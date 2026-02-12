@@ -4,75 +4,77 @@ const helmet = require('helmet')
 const rateLimit = require('express-rate-limit')
 require('./config/env')
 
+const { queryOne } = require('./config/db')
+
 // Routes
 const authRoutes = require('./routes/auth.routes')
 const effectifsRoutes = require('./routes/effectifs.routes')
 const unitesRoutes = require('./routes/unites.routes')
 const rapportsRoutes = require('./routes/rapports.routes')
+const soldbuchRoutes = require('./routes/soldbuch.routes')
+const searchRoutes = require('./routes/search.routes')
 const adminRoutes = require('./routes/admin.routes')
 
 const app = express()
 const PORT = process.env.PORT || 3001
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-})
+// Rate limiting (login stricter)
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 })
+const generalLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 })
 
 // Middlewares
-app.use(helmet())
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? ['http://localhost:5173'] : true,
-  credentials: true
-}))
-app.use(limiter)
+app.use(helmet({ crossOriginResourcePolicy: false }))
+app.use(cors({ origin: true, credentials: true }))
+app.use(generalLimiter)
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 
-// Serve uploaded files
+// Static uploads
 app.use('/uploads', express.static('uploads'))
 
 // Routes
-app.use('/api/auth', authRoutes)
+app.use('/api/auth', loginLimiter, authRoutes)
 app.use('/api/effectifs', effectifsRoutes)
 app.use('/api/unites', unitesRoutes)
 app.use('/api/rapports', rapportsRoutes)
+app.use('/api/soldbuch', soldbuchRoutes)
+app.use('/api/search', searchRoutes)
 app.use('/api/admin', adminRoutes)
+
+// Stats endpoint
+app.get('/api/stats', async (req, res) => {
+  try {
+    const effectifs = await queryOne('SELECT COUNT(*) as c FROM effectifs')
+    const rapports = await queryOne('SELECT COUNT(*) as c FROM rapports')
+    const unites = await queryOne('SELECT COUNT(*) as c FROM unites')
+    res.json({ effectifs: effectifs.c, rapports: rapports.c, unites: unites.c })
+  } catch {
+    res.json({ effectifs: 0, rapports: 0, unites: 0 })
+  }
+})
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    message: 'Archives Wehrmacht RP API',
-    timestamp: new Date().toISOString()
-  })
+  res.json({ status: 'OK', message: 'Archives Wehrmacht RP API', timestamp: new Date().toISOString() })
 })
 
-// 404 handler
+// 404
 app.use('/api/*', (req, res) => {
-  res.status(404).json({ 
-    success: false, 
-    message: 'Route non trouvée' 
-  })
+  res.status(404).json({ success: false, message: 'Route non trouvée' })
 })
 
 // Error handler
 app.use((err, req, res, next) => {
   console.error('Server Error:', err.stack)
-  
   res.status(err.status || 500).json({
     success: false,
-    message: err.message || 'Erreur interne du serveur',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    message: err.message || 'Erreur interne du serveur'
   })
 })
 
-// Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
-  console.log(`📋 Health check: http://localhost:${PORT}/api/health`)
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`)
+  console.log(`🚀 Archives Wehrmacht RP API — http://localhost:${PORT}`)
+  console.log(`📋 Health: http://localhost:${PORT}/api/health`)
 })
 
 module.exports = app

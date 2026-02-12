@@ -1,86 +1,26 @@
-const express = require('express')
-const { param } = require('express-validator')
-const { handleValidation } = require('../middleware/validate')
-const { authenticateToken } = require('../middleware/auth')
-const { query, queryOne } = require('../config/db')
+const router = require('express').Router()
+const { query } = require('../config/db')
 
-const router = express.Router()
-
-// All routes require authentication
-router.use(authenticateToken)
-
-// GET /api/unites - Liste des unités
+// GET /api/unites
 router.get('/', async (req, res) => {
   try {
-    const unites = await query(`
-      SELECT u.*, 
-             COUNT(e.id) as effectifs_count
-      FROM unites u
-      LEFT JOIN effectifs e ON u.id = e.unite_id AND e.statut = 'Actif'
-      WHERE u.active = 1
-      GROUP BY u.id
-      ORDER BY u.nom
-    `)
-
-    res.json({
-      success: true,
-      data: {
-        unites
-      }
-    })
-  } catch (error) {
-    console.error('Error fetching unites:', error)
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la récupération des unités'
-    })
+    const unites = await query('SELECT id, code, nom, couleur FROM unites ORDER BY id')
+    res.json({ success: true, data: unites })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
   }
 })
 
-// GET /api/unites/:id/grades - Grades d'une unité
-router.get('/:id/grades', [
-  param('id').isInt().withMessage('ID unité invalide')
-], handleValidation, async (req, res) => {
+// GET /api/unites/:id/grades
+router.get('/:id/grades', async (req, res) => {
   try {
-    // Check if unit exists
-    const unite = await queryOne(
-      'SELECT id, nom FROM unites WHERE id = ? AND active = 1',
+    const grades = await query(
+      'SELECT id, nom_complet, rang FROM grades WHERE unite_id = ? ORDER BY rang DESC',
       [req.params.id]
     )
-
-    if (!unite) {
-      return res.status(404).json({
-        success: false,
-        message: 'Unité non trouvée'
-      })
-    }
-
-    // Get grades for this unit
-    const grades = await query(`
-      SELECT g.id, g.nom, g.niveau, g.couleur,
-             COUNT(e.id) as effectifs_count
-      FROM grades g
-      LEFT JOIN effectifs e ON g.id = e.grade_id 
-                           AND e.unite_id = ? 
-                           AND e.statut = 'Actif'
-      WHERE g.unite_id = ? OR g.unite_id IS NULL
-      GROUP BY g.id
-      ORDER BY g.niveau DESC, g.nom
-    `, [req.params.id, req.params.id])
-
-    res.json({
-      success: true,
-      data: {
-        unite,
-        grades
-      }
-    })
-  } catch (error) {
-    console.error('Error fetching grades:', error)
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la récupération des grades'
-    })
+    res.json({ success: true, data: grades })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
   }
 })
 

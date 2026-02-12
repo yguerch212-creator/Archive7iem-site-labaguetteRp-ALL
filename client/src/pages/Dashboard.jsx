@@ -1,107 +1,60 @@
-import React from 'react'
-import Topbar from '../components/layout/Topbar'
-import PaperCard from '../components/layout/PaperCard'
-import TypeTag from '../components/ui/TypeTag'
+import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
+import apiClient from '../api/client'
+import Topbar from '../components/layout/Topbar'
 
-function Dashboard() {
+export default function Dashboard() {
   const { user } = useAuth()
+  const [stats, setStats] = useState({ effectifs: 0, rapports: 0, unites: 0 })
+
+  useEffect(() => {
+    apiClient.get('/stats').then(r => setStats(r.data)).catch(() => {})
+  }, [])
+
+  const cards = [
+    { icon: '📋', title: 'Effectifs', desc: `${stats.effectifs} soldats enregistrés`, to: '/effectifs' },
+    { icon: '📝', title: 'Rapports', desc: `${stats.rapports} rapports officiels`, to: '/rapports' },
+    { icon: '📁', title: 'Dossiers', desc: 'Documents classifiés', to: '/search' },
+    { icon: '⚖️', title: 'Casiers', desc: 'Casiers judiciaires', to: '/search?filter=casier' },
+    { icon: '🔎', title: 'Recherche', desc: 'Recherche globale', to: '/search' },
+  ]
+
+  if (user?.isAdmin) {
+    cards.push({ icon: '⚙️', title: 'Administration', desc: 'Gestion des utilisateurs', to: '/admin/users', admin: true })
+  }
 
   return (
-    <div>
+    <>
       <Topbar />
-      
-      <div className="container" style={{ padding: '2rem 1rem' }}>
-        <div className="paper-card-header">
-          <h1>Tableau de bord</h1>
-          <p className="text-secondary">
-            Bienvenue, {user?.username} - {user?.unite || 'Sans affectation'}
+      <div className="container" style={{ marginTop: 'var(--space-xxl)' }}>
+        <div className="paper-card" style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
+          <h1 style={{ marginBottom: 'var(--space-xs)' }}>Archives 7e Armeekorps</h1>
+          <p style={{ margin: 0, color: 'var(--text-muted)' }}>
+            {user?.grade || ''} {user?.username || ''} — {user?.unite || 'Commandement'}
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-lg">
-          <PaperCard>
-            <div className="paper-card-header">
-              <h3 className="paper-card-title">Effectifs</h3>
-            </div>
-            <p>Gestion des soldats et de leurs affectations</p>
-            <div className="flex gap-sm" style={{ marginTop: '1rem' }}>
-              <button className="btn btn-primary btn-small">Nouvel effectif</button>
-              <button className="btn btn-secondary btn-small">Liste</button>
-            </div>
-          </PaperCard>
-
-          <PaperCard>
-            <div className="paper-card-header">
-              <h3 className="paper-card-title">Rapports</h3>
-            </div>
-            <p>Rédaction et consultation des rapports militaires</p>
-            <div className="flex gap-sm" style={{ marginTop: '1rem' }}>
-              <button className="btn btn-primary btn-small">Nouveau rapport</button>
-              <button className="btn btn-secondary btn-small">Archives</button>
-            </div>
-          </PaperCard>
-
-          <PaperCard>
-            <div className="paper-card-header">
-              <h3 className="paper-card-title">Casiers</h3>
-            </div>
-            <p>Dossiers disciplinaires et judiciaires</p>
-            <div className="flex gap-sm" style={{ marginTop: '1rem' }}>
-              <button className="btn btn-primary btn-small">Nouveau casier</button>
-              <button className="btn btn-secondary btn-small">Consulter</button>
-            </div>
-          </PaperCard>
+        <div className="grid grid-cols-3" style={{ gap: 'var(--space-lg)' }}>
+          {cards.map((card, i) => (
+            <Link to={card.to} key={i} className="paper-card" style={{
+              textAlign: 'center',
+              textDecoration: 'none',
+              cursor: 'pointer',
+              ...(card.admin ? { borderColor: 'var(--warning)', background: 'rgba(161, 124, 71, 0.05)' } : {})
+            }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: 'var(--space-sm)' }}>{card.icon}</div>
+              <h3 style={{ margin: '0 0 var(--space-xs)' }}>{card.title}</h3>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>{card.desc}</p>
+            </Link>
+          ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-lg" style={{ marginTop: '2rem' }}>
-          <PaperCard>
-            <div className="paper-card-header">
-              <h3 className="paper-card-title">Rapports récents</h3>
-            </div>
-            <div className="flex flex-col gap-md">
-              <div className="flex justify-between items-center">
-                <span>Mission de reconnaissance - Secteur Nord</span>
-                <TypeTag type="rapport" />
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Incident disciplinaire - Soldat Müller</span>
-                <TypeTag type="incident" />
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Recommandation d'équipement</span>
-                <TypeTag type="recommandation" />
-              </div>
-            </div>
-          </PaperCard>
-
-          <PaperCard>
-            <div className="paper-card-header">
-              <h3 className="paper-card-title">Statistiques</h3>
-            </div>
-            <div className="grid grid-cols-2 gap-md">
-              <div className="text-center">
-                <div className="font-bold text-primary" style={{ fontSize: '1.5rem' }}>42</div>
-                <div className="text-muted text-sm">Effectifs actifs</div>
-              </div>
-              <div className="text-center">
-                <div className="font-bold text-primary" style={{ fontSize: '1.5rem' }}>18</div>
-                <div className="text-muted text-sm">Rapports ce mois</div>
-              </div>
-              <div className="text-center">
-                <div className="font-bold text-primary" style={{ fontSize: '1.5rem' }}>3</div>
-                <div className="text-muted text-sm">Incidents ouverts</div>
-              </div>
-              <div className="text-center">
-                <div className="font-bold text-primary" style={{ fontSize: '1.5rem' }}>7</div>
-                <div className="text-muted text-sm">Unités actives</div>
-              </div>
-            </div>
-          </PaperCard>
+        <div style={{ textAlign: 'center', marginTop: 'var(--space-xxl)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          Archives du 7e Armeekorps — Commandement de la 916. Grenadier-Regiment<br />
+          Accès réservé aux personnels autorisés
         </div>
       </div>
-    </div>
+    </>
   )
 }
-
-export default Dashboard

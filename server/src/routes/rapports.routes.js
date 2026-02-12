@@ -1,161 +1,76 @@
-const express = require('express')
-const { body, param, query } = require('express-validator')
-const { handleValidation } = require('../middleware/validate')
-const { authenticateToken } = require('../middleware/auth')
+const router = require('express').Router()
+const { query, queryOne, pool } = require('../config/db')
+const auth = require('../middleware/auth')
+const admin = require('../middleware/admin')
 
-const router = express.Router()
-
-// All routes require authentication
-router.use(authenticateToken)
-
-// GET /api/rapports - Liste des rapports
-router.get('/', [
-  query('type').optional().isIn(['rapport', 'incident', 'recommandation', 'mission']).withMessage('Type de rapport invalide'),
-  query('unite_id').optional().isInt().withMessage('ID unité invalide'),
-  query('statut').optional().isIn(['Brouillon', 'Envoyé', 'Lu', 'Archivé']).withMessage('Statut invalide'),
-  query('page').optional().isInt({ min: 1 }).withMessage('Page invalide'),
-  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limite invalide')
-], handleValidation, async (req, res) => {
+// GET /api/rapports
+router.get('/', auth, async (req, res) => {
   try {
-    // TODO: Implement getRapports controller
-    res.json({
-      success: true,
-      data: {
-        rapports: [
-          {
-            id: 1,
-            titre: 'Mission de reconnaissance - Secteur Nord',
-            type: 'rapport',
-            statut: 'Envoyé',
-            auteur: 'Hauptmann Schmidt',
-            date_creation: '2024-02-12T10:30:00.000Z',
-            unite_nom: '916 Grenadier Regiment'
-          },
-          {
-            id: 2,
-            titre: 'Incident disciplinaire - Soldat Müller',
-            type: 'incident',
-            statut: 'Lu',
-            auteur: 'Feldwebel Weber',
-            date_creation: '2024-02-11T14:15:00.000Z',
-            unite_nom: '254 Feldgendarmerie'
-          }
-        ],
-        pagination: {
-          page: 1,
-          limit: 20,
-          total: 2,
-          pages: 1
-        }
-      }
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la récupération des rapports'
-    })
+    const rows = await query(`
+      SELECT id, titre, auteur_nom, personne_renseignee_nom, type, date_rp, date_irl, published, created_at
+      FROM rapports ORDER BY created_at DESC
+    `)
+    res.json({ success: true, data: rows })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
   }
 })
 
-// GET /api/rapports/:id - Détails d'un rapport
-router.get('/:id', [
-  param('id').isInt().withMessage('ID rapport invalide')
-], handleValidation, async (req, res) => {
+// GET /api/rapports/:id
+router.get('/:id', auth, async (req, res) => {
   try {
-    // TODO: Implement getRapport controller
-    res.json({
-      success: true,
-      data: {
-        rapport: {
-          id: parseInt(req.params.id),
-          titre: 'Mission de reconnaissance - Secteur Nord',
-          type: 'rapport',
-          contenu: 'Contenu détaillé du rapport...',
-          statut: 'Envoyé',
-          auteur_id: 1,
-          auteur: 'Hauptmann Schmidt',
-          unite_id: 1,
-          unite_nom: '916 Grenadier Regiment',
-          date_creation: '2024-02-12T10:30:00.000Z',
-          date_modification: '2024-02-12T10:30:00.000Z'
-        }
-      }
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la récupération du rapport'
-    })
+    const row = await queryOne('SELECT * FROM rapports WHERE id = ?', [req.params.id])
+    if (!row) return res.status(404).json({ success: false, message: 'Rapport non trouvé' })
+    res.json({ success: true, data: row })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
   }
 })
 
-// POST /api/rapports - Créer un rapport
-router.post('/', [
-  body('titre').trim().notEmpty().withMessage('Titre requis'),
-  body('type').isIn(['rapport', 'incident', 'recommandation', 'mission']).withMessage('Type de rapport invalide'),
-  body('contenu').trim().notEmpty().withMessage('Contenu requis'),
-  body('statut').optional().isIn(['Brouillon', 'Envoyé']).withMessage('Statut invalide')
-], handleValidation, async (req, res) => {
+// POST /api/rapports
+router.post('/', auth, async (req, res) => {
   try {
-    // TODO: Implement createRapport controller
-    res.status(201).json({
-      success: true,
-      message: 'Rapport créé avec succès',
-      data: {
-        rapport: {
-          id: 3,
-          ...req.body,
-          auteur_id: req.user.id,
-          unite_id: req.user.unite_id,
-          date_creation: new Date().toISOString(),
-          date_modification: new Date().toISOString()
-        }
-      }
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la création du rapport'
-    })
+    const f = req.body
+    const [result] = await pool.execute(
+      `INSERT INTO rapports (type, titre, auteur_nom, auteur_id, personne_renseignee_nom,
+        unite_id, grade_id, contexte, resume, bilan, remarques,
+        recommande_nom, recommande_grade, raison_1, recompense,
+        intro_nom, intro_grade, mise_en_cause_nom, mise_en_cause_grade,
+        lieu_incident, compte_rendu, signature_nom, signature_grade,
+        date_rp, date_irl)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [f.type || 'rapport', f.titre, f.auteur_nom || null, f.auteur_id || null,
+       f.personne_renseignee_nom || null, f.unite_id || null, f.grade_id || null,
+       f.contexte || null, f.resume || null, f.bilan || null, f.remarques || null,
+       f.recommande_nom || null, f.recommande_grade || null, f.raison_1 || null, f.recompense || null,
+       f.intro_nom || null, f.intro_grade || null, f.mise_en_cause_nom || null, f.mise_en_cause_grade || null,
+       f.lieu_incident || null, f.compte_rendu || null, f.signature_nom || null, f.signature_grade || null,
+       f.date_rp || null, f.date_irl || null]
+    )
+    res.json({ success: true, data: { id: result.insertId } })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
   }
 })
 
-// PUT /api/rapports/:id - Modifier un rapport
-router.put('/:id', [
-  param('id').isInt().withMessage('ID rapport invalide'),
-  body('titre').optional().trim().notEmpty().withMessage('Titre invalide'),
-  body('contenu').optional().trim().notEmpty().withMessage('Contenu invalide'),
-  body('statut').optional().isIn(['Brouillon', 'Envoyé', 'Archivé']).withMessage('Statut invalide')
-], handleValidation, async (req, res) => {
+// PUT /api/rapports/:id/publish
+router.put('/:id/publish', auth, async (req, res) => {
   try {
-    // TODO: Implement updateRapport controller
-    res.json({
-      success: true,
-      message: 'Rapport modifié avec succès'
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la modification du rapport'
-    })
+    const { contenu_html } = req.body
+    await pool.execute('UPDATE rapports SET contenu_html = ?, published = 1 WHERE id = ?', [contenu_html, req.params.id])
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
   }
 })
 
-// DELETE /api/rapports/:id - Supprimer un rapport
-router.delete('/:id', [
-  param('id').isInt().withMessage('ID rapport invalide')
-], handleValidation, async (req, res) => {
+// DELETE /api/rapports/:id (admin only)
+router.delete('/:id', auth, admin, async (req, res) => {
   try {
-    // TODO: Implement deleteRapport controller
-    res.json({
-      success: true,
-      message: 'Rapport supprimé avec succès'
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la suppression du rapport'
-    })
+    await pool.execute('DELETE FROM rapports WHERE id = ?', [req.params.id])
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
   }
 })
 

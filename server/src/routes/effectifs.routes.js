@@ -1,131 +1,74 @@
-const express = require('express')
-const { body, param, query } = require('express-validator')
-const { handleValidation } = require('../middleware/validate')
-const { authenticateToken } = require('../middleware/auth')
+const router = require('express').Router()
+const { query, queryOne } = require('../config/db')
+const auth = require('../middleware/auth')
 
-const router = express.Router()
-
-// All routes require authentication
-router.use(authenticateToken)
-
-// GET /api/effectifs - Liste des effectifs
-router.get('/', [
-  query('unite_id').optional().isInt().withMessage('ID unité invalide'),
-  query('active').optional().isBoolean().withMessage('Statut actif invalide'),
-  query('page').optional().isInt({ min: 1 }).withMessage('Page invalide'),
-  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limite invalide')
-], handleValidation, async (req, res) => {
+// GET /api/effectifs?unite_id=X
+router.get('/', auth, async (req, res) => {
   try {
-    // TODO: Implement getEffectifs controller
-    res.json({
-      success: true,
-      data: {
-        effectifs: [],
-        pagination: {
-          page: 1,
-          limit: 20,
-          total: 0,
-          pages: 0
-        }
-      }
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la récupération des effectifs'
-    })
+    const { unite_id } = req.query
+    let sql = `
+      SELECT e.*, g.nom_complet AS grade_nom, u.nom AS unite_nom, u.code AS unite_code
+      FROM effectifs e
+      LEFT JOIN grades g ON g.id = e.grade_id
+      LEFT JOIN unites u ON u.id = e.unite_id
+    `
+    const params = []
+    if (unite_id) { sql += ' WHERE e.unite_id = ?'; params.push(unite_id) }
+    sql += ' ORDER BY COALESCE(g.rang, 0) DESC, e.nom ASC'
+    const rows = await query(sql, params)
+    res.json({ success: true, data: rows })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
   }
 })
 
-// GET /api/effectifs/:id - Détails d'un effectif
-router.get('/:id', [
-  param('id').isInt().withMessage('ID effectif invalide')
-], handleValidation, async (req, res) => {
+// GET /api/effectifs/all (for dropdowns)
+router.get('/all', auth, async (req, res) => {
   try {
-    // TODO: Implement getEffectif controller
-    res.json({
-      success: true,
-      data: {
-        effectif: null
-      }
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la récupération de l\'effectif'
-    })
+    const rows = await query('SELECT id, nom, prenom, unite_id FROM effectifs ORDER BY nom, prenom')
+    res.json({ success: true, data: rows })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
   }
 })
 
-// POST /api/effectifs - Créer un effectif
-router.post('/', [
-  body('nom').trim().notEmpty().withMessage('Nom requis'),
-  body('prenom').trim().notEmpty().withMessage('Prénom requis'),
-  body('unite_id').isInt().withMessage('Unité requise'),
-  body('grade_id').optional().isInt().withMessage('Grade invalide'),
-  body('date_naissance').optional().isISO8601().withMessage('Date de naissance invalide'),
-  body('lieu_naissance').optional().trim(),
-  body('nationalite').optional().trim(),
-  body('statut').optional().isIn(['Actif', 'Inactif', 'MIA', 'KIA']).withMessage('Statut invalide')
-], handleValidation, async (req, res) => {
+// GET /api/effectifs/:id
+router.get('/:id', auth, async (req, res) => {
   try {
-    // TODO: Implement createEffectif controller
-    res.status(201).json({
-      success: true,
-      message: 'Effectif créé avec succès',
-      data: {
-        effectif: {
-          id: 1,
-          ...req.body
-        }
-      }
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la création de l\'effectif'
-    })
+    const row = await queryOne(`
+      SELECT e.*, g.nom_complet AS grade_nom, u.nom AS unite_nom, u.code AS unite_code
+      FROM effectifs e
+      LEFT JOIN grades g ON g.id = e.grade_id
+      LEFT JOIN unites u ON u.id = e.unite_id
+      WHERE e.id = ?
+    `, [req.params.id])
+    if (!row) return res.status(404).json({ success: false, message: 'Effectif non trouvé' })
+    res.json({ success: true, data: row })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
   }
 })
 
-// PUT /api/effectifs/:id - Modifier un effectif
-router.put('/:id', [
-  param('id').isInt().withMessage('ID effectif invalide'),
-  body('nom').optional().trim().notEmpty().withMessage('Nom invalide'),
-  body('prenom').optional().trim().notEmpty().withMessage('Prénom invalide'),
-  body('unite_id').optional().isInt().withMessage('Unité invalide'),
-  body('grade_id').optional().isInt().withMessage('Grade invalide'),
-  body('statut').optional().isIn(['Actif', 'Inactif', 'MIA', 'KIA']).withMessage('Statut invalide')
-], handleValidation, async (req, res) => {
+// POST /api/effectifs
+router.post('/', auth, async (req, res) => {
   try {
-    // TODO: Implement updateEffectif controller
-    res.json({
-      success: true,
-      message: 'Effectif modifié avec succès'
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la modification de l\'effectif'
-    })
-  }
-})
-
-// DELETE /api/effectifs/:id - Supprimer un effectif
-router.delete('/:id', [
-  param('id').isInt().withMessage('ID effectif invalide')
-], handleValidation, async (req, res) => {
-  try {
-    // TODO: Implement deleteEffectif controller
-    res.json({
-      success: true,
-      message: 'Effectif supprimé avec succès'
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la suppression de l\'effectif'
-    })
+    const f = req.body
+    const [result] = await require('../config/db').pool.execute(
+      `INSERT INTO effectifs (nom, prenom, surnom, unite_id, grade_id, specialite, 
+        date_naissance, lieu_naissance, nationalite, taille_cm,
+        arme_principale, arme_secondaire, equipement_special, tenue,
+        historique, date_entree_ig, date_entree_irl)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [f.nom, f.prenom, f.surnom || null, f.unite_id || null, f.grade_id || null,
+       f.specialite || null, f.date_naissance || null, f.lieu_naissance || null,
+       f.nationalite || 'Allemande', f.taille_cm || null,
+       f.arme_principale || null, f.arme_secondaire || null,
+       f.equipement_special || null, f.tenue || null,
+       f.historique || null, f.date_entree_ig || null, f.date_entree_irl || null]
+    )
+    res.json({ success: true, data: { id: result.insertId } })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
   }
 })
 

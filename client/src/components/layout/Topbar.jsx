@@ -2,99 +2,38 @@ import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 
-function Topbar() {
+export default function Topbar() {
   const { user, logout } = useAuth()
   const location = useLocation()
 
-  const isActive = (path) => location.pathname === path
-
-  const handleLogout = async () => {
-    if (window.confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-      await logout()
-    }
-  }
+  const isActive = (path) => location.pathname.startsWith(path) ? 'active' : ''
 
   return (
     <div className="topbar">
-      <div className="container">
-        <div className="topbar-content">
-          <div className="topbar-logo">
-            <Link to="/dashboard">
-              Archives Wehrmacht RP
-            </Link>
-          </div>
+      <div className="container topbar-content">
+        <Link to="/dashboard" className="topbar-logo">
+          ✠ Archives 7e Armeekorps
+        </Link>
+        
+        <nav className="topbar-nav">
+          <Link to="/dashboard" className={isActive('/dashboard')}>Tableau de bord</Link>
+          <Link to="/effectifs" className={isActive('/effectifs')}>Effectifs</Link>
+          <Link to="/rapports" className={isActive('/rapports')}>Rapports</Link>
+          <Link to="/search" className={isActive('/search')}>Recherche</Link>
+          {user?.isAdmin && (
+            <Link to="/admin/users" className={isActive('/admin')}>Admin</Link>
+          )}
+        </nav>
 
-          <nav>
-            <ul className="topbar-nav">
-              <li>
-                <Link 
-                  to="/dashboard" 
-                  className={isActive('/dashboard') ? 'active' : ''}
-                >
-                  Tableau de bord
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/effectifs" 
-                  className={isActive('/effectifs') ? 'active' : ''}
-                >
-                  Effectifs
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/rapports" 
-                  className={isActive('/rapports') ? 'active' : ''}
-                >
-                  Rapports
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/casiers" 
-                  className={isActive('/casiers') ? 'active' : ''}
-                >
-                  Casiers
-                </Link>
-              </li>
-              {user?.isAdmin && (
-                <li>
-                  <Link 
-                    to="/admin" 
-                    className={isActive('/admin') ? 'active' : ''}
-                  >
-                    Administration
-                  </Link>
-                </li>
-              )}
-            </ul>
-          </nav>
-
-          <div className="topbar-user">
-            <div className="text-right">
-              <div className="text-sm font-semibold">{user?.username}</div>
-              <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                {user?.unite || 'Sans affectation'}
-              </div>
-            </div>
-            
-            <div className="flex gap-sm">
-              <Link to="/profile" className="btn btn-small btn-secondary">
-                Profil
-              </Link>
-              <button 
-                onClick={handleLogout}
-                className="btn btn-small btn-secondary"
-              >
-                Déconnexion
-              </button>
-            </div>
-          </div>
+        <div className="topbar-user">
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            {user?.unite || ''} — {user?.username || ''}
+          </span>
+          <button className="btn btn-small btn-secondary" onClick={logout}>
+            Déconnexion
+          </button>
         </div>
       </div>
     </div>
   )
 }
-
-export default Topbar

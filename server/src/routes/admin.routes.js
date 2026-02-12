@@ -1,158 +1,87 @@
-const express = require('express')
-const { body, param, query } = require('express-validator')
-const { handleValidation } = require('../middleware/validate')
-const { authenticateToken } = require('../middleware/auth')
-const { requireAdmin } = require('../middleware/admin')
+const router = require('express').Router()
+const bcrypt = require('bcryptjs')
+const { query, queryOne, pool } = require('../config/db')
+const auth = require('../middleware/auth')
+const admin = require('../middleware/admin')
 
-const router = express.Router()
-
-// All routes require authentication and admin privileges
-router.use(authenticateToken)
-router.use(requireAdmin)
-
-// GET /api/admin/users - Liste des utilisateurs
-router.get('/users', [
-  query('page').optional().isInt({ min: 1 }).withMessage('Page invalide'),
-  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limite invalide')
-], handleValidation, async (req, res) => {
+// GET /api/admin/users
+router.get('/users', auth, admin, async (req, res) => {
   try {
-    // TODO: Implement getUsersAdmin controller
-    res.json({
-      success: true,
-      data: {
-        users: [
-          {
-            id: 1,
-            username: 'admin',
-            email: 'admin@archives7e.com',
-            unite_nom: null,
-            groups: ['Administration'],
-            active: true,
-            date_creation: '2024-01-01T00:00:00.000Z',
-            derniere_connexion: '2024-02-12T18:00:00.000Z'
-          },
-          {
-            id: 2,
-            username: 'schmidt.h',
-            email: 'schmidt@archives7e.com',
-            unite_nom: '916 Grenadier Regiment',
-            groups: ['Utilisateur'],
-            active: true,
-            date_creation: '2024-01-15T00:00:00.000Z',
-            derniere_connexion: '2024-02-12T17:30:00.000Z'
-          }
-        ],
-        pagination: {
-          page: 1,
-          limit: 20,
-          total: 2,
-          pages: 1
-        }
-      }
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la récupération des utilisateurs'
-    })
+    const users = await query(`
+      SELECT u.id, u.nom, u.prenom, u.username, u.role_level, u.must_change_password, u.active,
+             g.nom_complet AS grade_nom, un.nom AS unite_nom,
+             (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
+              WHERE ug.user_id = u.id AND gp.name = 'Administration') > 0 AS is_admin
+      FROM users u
+      LEFT JOIN grades g ON g.id = u.grade_id
+      LEFT JOIN unites un ON un.id = u.unite_id
+      ORDER BY u.role_level DESC, u.nom
+    `)
+    res.json({ success: true, data: users })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
   }
 })
 
-// POST /api/admin/users - Créer un utilisateur
-router.post('/users', [
-  body('username').trim().notEmpty().withMessage('Nom d\'utilisateur requis'),
-  body('email').isEmail().withMessage('Email invalide'),
-  body('password').isLength({ min: 6 }).withMessage('Mot de passe trop court (min 6 caractères)'),
-  body('unite_id').optional().isInt().withMessage('Unité invalide'),
-  body('groups').optional().isArray().withMessage('Groupes invalides')
-], handleValidation, async (req, res) => {
+// GET /api/admin/effectifs-sans-compte
+router.get('/effectifs-sans-compte', auth, admin, async (req, res) => {
   try {
-    // TODO: Implement createUserAdmin controller
-    res.status(201).json({
-      success: true,
-      message: 'Utilisateur créé avec succès',
-      data: {
-        user: {
-          id: 3,
-          username: req.body.username,
-          email: req.body.email,
-          active: true
-        }
-      }
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la création de l\'utilisateur'
-    })
+    const rows = await query(`
+      SELECT e.id, e.nom, e.prenom, g.nom_complet AS grade_nom, u.nom AS unite_nom
+      FROM effectifs e
+      LEFT JOIN grades g ON e.grade_id = g.id
+      LEFT JOIN unites u ON e.unite_id = u.id
+      WHERE NOT EXISTS (
+        SELECT 1 FROM users us WHERE us.nom = e.nom AND us.prenom = e.prenom AND us.unite_id = e.unite_id
+      )
+      ORDER BY e.nom
+    `)
+    res.json({ success: true, data: rows })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
   }
 })
 
-// PUT /api/admin/users/:id - Modifier un utilisateur
-router.put('/users/:id', [
-  param('id').isInt().withMessage('ID utilisateur invalide'),
-  body('username').optional().trim().notEmpty().withMessage('Nom d\'utilisateur invalide'),
-  body('email').optional().isEmail().withMessage('Email invalide'),
-  body('unite_id').optional().isInt().withMessage('Unité invalide'),
-  body('active').optional().isBoolean().withMessage('Statut actif invalide'),
-  body('groups').optional().isArray().withMessage('Groupes invalides')
-], handleValidation, async (req, res) => {
+// POST /api/admin/users (create from effectif)
+router.post('/users', auth, admin, async (req, res) => {
   try {
-    // TODO: Implement updateUserAdmin controller
-    res.json({
-      success: true,
-      message: 'Utilisateur modifié avec succès'
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la modification de l\'utilisateur'
-    })
+    const { effectif_id, password } = req.body
+    const eff = await queryOne(`
+      SELECT e.*, u.nom AS unite_nom FROM effectifs e LEFT JOIN unites u ON e.unite_id = u.id WHERE e.id = ?
+    `, [effectif_id])
+    if (!eff) return res.status(404).json({ success: false, message: 'Effectif introuvable' })
+
+    const exists = await queryOne('SELECT id FROM users WHERE nom = ? AND prenom = ? AND unite_id = ?', [eff.nom, eff.prenom, eff.unite_id])
+    if (exists) return res.status(400).json({ success: false, message: 'Compte déjà existant' })
+
+    const hash = await bcrypt.hash(password || 'Wehrmacht123', 10)
+    const username = `${eff.prenom.toLowerCase()}.${eff.nom.toLowerCase()}`.replace(/\s/g, '')
+    
+    await pool.execute(
+      'INSERT INTO users (nom, prenom, username, password_hash, unite_id, grade_id, role_level, must_change_password, active) VALUES (?, ?, ?, ?, ?, ?, 1, 1, 1)',
+      [eff.nom, eff.prenom, username, hash, eff.unite_id, eff.grade_id]
+    )
+    res.json({ success: true, message: `Compte créé pour ${eff.prenom} ${eff.nom} (${username}) — mdp: ${password || 'Wehrmacht123'}` })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
   }
 })
 
-// DELETE /api/admin/users/:id - Supprimer un utilisateur
-router.delete('/users/:id', [
-  param('id').isInt().withMessage('ID utilisateur invalide')
-], handleValidation, async (req, res) => {
+// PUT /api/admin/users/:id/group
+router.put('/users/:id/group', auth, admin, async (req, res) => {
   try {
-    // TODO: Implement deleteUserAdmin controller
-    res.json({
-      success: true,
-      message: 'Utilisateur supprimé avec succès'
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la suppression de l\'utilisateur'
-    })
-  }
-})
+    const { action } = req.body // 'add' or 'remove'
+    const adminGroup = await queryOne("SELECT id FROM `groups` WHERE name = 'Administration'")
+    if (!adminGroup) return res.status(500).json({ success: false, message: 'Groupe Administration introuvable' })
 
-// GET /api/admin/stats - Statistiques générales
-router.get('/stats', async (req, res) => {
-  try {
-    // TODO: Implement getStatsAdmin controller
-    res.json({
-      success: true,
-      data: {
-        stats: {
-          total_users: 25,
-          active_users: 23,
-          total_effectifs: 342,
-          active_effectifs: 298,
-          total_rapports: 156,
-          rapports_ce_mois: 18,
-          incidents_ouverts: 3,
-          unites_actives: 7
-        }
-      }
-    })
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la récupération des statistiques'
-    })
+    if (action === 'add') {
+      await pool.execute('INSERT IGNORE INTO user_groups (user_id, group_id) VALUES (?, ?)', [req.params.id, adminGroup.id])
+    } else {
+      await pool.execute('DELETE FROM user_groups WHERE user_id = ? AND group_id = ?', [req.params.id, adminGroup.id])
+    }
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
   }
 })
 
