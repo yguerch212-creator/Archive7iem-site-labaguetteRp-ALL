@@ -64,20 +64,22 @@ export default function EffectifsList() {
                 <th style={thStyle}>Prénom / Nom</th>
                 <th style={thStyle}>Grade</th>
                 <th style={thStyle}>Spécialité</th>
-                <th style={thStyle}>Date RP</th>
+                <th style={thStyle}>Entrée RP</th>
+                <th style={thStyle}>Entrée IRL</th>
                 <th style={thStyle}>Soldbuch</th>
                 <th style={thStyle}>Rapports</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-lg)', color: 'var(--text-muted)' }}>Aucun effectif</td></tr>
+                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-lg)', color: 'var(--text-muted)' }}>Aucun effectif</td></tr>
               ) : filtered.map(e => (
                 <tr key={e.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                   <td style={tdStyle}><strong>{e.prenom} {e.nom}</strong></td>
                   <td style={tdStyle}>{e.grade_nom || '—'}</td>
                   <td style={tdStyle}>{e.specialite || '—'}</td>
                   <td style={tdStyle}>{e.date_entree_ig || '—'}</td>
+                  <td style={tdStyle}>{e.date_entree_irl || '—'}</td>
                   <td style={{ ...tdStyle, textAlign: 'center' }}>
                     <Link to={`/effectifs/${e.id}/soldbuch`}>📘</Link>
                   </td>

@@ -7,7 +7,8 @@ const admin = require('../middleware/admin')
 router.get('/', auth, async (req, res) => {
   try {
     const rows = await query(`
-      SELECT id, titre, auteur_nom, personne_renseignee_nom, type, date_rp, date_irl, published, created_at
+      SELECT id, titre, auteur_nom, personne_renseignee_nom, recommande_nom, mise_en_cause_nom, type, date_rp, date_irl, published, created_at,
+        COALESCE(personne_renseignee_nom, recommande_nom, mise_en_cause_nom) AS personne_mentionnee
       FROM rapports ORDER BY created_at DESC
     `)
     res.json({ success: true, data: rows })

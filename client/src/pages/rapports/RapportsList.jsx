@@ -64,6 +64,7 @@ export default function RapportsList() {
                 <th style={th}>Date RP</th>
                 <th style={th}>Date IRL</th>
                 <th style={th}>Auteur</th>
+                <th style={th}>Personne mentionnée</th>
                 <th style={th}>Type</th>
                 <th style={th}>État</th>
                 {user?.isAdmin && <th style={th}>🗑️</th>}
@@ -71,13 +72,14 @@ export default function RapportsList() {
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-lg)', color: 'var(--text-muted)' }}>Aucun rapport</td></tr>
+                <tr><td colSpan={8} style={{ textAlign: 'center', padding: 'var(--space-lg)', color: 'var(--text-muted)' }}>Aucun rapport</td></tr>
               ) : filtered.map(r => (
                 <tr key={r.id} style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }} onClick={() => window.location.href = `/rapports/${r.id}`}>
                   <td style={td}>{r.titre}</td>
                   <td style={td}>{r.date_rp || '—'}</td>
                   <td style={td}>{r.date_irl || '—'}</td>
                   <td style={td}>{r.auteur_nom || 'Inconnu'}</td>
+                  <td style={td}>{r.personne_mentionnee || '—'}</td>
                   <td style={td}><span className={`tag ${TYPE_CLASSES[r.type]}`}>{TYPE_LABELS[r.type]}</span></td>
                   <td style={td}>{r.published ? '✅ Publié' : '📝 Brouillon'}</td>
                   {user?.isAdmin && (
