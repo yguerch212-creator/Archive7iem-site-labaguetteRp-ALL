@@ -63,6 +63,8 @@ export default function EffectifsList() {
               <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
                 <th style={thStyle}>Prénom / Nom</th>
                 <th style={thStyle}>Grade</th>
+                <th style={thStyle}>Catégorie</th>
+                <th style={thStyle}>Fonction</th>
                 <th style={thStyle}>Spécialité</th>
                 <th style={thStyle}>Entrée RP</th>
                 <th style={thStyle}>Entrée IRL</th>
@@ -72,11 +74,13 @@ export default function EffectifsList() {
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-lg)', color: 'var(--text-muted)' }}>Aucun effectif</td></tr>
+                <tr><td colSpan={9} style={{ textAlign: 'center', padding: 'var(--space-lg)', color: 'var(--text-muted)' }}>Aucun effectif</td></tr>
               ) : filtered.map(e => (
                 <tr key={e.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                   <td style={tdStyle}><strong>{e.prenom} {e.nom}</strong></td>
                   <td style={tdStyle}>{e.grade_nom || '—'}</td>
+                  <td style={tdStyle}><span className={`badge ${e.categorie === 'Officier' ? 'badge-warning' : e.categorie === 'Sous-officier' ? 'badge-success' : 'badge-muted'}`}>{e.categorie || e.grade_categorie || '—'}</span></td>
+                  <td style={tdStyle}>{e.fonction || '—'}</td>
                   <td style={tdStyle}>{e.specialite || '—'}</td>
                   <td style={tdStyle}>{e.date_entree_ig || '—'}</td>
                   <td style={tdStyle}>{e.date_entree_irl || '—'}</td>

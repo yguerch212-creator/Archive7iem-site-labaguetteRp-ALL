@@ -14,7 +14,7 @@ export default function EffectifNew() {
   const [loading, setLoading] = useState(isEdit)
   const [form, setForm] = useState({
     nom: '', prenom: '', surnom: '', unite_id: params.get('unite_id') || '',
-    grade_id: '', specialite: '', date_naissance: '', lieu_naissance: '',
+    grade_id: '', fonction: '', categorie: '', specialite: '', date_naissance: '', lieu_naissance: '',
     nationalite: 'Allemande', taille_cm: '', arme_principale: '', arme_secondaire: '',
     equipement_special: '', tenue: '', historique: '', date_entree_ig: '', date_entree_irl: ''
   })
@@ -27,6 +27,7 @@ export default function EffectifNew() {
         setForm({
           nom: e.nom || '', prenom: e.prenom || '', surnom: e.surnom || '',
           unite_id: e.unite_id || '', grade_id: e.grade_id || '',
+          fonction: e.fonction || '', categorie: e.categorie || '',
           specialite: e.specialite || '', date_naissance: e.date_naissance || '',
           lieu_naissance: e.lieu_naissance || '', nationalite: e.nationalite || 'Allemande',
           taille_cm: e.taille_cm || '', arme_principale: e.arme_principale || '',
@@ -96,6 +97,22 @@ export default function EffectifNew() {
               <select className="form-select" value={form.grade_id} onChange={e => set('grade_id', e.target.value)} required disabled={!form.unite_id}>
                 <option value="">— Sélectionner —</option>
                 {grades.map(g => <option key={g.id} value={g.id}>{g.nom_complet}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2" style={{ gap: 'var(--space-md)' }}>
+            <div className="form-group">
+              <label className="form-label">Fonction</label>
+              <input className="form-input" value={form.fonction} onChange={e => set('fonction', e.target.value)} placeholder="Kommandeur, Kommandeur adjoint..." />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Catégorie</label>
+              <select className="form-select" value={form.categorie} onChange={e => set('categorie', e.target.value)}>
+                <option value="">— Auto (selon grade) —</option>
+                <option value="Officier">Officier</option>
+                <option value="Sous-officier">Sous-officier</option>
+                <option value="Militaire du rang">Militaire du rang</option>
               </select>
             </div>
           </div>
