@@ -44,12 +44,29 @@ app.use('/api/admin', adminRoutes)
 // Stats endpoint
 app.get('/api/stats', async (req, res) => {
   try {
+    const { query } = require('./config/db')
     const effectifs = await queryOne('SELECT COUNT(*) as c FROM effectifs')
     const rapports = await queryOne('SELECT COUNT(*) as c FROM rapports')
     const unites = await queryOne('SELECT COUNT(*) as c FROM unites')
-    res.json({ effectifs: effectifs.c, rapports: rapports.c, unites: unites.c })
-  } catch {
-    res.json({ effectifs: 0, rapports: 0, unites: 0 })
+    
+    // Effectifs par unité
+    const parUnite = await query(`
+      SELECT u.id, u.code, u.nom, u.couleur, COUNT(e.id) as count
+      FROM unites u
+      LEFT JOIN effectifs e ON e.unite_id = u.id
+      GROUP BY u.id ORDER BY count DESC
+    `)
+    
+    // 5 derniers rapports
+    const derniers = await query(`
+      SELECT id, titre, type, auteur_nom, date_irl, created_at
+      FROM rapports ORDER BY created_at DESC LIMIT 5
+    `)
+    
+    res.json({ effectifs: effectifs.c, rapports: rapports.c, unites: unites.c, parUnite, derniers })
+  } catch (err) {
+    console.error('Stats error:', err)
+    res.json({ effectifs: 0, rapports: 0, unites: 0, parUnite: [], derniers: [] })
   }
 })
 
