@@ -58,9 +58,12 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Archives Wehrmacht RP API', timestamp: new Date().toISOString() })
 })
 
-// 404
-app.use('/api/*', (req, res) => {
-  res.status(404).json({ success: false, message: 'Route non trouvée' })
+// 404 - catch unmatched API routes
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ success: false, message: 'Route non trouvée' })
+  }
+  next()
 })
 
 // Error handler
