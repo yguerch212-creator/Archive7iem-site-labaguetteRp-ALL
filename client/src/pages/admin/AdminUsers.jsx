@@ -1,111 +1,185 @@
-import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import apiClient from '../../api/client'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../../auth/useAuth'
-import Topbar from '../../components/layout/Topbar'
+import apiClient from '../../api/client'
 
 export default function AdminUsers() {
   const { user } = useAuth()
   const [users, setUsers] = useState([])
-  const [effectifs, setEffectifs] = useState([])
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
-  const [newUser, setNewUser] = useState({ effectif_id: '', password: 'Wehrmacht123' })
+  const [effectifsSansCompte, setEffectifsSansCompte] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [showCreate, setShowCreate] = useState(false)
+  const [createForm, setCreateForm] = useState({ effectif_id: '', password: '' })
+  const [message, setMessage] = useState(null)
 
-  useEffect(() => {
-    if (!user?.isAdmin) return
-    loadData()
-  }, [])
+  useEffect(() => { fetchAll() }, [])
 
-  const loadData = () => {
-    apiClient.get('/admin/users').then(r => setUsers(r.data.data || []))
-    apiClient.get('/admin/effectifs-sans-compte').then(r => setEffectifs(r.data.data || [])).catch(() => {})
+  const fetchAll = async () => {
+    setLoading(true)
+    try {
+      const [usersRes, effRes] = await Promise.all([
+        apiClient.get('/admin/users'),
+        apiClient.get('/admin/effectifs-sans-compte')
+      ])
+      if (usersRes.data.success) setUsers(usersRes.data.data)
+      if (effRes.data.success) setEffectifsSansCompte(effRes.data.data)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const toggleAdmin = async (userId, currentlyAdmin) => {
+    try {
+      await apiClient.put(`/admin/users/${userId}/group`, { action: currentlyAdmin ? 'remove' : 'add' })
+      fetchAll()
+      setMessage({ type: 'success', text: currentlyAdmin ? 'Droits admin retirés' : 'Droits admin accordés' })
+    } catch {
+      setMessage({ type: 'error', text: 'Erreur' })
+    }
   }
 
   const createUser = async (e) => {
     e.preventDefault()
-    setError(''); setMessage('')
+    if (!createForm.effectif_id) return
     try {
-      const res = await apiClient.post('/admin/users', newUser)
-      setMessage(res.data.message)
-      setNewUser({ effectif_id: '', password: 'Wehrmacht123' })
-      loadData()
-    } catch (err) { setError(err.response?.data?.message || 'Erreur') }
+      const { data } = await apiClient.post('/admin/users', createForm)
+      if (data.success) {
+        setMessage({ type: 'success', text: data.message })
+        setShowCreate(false)
+        setCreateForm({ effectif_id: '', password: '' })
+        fetchAll()
+      } else {
+        setMessage({ type: 'error', text: data.message })
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur serveur' })
+    }
   }
 
-  const toggleAdmin = async (uid, isAdmin) => {
-    try {
-      await apiClient.put(`/admin/users/${uid}/group`, { action: isAdmin ? 'remove' : 'add' })
-      loadData()
-    } catch (err) { alert('Erreur') }
+  if (!user?.isAdmin) {
+    return (
+      <div className="page-container">
+        <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
+          <p style={{ fontSize: '3rem' }}>🚫</p>
+          <p>Accès refusé — Droits administrateur requis</p>
+        </div>
+      </div>
+    )
   }
-
-  if (!user?.isAdmin) return <><Topbar /><div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Accès refusé</div></>
 
   return (
-    <>
-      <Topbar />
-      <div className="container" style={{ maxWidth: 1000, marginTop: 'var(--space-xl)' }}>
-        <Link to="/dashboard" className="btn btn-secondary btn-small">← Retour</Link>
-        <h1 style={{ textAlign: 'center' }}>⚙️ Administration</h1>
+    <div className="page-container">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+        <h1 className="page-title" style={{ margin: 0 }}>⚙️ Gestion des utilisateurs</h1>
+        <button className="btn btn-primary" onClick={() => setShowCreate(!showCreate)}>
+          {showCreate ? '✕ Annuler' : '+ Créer un compte'}
+        </button>
+      </div>
 
-        {/* Création de compte */}
-        <div className="paper-card">
+      {message && (
+        <div className={`alert alert-${message.type}`} style={{ marginBottom: '1rem' }}>
+          {message.text}
+          <button onClick={() => setMessage(null)} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
+        </div>
+      )}
+
+      {showCreate && (
+        <div className="card" style={{ marginBottom: '2rem' }}>
           <h3>Créer un compte depuis un effectif</h3>
-          {message && <div style={{ color: 'var(--success)', marginBottom: '1rem' }}>{message}</div>}
-          {error && <div style={{ color: 'var(--error)', marginBottom: '1rem' }}>{error}</div>}
-          <form onSubmit={createUser} style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'end', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1 }}>
-              <label className="form-label">Effectif</label>
-              <select className="form-select" value={newUser.effectif_id} onChange={e => setNewUser(n => ({ ...n, effectif_id: e.target.value }))} required>
-                <option value="">— Choisir —</option>
-                {effectifs.map(ef => <option key={ef.id} value={ef.id}>{ef.grade_nom} {ef.prenom} {ef.nom} — {ef.unite_nom}</option>)}
+          <form onSubmit={createUser}>
+            <div className="form-group">
+              <label className="form-label">Effectif (sans compte)</label>
+              <select
+                className="form-input"
+                value={createForm.effectif_id}
+                onChange={e => setCreateForm(p => ({ ...p, effectif_id: e.target.value }))}
+                required
+              >
+                <option value="">— Sélectionner —</option>
+                {effectifsSansCompte.map(e => (
+                  <option key={e.id} value={e.id}>
+                    {e.grade_nom ? `${e.grade_nom} ` : ''}{e.prenom} {e.nom} — {e.unite_nom}
+                  </option>
+                ))}
               </select>
+              {effectifsSansCompte.length === 0 && (
+                <small className="text-muted">Tous les effectifs ont déjà un compte.</small>
+              )}
             </div>
-            <div>
-              <label className="form-label">Mot de passe</label>
-              <input className="form-input" value={newUser.password} onChange={e => setNewUser(n => ({ ...n, password: e.target.value }))} />
+            <div className="form-group">
+              <label className="form-label">Mot de passe (défaut: Wehrmacht123)</label>
+              <input
+                type="text"
+                className="form-input"
+                value={createForm.password}
+                onChange={e => setCreateForm(p => ({ ...p, password: e.target.value }))}
+                placeholder="Wehrmacht123"
+              />
             </div>
-            <button className="btn btn-primary" type="submit">Créer</button>
+            <button type="submit" className="btn btn-primary">Créer le compte</button>
           </form>
         </div>
+      )}
 
-        {/* Liste users */}
-        <div className="paper-card" style={{ overflow: 'auto' }}>
-          <h3>Utilisateurs ({users.length})</h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+      {loading ? (
+        <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>Chargement...</div>
+      ) : (
+        <div className="table-responsive">
+          <table className="table">
             <thead>
-              <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
-                <th style={th}>Nom</th>
-                <th style={th}>Grade</th>
-                <th style={th}>Unité</th>
-                <th style={th}>Niveau</th>
-                <th style={th}>Admin</th>
-                <th style={th}>Actions</th>
+              <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Username</th>
+                <th>Grade</th>
+                <th>Unité</th>
+                <th>Admin</th>
+                <th>Actif</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {users.map(u => (
-                <tr key={u.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={td}>{u.prenom} {u.nom}</td>
-                  <td style={td}>{u.grade_nom || '—'}</td>
-                  <td style={td}>{u.unite_nom || '—'}</td>
-                  <td style={td}>{u.role_level}</td>
-                  <td style={td}>{u.is_admin ? <span className="tag tag-success">Admin</span> : '—'}</td>
-                  <td style={td}>
-                    <button className="btn btn-small btn-secondary" onClick={() => toggleAdmin(u.id, u.is_admin)}>
-                      {u.is_admin ? 'Retirer admin' : 'Rendre admin'}
-                    </button>
+                <tr key={u.id}>
+                  <td>{u.id}</td>
+                  <td><strong>{u.prenom} {u.nom}</strong></td>
+                  <td><code>{u.username}</code></td>
+                  <td>{u.grade_nom || '—'}</td>
+                  <td>{u.unite_nom || '—'}</td>
+                  <td>
+                    <span className={`badge ${u.is_admin ? 'badge-success' : 'badge-muted'}`}>
+                      {u.is_admin ? '✅ Admin' : '—'}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`badge ${u.active ? 'badge-success' : 'badge-danger'}`}>
+                      {u.active ? 'Actif' : 'Inactif'}
+                    </span>
+                  </td>
+                  <td>
+                    {u.id !== user.id && (
+                      <button
+                        className="btn btn-sm"
+                        onClick={() => toggleAdmin(u.id, u.is_admin)}
+                      >
+                        {u.is_admin ? '🔓 Retirer admin' : '🔒 Donner admin'}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      <div className="card" style={{ marginTop: '2rem', padding: '1rem' }}>
+        <p className="text-muted" style={{ margin: 0, fontSize: '0.85rem' }}>
+          📌 Les comptes sont créés depuis les effectifs existants. Le username est généré automatiquement (prénom.nom).
+          Le mot de passe par défaut est <code>Wehrmacht123</code> — l'utilisateur devra le changer à sa première connexion.
+        </p>
       </div>
-    </>
+    </div>
   )
 }
-
-const th = { textAlign: 'left', padding: 'var(--space-sm) var(--space-md)', fontWeight: 700 }
-const td = { padding: 'var(--space-sm) var(--space-md)' }

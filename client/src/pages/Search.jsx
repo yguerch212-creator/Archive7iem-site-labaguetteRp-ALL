@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../auth/AuthContext'
+import apiClient from '../api/client'
 
 export default function Search() {
-  const { token } = useAuth()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('all')
@@ -15,10 +14,7 @@ export default function Search() {
     if (!query.trim()) return
     setLoading(true)
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&filter=${filter}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
+      const { data } = await apiClient.get('/search', { params: { q: query, filter } })
       if (data.success) setResults(data.data)
     } catch (err) {
       console.error(err)
@@ -62,7 +58,6 @@ export default function Search() {
 
       {results && (
         <div>
-          {/* Effectifs */}
           {(filter === 'all' || filter === 'effectif') && (
             <div style={{ marginBottom: '2rem' }}>
               <h2 className="section-title">👤 Effectifs ({results.effectifs.length})</h2>
@@ -72,13 +67,7 @@ export default function Search() {
                 <div className="table-responsive">
                   <table className="table">
                     <thead>
-                      <tr>
-                        <th>Grade</th>
-                        <th>Nom</th>
-                        <th>Prénom</th>
-                        <th>Unité</th>
-                        <th></th>
-                      </tr>
+                      <tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>Unité</th><th></th></tr>
                     </thead>
                     <tbody>
                       {results.effectifs.map(e => (
@@ -101,7 +90,6 @@ export default function Search() {
             </div>
           )}
 
-          {/* Rapports */}
           {(filter === 'all' || filter === 'rapport') && (
             <div>
               <h2 className="section-title">📋 Rapports ({results.rapports.length})</h2>
@@ -111,13 +99,7 @@ export default function Search() {
                 <div className="table-responsive">
                   <table className="table">
                     <thead>
-                      <tr>
-                        <th>Type</th>
-                        <th>Titre</th>
-                        <th>Auteur</th>
-                        <th>Date</th>
-                        <th></th>
-                      </tr>
+                      <tr><th>Type</th><th>Titre</th><th>Auteur</th><th>Date</th><th></th></tr>
                     </thead>
                     <tbody>
                       {results.rapports.map(r => (
