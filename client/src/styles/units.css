@@ -1,97 +1,22 @@
-/* ============= COULEURS PAR UNITÉ ============= */
+/* Couleurs par unité du 84e Armeekorps */
+.unit-916  { color: #dcdcdc; text-shadow: 0 0 3px #000, 0 0 6px rgba(0,0,0,0.5); }
+.unit-254  { color: #ff9500; }
+.unit-916S { color: #3da9fc; }
+.unit-001  { color: #222; }
+.unit-919  { color: #8B4513; }
+.unit-130  { color: #8a2be2; }
+.unit-009  { color: #e4c21c; }
 
-/* 916 Grenadier Regiment */
-.unit-916-grenadier {
-  --unit-color: #4a6741;
-  --unit-light: #5c7d52;
-  --unit-dark: #3a4f33;
-}
+/* Backgrounds pour cards */
+.unit-bg-916  { border-left: 4px solid #dcdcdc; }
+.unit-bg-254  { border-left: 4px solid #ff9500; }
+.unit-bg-916S { border-left: 4px solid #3da9fc; }
+.unit-bg-001  { border-left: 4px solid #222; }
+.unit-bg-919  { border-left: 4px solid #8B4513; }
+.unit-bg-130  { border-left: 4px solid #8a2be2; }
+.unit-bg-009  { border-left: 4px solid #e4c21c; }
 
-/* 254 Feldgendarmerie */
-.unit-254-feldgendarmerie {
-  --unit-color: #8b4a47;
-  --unit-light: #a16360;
-  --unit-dark: #6b3634;
-}
-
-/* 916 Sanitäts Kompanie */
-.unit-916-sanitats {
-  --unit-color: #6b7a8b;
-  --unit-light: #7d8ea0;
-  --unit-dark: #526170;
-}
-
-/* 001 Marine Pionier */
-.unit-001-marine {
-  --unit-color: #2d4a5c;
-  --unit-light: #426073;
-  --unit-dark: #1f3240;
-}
-
-/* 919 Logistik */
-.unit-919-logistik {
-  --unit-color: #a17c47;
-  --unit-light: #b89660;
-  --unit-dark: #7d5f35;
-}
-
-/* 130 Panzer Lehr */
-.unit-130-panzer {
-  --unit-color: #5c4a3a;
-  --unit-light: #735d4a;
-  --unit-dark: #443529;
-}
-
-/* 009 Fallschirmjäger */
-.unit-009-fallschirm {
-  --unit-color: #4a5c3a;
-  --unit-light: #5d7349;
-  --unit-dark: #354029;
-}
-
-/* Classes utilitaires pour les unités */
-[class*="unit-"] {
-  color: var(--unit-color);
-}
-
-[class*="unit-"] .unit-badge {
-  background: var(--unit-color);
-  color: var(--paper-bg);
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--border-radius);
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-[class*="unit-"] .unit-accent {
-  border-left: 4px solid var(--unit-color);
-  padding-left: var(--space-md);
-}
-
-[class*="unit-"] .unit-button {
-  background: var(--unit-color);
-  border-color: var(--unit-color);
-  color: var(--paper-bg);
-}
-
-[class*="unit-"] .unit-button:hover {
-  background: var(--unit-dark);
-  border-color: var(--unit-dark);
-}
-
-/* Tags de type de rapport avec couleurs unité */
-.type-tag {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--space-xs) var(--space-sm);
-  font-size: 0.75rem;
-  font-weight: 500;
-  border-radius: 12px;
-  gap: var(--space-xs);
-}
-
-.type-tag.rapport { background: #4a6741; color: white; }
-.type-tag.incident { background: #8b4a47; color: white; }
-.type-tag.recommandation { background: #6b7a8b; color: white; }
-.type-tag.mission { background: #2d4a5c; color: white; }
-.type-tag.personnel { background: #a17c47; color: white; }
+/* Type tags rapports */
+.type-rapport { background: var(--success); color: #fff; }
+.type-recommandation { background: var(--info); color: #fff; }
+.type-incident { background: var(--error); color: #fff; }

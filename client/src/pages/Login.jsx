@@ -1,113 +1,121 @@
 import React, { useState } from 'react'
 import { useAuth } from '../auth/useAuth'
-import PaperCard from '../components/layout/PaperCard'
+import { useNavigate } from 'react-router-dom'
 
-function Login() {
-  const [credentials, setCredentials] = useState({
-    username: '',
-    password: ''
-  })
+export default function Login() {
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  
   const { login } = useAuth()
-
-  const handleChange = (e) => {
-    setCredentials({
-      ...credentials,
-      [e.target.name]: e.target.value
-    })
-    setError('')
-  }
+  const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!credentials.username || !credentials.password) {
-      setError('Veuillez remplir tous les champs')
-      return
-    }
-
+    setError('')
     setLoading(true)
-    try {
-      const result = await login(credentials)
-      if (!result.success) {
-        setError(result.error)
-      }
-    } catch (err) {
-      setError('Erreur de connexion')
-    } finally {
-      setLoading(false)
+    const result = await login({ username, password })
+    setLoading(false)
+    if (result.success) {
+      navigate('/dashboard')
+    } else {
+      setError(result.error)
     }
   }
 
   return (
-    <div className="container">
-      <div className="flex items-center justify-center" style={{ minHeight: '100vh', padding: '2rem 0' }}>
-        <div style={{ width: '100%', maxWidth: '400px' }}>
-          <PaperCard>
-            <div className="paper-card-header text-center">
-              <h1 className="paper-card-title">Archives Wehrmacht RP</h1>
-              <p className="paper-card-subtitle">7ème Division d'Infanterie</p>
-            </div>
-            
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label htmlFor="username" className="form-label">
-                  Nom d'utilisateur
-                </label>
-                <input
-                  type="text"
-                  id="username"
-                  name="username"
-                  value={credentials.username}
-                  onChange={handleChange}
-                  className="form-input"
-                  disabled={loading}
-                />
-              </div>
+    <div className="login-page">
+      <div className="login-box">
+        <div className="login-header">
+          <h1>Archives 7e Armeekorps</h1>
+          <p className="login-subtitle">Zugang nur für autorisiertes Personal</p>
+        </div>
 
-              <div className="form-group">
-                <label htmlFor="password" className="form-label">
-                  Mot de passe
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={credentials.password}
-                  onChange={handleChange}
-                  className="form-input"
-                  disabled={loading}
-                />
-              </div>
+        {error && <div className="login-error">{error}</div>}
 
-              {error && (
-                <div className="form-error mb-0" style={{ marginBottom: '1rem' }}>
-                  {error}
-                </div>
-              )}
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label className="form-label">Nom d'utilisateur</label>
+            <input
+              className="form-input"
+              type="text"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              placeholder="Ex : Zussman"
+              required
+              autoFocus
+            />
+          </div>
 
-              <button
-                type="submit"
-                className="btn btn-primary"
-                style={{ width: '100%' }}
-                disabled={loading}
-              >
-                {loading ? (
-                  <div className="flex items-center gap-sm">
-                    <div className="loading-spinner" style={{ width: '16px', height: '16px' }}></div>
-                    Connexion...
-                  </div>
-                ) : (
-                  'Se connecter'
-                )}
-              </button>
-            </form>
-          </PaperCard>
+          <div className="form-group">
+            <label className="form-label">Mot de passe</label>
+            <input
+              className="form-input"
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+            />
+          </div>
+
+          <button className="btn btn-primary btn-large" type="submit" disabled={loading} style={{ width: '100%' }}>
+            {loading ? 'Connexion...' : 'Se connecter'}
+          </button>
+        </form>
+
+        <div className="login-footer">
+          Accès réservé aux personnels autorisés du 84e Corps d'Armée
         </div>
       </div>
+
+      <style>{`
+        .login-page {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: var(--space-md);
+        }
+        .login-box {
+          background: var(--paper-bg);
+          border: 2px solid var(--border-color);
+          border-radius: var(--border-radius);
+          box-shadow: var(--shadow-heavy);
+          padding: var(--space-xxl);
+          width: 100%;
+          max-width: 420px;
+        }
+        .login-header {
+          text-align: center;
+          margin-bottom: var(--space-xl);
+        }
+        .login-header h1 {
+          font-size: 1.5rem;
+          margin-bottom: var(--space-xs);
+        }
+        .login-subtitle {
+          font-size: 0.8rem;
+          color: var(--text-muted);
+          font-style: italic;
+        }
+        .login-error {
+          background: rgba(139, 74, 71, 0.1);
+          border: 1px solid var(--error);
+          color: var(--error);
+          padding: var(--space-sm) var(--space-md);
+          border-radius: var(--border-radius);
+          margin-bottom: var(--space-lg);
+          text-align: center;
+          font-size: 0.85rem;
+        }
+        .login-footer {
+          margin-top: var(--space-xl);
+          text-align: center;
+          font-size: 0.7rem;
+          color: var(--text-muted);
+        }
+      `}</style>
     </div>
   )
 }
-
-export default Login

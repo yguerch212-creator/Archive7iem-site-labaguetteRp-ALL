@@ -1,0 +1,38 @@
+FROM node:20-alpine
+
+# Informations sur l'image
+LABEL maintainer="Archives Wehrmacht RP Team"
+LABEL description="Frontend React pour Archives Wehrmacht RP"
+
+# Créer le répertoire de travail
+WORKDIR /app
+
+# Installer les outils système nécessaires
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/cache/apk/*
+
+# Copier les fichiers de dépendances
+COPY package*.json ./
+
+# Installer les dépendances
+RUN npm ci
+
+# Copier le code source
+COPY . .
+
+# Créer un utilisateur non-root
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Changer les permissions
+RUN chown -R nodejs:nodejs /app
+USER nodejs
+
+# Exposer le port Vite
+EXPOSE 5173
+
+# Commande de démarrage (dev mode)
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
