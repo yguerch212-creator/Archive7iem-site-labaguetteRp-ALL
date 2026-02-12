@@ -1,0 +1,97 @@
+/* ============= COULEURS PAR UNITÉ ============= */
+
+/* 916 Grenadier Regiment */
+.unit-916-grenadier {
+  --unit-color: #4a6741;
+  --unit-light: #5c7d52;
+  --unit-dark: #3a4f33;
+}
+
+/* 254 Feldgendarmerie */
+.unit-254-feldgendarmerie {
+  --unit-color: #8b4a47;
+  --unit-light: #a16360;
+  --unit-dark: #6b3634;
+}
+
+/* 916 Sanitäts Kompanie */
+.unit-916-sanitats {
+  --unit-color: #6b7a8b;
+  --unit-light: #7d8ea0;
+  --unit-dark: #526170;
+}
+
+/* 001 Marine Pionier */
+.unit-001-marine {
+  --unit-color: #2d4a5c;
+  --unit-light: #426073;
+  --unit-dark: #1f3240;
+}
+
+/* 919 Logistik */
+.unit-919-logistik {
+  --unit-color: #a17c47;
+  --unit-light: #b89660;
+  --unit-dark: #7d5f35;
+}
+
+/* 130 Panzer Lehr */
+.unit-130-panzer {
+  --unit-color: #5c4a3a;
+  --unit-light: #735d4a;
+  --unit-dark: #443529;
+}
+
+/* 009 Fallschirmjäger */
+.unit-009-fallschirm {
+  --unit-color: #4a5c3a;
+  --unit-light: #5d7349;
+  --unit-dark: #354029;
+}
+
+/* Classes utilitaires pour les unités */
+[class*="unit-"] {
+  color: var(--unit-color);
+}
+
+[class*="unit-"] .unit-badge {
+  background: var(--unit-color);
+  color: var(--paper-bg);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--border-radius);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+[class*="unit-"] .unit-accent {
+  border-left: 4px solid var(--unit-color);
+  padding-left: var(--space-md);
+}
+
+[class*="unit-"] .unit-button {
+  background: var(--unit-color);
+  border-color: var(--unit-color);
+  color: var(--paper-bg);
+}
+
+[class*="unit-"] .unit-button:hover {
+  background: var(--unit-dark);
+  border-color: var(--unit-dark);
+}
+
+/* Tags de type de rapport avec couleurs unité */
+.type-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 12px;
+  gap: var(--space-xs);
+}
+
+.type-tag.rapport { background: #4a6741; color: white; }
+.type-tag.incident { background: #8b4a47; color: white; }
+.type-tag.recommandation { background: #6b7a8b; color: white; }
+.type-tag.mission { background: #2d4a5c; color: white; }
+.type-tag.personnel { background: #a17c47; color: white; }
