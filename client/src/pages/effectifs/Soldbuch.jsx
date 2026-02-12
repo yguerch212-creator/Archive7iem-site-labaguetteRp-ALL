@@ -27,7 +27,10 @@ export default function Soldbuch() {
       <div className="container" style={{ maxWidth: 900, marginTop: 'var(--space-xl)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
           <Link to={`/effectifs/unite/${e.unite_id}`} className="btn btn-secondary btn-small">← Retour liste</Link>
-          <Link to={`/effectifs/${id}/soldbuch/edit`} className="btn btn-primary btn-small">🖋️ Mise en page</Link>
+          <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+            <Link to={`/effectifs/${id}/edit`} className="btn btn-secondary btn-small">✏️ Modifier</Link>
+            <Link to={`/effectifs/${id}/soldbuch/edit`} className="btn btn-primary btn-small">🖋️ Mise en page</Link>
+          </div>
         </div>
 
         <div className="paper-card" id="soldbuch-paper" style={{ padding: 'var(--space-lg)' }}>

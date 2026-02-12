@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams, Link } from 'react-router-dom'
+import { useNavigate, useSearchParams, useParams, Link } from 'react-router-dom'
 import apiClient from '../../api/client'
 import Topbar from '../../components/layout/Topbar'
 
 export default function EffectifNew() {
   const navigate = useNavigate()
+  const { id } = useParams()
+  const isEdit = !!id
   const [params] = useSearchParams()
   const [unites, setUnites] = useState([])
   const [grades, setGrades] = useState([])
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(isEdit)
   const [form, setForm] = useState({
     nom: '', prenom: '', surnom: '', unite_id: params.get('unite_id') || '',
     grade_id: '', specialite: '', date_naissance: '', lieu_naissance: '',
@@ -18,7 +21,23 @@ export default function EffectifNew() {
 
   useEffect(() => {
     apiClient.get('/unites').then(r => setUnites(r.data.data || []))
-  }, [])
+    if (isEdit) {
+      apiClient.get(`/effectifs/${id}`).then(r => {
+        const e = r.data.data
+        setForm({
+          nom: e.nom || '', prenom: e.prenom || '', surnom: e.surnom || '',
+          unite_id: e.unite_id || '', grade_id: e.grade_id || '',
+          specialite: e.specialite || '', date_naissance: e.date_naissance || '',
+          lieu_naissance: e.lieu_naissance || '', nationalite: e.nationalite || 'Allemande',
+          taille_cm: e.taille_cm || '', arme_principale: e.arme_principale || '',
+          arme_secondaire: e.arme_secondaire || '', equipement_special: e.equipement_special || '',
+          tenue: e.tenue || '', historique: e.historique || '',
+          date_entree_ig: e.date_entree_ig || '', date_entree_irl: e.date_entree_irl || ''
+        })
+        setLoading(false)
+      }).catch(() => setLoading(false))
+    }
+  }, [id])
 
   useEffect(() => {
     if (form.unite_id) {
@@ -34,21 +53,27 @@ export default function EffectifNew() {
     e.preventDefault()
     setError('')
     try {
-      const res = await apiClient.post('/effectifs', form)
+      if (isEdit) {
+        await apiClient.put(`/effectifs/${id}`, form)
+      } else {
+        await apiClient.post('/effectifs', form)
+      }
       navigate(`/effectifs/unite/${form.unite_id}`)
     } catch (err) {
       setError(err.response?.data?.message || 'Erreur')
     }
   }
 
+  if (loading) return <><Topbar /><div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div></>
+
   return (
     <>
       <Topbar />
       <div className="container" style={{ maxWidth: 800, marginTop: 'var(--space-xl)' }}>
         <Link to={form.unite_id ? `/effectifs/unite/${form.unite_id}` : '/effectifs'} className="btn btn-secondary btn-small">← Retour</Link>
-        <h1 style={{ textAlign: 'center' }}>Nouvel Effectif</h1>
+        <h1 style={{ textAlign: 'center' }}>{isEdit ? 'Modifier l\'effectif' : 'Nouvel Effectif'}</h1>
 
-        {error && <div style={{ color: 'var(--error)', textAlign: 'center', marginBottom: '1rem' }}>{error}</div>}
+        {error && <div className="alert alert-error">{error}</div>}
 
         <form onSubmit={handleSubmit} className="paper-card">
           <div className="grid grid-cols-2" style={{ gap: 'var(--space-md)' }}>
@@ -75,7 +100,7 @@ export default function EffectifNew() {
             </div>
           </div>
 
-          <div className="form-group"><label className="form-label">Spécialité</label><input className="form-input" value={form.specialite} onChange={e => set('specialite', e.target.value)} /></div>
+          <div className="form-group"><label className="form-label">Spécialité</label><input className="form-input" value={form.specialite} onChange={e => set('specialite', e.target.value)} placeholder="Scharf, Funker, Pionnier..." /></div>
 
           <div className="grid grid-cols-3" style={{ gap: 'var(--space-md)' }}>
             <div className="form-group"><label className="form-label">Date de naissance</label><input className="form-input" value={form.date_naissance} onChange={e => set('date_naissance', e.target.value)} placeholder="xx/xx/19xx" /></div>
@@ -99,7 +124,9 @@ export default function EffectifNew() {
           <div className="form-group"><label className="form-label">Historique</label><textarea className="form-textarea" value={form.historique} onChange={e => set('historique', e.target.value)} /></div>
 
           <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)' }}>
-            <button className="btn btn-primary btn-large" type="submit">Enregistrer l'effectif</button>
+            <button className="btn btn-primary btn-large" type="submit">
+              {isEdit ? 'Enregistrer les modifications' : 'Enregistrer l\'effectif'}
+            </button>
           </div>
         </form>
       </div>

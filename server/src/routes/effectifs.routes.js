@@ -72,4 +72,38 @@ router.post('/', auth, async (req, res) => {
   }
 })
 
+// PUT /api/effectifs/:id
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const f = req.body
+    await require('../config/db').pool.execute(
+      `UPDATE effectifs SET nom=?, prenom=?, surnom=?, unite_id=?, grade_id=?, specialite=?,
+        date_naissance=?, lieu_naissance=?, nationalite=?, taille_cm=?,
+        arme_principale=?, arme_secondaire=?, equipement_special=?, tenue=?,
+        historique=?, date_entree_ig=?, date_entree_irl=?
+       WHERE id=?`,
+      [f.nom, f.prenom, f.surnom || null, f.unite_id || null, f.grade_id || null,
+       f.specialite || null, f.date_naissance || null, f.lieu_naissance || null,
+       f.nationalite || 'Allemande', f.taille_cm || null,
+       f.arme_principale || null, f.arme_secondaire || null,
+       f.equipement_special || null, f.tenue || null,
+       f.historique || null, f.date_entree_ig || null, f.date_entree_irl || null,
+       req.params.id]
+    )
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// DELETE /api/effectifs/:id (admin only)
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    await require('../config/db').pool.execute('DELETE FROM effectifs WHERE id = ?', [req.params.id])
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
 module.exports = router
