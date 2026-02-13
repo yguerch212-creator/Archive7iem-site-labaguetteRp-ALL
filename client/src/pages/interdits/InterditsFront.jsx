@@ -1,3 +1,4 @@
+import BackButton from '../../components/BackButton'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
@@ -65,7 +66,7 @@ export default function InterditsFront() {
 
   return (
     <div className="interdits-page">
-      <Link to="/dashboard" className="btn-back">← Tableau de bord</Link>
+      <BackButton label="← Tableau de bord" />
       <div className="interdits-header">
         <h1>🚫 Interdits de Front</h1>
         <div className="interdits-actions">

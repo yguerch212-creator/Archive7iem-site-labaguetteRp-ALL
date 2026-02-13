@@ -22,6 +22,7 @@ import VisitesMedicales from './pages/medical/VisitesMedicales'
 import Documentation from './pages/documentation/Documentation'
 import DossiersList from './pages/dossiers/DossiersList'
 import DossierPersonnel from './pages/dossiers/DossierPersonnel'
+import DossierView from './pages/dossiers/DossierView'
 
 function AppRouter() {
   const { user } = useAuth()
@@ -62,7 +63,7 @@ function AppRouter() {
       {/* Dossiers */}
       <Route path="/dossiers" element={<ProtectedRoute><DossiersList /></ProtectedRoute>} />
       <Route path="/dossiers/effectif/:effectifId" element={<ProtectedRoute><DossierPersonnel /></ProtectedRoute>} />
-      <Route path="/dossiers/:id" element={<ProtectedRoute><DossierPersonnel /></ProtectedRoute>} />
+      <Route path="/dossiers/:id" element={<ProtectedRoute><DossierView /></ProtectedRoute>} />
       
       {/* Search */}
       <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />

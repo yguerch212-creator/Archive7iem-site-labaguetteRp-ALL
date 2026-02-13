@@ -1,3 +1,4 @@
+import BackButton from '../../components/BackButton'
 import React, { useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import apiClient from '../../api/client'
@@ -29,7 +30,7 @@ export default function EffectifsList() {
       
       <div className="container" style={{ }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
-          <Link to="/effectifs" className="btn btn-secondary btn-small">← Retour aux unités</Link>
+          <BackButton className="btn btn-secondary btn-small" label="← Retour" />
           <Link to={`/effectifs/new?unite_id=${uniteId}`} className="btn btn-primary btn-small">+ Ajouter</Link>
         </div>
 

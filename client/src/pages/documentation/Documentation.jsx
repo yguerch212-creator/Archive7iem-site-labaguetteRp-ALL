@@ -1,3 +1,4 @@
+import BackButton from '../../components/BackButton'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
@@ -95,7 +96,7 @@ export default function Documentation() {
 
   return (
     <div className="docs-page">
-      <Link to="/dashboard" className="btn-back">← Tableau de bord</Link>
+      <BackButton label="← Tableau de bord" />
       <div className="docs-header">
         <h1>📚 Documentation & Règlements</h1>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>

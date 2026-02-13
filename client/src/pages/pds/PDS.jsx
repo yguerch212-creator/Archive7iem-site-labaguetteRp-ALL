@@ -1,3 +1,4 @@
+import BackButton from '../../components/BackButton'
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
@@ -171,7 +172,7 @@ export default function PDS() {
 
   return (
     <div className="pds-page">
-      <Link to="/dashboard" className="btn-back">← Tableau de bord</Link>
+      <BackButton label="← Tableau de bord" />
       <div className="pds-header">
         <h1>📋 Prise De Service</h1>
         <div className="pds-week-nav">

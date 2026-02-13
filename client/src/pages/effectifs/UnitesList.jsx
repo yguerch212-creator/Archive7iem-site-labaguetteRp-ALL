@@ -1,3 +1,4 @@
+import BackButton from '../../components/BackButton'
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import apiClient from '../../api/client'
@@ -18,7 +19,7 @@ export default function UnitesList() {
     <>
       
       <div className="container" style={{ marginTop: 'var(--space-xxl)', maxWidth: 800 }}>
-        <Link to="/dashboard" className="btn btn-secondary btn-small" style={{ marginBottom: 'var(--space-lg)' }}>← Retour</Link>
+        <BackButton className="btn btn-secondary btn-small" label="← Retour" />
         <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-xs)' }}>Effectifs</h1>
         <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: 'var(--space-xl)' }}>
           Sélectionnez une unité pour afficher les effectifs

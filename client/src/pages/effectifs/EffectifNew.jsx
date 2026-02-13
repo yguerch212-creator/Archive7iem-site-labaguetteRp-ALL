@@ -1,3 +1,4 @@
+import BackButton from '../../components/BackButton'
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, useParams, Link } from 'react-router-dom'
 import apiClient from '../../api/client'
@@ -141,7 +142,7 @@ export default function EffectifNew() {
 
   return (
     <div className="container" style={{ maxWidth: 800 }}>
-        <Link to={form.unite_id ? `/effectifs/unite/${form.unite_id}` : '/effectifs'} className="btn btn-secondary btn-small">← Retour</Link>
+        <BackButton className="btn btn-secondary btn-small" label="← Retour" />
         <h1 style={{ textAlign: 'center' }}>{isEdit ? "Modifier l'effectif" : 'Nouvel Effectif'}</h1>
 
         {error && <div className="alert alert-error">{error}</div>}

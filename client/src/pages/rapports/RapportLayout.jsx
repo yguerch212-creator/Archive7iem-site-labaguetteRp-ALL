@@ -1,3 +1,4 @@
+import BackButton from '../../components/BackButton'
 import React from 'react'
 import { useParams, Link } from 'react-router-dom'
 
@@ -9,7 +10,7 @@ export default function RapportLayout() {
     <>
       
       <div className="container" style={{ maxWidth: 1000 }}>
-        <Link to={`/rapports/${id}`} className="btn btn-secondary btn-small">← Retour au rapport</Link>
+        <BackButton className="btn btn-secondary btn-small" label="← Retour" />
         <div className="paper-card" style={{ textAlign: 'center', marginTop: 'var(--space-lg)' }}>
           <h2>🖋️ Éditeur de mise en page</h2>
           <p style={{ color: 'var(--text-muted)' }}>

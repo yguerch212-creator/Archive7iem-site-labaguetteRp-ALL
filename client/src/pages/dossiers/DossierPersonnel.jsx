@@ -1,3 +1,4 @@
+import BackButton from '../../components/BackButton'
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
@@ -73,7 +74,7 @@ export default function DossierPersonnel() {
 
   return (
     <div className="dossier-detail-page">
-      <Link to="/dossiers" className="btn-back">← Dossiers</Link>
+      <BackButton label="← Retour" />
 
       {/* Header card */}
       <div className="dossier-header-card card">

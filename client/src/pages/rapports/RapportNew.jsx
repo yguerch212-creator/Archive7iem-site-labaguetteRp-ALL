@@ -1,3 +1,4 @@
+import BackButton from '../../components/BackButton'
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
@@ -107,7 +108,7 @@ export default function RapportNew() {
 
   return (
     <div className="container" style={{ maxWidth: 900 }}>
-      <Link to="/rapports" className="btn-back">← Retour aux rapports</Link>
+      <BackButton label="← Retour" />
       <h1 style={{ textAlign: 'center', marginBottom: '0.5rem' }}>Nouveau Rapport</h1>
 
       {numero && (

@@ -1,3 +1,4 @@
+import BackButton from '../../components/BackButton'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
@@ -54,7 +55,7 @@ export default function DossiersList() {
 
   return (
     <div className="dossiers-page">
-      <Link to="/dashboard" className="btn-back">← Tableau de bord</Link>
+      <BackButton label="← Tableau de bord" />
       <div className="dossiers-header">
         <h1>📁 Dossiers</h1>
         {canCreate && (

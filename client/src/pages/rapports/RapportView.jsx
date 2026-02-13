@@ -1,3 +1,4 @@
+import BackButton from '../../components/BackButton'
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import apiClient from '../../api/client'
@@ -25,7 +26,7 @@ export default function RapportView() {
       
       <div className="container" style={{ maxWidth: 980 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
-          <Link to="/rapports" className="btn btn-secondary btn-small">← Retour liste</Link>
+          <BackButton className="btn btn-secondary btn-small" label="← Retour" />
           {!R.published && <Link to={`/rapports/${id}/layout`} className="btn btn-primary btn-small">🖋️ Mise en page</Link>}
         </div>
 

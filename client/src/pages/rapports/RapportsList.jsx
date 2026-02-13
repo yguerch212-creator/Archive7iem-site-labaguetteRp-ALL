@@ -1,3 +1,4 @@
+import BackButton from '../../components/BackButton'
 import React, { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import apiClient from '../../api/client'
@@ -38,7 +39,7 @@ export default function RapportsList() {
       
       <div className="container" style={{ }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
-          <Link to="/dashboard" className="btn btn-secondary btn-small">← Retour</Link>
+          <BackButton className="btn btn-secondary btn-small" label="← Retour" />
           <Link to="/rapports/new" className="btn btn-primary btn-small">+ Nouveau rapport</Link>
         </div>
 

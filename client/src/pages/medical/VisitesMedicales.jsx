@@ -1,3 +1,4 @@
+import BackButton from '../../components/BackButton'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
@@ -60,7 +61,7 @@ export default function VisitesMedicales() {
 
   return (
     <div className="medical-page">
-      <Link to="/dashboard" className="btn-back">← Tableau de bord</Link>
+      <BackButton label="← Tableau de bord" />
       <div className="medical-header">
         <h1>🏥 Visites Médicales</h1>
         {canCreate && (
