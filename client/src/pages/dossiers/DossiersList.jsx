@@ -8,15 +8,25 @@ import './dossiers.css'
 const TYPE_ICONS = { personnel: '📁', thematique: '📂', enquete: '🔍', autre: '📋' }
 const TYPE_LABELS = { personnel: 'Personnel', thematique: 'Thématique', enquete: 'Enquête', autre: 'Autre' }
 const VIS_ICONS = { public: '🌐', prive: '🔒', lien: '🔗' }
+const ACCESS_LABELS = { tous: '🌐 Tous', officier: '⭐ Officiers', sous_officier: '🎖️ Sous-officiers', militaire: '🪖 Militaires du rang' }
+
+const TABS = [
+  { key: 'tous', label: '🌐 Tous', icon: '🌐' },
+  { key: 'partage', label: '📤 Partagés', icon: '📤' },
+  { key: 'officier', label: '⭐ Officiers', icon: '⭐' },
+  { key: 'sous_officier', label: '🎖️ Sous-officiers', icon: '🎖️' },
+  { key: 'militaire', label: '🪖 Troupes', icon: '🪖' },
+]
 
 export default function DossiersList() {
   const { user } = useAuth()
   const [dossiers, setDossiers] = useState([])
+  const [tab, setTab] = useState('tous')
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ titre: '', type: 'thematique', description: '', visibilite: 'public' })
+  const [form, setForm] = useState({ titre: '', type: 'thematique', description: '', visibilite: 'public', access_group: 'tous' })
   const [message, setMessage] = useState(null)
-
   const [myDossier, setMyDossier] = useState(null)
+
   const canCreate = user?.isAdmin || user?.isOfficier || user?.isRecenseur
 
   useEffect(() => { load(); loadMine() }, [])
@@ -41,7 +51,7 @@ export default function DossiersList() {
     try {
       await api.post('/dossiers', form)
       setShowForm(false)
-      setForm({ titre: '', type: 'thematique', description: '', visibilite: 'public' })
+      setForm({ titre: '', type: 'thematique', description: '', visibilite: 'public', access_group: 'tous' })
       setMessage({ type: 'success', text: 'Dossier créé' })
       setTimeout(() => setMessage(null), 2000)
       load()
@@ -50,8 +60,11 @@ export default function DossiersList() {
     }
   }
 
-  const personal = dossiers.filter(d => d.type === 'personnel')
-  const other = dossiers.filter(d => d.type !== 'personnel')
+  // Filter dossiers by tab
+  const nonPersonal = dossiers.filter(d => d.type !== 'personnel')
+  const filtered = tab === 'tous' ? nonPersonal
+    : tab === 'partage' ? nonPersonal.filter(d => d.visibilite === 'public')
+    : nonPersonal.filter(d => d.access_group === tab)
 
   return (
     <div className="dossiers-page">
@@ -69,41 +82,6 @@ export default function DossiersList() {
         <div className={`alert alert-${message.type}`}>
           {message.text}
           <button onClick={() => setMessage(null)} className="alert-close">✕</button>
-        </div>
-      )}
-
-      {showForm && (
-        <div className="card dossier-form">
-          <h3>Nouveau dossier</h3>
-          <form onSubmit={submit}>
-            <div className="form-row">
-              <div className="form-group" style={{ flex: 2 }}>
-                <label className="form-label">Titre *</label>
-                <input type="text" className="form-input" value={form.titre} onChange={e => setForm(p => ({...p, titre: e.target.value}))} required placeholder="Titre du dossier..." />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Type</label>
-                <select className="form-input" value={form.type} onChange={e => setForm(p => ({...p, type: e.target.value}))}>
-                  <option value="thematique">📂 Thématique</option>
-                  <option value="enquete">🔍 Enquête</option>
-                  <option value="autre">📋 Autre</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Visibilité</label>
-                <select className="form-input" value={form.visibilite} onChange={e => setForm(p => ({...p, visibilite: e.target.value}))}>
-                  <option value="public">🌐 Public</option>
-                  <option value="prive">🔒 Privé</option>
-                  <option value="lien">🔗 Par lien</option>
-                </select>
-              </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Description</label>
-              <textarea className="form-input form-textarea" value={form.description} onChange={e => setForm(p => ({...p, description: e.target.value}))} rows={2} placeholder="Description optionnelle..." />
-            </div>
-            <button type="submit" className="btn btn-primary">📁 Créer le dossier</button>
-          </form>
         </div>
       )}
 
@@ -135,50 +113,81 @@ export default function DossiersList() {
         </div>
       )}
 
-      {/* Personal dossiers */}
-      {personal.length > 0 && (
-        <div className="dossier-section">
-          <h2 className="dossier-section-title">📁 Dossiers personnels</h2>
-          <div className="dossier-grid">
-            {personal.map(d => (
-              <Link key={d.id} to={`/dossiers/effectif/${d.effectif_id}`} className="card dossier-card">
-                <div className="dossier-card-icon">📁</div>
-                <div className="dossier-card-info">
-                  <h3>{d.effectif_grade ? `${d.effectif_grade} ` : ''}{d.effectif_prenom} {d.effectif_nom}</h3>
-                  <span className="dossier-card-meta">{d.effectif_unite_code} · {d.nb_entrees} entrée{d.nb_entrees !== 1 ? 's' : ''}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
+      {/* Category tabs */}
+      <div className="dossier-tabs">
+        {TABS.map(t => (
+          <button key={t.key} className={`dossier-tab ${tab === t.key ? 'active' : ''}`} onClick={() => setTab(t.key)}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Create form */}
+      {showForm && (
+        <div className="card dossier-form">
+          <h3>Nouveau dossier</h3>
+          <form onSubmit={submit}>
+            <div className="form-row">
+              <div className="form-group" style={{ flex: 2 }}>
+                <label className="form-label">Titre *</label>
+                <input type="text" className="form-input" value={form.titre} onChange={e => setForm(p => ({...p, titre: e.target.value}))} required placeholder="Titre du dossier..." />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Type</label>
+                <select className="form-input" value={form.type} onChange={e => setForm(p => ({...p, type: e.target.value}))}>
+                  <option value="thematique">📂 Thématique</option>
+                  <option value="enquete">🔍 Enquête</option>
+                  <option value="autre">📋 Autre</option>
+                </select>
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Visibilité</label>
+                <select className="form-input" value={form.visibilite} onChange={e => setForm(p => ({...p, visibilite: e.target.value}))}>
+                  <option value="public">🌐 Public</option>
+                  <option value="prive">🔒 Privé</option>
+                  <option value="lien">🔗 Par lien</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Accès réservé à</label>
+                <select className="form-input" value={form.access_group} onChange={e => setForm(p => ({...p, access_group: e.target.value}))}>
+                  <option value="tous">🌐 Tous</option>
+                  <option value="officier">⭐ Officiers uniquement</option>
+                  <option value="sous_officier">🎖️ Sous-officiers et +</option>
+                  <option value="militaire">🪖 Militaires du rang et +</option>
+                </select>
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Description</label>
+              <textarea className="form-input form-textarea" value={form.description} onChange={e => setForm(p => ({...p, description: e.target.value}))} rows={2} placeholder="Description optionnelle..." />
+            </div>
+            <button type="submit" className="btn btn-primary">📁 Créer le dossier</button>
+          </form>
         </div>
       )}
 
-      {/* Other dossiers */}
-      {other.length > 0 && (
-        <div className="dossier-section">
-          <h2 className="dossier-section-title">📂 Dossiers thématiques & enquêtes</h2>
-          <div className="dossier-grid">
-            {other.map(d => (
-              <Link key={d.id} to={`/dossiers/${d.id}`} className="card dossier-card">
-                <div className="dossier-card-icon">{TYPE_ICONS[d.type]}</div>
-                <div className="dossier-card-info">
-                  <h3>{d.titre}</h3>
-                  {d.description && <p className="dossier-card-desc">{d.description}</p>}
-                  <span className="dossier-card-meta">
-                    {VIS_ICONS[d.visibilite]} {TYPE_LABELS[d.type]} · {d.nb_entrees} entrée{d.nb_entrees !== 1 ? 's' : ''} · par {d.created_by_nom}
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
+      {/* Dossiers grid */}
+      {filtered.length > 0 ? (
+        <div className="dossier-grid">
+          {filtered.map(d => (
+            <Link key={d.id} to={d.type === 'personnel' ? `/dossiers/effectif/${d.effectif_id}` : `/dossiers/${d.id}`} className="card dossier-card">
+              <div className="dossier-card-icon">{TYPE_ICONS[d.type]}</div>
+              <div className="dossier-card-info">
+                <h3>{d.type === 'personnel' ? `${d.effectif_grade ? d.effectif_grade + ' ' : ''}${d.effectif_prenom} ${d.effectif_nom}` : d.titre}</h3>
+                {d.description && <p className="dossier-card-desc">{d.description}</p>}
+                <span className="dossier-card-meta">
+                  {VIS_ICONS[d.visibilite]} {ACCESS_LABELS[d.access_group] || ''} · {d.nb_entrees} entrée{d.nb_entrees !== 1 ? 's' : ''} · par {d.created_by_nom}
+                </span>
+              </div>
+            </Link>
+          ))}
         </div>
-      )}
-
-      {dossiers.length === 0 && (
-        <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-          <p style={{ fontSize: '2rem' }}>📁</p>
-          <p>Aucun dossier</p>
-          <p className="text-muted">Les dossiers personnels se créent automatiquement quand on consulte un effectif.</p>
+      ) : (
+        <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
+          <p className="text-muted">Aucun dossier dans cette catégorie</p>
         </div>
       )}
     </div>

@@ -8,7 +8,20 @@ const admin = require('../middleware/admin')
 router.get('/', auth, async (req, res) => {
   try {
     const isPrivileged = req.user.isAdmin || req.user.isOfficier || req.user.isRecenseur
-    const where = isPrivileged ? '' : "WHERE d.visibilite = 'public' OR d.created_by = " + req.user.id
+    // Access control based on rank
+    const rank = req.user.grade_rang || 0
+    const userCategory = rank >= 60 ? 'officier' : rank >= 35 ? 'sous_officier' : 'militaire'
+    let where
+    if (isPrivileged) {
+      where = ''
+    } else {
+      // User sees: public + own + matching access_group
+      const accessGroups = ["'tous'"]
+      if (userCategory === 'officier') accessGroups.push("'officier'", "'sous_officier'", "'militaire'")
+      else if (userCategory === 'sous_officier') accessGroups.push("'sous_officier'", "'militaire'")
+      else accessGroups.push("'militaire'")
+      where = `WHERE (d.visibilite = 'public' AND d.access_group IN (${accessGroups.join(',')})) OR d.created_by = ${req.user.id}`
+    }
     const rows = await query(`
       SELECT d.*, e.nom AS effectif_nom, e.prenom AS effectif_prenom,
         g.nom_complet AS effectif_grade, u.code AS effectif_unite_code,
@@ -121,11 +134,11 @@ router.get('/:id', auth, async (req, res) => {
 // POST /api/dossiers — Create a thematic/investigation dossier
 router.post('/', auth, async (req, res) => {
   try {
-    const { titre, type, description, visibilite, effectif_id } = req.body
+    const { titre, type, description, visibilite, effectif_id, access_group } = req.body
     if (!titre) return res.status(400).json({ success: false, message: 'Titre requis' })
     const [result] = await pool.execute(
-      'INSERT INTO dossiers (effectif_id, titre, type, description, visibilite, created_by) VALUES (?, ?, ?, ?, ?, ?)',
-      [effectif_id || null, titre, type || 'thematique', description || null, visibilite || 'public', req.user.id]
+      'INSERT INTO dossiers (effectif_id, titre, type, description, visibilite, access_group, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [effectif_id || null, titre, type || 'thematique', description || null, visibilite || 'public', access_group || 'tous', req.user.id]
     )
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {
