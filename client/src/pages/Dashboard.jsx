@@ -67,6 +67,9 @@ export default function Dashboard() {
             {pending.interdits > 0 && (
               <Link to="/interdits" className="btn btn-sm btn-secondary">🚫 {pending.interdits} interdit{pending.interdits > 1 ? 's' : ''} de front actif{pending.interdits > 1 ? 's' : ''}</Link>
             )}
+            {pending.media > 0 && (
+              <Link to="/admin/moderation" className="btn btn-sm btn-secondary">📸 {pending.media} média{pending.media > 1 ? 's' : ''} à modérer</Link>
+            )}
           </div>
         </div>
       )}

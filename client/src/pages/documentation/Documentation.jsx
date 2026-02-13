@@ -255,19 +255,101 @@ export default function Documentation() {
   )
 }
 
+// Detect URL type for smart display
+function getUrlType(url) {
+  if (!url) return 'none'
+  if (url.match(/docs\.google\.com\/document/)) return 'gdoc'
+  if (url.match(/docs\.google\.com\/spreadsheets/)) return 'gsheet'
+  if (url.match(/docs\.google\.com\/presentation/)) return 'gslide'
+  if (url.match(/drive\.google\.com/)) return 'gdrive'
+  if (url.match(/\.pdf(\?|$)/i)) return 'pdf'
+  if (url.match(/\.(png|jpg|jpeg|gif|webp)(\?|$)/i)) return 'image'
+  return 'link'
+}
+
+// Convert Google Doc/Sheet URLs to embeddable format
+function getEmbedUrl(url) {
+  if (!url) return null
+  // Google Docs → /pub for embed
+  const gdocMatch = url.match(/docs\.google\.com\/document\/d\/([a-zA-Z0-9_-]+)/)
+  if (gdocMatch) return `https://docs.google.com/document/d/${gdocMatch[1]}/pub?embedded=true`
+  // Google Sheets → /pubhtml
+  const gsheetMatch = url.match(/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/)
+  if (gsheetMatch) return `https://docs.google.com/spreadsheets/d/${gsheetMatch[1]}/pubhtml?widget=true&headers=false`
+  // Google Slides → /embed
+  const gslideMatch = url.match(/docs\.google\.com\/presentation\/d\/([a-zA-Z0-9_-]+)/)
+  if (gslideMatch) return `https://docs.google.com/presentation/d/${gslideMatch[1]}/embed`
+  // Google Drive file → preview
+  const gdriveMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/)
+  if (gdriveMatch) return `https://drive.google.com/file/d/${gdriveMatch[1]}/preview`
+  // PDF → use Google Docs viewer as fallback or direct embed
+  if (url.match(/\.pdf(\?|$)/i)) return url
+  return null
+}
+
+const URL_TYPE_ICONS = { gdoc: '📝', gsheet: '📊', gslide: '📽️', gdrive: '☁️', pdf: '📕', image: '🖼️', link: '🔗', none: '📄' }
+const URL_TYPE_LABELS = { gdoc: 'Google Doc', gsheet: 'Google Sheet', gslide: 'Google Slides', gdrive: 'Google Drive', pdf: 'PDF', image: 'Image', link: 'Lien externe', none: 'Document' }
+
 function DocRow({ doc, isOfficier, isAdmin, onEdit, onRemove }) {
+  const [showViewer, setShowViewer] = useState(false)
+  const urlType = getUrlType(doc.url)
+  const embedUrl = getEmbedUrl(doc.url)
+  const canEmbed = ['gdoc', 'gsheet', 'gslide', 'gdrive', 'pdf'].includes(urlType)
+
+  const handleClick = () => {
+    if (canEmbed) {
+      setShowViewer(true)
+    } else if (doc.url) {
+      window.open(doc.url, '_blank', 'noopener,noreferrer')
+    }
+  }
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', padding: 'var(--space-sm) var(--space-md)', borderBottom: '1px solid var(--border-color)' }}>
-      <span style={{ fontSize: '1.1rem' }}>{CAT_ICONS[doc.categorie] || '📄'}</span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <strong style={{ fontSize: '0.9rem' }}>{doc.titre}</strong>
-        {doc.description && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{doc.description}</div>}
+    <>
+      <div className="doc-card" onClick={handleClick}>
+        <div className="doc-card-icon">{URL_TYPE_ICONS[urlType]}</div>
+        <div className="doc-card-content">
+          <div className="doc-card-title">{doc.titre}</div>
+          {doc.description && <div className="doc-card-desc">{doc.description}</div>}
+          <div className="doc-card-meta">
+            <span className="doc-type-badge">{URL_TYPE_LABELS[urlType]}</span>
+            {canEmbed && <span className="doc-embed-hint">📖 Cliquer pour consulter</span>}
+          </div>
+        </div>
+        <div className="doc-card-actions" onClick={e => e.stopPropagation()}>
+          {doc.url && (
+            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="btn btn-sm" title="Ouvrir dans un nouvel onglet">↗️</a>
+          )}
+          {isOfficier && <button className="btn btn-sm" onClick={() => onEdit(doc)} title="Modifier">✏️</button>}
+          {isAdmin && <button className="btn btn-sm" style={{ color: 'var(--danger)' }} onClick={() => onRemove(doc.id)} title="Supprimer">🗑️</button>}
+        </div>
       </div>
-      <div style={{ display: 'flex', gap: 'var(--space-xs)', alignItems: 'center', flexShrink: 0 }}>
-        {doc.url && <a href={doc.url} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary" style={{ padding: '4px 12px', fontSize: '0.75rem', textDecoration: 'none' }}>🔗 Ouvrir</a>}
-        {isOfficier && <button className="btn btn-sm btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => onEdit(doc)}>✏️</button>}
-        {isAdmin && <button className="btn btn-sm btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem', color: 'var(--danger)' }} onClick={() => onRemove(doc.id)}>🗑️</button>}
-      </div>
-    </div>
+
+      {showViewer && (
+        <div className="doc-viewer-overlay" onClick={() => setShowViewer(false)}>
+          <div className="doc-viewer" onClick={e => e.stopPropagation()}>
+            <div className="doc-viewer-header">
+              <h3>{doc.titre}</h3>
+              <div className="doc-viewer-toolbar">
+                <a href={doc.url} target="_blank" rel="noopener noreferrer" className="btn btn-sm">↗️ Nouvel onglet</a>
+                <button className="btn btn-sm" onClick={() => setShowViewer(false)}>✕ Fermer</button>
+              </div>
+            </div>
+            {urlType === 'image' ? (
+              <div className="doc-viewer-body" style={{ textAlign: 'center' }}>
+                <img src={doc.url} alt={doc.titre} style={{ maxWidth: '100%', maxHeight: '80vh' }} />
+              </div>
+            ) : (
+              <iframe
+                src={embedUrl || doc.url}
+                className="doc-viewer-iframe"
+                title={doc.titre}
+                allowFullScreen
+              />
+            )}
+          </div>
+        </div>
+      )}
+    </>
   )
 }

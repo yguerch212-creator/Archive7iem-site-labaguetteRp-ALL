@@ -6,7 +6,7 @@ import api from '../../api/client'
 
 export default function Moderation() {
   const { user } = useAuth()
-  const [data, setData] = useState({ docs: [], permissions: [], rapports: [], interdits: [] })
+  const [data, setData] = useState({ docs: [], permissions: [], rapports: [], interdits: [], media: [] })
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState(null)
   const [tab, setTab] = useState('docs')
@@ -16,7 +16,13 @@ export default function Moderation() {
   const load = async () => {
     try {
       const res = await api.get('/moderation/pending')
-      setData(res.data.data)
+      // Also load pending media
+      let mediaData = []
+      try {
+        const mRes = await api.get('/media/pending')
+        mediaData = mRes.data.data || []
+      } catch {}
+      setData({ ...res.data.data, media: mediaData })
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
   }
@@ -41,11 +47,29 @@ export default function Moderation() {
     } catch { flash('error', 'Erreur') }
   }
 
+  const leverInterdit = async (id) => {
+    if (!confirm('Lever cet interdit de front ?')) return
+    try {
+      await api.put(`/interdits/${id}/lever`)
+      flash('success', '✅ Interdit levé')
+      load()
+    } catch { flash('error', 'Erreur') }
+  }
+
+  const moderateMedia = async (id, decision) => {
+    try {
+      await api.put(`/media/${id}/moderate`, { decision })
+      flash('success', decision === 'approuve' ? '✅ Média approuvé' : '❌ Média refusé et supprimé')
+      load()
+    } catch { flash('error', 'Erreur') }
+  }
+
   const tabs = [
     { key: 'docs', label: '📚 Documents', count: data.docs.length },
     { key: 'permissions', label: '🏖️ Permissions', count: data.permissions.length },
     { key: 'rapports', label: '📝 Rapports récents', count: data.rapports.length },
     { key: 'interdits', label: '🚫 Interdits actifs', count: data.interdits.length },
+    { key: 'media', label: '📸 Médias', count: data.media.length },
   ]
 
   return (
@@ -158,6 +182,39 @@ export default function Moderation() {
             </div>
           )}
 
+          {/* Médias en attente */}
+          {tab === 'media' && (
+            <div className="paper-card" style={{ overflow: 'auto' }}>
+              {data.media.length === 0 ? (
+                <p style={{ textAlign: 'center', padding: 'var(--space-lg)', color: 'var(--text-muted)' }}>✅ Aucun média en attente</p>
+              ) : (
+                <div className="moderation-grid" style={{ padding: 'var(--space-md)' }}>
+                  {data.media.map(m => (
+                    <div key={m.id} style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius)', padding: 'var(--space-sm)', display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        {m.mime_type?.startsWith('image/') ? (
+                          <img src={`/api/media/file/${m.filename}`} alt={m.original_name} style={{ maxWidth: '100%', maxHeight: 150, objectFit: 'cover', borderRadius: 4 }} />
+                        ) : m.mime_type?.startsWith('video/') ? (
+                          <video src={`/api/media/file/${m.filename}`} controls style={{ maxWidth: '100%', maxHeight: 150 }} />
+                        ) : (
+                          <div style={{ padding: '1.5rem', background: 'var(--border)', borderRadius: 4 }}>📄</div>
+                        )}
+                      </div>
+                      <div>
+                        <strong style={{ fontSize: '0.85rem' }}>{m.original_name}</strong>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{m.uploaded_by_username} · {m.context_type} · {(m.size_bytes / 1024).toFixed(0)} Ko</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button className="btn btn-sm btn-primary" style={{ padding: '2px 8px', fontSize: '0.75rem', flex: 1 }} onClick={() => moderateMedia(m.id, 'approuve')}>✅</button>
+                        <button className="btn btn-sm btn-secondary" style={{ padding: '2px 8px', fontSize: '0.75rem', flex: 1 }} onClick={() => moderateMedia(m.id, 'refuse')}>❌</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Interdits actifs */}
           {tab === 'interdits' && (
             <div className="paper-card" style={{ overflow: 'auto' }}>
@@ -166,7 +223,7 @@ export default function Moderation() {
               ) : (
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                   <thead><tr style={{ borderBottom: '2px solid var(--border-color)' }}>
-                    <th style={th}>Effectif</th><th style={th}>Type</th><th style={th}>Motif</th><th style={th}>Depuis</th>
+                    <th style={th}>Effectif</th><th style={th}>Type</th><th style={th}>Motif</th><th style={th}>Depuis</th><th style={th}>Actions</th>
                   </tr></thead>
                   <tbody>
                     {data.interdits.map(i => (
@@ -175,6 +232,9 @@ export default function Moderation() {
                         <td style={td}><span className={`badge ${i.type === 'Disciplinaire' ? 'badge-red' : 'badge-warning'}`}>{i.type}</span></td>
                         <td style={td}>{i.motif}</td>
                         <td style={td}>{fmtDate(i.date_debut)}</td>
+                        <td style={td}>
+                          <button className="btn btn-sm btn-primary" style={{ padding: '2px 10px', fontSize: '0.75rem' }} onClick={() => leverInterdit(i.id)}>🔓 Lever</button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

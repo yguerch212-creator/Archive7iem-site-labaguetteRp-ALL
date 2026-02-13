@@ -22,6 +22,7 @@ const documentationRoutes = require('./routes/documentation.routes')
 const discordRoutes = require('./routes/discord.routes')
 const telegrammesRoutes = require('./routes/telegrammes.routes')
 const sanctionsRoutes = require('./routes/sanctions.routes')
+const mediaRoutes = require('./routes/media.routes')
 const moderationRoutes = require('./routes/moderation.routes')
 const dossiersRoutes = require('./routes/dossiers.routes')
 const decorationsRoutes = require('./routes/decorations.routes')
@@ -59,6 +60,7 @@ app.use('/api/documentation', documentationRoutes)
 app.use('/api/discord', discordRoutes)
 app.use('/api/telegrammes', telegrammesRoutes)
 app.use('/api/sanctions', sanctionsRoutes)
+app.use('/api/media', mediaRoutes)
 app.use('/api/moderation', moderationRoutes)
 app.use('/api/dossiers', dossiersRoutes)
 app.use('/api/decorations', decorationsRoutes)
@@ -98,10 +100,12 @@ app.get('/api/stats/pending', auth, async (req, res) => {
     const docs = await queryOne("SELECT COUNT(*) as c FROM moderation_queue WHERE statut = 'En attente'")
     const permissions = await queryOne("SELECT COUNT(*) as c FROM permissions_absence WHERE statut = 'En attente'")
     const interdits = await queryOne("SELECT COUNT(*) as c FROM interdits_front WHERE actif = 1")
+    const media = await queryOne("SELECT COUNT(*) as c FROM media_uploads WHERE statut = 'en_attente'")
     const docsCount = docs?.c || 0
     const permsCount = permissions?.c || 0
     const interditsCount = interdits?.c || 0
-    res.json({ docs: docsCount, permissions: permsCount, interdits: interditsCount, total: docsCount + permsCount + interditsCount })
+    const mediaCount = media?.c || 0
+    res.json({ docs: docsCount, permissions: permsCount, interdits: interditsCount, media: mediaCount, total: docsCount + permsCount + interditsCount + mediaCount })
   } catch (err) {
     res.json({ docs: 0, permissions: 0, total: 0 })
   }
