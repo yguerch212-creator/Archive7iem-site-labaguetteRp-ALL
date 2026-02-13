@@ -643,3 +643,213 @@
   border-radius: 4px;
   padding: 2rem;
 }
+
+/* ===== DOSSIER LAYOUT EDITOR (Book style) ===== */
+.dossier-layout-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+.dossier-layout-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+.dossier-layout-title {
+  flex: 1;
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-color);
+}
+.dossier-layout-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Page tabs */
+.dossier-layout-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.dossier-page-tabs {
+  display: flex;
+  gap: 0.25rem;
+  flex: 1;
+  overflow-x: auto;
+  padding: 0.25rem 0;
+}
+.dossier-page-tab {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #d4c9a8;
+  background: #f5f2e8;
+  border-radius: 4px 4px 0 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.dossier-page-tab:hover {
+  background: #ede8d8;
+}
+.dossier-page-tab.active {
+  background: #faf8f0;
+  border-bottom-color: #faf8f0;
+  font-weight: 700;
+  color: #5c6b3c;
+}
+.dossier-page-add {
+  border-style: dashed;
+  color: #999;
+}
+.dossier-page-add:hover {
+  color: #5c6b3c;
+  border-color: #5c6b3c;
+}
+
+/* Block toolbar */
+.dossier-block-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: #eee8d8;
+  border-radius: 4px;
+}
+.dossier-toolbar-hint {
+  font-size: 0.65rem;
+  color: #999;
+  margin-left: auto;
+  font-style: italic;
+}
+
+/* The book page canvas */
+.dossier-book-editor {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+}
+.dossier-book-page {
+  position: relative;
+  width: 720px;
+  min-height: 540px;
+  background: #faf8f0;
+  border: 1px solid #b8a88a;
+  border-radius: 2px;
+  box-shadow: 3px 3px 15px rgba(0,0,0,0.15), inset 0 0 30px rgba(0,0,0,0.03);
+  font-family: 'IBM Plex Mono', monospace;
+  overflow: hidden;
+}
+.dossier-book-page.is-cover {
+  background: linear-gradient(135deg, #3a3a2a 0%, #4a4a38 50%, #3a3a2a 100%);
+  color: #d4c9a8;
+  border-color: #2a2a1a;
+}
+
+/* Blocks inside pages */
+.book-block {
+  position: absolute;
+  cursor: move;
+  padding: 2px 4px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  transition: border-color 0.1s;
+  box-sizing: border-box;
+  font-family: 'IBM Plex Mono', monospace;
+  overflow: hidden;
+}
+.book-block:hover {
+  border-color: rgba(92,107,60,0.3);
+}
+.book-block.selected {
+  border-color: #5c6b3c;
+  box-shadow: 0 0 0 1px #5c6b3c;
+}
+.book-block-content {
+  width: 100%;
+  height: 100%;
+  outline: none;
+  overflow: hidden;
+  word-wrap: break-word;
+}
+.book-block-content:focus {
+  outline: none;
+}
+.book-block-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 10px;
+  height: 10px;
+  cursor: se-resize;
+}
+.book-block.selected .book-block-resize {
+  background: linear-gradient(135deg, transparent 50%, #5c6b3c 50%);
+  border-radius: 0 0 2px 0;
+}
+
+/* Block tools */
+.book-block-tools {
+  position: absolute;
+  top: -28px;
+  left: 0;
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+  background: #3a3a2a;
+  padding: 2px 6px;
+  border-radius: 3px;
+  z-index: 200;
+  white-space: nowrap;
+}
+.book-block-tools button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 1px 4px;
+}
+.book-block-style-select {
+  font-size: 0.65rem;
+  background: #555;
+  color: #eee;
+  border: none;
+  border-radius: 2px;
+  padding: 1px 4px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.dossier-empty-page {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #bbb;
+  font-size: 0.82rem;
+  text-align: center;
+  font-style: italic;
+}
+
+/* ===== PUBLISHED LAYOUT VIEW ===== */
+.layout-published-view {
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+.layout-published-view .layout-canvas {
+  background: #faf8f0;
+  border: 1px solid #b8a88a;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  border-radius: 4px;
+  padding: 2rem;
+}
+
+@media (max-width: 768px) {
+  .dossier-book-page { width: 100%; min-height: 400px; }
+  .dossier-layout-header { flex-direction: column; align-items: flex-start; }
+}

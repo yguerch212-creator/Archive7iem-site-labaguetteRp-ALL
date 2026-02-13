@@ -20,9 +20,6 @@ export default function DossierView() {
   const [message, setMessage] = useState(null)
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(0)
-  const [publishedHtml, setPublishedHtml] = useState(null)
-  const [viewMode, setViewMode] = useState('book') // 'book' or 'layout'
-
   useEffect(() => { load() }, [id])
 
   const load = async () => {
@@ -30,14 +27,6 @@ export default function DossierView() {
       const res = await api.get(`/dossiers/${id}`)
       setDossier(res.data.data.dossier)
       setEntrees(res.data.data.entrees || [])
-      // Load published layout if exists
-      try {
-        const lRes = await api.get(`/dossiers/${id}/layout`)
-        const data = lRes.data
-        if (data?.html_published) {
-          setPublishedHtml(data.html_published)
-        }
-      } catch {}
     } catch (err) { console.error(err) }
     setLoading(false)
   }
@@ -80,11 +69,6 @@ export default function DossierView() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap', gap: '0.5rem' }}>
         <button onClick={() => navigate(-1)} className="btn btn-secondary btn-small">← Retour</button>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          {publishedHtml && (
-            <button className="btn btn-secondary btn-small" onClick={() => setViewMode(v => v === 'book' ? 'layout' : 'book')}>
-              {viewMode === 'book' ? '📐 Voir mise en page' : '📖 Voir carnet'}
-            </button>
-          )}
           {canWrite && <Link to={`/dossiers/${id}/layout`} className="btn btn-secondary btn-small">🖋️ Mise en page</Link>}
           {canWrite && (
             <button className="btn btn-primary btn-small" onClick={() => setShowForm(true)}>
@@ -96,15 +80,8 @@ export default function DossierView() {
 
       {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}
 
-      {/* Published layout view */}
-      {viewMode === 'layout' && publishedHtml && (
-        <div className="layout-published-view">
-          <div className="layout-canvas" style={{ width: 800, minHeight: 1200, position: 'relative', margin: '0 auto' }} dangerouslySetInnerHTML={{ __html: publishedHtml }} />
-        </div>
-      )}
-
       {/* Book */}
-      {viewMode === 'book' && <div className="book-container">
+      <div className="book-container">
         <div className="book-nav">
           <button className="book-nav-btn" onClick={prevPage} disabled={currentPage === 0}>◀</button>
           <span className="book-page-indicator">
@@ -161,7 +138,7 @@ export default function DossierView() {
             ))}
           </div>
         )}
-      </div>}
+      </div>
 
       {/* Add entry popup */}
       {showForm && (

@@ -3,23 +3,23 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import BackButton from '../../components/BackButton'
-import LayoutEditor from '../../components/LayoutEditor'
+import interact from 'interactjs'
+import './dossiers.css'
+
+const GRID = 5
 
 export default function DossierLayout() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [dossier, setDossier] = useState(null)
   const [entrees, setEntrees] = useState([])
-  const [blocks, setBlocks] = useState([])
+  const [pages, setPages] = useState({}) // { 'cover': [...blocks], 'page-1': [...blocks], ... }
+  const [currentPage, setCurrentPage] = useState('cover')
+  const [selectedBlock, setSelectedBlock] = useState(null)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
-  const [showImport, setShowImport] = useState(false)
-  const [importSearch, setImportSearch] = useState('')
-  const [importResults, setImportResults] = useState(null) // { rapports, visites, interdits, telegrammes }
-  const [importLoading, setImportLoading] = useState(false)
-  const [allData, setAllData] = useState(null) // cached full lists
-  const searchRef = useRef(null)
-  const debounceRef = useRef(null)
+  const canvasRef = useRef(null)
 
   useEffect(() => { loadData() }, [id])
 
@@ -27,125 +27,164 @@ export default function DossierLayout() {
     try {
       const [dRes, lRes] = await Promise.all([
         api.get(`/dossiers/${id}`),
-        api.get(`/dossiers/${id}/layout`).catch(() => ({ data: { blocks: null } }))
+        api.get(`/dossiers/${id}/layout`).catch(() => ({ data: { pages: null } }))
       ])
       const d = dRes.data.data
       setDossier(d.dossier)
       setEntrees(d.entrees || [])
 
-      if (lRes.data?.blocks) {
-        setBlocks(lRes.data.blocks)
+      const layoutData = lRes.data
+      if (layoutData?.pages) {
+        setPages(layoutData.pages)
       } else {
-        setBlocks(generateBlocks(d.dossier, d.entrees || []))
+        // Generate default pages from entries
+        setPages(generateDefaultPages(d.dossier, d.entrees || []))
       }
     } catch (err) { console.error(err) }
     setLoading(false)
   }
 
-  const openImport = async () => {
-    setShowImport(true)
-    setImportSearch('')
-    setImportResults(null)
-    setTimeout(() => searchRef.current?.focus(), 150)
+  const generateDefaultPages = (dos, entries) => {
+    const p = {}
 
-    // Load all data once on first open
-    if (!allData) {
-      setImportLoading(true)
-      try {
-        const [rRes, vRes, iRes, tRes] = await Promise.all([
-          api.get('/rapports'), api.get('/medical'), api.get('/interdits'), api.get('/telegrammes')
-        ])
-        const d = {
-          rapports: (rRes.data?.data || []).map(r => ({ id: r.id, title: r.titre || r.type, sub: `${r.auteur_nom || '?'} — ${r.date_rp || ''}`, badge: r.type, cat: 'rapport', icon: '📋', url: `/rapports/${r.id}` })),
-          visites: (vRes.data?.data || []).map(r => ({ id: r.id, title: `${r.effectif_prenom || ''} ${r.effectif_nom || ''}`, sub: `${r.diagnostic || '—'} — ${r.aptitude || ''}`, badge: 'visite', cat: 'visite', icon: '🏥', url: `/medical/${r.id}` })),
-          interdits: (iRes.data?.data || []).map(r => ({ id: r.id, title: `${r.effectif_prenom || ''} ${r.effectif_nom || ''}`, sub: `${(r.motif || '').substring(0, 60)}`, badge: r.statut || 'actif', cat: 'interdit', icon: '⛔', url: `/interdits` })),
-          telegrammes: (tRes.data?.data || []).map(r => ({ id: r.id, title: `${r.numero || 'TEL'} — ${(r.objet || '').substring(0, 40)}`, sub: `${r.expediteur_texte || '?'} → ${r.destinataire_texte || '?'}`, badge: r.priorite || 'normal', cat: 'telegramme', icon: '📨', url: `/telegrammes` })),
-        }
-        setAllData(d)
-        setImportResults(d)
-      } catch { setAllData({ rapports: [], visites: [], interdits: [], telegrammes: [] }) }
-      setImportLoading(false)
-    } else {
-      setImportResults(allData)
-    }
-  }
+    // Cover page
+    p['cover'] = [
+      { id: 'cover-stamp', type: 'text', content: 'GEHEIM', x: 280, y: 20, w: 200, h: 30, style: 'stamp' },
+      { id: 'cover-emblem', type: 'text', content: '✠', x: 310, y: 80, w: 100, h: 80, style: 'emblem' },
+      { id: 'cover-title', type: 'text', content: dos.titre || 'DOSSIER', x: 80, y: 180, w: 560, h: 50, style: 'title' },
+      { id: 'cover-desc', type: 'text', content: dos.description || '', x: 120, y: 240, w: 480, h: 30, style: 'subtitle' },
+      { id: 'cover-type', type: 'text', content: `${dos.type || '—'} · ${entries.length} entrée${entries.length !== 1 ? 's' : ''}`, x: 180, y: 290, w: 360, h: 25, style: 'meta' },
+      { id: 'cover-footer', type: 'text', content: 'Archives du 7e Armeekorps', x: 200, y: 480, w: 320, h: 25, style: 'footer' },
+    ]
 
-  // Filter all data when search changes
-  useEffect(() => {
-    if (!allData || !showImport) return
-    if (!importSearch.trim()) { setImportResults(allData); return }
-    const q = importSearch.toLowerCase()
-    setImportResults({
-      rapports: allData.rapports.filter(i => `${i.title} ${i.sub}`.toLowerCase().includes(q)),
-      visites: allData.visites.filter(i => `${i.title} ${i.sub}`.toLowerCase().includes(q)),
-      interdits: allData.interdits.filter(i => `${i.title} ${i.sub}`.toLowerCase().includes(q)),
-      telegrammes: allData.telegrammes.filter(i => `${i.title} ${i.sub}`.toLowerCase().includes(q)),
-    })
-  }, [importSearch, allData, showImport])
-
-  const generateBlocks = (dos, entries) => {
-    const b = []
-    let y = 30
-
-    b.push({ id: 'stamp', type: 'text', content: '<span style="color:rgba(180,40,40,0.4);font-weight:900;letter-spacing:3px">GEHEIM</span>', x: 600, y: 15, w: 150, h: 25 })
-    b.push({ id: 'title', type: 'title', content: `<b>${dos.titre || 'DOSSIER'}</b>`, x: 150, y, w: 500, h: 40 })
-    y += 50
-    if (dos.description) {
-      b.push({ id: 'desc', type: 'text', content: dos.description, x: 100, y, w: 600, h: 30 })
-      y += 40
-    }
-    b.push({ id: 'meta', type: 'text', content: `<b>Type :</b> ${dos.type || '—'} · <b>Visibilité :</b> ${dos.visibilite || '—'} · <b>Entrées :</b> ${entries.length}`, x: 40, y, w: 700, h: 25 })
-    y += 35
-    b.push({ id: 'sep1', type: 'separator', content: '', x: 40, y, w: 720, h: 4 })
-    y += 25
-
+    // One page per entry
     entries.forEach((e, i) => {
-      b.push({ id: `entry-title-${i}`, type: 'title', content: `<b>${e.titre || `Note ${i+1}`}</b>`, x: 40, y, w: 500, h: 25 })
-      y += 28
-      b.push({ id: `entry-content-${i}`, type: 'text', content: e.contenu || '', x: 40, y, w: 700, h: 80 })
-      y += 90
-      b.push({ id: `entry-meta-${i}`, type: 'text', content: `<small>Par ${e.created_by_nom || '—'} ${e.date_rp ? `· RP: ${e.date_rp}` : ''}</small>`, x: 40, y, w: 400, h: 20 })
-      y += 30
+      const key = `page-${i + 1}`
+      p[key] = [
+        { id: `${key}-num`, type: 'text', content: `N° ${i + 1}`, x: 30, y: 15, w: 60, h: 20, style: 'page-num' },
+        { id: `${key}-date`, type: 'text', content: e.date_rp || '', x: 500, y: 15, w: 200, h: 20, style: 'date' },
+        { id: `${key}-title`, type: 'text', content: e.titre || `Entrée ${i + 1}`, x: 40, y: 50, w: 640, h: 35, style: 'entry-title' },
+        { id: `${key}-content`, type: 'text', content: e.contenu || '', x: 40, y: 95, w: 640, h: 350, style: 'entry-content' },
+        { id: `${key}-author`, type: 'text', content: `Par ${e.created_by_nom || '—'}`, x: 40, y: 470, w: 300, h: 20, style: 'author' },
+      ]
     })
 
-    b.push({ id: 'sep2', type: 'separator', content: '', x: 40, y, w: 720, h: 4 })
-    y += 20
-    b.push({ id: 'footer', type: 'text', content: 'Archives du 7e Armeekorps', x: 250, y, w: 300, h: 25 })
-
-    return b
+    return p
   }
 
-  const importPiece = (item) => {
-    const maxY = blocks.reduce((max, bl) => Math.max(max, (bl.y || 0) + (bl.h || 50)), 100)
-    const newId = `doc-${Date.now()}`
-    const catLabels = { rapport: 'Rapports', visite: 'Visites médicales', interdit: 'Interdits de front', telegramme: 'Télégrammes' }
-    setBlocks(prev => [
-      ...prev,
-      {
-        id: newId,
-        type: 'document',
-        content: item.title,
-        x: 40,
-        y: maxY + 20,
-        w: 300,
-        h: 100,
-        docRef: {
-          id: item.id,
-          label: item.title,
-          sub: item.sub,
-          badge: item.badge,
-          category: catLabels[item.cat] || item.cat,
-          url: item.url
+  // InteractJS for current page blocks
+  useEffect(() => {
+    if (!canvasRef.current) return
+    const snap = interact.modifiers.snap({
+      targets: [interact.snappers.grid({ x: GRID, y: GRID })],
+      range: GRID,
+      relativePoints: [{ x: 0, y: 0 }]
+    })
+
+    interact('.book-block').draggable({
+      inertia: false,
+      modifiers: [
+        snap,
+        interact.modifiers.restrictRect({ restriction: 'parent', endOnly: false })
+      ],
+      listeners: {
+        move(event) {
+          const el = event.target
+          const x = (parseFloat(el.dataset.x) || 0) + event.dx
+          const y = (parseFloat(el.dataset.y) || 0) + event.dy
+          el.style.transform = `translate(${x}px, ${y}px)`
+          el.dataset.x = x
+          el.dataset.y = y
+        },
+        end(event) {
+          const el = event.target
+          const bid = el.dataset.blockId
+          const dx = parseFloat(el.dataset.x) || 0
+          const dy = parseFloat(el.dataset.y) || 0
+          updateBlock(bid, b => ({ ...b, x: Math.round(b.x + dx), y: Math.round(b.y + dy) }))
+          el.style.transform = ''
+          el.dataset.x = 0
+          el.dataset.y = 0
         }
       }
-    ])
-    setMessage(`📎 ${item.title} épinglé`)
-    setTimeout(() => setMessage(''), 2000)
+    }).resizable({
+      edges: { right: true, bottom: true, left: false, top: false },
+      modifiers: [
+        snap,
+        interact.modifiers.restrictSize({ min: { width: 40, height: 15 } })
+      ],
+      listeners: {
+        move(event) {
+          event.target.style.width = `${event.rect.width}px`
+          event.target.style.height = `${event.rect.height}px`
+        },
+        end(event) {
+          const bid = event.target.dataset.blockId
+          updateBlock(bid, b => ({ ...b, w: Math.round(event.rect.width), h: Math.round(event.rect.height) }))
+        }
+      }
+    })
+
+    return () => { interact('.book-block').unset() }
+  }, [currentPage])
+
+  const updateBlock = (blockId, fn) => {
+    setPages(prev => {
+      const pageBlocks = (prev[currentPage] || []).map(b => b.id === blockId ? fn(b) : b)
+      return { ...prev, [currentPage]: pageBlocks }
+    })
   }
 
-  const handleSave = async (newBlocks) => {
+  const updateBlockContent = (blockId, content) => {
+    updateBlock(blockId, b => ({ ...b, content }))
+  }
+
+  const addBlock = () => {
+    const newId = `block-${Date.now()}`
+    setPages(prev => ({
+      ...prev,
+      [currentPage]: [...(prev[currentPage] || []), { id: newId, type: 'text', content: 'Nouveau texte...', x: 40, y: 40, w: 300, h: 60, style: 'entry-content' }]
+    }))
+    setSelectedBlock(newId)
+  }
+
+  const removeBlock = (blockId) => {
+    setPages(prev => ({
+      ...prev,
+      [currentPage]: (prev[currentPage] || []).filter(b => b.id !== blockId)
+    }))
+    if (selectedBlock === blockId) setSelectedBlock(null)
+  }
+
+  const addPage = () => {
+    const pageNums = Object.keys(pages).filter(k => k.startsWith('page-')).map(k => parseInt(k.split('-')[1]))
+    const next = Math.max(0, ...pageNums) + 1
+    const key = `page-${next}`
+    setPages(prev => ({
+      ...prev,
+      [key]: [
+        { id: `${key}-num`, type: 'text', content: `N° ${next}`, x: 30, y: 15, w: 60, h: 20, style: 'page-num' },
+        { id: `${key}-title`, type: 'text', content: 'Nouvelle page', x: 40, y: 50, w: 640, h: 35, style: 'entry-title' },
+        { id: `${key}-content`, type: 'text', content: '', x: 40, y: 95, w: 640, h: 350, style: 'entry-content' },
+      ]
+    }))
+    setCurrentPage(key)
+  }
+
+  const deletePage = () => {
+    if (currentPage === 'cover') return
+    if (!confirm('Supprimer cette page ?')) return
+    setPages(prev => {
+      const next = { ...prev }
+      delete next[currentPage]
+      return next
+    })
+    setCurrentPage('cover')
+  }
+
+  const handleSave = async () => {
     try {
-      await api.put(`/dossiers/${id}/layout`, { blocks: newBlocks })
+      await api.put(`/dossiers/${id}/layout`, { pages })
       setMessage('💾 Sauvegardé !')
       setTimeout(() => setMessage(''), 3000)
     } catch (err) {
@@ -154,12 +193,11 @@ export default function DossierLayout() {
     }
   }
 
-  const handlePublish = async (html, publishedBlocks) => {
+  const handlePublish = async () => {
     try {
-      const payload = { blocks: publishedBlocks || blocks, html_published: html }
-      console.log('Publishing layout:', { blocksCount: payload.blocks?.length, htmlLength: payload.html_published?.length })
-      await api.put(`/dossiers/${id}/layout`, payload)
-      setMessage('📜 Dossier publié ! Redirection...')
+      // Generate HTML from all pages for the book view
+      await api.put(`/dossiers/${id}/layout`, { pages, published: true })
+      setMessage('📜 Carnet publié ! Redirection...')
       setTimeout(() => navigate(`/dossiers/${id}`), 1500)
     } catch (err) {
       console.error('Publish error:', err)
@@ -169,82 +207,139 @@ export default function DossierLayout() {
 
   if (loading) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div>
 
-  const totalResults = importResults ? Object.values(importResults).reduce((s, arr) => s + arr.length, 0) : 0
+  const pageKeys = ['cover', ...Object.keys(pages).filter(k => k !== 'cover').sort((a, b) => {
+    const na = parseInt(a.split('-')[1]) || 0
+    const nb = parseInt(b.split('-')[1]) || 0
+    return na - nb
+  })]
 
-  const renderSection = (label, icon, items) => {
-    if (!items || items.length === 0) return null
-    return (
-      <div className="import-section" key={label}>
-        <div className="import-section-header">{icon} {label} <span className="import-section-count">{items.length}</span></div>
-        {items.slice(0, 15).map(item => (
-          <button key={`${item.cat}-${item.id}`} className="import-picker-item" onClick={() => importPiece(item)}>
-            <div className="import-item-top">
-              <span className="import-item-icon">{item.icon}</span>
-              <span className="import-item-label">{item.title}</span>
-              {item.badge && <span className="import-item-badge">{item.badge}</span>}
-            </div>
-            {item.sub && <div className="import-item-sub">{item.sub}</div>}
-          </button>
-        ))}
-        {items.length > 15 && <p className="import-more">… et {items.length - 15} autres — affinez votre recherche</p>}
-      </div>
-    )
+  const currentBlocks = pages[currentPage] || []
+  const currentPageIdx = pageKeys.indexOf(currentPage)
+
+  const STYLE_MAP = {
+    'stamp': { color: 'rgba(180,40,40,0.5)', fontWeight: '900', letterSpacing: '3px', textAlign: 'center', fontSize: '1.2rem' },
+    'emblem': { textAlign: 'center', fontSize: '3rem', lineHeight: '1' },
+    'title': { fontWeight: '800', fontSize: '1.4rem', textAlign: 'center', borderBottom: '2px solid #8a7a5a' },
+    'subtitle': { textAlign: 'center', fontStyle: 'italic', color: '#555', fontSize: '0.85rem' },
+    'meta': { textAlign: 'center', color: '#777', fontSize: '0.75rem' },
+    'footer': { textAlign: 'center', color: '#8a7a5a', fontSize: '0.75rem', borderTop: '1px solid #ccc', paddingTop: '4px' },
+    'page-num': { fontWeight: '700', fontSize: '0.7rem', color: '#999' },
+    'date': { textAlign: 'right', fontSize: '0.75rem', color: '#666', fontStyle: 'italic' },
+    'entry-title': { fontWeight: '700', fontSize: '1.1rem', borderBottom: '1px solid #b8a88a', paddingBottom: '4px' },
+    'entry-content': { fontSize: '0.82rem', lineHeight: '1.5', whiteSpace: 'pre-wrap' },
+    'author': { fontSize: '0.7rem', color: '#888', fontStyle: 'italic' },
   }
 
   return (
-    <div style={{ padding: '1rem', maxWidth: 1100, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+    <div className="dossier-layout-page">
+      <div className="dossier-layout-header">
         <BackButton label="← Retour au dossier" />
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <button className="btn btn-secondary btn-small" onClick={openImport}>📎 Épingler un document</button>
+        <h2 className="dossier-layout-title">🖋️ Mise en page — {dossier?.titre || 'Dossier'}</h2>
+        <div className="dossier-layout-actions">
+          <button className="btn btn-secondary btn-small" onClick={handleSave}>💾 Sauvegarder</button>
+          <button className="btn btn-primary btn-small" onClick={handlePublish}>📜 Publier</button>
         </div>
       </div>
 
       {message && (
-        <div className={`alert ${message.includes('❌') ? 'alert-danger' : 'alert-success'}`} style={{ marginBottom: '0.75rem', textAlign: 'center', fontWeight: 600 }}>
+        <div className={`alert ${message.includes('❌') ? 'alert-danger' : 'alert-success'}`} style={{ textAlign: 'center', fontWeight: 600 }}>
           {message}
         </div>
       )}
 
-      {/* Import picker — global search */}
-      {showImport && (
-        <div className="popup-overlay" onClick={() => setShowImport(false)}>
-          <div className="popup-content import-picker-modal" onClick={e => e.stopPropagation()}>
-            <button className="popup-close" onClick={() => setShowImport(false)}>✕</button>
-            <h2 className="import-picker-title">📎 Épingler un document</h2>
-
-            <input
-              ref={searchRef}
-              className="form-input import-picker-search"
-              placeholder="🔍 Rechercher un rapport, une visite, un télégramme..."
-              value={importSearch}
-              onChange={e => setImportSearch(e.target.value)}
-            />
-
-            {importLoading ? (
-              <p className="import-picker-empty">Chargement des archives...</p>
-            ) : !importResults ? null : totalResults === 0 ? (
-              <p className="import-picker-empty">Aucun résultat pour « {importSearch} »</p>
-            ) : (
-              <div className="import-picker-results">
-                {!importSearch.trim() && <p className="import-picker-hint">Tapez pour filtrer, ou parcourez les archives ci-dessous</p>}
-                {renderSection('Rapports', '📋', importResults.rapports)}
-                {renderSection('Visites médicales', '🏥', importResults.visites)}
-                {renderSection('Interdits de front', '⛔', importResults.interdits)}
-                {renderSection('Télégrammes', '📨', importResults.telegrammes)}
-              </div>
-            )}
-          </div>
+      {/* Page navigation - book style */}
+      <div className="dossier-layout-nav">
+        <button className="book-nav-btn" disabled={currentPageIdx <= 0} onClick={() => setCurrentPage(pageKeys[currentPageIdx - 1])}>◀</button>
+        <div className="dossier-page-tabs">
+          {pageKeys.map((key, i) => (
+            <button
+              key={key}
+              className={`dossier-page-tab ${currentPage === key ? 'active' : ''}`}
+              onClick={() => setCurrentPage(key)}
+            >
+              {key === 'cover' ? '📔 Couverture' : `📄 ${i}`}
+            </button>
+          ))}
+          <button className="dossier-page-tab dossier-page-add" onClick={addPage}>+ Page</button>
         </div>
-      )}
+        <button className="book-nav-btn" disabled={currentPageIdx >= pageKeys.length - 1} onClick={() => setCurrentPage(pageKeys[currentPageIdx + 1])}>▶</button>
+      </div>
 
-      <LayoutEditor
-        blocks={blocks}
-        onSave={handleSave}
-        onPublish={handlePublish}
-        title={`Dossier — ${dossier?.titre || ''}`}
-        height={1200}
-      />
+      {/* Page toolbar */}
+      <div className="dossier-block-toolbar">
+        <button className="btn btn-sm btn-secondary" onClick={addBlock}>+ Bloc texte</button>
+        {currentPage !== 'cover' && (
+          <button className="btn btn-sm" style={{ color: 'var(--danger)' }} onClick={deletePage}>🗑️ Supprimer la page</button>
+        )}
+        <span className="dossier-toolbar-hint">Glissez pour déplacer · Bord droit/bas pour redimensionner · Cliquez pour éditer</span>
+      </div>
+
+      {/* The book page canvas */}
+      <div className="dossier-book-editor">
+        <div
+          ref={canvasRef}
+          className={`dossier-book-page ${currentPage === 'cover' ? 'is-cover' : ''}`}
+          onClick={(e) => { if (e.target === e.currentTarget) setSelectedBlock(null) }}
+        >
+          {currentBlocks.map((block, zIdx) => (
+            <div
+              key={block.id}
+              className={`book-block ${selectedBlock === block.id ? 'selected' : ''}`}
+              data-block-id={block.id}
+              style={{
+                position: 'absolute',
+                left: block.x,
+                top: block.y,
+                width: block.w,
+                height: block.h,
+                zIndex: selectedBlock === block.id ? 100 : zIdx + 1,
+                ...STYLE_MAP[block.style] || {},
+              }}
+              onClick={(e) => { e.stopPropagation(); setSelectedBlock(block.id) }}
+            >
+              {/* Block tools */}
+              {selectedBlock === block.id && (
+                <div className="book-block-tools">
+                  <select
+                    className="book-block-style-select"
+                    value={block.style || 'entry-content'}
+                    onChange={e => updateBlock(block.id, b => ({ ...b, style: e.target.value }))}
+                  >
+                    <option value="title">Titre</option>
+                    <option value="subtitle">Sous-titre</option>
+                    <option value="entry-title">En-tête</option>
+                    <option value="entry-content">Texte</option>
+                    <option value="stamp">Tampon</option>
+                    <option value="meta">Méta</option>
+                    <option value="date">Date</option>
+                    <option value="author">Auteur</option>
+                    <option value="footer">Pied de page</option>
+                    <option value="page-num">N° page</option>
+                    <option value="emblem">Emblème</option>
+                  </select>
+                  <button onClick={() => removeBlock(block.id)} title="Supprimer" style={{ color: '#ff6b6b' }}>✕</button>
+                </div>
+              )}
+
+              <div
+                className="book-block-content"
+                contentEditable
+                suppressContentEditableWarning
+                onBlur={(e) => updateBlockContent(block.id, e.currentTarget.innerText)}
+                dangerouslySetInnerHTML={{ __html: block.content }}
+              />
+
+              <div className="book-block-resize" />
+            </div>
+          ))}
+
+          {currentBlocks.length === 0 && (
+            <div className="dossier-empty-page">
+              Page vide — cliquez "+ Bloc texte" pour ajouter du contenu
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
