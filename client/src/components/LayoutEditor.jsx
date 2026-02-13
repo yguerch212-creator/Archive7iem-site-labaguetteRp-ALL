@@ -1,27 +1,39 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import interact from 'interactjs'
+import apiClient from '../api/client'
 import SignatureCanvas from './SignatureCanvas'
 import './layout-editor.css'
 
 const BLOCK_TYPES = [
   { type: 'title', label: 'Titre', icon: '📌' },
   { type: 'text', label: 'Texte', icon: '📝' },
+  { type: 'document', label: 'Document', icon: '📎' },
   { type: 'signature', label: 'Signature', icon: '✍️' },
   { type: 'stamp', label: 'Tampon', icon: '🔏' },
   { type: 'image', label: 'Image', icon: '🖼️' },
   { type: 'separator', label: 'Séparateur', icon: '━' },
 ]
 
+const DOC_CATEGORIES = [
+  { key: 'rapport', label: '📋 Rapports', endpoint: '/rapports', mapFn: (r) => ({ id: r.id, label: `${r.numero || 'Sans numéro'} — ${r.titre || r.type}`, sub: r.date_rp || '', url: `/rapports/${r.id}` }) },
+  { key: 'pds', label: '📊 PDS (Semaines)', endpoint: '/pds', mapFn: (r) => ({ id: r.id, label: `Semaine du ${r.semaine_du || '?'}`, sub: `${r.prenom || ''} ${r.nom || ''} — ${r.total_heures || 0}h`, url: `/pds` }) },
+  { key: 'visite', label: '🏥 Visites médicales', endpoint: '/medical', mapFn: (r) => ({ id: r.id, label: `Visite — ${r.effectif_prenom || ''} ${r.effectif_nom || ''}`, sub: r.date_visite_rp || r.date_visite || '', url: `/medical/${r.id}` }) },
+  { key: 'telegramme', label: '📨 Télégrammes', endpoint: '/telegrammes', mapFn: (r) => ({ id: r.id, label: `${r.numero || 'TEL'} — ${(r.objet || '').substring(0, 40)}`, sub: `${r.expediteur_texte || r.expediteur_prenom || '?'} → ${r.destinataire_texte || r.destinataire_prenom || '?'}`, url: `/telegrammes` }) },
+  { key: 'interdit', label: '⛔ Interdits de front', endpoint: '/interdits', mapFn: (r) => ({ id: r.id, label: `Interdit — ${r.effectif_prenom || ''} ${r.effectif_nom || ''}`, sub: `${r.motif || ''}`.substring(0, 50), url: `/interdits` }) },
+  { key: 'piece', label: '⚖️ Pièces d\'affaire', endpoint: null, mapFn: null }, // loaded from affaire context
+]
+
 const GRID = 5
 
 let blockCounter = Date.now()
 
-export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPublish, title = 'Éditeur de mise en page', width = 800, height = 1100, readOnly = false }) {
+export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPublish, title = 'Éditeur de mise en page', width = 800, height = 1100, readOnly = false, affaireId = null }) {
   const [blocks, setBlocks] = useState(initialBlocks)
   const [selectedId, setSelectedId] = useState(null)
   const [history, setHistory] = useState([initialBlocks])
   const [historyIdx, setHistoryIdx] = useState(0)
   const [showSignatureModal, setShowSignatureModal] = useState(null) // blockId
+  const [showDocPicker, setShowDocPicker] = useState(null) // blockId
   const [msg, setMsg] = useState('')
   const canvasRef = useRef(null)
 
@@ -133,16 +145,20 @@ export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPub
     const defaults = {
       title: { content: '<b>TITRE</b>', w: 400, h: 40 },
       text: { content: 'Nouveau texte...', w: 350, h: 80 },
+      document: { content: '', w: 280, h: 100, docRef: null },
       signature: { content: '', w: 250, h: 70 },
       stamp: { content: '', w: 180, h: 100 },
       image: { content: '', w: 200, h: 200 },
       separator: { content: '', w: 600, h: 4 },
     }
     const d = defaults[type] || defaults.text
-    const newBlocks = [...blocks, { id, type, content: d.content, x: 50, y: 50 + blocks.length * 30, w: d.w, h: d.h }]
+    const newBlock = { id, type, content: d.content, x: 50, y: 50 + blocks.length * 30, w: d.w, h: d.h }
+    if (type === 'document') newBlock.docRef = null
+    const newBlocks = [...blocks, newBlock]
     setBlocks(newBlocks)
     pushHistory(newBlocks)
     setSelectedId(id)
+    if (type === 'document') setShowDocPicker(id)
   }
 
   const removeBlock = (id) => {
@@ -271,6 +287,7 @@ export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPub
               {!readOnly && selectedId === block.id && (
                 <div className="block-tools">
                   <span className="block-type-label">{block.type}</span>
+                  {block.type === 'document' && <button onClick={() => setShowDocPicker(block.id)} title="Changer document">📎</button>}
                   {block.type === 'image' && <button onClick={() => handleImageUpload(block.id)} title="Image">🖼️</button>}
                   {block.type === 'stamp' && <button onClick={() => handleImageUpload(block.id)} title="Tampon (image)">🔏</button>}
                   {block.type === 'signature' && <button onClick={() => setShowSignatureModal(block.id)} title="Dessiner">✍️</button>}
@@ -284,6 +301,19 @@ export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPub
               {/* Content */}
               {block.type === 'separator' ? (
                 <div className="block-separator" />
+              ) : block.type === 'document' ? (
+                block.docRef ? (
+                  <div className="block-document-card" onClick={() => !readOnly ? setShowDocPicker(block.id) : block.docRef.url && window.open(block.docRef.url, '_blank')}>
+                    <div className="block-doc-pin">📎</div>
+                    <div className="block-doc-info">
+                      <div className="block-doc-label">{block.docRef.label}</div>
+                      {block.docRef.sub && <div className="block-doc-sub">{block.docRef.sub}</div>}
+                      <div className="block-doc-cat">{block.docRef.category}</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="block-placeholder" onClick={() => !readOnly && setShowDocPicker(block.id)}>📎 Épingler un document</div>
+                )
               ) : block.type === 'image' || block.type === 'stamp' ? (
                 block.content ? (
                   <img src={block.content} alt="" className={block.type === 'stamp' ? 'block-stamp' : 'block-image'} />
@@ -335,6 +365,114 @@ export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPub
             <SignatureCanvas onDone={handleSignatureDone} onCancel={() => setShowSignatureModal(null)} />
           </div>
         </div>
+      )}
+
+      {/* Document picker modal */}
+      {showDocPicker && (
+        <div className="layout-modal-overlay" onClick={() => setShowDocPicker(null)}>
+          <div className="layout-modal layout-modal-wide" onClick={e => e.stopPropagation()}>
+            <DocumentPicker
+              affaireId={affaireId}
+              onSelect={(docRef) => {
+                setBlocks(prev => {
+                  const updated = prev.map(b => b.id === showDocPicker ? { ...b, docRef, content: docRef.label } : b)
+                  pushHistory(updated)
+                  return updated
+                })
+                setShowDocPicker(null)
+              }}
+              onClose={() => setShowDocPicker(null)}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ─── Document Picker Component ─── */
+function DocumentPicker({ affaireId, onSelect, onClose }) {
+  const [category, setCategory] = useState(null)
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [search, setSearch] = useState('')
+
+  const loadCategory = async (cat) => {
+    setCategory(cat)
+    setItems([])
+    setSearch('')
+    setLoading(true)
+    try {
+      if (cat.key === 'piece' && affaireId) {
+        const res = await apiClient.get(`/affaires/${affaireId}`)
+        setItems((res.data.pieces || []).map(p => ({
+          id: p.id, label: `${p.titre}`, sub: `${p.type} — ${p.date_rp || ''}`, url: `/sanctions/${affaireId}`
+        })))
+      } else if (cat.endpoint) {
+        const res = await apiClient.get(cat.endpoint)
+        const data = Array.isArray(res.data) ? res.data : (res.data.rapports || res.data.items || res.data.semaines || [])
+        setItems(data.map(cat.mapFn).slice(0, 50))
+      }
+    } catch (err) {
+      console.error('Doc picker load error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filtered = items.filter(it =>
+    !search || `${it.label} ${it.sub}`.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const categories = DOC_CATEGORIES.filter(c => c.key !== 'piece' || affaireId)
+
+  return (
+    <div className="doc-picker">
+      <div className="doc-picker-header">
+        <h3>📎 Épingler un document</h3>
+        <button className="btn-close" onClick={onClose}>✕</button>
+      </div>
+
+      {!category ? (
+        <div className="doc-picker-categories">
+          {categories.map(cat => (
+            <button key={cat.key} className="doc-picker-cat-btn" onClick={() => loadCategory(cat)}>
+              {cat.label}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <>
+          <div className="doc-picker-nav">
+            <button className="btn btn-sm btn-secondary" onClick={() => setCategory(null)}>← Retour</button>
+            <span className="doc-picker-cat-title">{category.label}</span>
+          </div>
+          <input
+            className="form-input doc-picker-search"
+            placeholder="Rechercher..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            autoFocus
+          />
+          {loading ? (
+            <p className="doc-picker-loading">Chargement...</p>
+          ) : filtered.length === 0 ? (
+            <p className="doc-picker-empty">Aucun document trouvé</p>
+          ) : (
+            <div className="doc-picker-list">
+              {filtered.map(item => (
+                <button
+                  key={item.id}
+                  className="doc-picker-item"
+                  onClick={() => onSelect({ ...item, category: category.label })}
+                >
+                  <div className="doc-picker-item-label">{item.label}</div>
+                  {item.sub && <div className="doc-picker-item-sub">{item.sub}</div>}
+                </button>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

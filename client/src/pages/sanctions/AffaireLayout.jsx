@@ -145,6 +145,7 @@ export default function AffaireLayout() {
         onPublish={handlePublish}
         title={`Affaire — ${affaire?.numero || ''} ${affaire?.titre || ''}`}
         height={1400}
+        affaireId={id}
       />
     </div>
   )
