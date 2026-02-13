@@ -83,7 +83,7 @@ export default function EffectifsList() {
                   <td style={tdStyle}>{e.fonction || '—'}</td>
                   <td style={tdStyle}>{e.specialite || '—'}</td>
                   <td style={tdStyle}>{e.date_entree_ig || '—'}</td>
-                  <td style={tdStyle}>{e.date_entree_irl || '—'}</td>
+                  <td style={tdStyle}>{e.date_entree_irl ? new Date(e.date_entree_irl+'T00:00').toLocaleDateString('fr-FR') : '—'}</td>
                   <td style={{ ...tdStyle, textAlign: 'center' }}>
                     <Link to={`/effectifs/${e.id}/soldbuch`} title="Soldbuch">📘</Link>
                     <Link to={`/dossiers/effectif/${e.id}`} title="Dossier">📁</Link>

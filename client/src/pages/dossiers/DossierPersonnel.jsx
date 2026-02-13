@@ -70,7 +70,12 @@ export default function DossierPersonnel() {
     ...entrees.map(e => ({ type: 'note', date: e.created_at, data: e }))
   ].sort((a, b) => new Date(b.date) - new Date(a.date))
 
-  const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'
+  const formatDate = (d) => {
+    if (!d) return '—'
+    const date = new Date(d)
+    if (isNaN(date)) return d
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  }
 
   return (
     <div className="dossier-detail-page">
@@ -222,7 +227,7 @@ export default function DossierPersonnel() {
               <div key={i.id} className="card dossier-list-item">
                 <div>
                   <span>{i.actif ? '🔴' : '✅'} {i.type} — {i.motif}</span>
-                  <p className="text-muted">Du {i.date_debut}{i.date_fin ? ` au ${i.date_fin}` : ''} · Par {i.ordonne_par_nom}</p>
+                  <p className="text-muted">Du {formatDate(i.date_debut)}{i.date_fin ? ` au ${formatDate(i.date_fin)}` : ''} · Par {i.ordonne_par_nom}</p>
                 </div>
               </div>
             ))

@@ -409,7 +409,7 @@ export default function PDS() {
                       p.statut === 'Approuvee' ? '✅ Approuvée' : '❌ Refusée'
                     }</span>
                   </div>
-                  <div className="perm-dates">📅 Du {p.date_debut} au {p.date_fin}</div>
+                  <div className="perm-dates">📅 Du {p.date_debut ? new Date(p.date_debut+'T00:00').toLocaleDateString('fr-FR') : '?'} au {p.date_fin ? new Date(p.date_fin+'T00:00').toLocaleDateString('fr-FR') : '?'}</div>
                   <div className="perm-raison">{p.raison}</div>
                   {p.notes_traitement && <div className="perm-notes">💬 {p.notes_traitement}</div>}
                   {p.traite_par_nom && <div className="perm-meta">Traité par {p.traite_par_nom}</div>}

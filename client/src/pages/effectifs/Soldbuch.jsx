@@ -4,6 +4,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import apiClient from '../../api/client'
 import { exportToPdf } from '../../utils/exportPdf'
+import { formatDateSoft } from '../../utils/dates'
 
 export default function Soldbuch() {
   const { id } = useParams()
@@ -90,7 +91,7 @@ export default function Soldbuch() {
             <Field label="Nom" value={e.nom} />
             <Field label="Prénom" value={e.prenom} />
             {e.surnom && <Field label="Surnom" value={e.surnom} />}
-            <Field label="Date de naissance" value={e.date_naissance} />
+            <Field label="Date de naissance" value={formatDateSoft(e.date_naissance)} />
             <Field label="Lieu de naissance" value={e.lieu_naissance} />
             <Field label="Nationalité" value={e.nationalite} />
             {e.taille_cm && <Field label="Taille" value={`${e.taille_cm} cm`} />}
@@ -109,8 +110,8 @@ export default function Soldbuch() {
             <Field label="Unité" value={unitTitle} />
             <Field label="Grade" value={e.grade_nom} />
             <Field label="Spécialité" value={e.specialite} />
-            <Field label="Entrée RP" value={e.date_entree_ig} />
-            <Field label="Entrée IRL" value={e.date_entree_irl} />
+            <Field label="Entrée RP" value={formatDateSoft(e.date_entree_ig)} />
+            <Field label="Entrée IRL" value={formatDateSoft(e.date_entree_irl)} />
           </div>
         </div>
 

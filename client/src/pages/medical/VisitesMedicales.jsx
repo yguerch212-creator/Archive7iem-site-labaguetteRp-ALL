@@ -183,7 +183,7 @@ export default function VisitesMedicales() {
                 </span>
               </div>
               <div className="visite-meta">
-                <span>📅 {v.date_visite}</span>
+                <span>📅 {v.date_visite ? new Date(v.date_visite+'T00:00').toLocaleDateString('fr-FR') : '—'}</span>
                 {v.medecin && <span>👨‍⚕️ Dr. {v.medecin}</span>}
                 <span>📝 Par {v.created_by_nom}</span>
               </div>

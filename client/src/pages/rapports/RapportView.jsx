@@ -41,7 +41,7 @@ export default function RapportView() {
                 <div style={{ opacity: 0.85 }}>
                   Rédigé par {R.auteur_nom || 'Inconnu'}
                   {R.personne_renseignee_nom && <> — Personne renseignée : {R.personne_renseignee_nom}</>}<br />
-                  Date RP : {R.date_rp || '—'} — Date IRL : {R.date_irl || '—'}
+                  Date RP : {R.date_rp || '—'} — Date IRL : {R.date_irl ? new Date(R.date_irl).toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit',year:'numeric'}) : '—'}
                 </div>
               </div>
 

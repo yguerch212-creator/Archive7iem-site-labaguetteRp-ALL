@@ -157,7 +157,7 @@ export default function InterditsFront() {
               </div>
               <div className="interdit-motif">{i.motif}</div>
               <div className="interdit-meta">
-                <span>📅 Du {i.date_debut}{i.date_fin ? ` au ${i.date_fin}` : ' — indéterminé'}</span>
+                <span>📅 Du {i.date_debut ? new Date(i.date_debut+'T00:00').toLocaleDateString('fr-FR') : '?'}{i.date_fin ? ` au ${new Date(i.date_fin+'T00:00').toLocaleDateString('fr-FR')}` : ' — indéterminé'}</span>
                 <span>👤 Ordonné par {i.ordonne_par_nom}</span>
                 {!i.actif && i.leve_par_nom && <span>✅ Levé par {i.leve_par_nom}</span>}
               </div>

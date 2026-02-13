@@ -77,7 +77,7 @@ export default function RapportsList() {
                 <tr key={r.id} style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }} onClick={() => window.location.href = `/rapports/${r.id}`}>
                   <td style={td}>{r.titre}</td>
                   <td style={td}>{r.date_rp || '—'}</td>
-                  <td style={td}>{r.date_irl || '—'}</td>
+                  <td style={td}>{r.date_irl ? new Date(r.date_irl).toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit',year:'numeric'}) : '—'}</td>
                   <td style={td}>{r.auteur_nom || 'Inconnu'}</td>
                   <td style={td}>{r.personne_mentionnee || '—'}</td>
                   <td style={td}><span className={`tag ${TYPE_CLASSES[r.type]}`}>{TYPE_LABELS[r.type]}</span></td>

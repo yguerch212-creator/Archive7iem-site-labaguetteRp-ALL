@@ -24,7 +24,7 @@ export default function AdminLogs() {
 
   if (!user?.isAdmin) return <div className="container"><p>Accès refusé</p></div>
 
-  const formatDate = (d) => new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+  const formatDate = (d) => new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
   return (
     <div className="container" style={{ maxWidth: 900 }}>

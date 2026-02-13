@@ -45,7 +45,12 @@ export default function DossierView() {
     try { await api.delete(`/dossiers/entrees/${entryId}`); load() } catch {}
   }
 
-  const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'
+  const formatDate = (d) => {
+    if (!d) return '—'
+    const date = new Date(d)
+    if (isNaN(date)) return d
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  }
 
   if (loading) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div>
   if (!dossier) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Dossier non trouvé</div>
