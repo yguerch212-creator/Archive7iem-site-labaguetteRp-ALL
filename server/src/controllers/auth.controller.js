@@ -11,7 +11,7 @@ async function login(req, res) {
     }
 
     const user = await queryOne(`
-      SELECT u.id, u.nom, u.prenom, u.username, u.password_hash, u.unite_id, u.active, u.must_change_password,
+      SELECT u.id, u.nom, u.prenom, u.username, u.password_hash, u.unite_id, u.effectif_id, u.active, u.must_change_password,
              un.nom AS unite_nom, g.nom_complet AS grade_nom
       FROM users u
       LEFT JOIN unites un ON u.unite_id = un.id
