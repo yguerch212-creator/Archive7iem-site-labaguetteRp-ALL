@@ -23,6 +23,7 @@ export default function Topbar() {
           <Link to="/interdits" className={isActive('/interdits')}>Interdits</Link>
           <Link to="/medical" className={isActive('/medical')}>Médical</Link>
           <Link to="/dossiers" className={isActive('/dossiers')}>Dossiers</Link>
+          <Link to="/telegrammes" className={isActive('/telegrammes')}>⚡ Télégrammes</Link>
           <Link to="/documentation" className={isActive('/documentation')}>Docs</Link>
           <Link to="/search" className={isActive('/search')}>Recherche</Link>
           {user?.isAdmin && (
