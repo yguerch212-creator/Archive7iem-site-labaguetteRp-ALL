@@ -13,7 +13,9 @@ router.get('/users', auth, admin, async (req, res) => {
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
               WHERE ug.user_id = u.id AND gp.name = 'Administration') > 0 AS is_admin,
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
-              WHERE ug.user_id = u.id AND gp.name = 'Recenseur') > 0 AS is_recenseur
+              WHERE ug.user_id = u.id AND gp.name = 'Recenseur') > 0 AS is_recenseur,
+             (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
+              WHERE ug.user_id = u.id AND gp.name = 'Officier') > 0 AS is_officier
       FROM users u
       LEFT JOIN grades g ON g.id = u.grade_id
       LEFT JOIN unites un ON un.id = u.unite_id

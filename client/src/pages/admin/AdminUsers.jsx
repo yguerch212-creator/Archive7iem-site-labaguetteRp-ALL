@@ -24,26 +24,19 @@ export default function AdminUsers() {
       ])
       if (usersRes.data.success) setUsers(usersRes.data.data)
       if (effRes.data.success) setEffectifsSansCompte(effRes.data.data)
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
+    } catch (err) { console.error(err) }
+    finally { setLoading(false) }
   }
+
+  const flash = (type, text) => { setMessage({ type, text }); setTimeout(() => setMessage(null), 3000) }
 
   const toggleGroup = async (userId, group, currentlyActive) => {
     try {
       await apiClient.put(`/admin/users/${userId}/group`, { action: currentlyActive ? 'remove' : 'add', group })
       fetchAll()
-      const label = group === 'Administration' ? 'admin' : 'recenseur'
-      setMessage({ type: 'success', text: currentlyActive ? `Droits ${label} retirés` : `Droits ${label} accordés` })
-    } catch {
-      setMessage({ type: 'error', text: 'Erreur' })
-    }
+      flash('success', currentlyActive ? `${group} retiré` : `${group} accordé`)
+    } catch { flash('error', 'Erreur') }
   }
-
-  const toggleAdmin = (userId, current) => toggleGroup(userId, 'Administration', current)
-  const toggleRecenseur = (userId, current) => toggleGroup(userId, 'Recenseur', current)
 
   const createUser = async (e) => {
     e.preventDefault()
@@ -51,145 +44,118 @@ export default function AdminUsers() {
     try {
       const { data } = await apiClient.post('/admin/users', createForm)
       if (data.success) {
-        setMessage({ type: 'success', text: data.message })
+        flash('success', data.message)
         setShowCreate(false)
         setCreateForm({ effectif_id: '', password: '' })
         fetchAll()
-      } else {
-        setMessage({ type: 'error', text: data.message })
-      }
-    } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur serveur' })
-    }
+      } else { flash('error', data.message) }
+    } catch (err) { flash('error', err.response?.data?.message || 'Erreur') }
   }
 
   if (!user?.isAdmin) {
-    return (
-      <div className="page-container">
-        <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-          <p style={{ fontSize: '3rem' }}>🚫</p>
-          <p>Accès refusé — Droits administrateur requis</p>
-        </div>
-      </div>
-    )
+    return <div className="container" style={{ textAlign: 'center', padding: '3rem' }}><p>🚫 Accès refusé</p></div>
   }
 
   return (
-    <div className="page-container">
-      <BackButton label="← Tableau de bord" />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div>
-          <h1 className="page-title" style={{ margin: 0 }}>⚙️ Gestion des utilisateurs</h1>
-          <Link to="/admin/logs" style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>📊 Journal d'activité →</Link>
+    <div className="container" style={{ paddingBottom: 'var(--space-xxl)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
+        <BackButton label="← Tableau de bord" />
+        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+          <Link to="/admin/logs" className="btn btn-secondary btn-small">📊 Logs</Link>
+          <Link to="/admin/stats" className="btn btn-secondary btn-small">📈 Stats</Link>
+          <button className="btn btn-primary btn-small" onClick={() => setShowCreate(!showCreate)}>
+            {showCreate ? '✕ Annuler' : '+ Créer un compte'}
+          </button>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowCreate(!showCreate)}>
-          {showCreate ? '✕ Annuler' : '+ Créer un compte'}
-        </button>
       </div>
 
-      {message && (
-        <div className={`alert alert-${message.type}`} style={{ marginBottom: '1rem' }}>
-          {message.text}
-          <button onClick={() => setMessage(null)} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
-        </div>
-      )}
+      <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>⚙️ Gestion des utilisateurs</h1>
+
+      {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}
 
       {showCreate && (
-        <div className="card" style={{ marginBottom: '2rem' }}>
-          <h3>Créer un compte depuis un effectif</h3>
+        <div className="paper-card" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-lg)' }}>
+          <h3 style={{ marginTop: 0 }}>Créer un compte depuis un effectif</h3>
           <form onSubmit={createUser}>
-            <div className="form-group">
-              <label className="form-label">Effectif (sans compte)</label>
-              <select
-                className="form-input"
-                value={createForm.effectif_id}
-                onChange={e => setCreateForm(p => ({ ...p, effectif_id: e.target.value }))}
-                required
-              >
-                <option value="">— Sélectionner —</option>
-                {effectifsSansCompte.map(e => (
-                  <option key={e.id} value={e.id}>
-                    {e.grade_nom ? `${e.grade_nom} ` : ''}{e.prenom} {e.nom} — {e.unite_nom}
-                  </option>
-                ))}
-              </select>
-              {effectifsSansCompte.length === 0 && (
-                <small className="text-muted">Tous les effectifs ont déjà un compte.</small>
-              )}
+            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ flex: 2, minWidth: 200 }}>
+                <label className="form-label">Effectif</label>
+                <select className="form-input" value={createForm.effectif_id} onChange={e => setCreateForm(p => ({ ...p, effectif_id: e.target.value }))} required>
+                  <option value="">— Sélectionner —</option>
+                  {effectifsSansCompte.map(e => (
+                    <option key={e.id} value={e.id}>{e.grade_nom ? `${e.grade_nom} ` : ''}{e.prenom} {e.nom} — {e.unite_nom}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Mot de passe</label>
+                <input type="text" className="form-input" value={createForm.password} onChange={e => setCreateForm(p => ({ ...p, password: e.target.value }))} placeholder="Auto-généré" />
+              </div>
             </div>
-            <div className="form-group">
-              <label className="form-label">Mot de passe (défaut: Wehrmacht123)</label>
-              <input
-                type="text"
-                className="form-input"
-                value={createForm.password}
-                onChange={e => setCreateForm(p => ({ ...p, password: e.target.value }))}
-                placeholder="Wehrmacht123"
-              />
-            </div>
-            <button type="submit" className="btn btn-primary">Créer le compte</button>
+            <button type="submit" className="btn btn-primary" style={{ marginTop: 'var(--space-sm)' }}>Créer</button>
           </form>
         </div>
       )}
 
       {loading ? (
-        <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>Chargement...</div>
+        <div className="paper-card" style={{ textAlign: 'center', padding: '2rem' }}>Chargement...</div>
       ) : (
-        <div className="table-responsive">
-          <table className="table">
+        <div className="paper-card" style={{ overflow: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
             <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nom</th>
-                <th>Username</th>
-                <th>Grade</th>
-                <th>Unité</th>
-                <th>Admin</th>
-                <th>Recenseur</th>
-                <th>Actif</th>
-                <th>Actions</th>
+              <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+                <th style={th}>Utilisateur</th>
+                <th style={th}>Grade / Unité</th>
+                <th style={th} colSpan={3}>Permissions</th>
+                <th style={th}>Statut</th>
               </tr>
             </thead>
             <tbody>
               {users.map(u => (
-                <tr key={u.id}>
-                  <td>{u.id}</td>
-                  <td><strong>{u.prenom} {u.nom}</strong></td>
-                  <td><code>{u.username}</code></td>
-                  <td>{u.grade_nom || '—'}</td>
-                  <td>{u.unite_nom || '—'}</td>
-                  <td>
-                    <span className={`badge ${u.is_admin ? 'badge-success' : 'badge-muted'}`}>
-                      {u.is_admin ? '✅ Admin' : '—'}
-                    </span>
+                <tr key={u.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                  <td style={td}>
+                    <strong>{u.prenom} {u.nom}</strong>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{u.username}</div>
                   </td>
-                  <td>
-                    <span className={`badge ${u.is_recenseur ? 'badge-info' : 'badge-muted'}`}>
-                      {u.is_recenseur ? '📋 Recenseur' : '—'}
-                    </span>
+                  <td style={td}>
+                    {u.grade_nom || '—'}
+                    {u.unite_nom && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.unite_nom}</div>}
                   </td>
-                  <td>
-                    <span className={`badge ${u.active ? 'badge-success' : 'badge-danger'}`}>
-                      {u.active ? 'Actif' : 'Inactif'}
-                    </span>
+                  {/* Permission toggles */}
+                  <td style={{ ...td, textAlign: 'center' }}>
+                    {u.id !== user.id ? (
+                      <button
+                        onClick={() => toggleGroup(u.id, 'Administration', u.is_admin)}
+                        style={{ background: 'none', border: `2px solid ${u.is_admin ? 'var(--success)' : 'var(--border-color)'}`, borderRadius: 'var(--border-radius)', padding: '4px 10px', cursor: 'pointer', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: u.is_admin ? 'var(--success)' : 'var(--text-muted)', fontWeight: u.is_admin ? 700 : 400 }}
+                      >
+                        {u.is_admin ? '✅ Admin' : 'Admin'}
+                      </button>
+                    ) : <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Vous</span>}
                   </td>
-                  <td style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <td style={{ ...td, textAlign: 'center' }}>
                     {u.id !== user.id && (
-                      <>
-                        <button
-                          className="btn btn-sm"
-                          onClick={() => toggleAdmin(u.id, u.is_admin)}
-                        >
-                          {u.is_admin ? '🔓 Retirer admin' : '🔒 Admin'}
-                        </button>
-                        <button
-                          className="btn btn-sm"
-                          onClick={() => toggleRecenseur(u.id, u.is_recenseur)}
-                        >
-                          {u.is_recenseur ? '📋 Retirer recenseur' : '📋 Recenseur'}
-                        </button>
-                      </>
+                      <button
+                        onClick={() => toggleGroup(u.id, 'Recenseur', u.is_recenseur)}
+                        style={{ background: 'none', border: `2px solid ${u.is_recenseur ? 'var(--success)' : 'var(--border-color)'}`, borderRadius: 'var(--border-radius)', padding: '4px 10px', cursor: 'pointer', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: u.is_recenseur ? 'var(--success)' : 'var(--text-muted)', fontWeight: u.is_recenseur ? 700 : 400 }}
+                      >
+                        {u.is_recenseur ? '✅ Recenseur' : 'Recenseur'}
+                      </button>
                     )}
+                  </td>
+                  <td style={{ ...td, textAlign: 'center' }}>
+                    {u.id !== user.id && (
+                      <button
+                        onClick={() => toggleGroup(u.id, 'Officier', u.is_officier)}
+                        style={{ background: 'none', border: `2px solid ${u.is_officier ? 'var(--warning)' : 'var(--border-color)'}`, borderRadius: 'var(--border-radius)', padding: '4px 10px', cursor: 'pointer', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: u.is_officier ? 'var(--warning)' : 'var(--text-muted)', fontWeight: u.is_officier ? 700 : 400 }}
+                      >
+                        {u.is_officier ? '⭐ Officier' : 'Officier'}
+                      </button>
+                    )}
+                  </td>
+                  <td style={td}>
+                    <span style={{ fontSize: '0.8rem', color: u.active ? 'var(--success)' : 'var(--danger)' }}>
+                      {u.active ? '🟢 Actif' : '🔴 Inactif'}
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -197,13 +163,9 @@ export default function AdminUsers() {
           </table>
         </div>
       )}
-
-      <div className="card" style={{ marginTop: '2rem', padding: '1rem' }}>
-        <p className="text-muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-          📌 Les comptes sont créés depuis les effectifs existants. Le username est généré automatiquement (prénom.nom).
-          Le mot de passe par défaut est <code>Wehrmacht123</code> — l'utilisateur devra le changer à sa première connexion.
-        </p>
-      </div>
     </div>
   )
 }
+
+const th = { textAlign: 'left', padding: 'var(--space-sm) var(--space-md)', fontWeight: 700, color: 'var(--military-dark)', whiteSpace: 'nowrap' }
+const td = { padding: 'var(--space-sm) var(--space-md)', verticalAlign: 'middle' }
