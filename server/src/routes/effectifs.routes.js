@@ -1,3 +1,4 @@
+const { logActivity } = require('../utils/logger')
 const router = require('express').Router()
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
@@ -84,6 +85,8 @@ router.post('/', auth, recenseur, async (req, res) => {
        f.discord_id || null]
     )
     const effectifId = result.insertId
+
+    logActivity(req, 'create_effectif', 'effectif', effectifId, `${f.prenom} ${f.nom}`)
 
     // Auto-reconcile mentions
     if (f.nom && f.prenom) {

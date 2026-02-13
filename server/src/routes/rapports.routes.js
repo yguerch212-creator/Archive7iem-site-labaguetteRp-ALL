@@ -1,3 +1,4 @@
+const { logActivity } = require('../utils/logger')
 const router = require('express').Router()
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
@@ -73,6 +74,7 @@ router.post('/', auth, async (req, res) => {
        f.date_rp || null, f.date_irl || null]
     )
     const rapportId = result.insertId
+    logActivity(req, 'create_rapport', 'rapport', rapportId, `${f.type}: ${f.titre}`)
 
     // Save mentions for name fields
     const mentionFields = [

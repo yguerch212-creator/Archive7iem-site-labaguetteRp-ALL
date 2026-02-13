@@ -22,11 +22,12 @@ const discordRoutes = require('./routes/discord.routes')
 const dossiersRoutes = require('./routes/dossiers.routes')
 
 const app = express()
+app.set('trust proxy', 1) // Behind Nginx
 const PORT = process.env.PORT || 3001
 
 // Rate limiting (login stricter)
-const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 })
-const generalLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 })
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, validate: { trustProxy: false } })
+const generalLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200, validate: { trustProxy: false } })
 
 // Middlewares
 app.use(helmet({ crossOriginResourcePolicy: false }))

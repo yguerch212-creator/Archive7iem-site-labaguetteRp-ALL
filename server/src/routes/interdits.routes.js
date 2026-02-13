@@ -1,3 +1,4 @@
+const { logActivity } = require('../utils/logger')
 const router = require('express').Router()
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
@@ -77,6 +78,7 @@ router.post('/', auth, feldgendarmerie, async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [resolvedId, motif, type || 'Disciplinaire', date_debut || new Date().toISOString().slice(0, 10), date_fin || null, req.user.id, notes || null]
     )
+    logActivity(req, 'create_interdit', 'interdit', result.insertId, `${type}: ${motif?.slice(0, 100)}`)
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })

@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { query, queryOne } = require('../config/db')
 const config = require('../config/env')
+const { logActivity } = require('../utils/logger')
 
 async function login(req, res) {
   try {
@@ -20,14 +21,17 @@ async function login(req, res) {
     `, [username, username])
 
     if (!user) {
+      logActivity(req, 'login_failed', 'user', null, `Tentative: ${username}`)
       return res.status(401).json({ success: false, message: 'Nom ou mot de passe incorrect' })
     }
     if (!user.active) {
+      logActivity(req, 'login_blocked', 'user', user.id, `Compte désactivé: ${username}`)
       return res.status(401).json({ success: false, message: 'Compte désactivé' })
     }
 
     const valid = await bcrypt.compare(password, user.password_hash)
     if (!valid) {
+      logActivity(req, 'login_failed', 'user', user.id, `Mauvais mdp: ${username}`)
       return res.status(401).json({ success: false, message: 'Nom ou mot de passe incorrect' })
     }
 
@@ -54,6 +58,12 @@ async function login(req, res) {
     const isOfficier = officierCheck.c > 0
 
     const token = jwt.sign({ userId: user.id }, config.jwt.secret, { expiresIn: config.jwt.expiresIn })
+
+    // Log login
+    logActivity(req, 'login', 'user', user.id, `${user.username} connecté`)
+
+    // Update last login
+    require('../config/db').pool.execute('UPDATE users SET derniere_connexion = NOW() WHERE id = ?', [user.id]).catch(() => {})
 
     res.json({
       success: true,
@@ -86,6 +96,9 @@ async function getMe(req, res) {
 async function changePassword(req, res) {
   try {
     const { currentPassword, newPassword } = req.body
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'Le nouveau mot de passe doit faire au moins 6 caractères' })
+    }
     const user = await queryOne('SELECT password_hash FROM users WHERE id = ?', [req.user.id])
     if (!user) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' })
 

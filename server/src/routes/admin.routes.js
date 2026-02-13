@@ -98,4 +98,18 @@ router.get('/groups', auth, admin, async (req, res) => {
   }
 })
 
+// GET /api/admin/logs — Activity logs (admin only)
+router.get('/logs', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 50, 200)
+    const rows = await query(
+      'SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT ?',
+      [limit]
+    )
+    res.json({ success: true, data: rows })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
 module.exports = router

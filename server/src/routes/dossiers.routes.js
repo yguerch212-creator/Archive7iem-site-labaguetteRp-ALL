@@ -1,3 +1,4 @@
+const { logActivity } = require('../utils/logger')
 const router = require('express').Router()
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
@@ -11,16 +12,15 @@ router.get('/', auth, async (req, res) => {
     // Access control based on rank
     const rank = req.user.grade_rang || 0
     const userCategory = rank >= 60 ? 'officier' : rank >= 35 ? 'sous_officier' : 'militaire'
-    let where
-    if (isPrivileged) {
-      where = ''
-    } else {
-      // User sees: public + own + matching access_group
-      const accessGroups = ["'tous'"]
-      if (userCategory === 'officier') accessGroups.push("'officier'", "'sous_officier'", "'militaire'")
-      else if (userCategory === 'sous_officier') accessGroups.push("'sous_officier'", "'militaire'")
-      else accessGroups.push("'militaire'")
-      where = `WHERE (d.visibilite = 'public' AND d.access_group IN (${accessGroups.join(',')})) OR d.created_by = ${req.user.id}`
+    let where = ''
+    const params = []
+    if (!isPrivileged) {
+      const accessGroups = ['tous']
+      if (userCategory === 'officier') accessGroups.push('officier', 'sous_officier', 'militaire')
+      else if (userCategory === 'sous_officier') accessGroups.push('sous_officier', 'militaire')
+      else accessGroups.push('militaire')
+      where = `WHERE (d.visibilite = 'public' AND d.access_group IN (${accessGroups.map(() => '?').join(',')})) OR d.created_by = ?`
+      params.push(...accessGroups, req.user.id)
     }
     const rows = await query(`
       SELECT d.*, e.nom AS effectif_nom, e.prenom AS effectif_prenom,
@@ -34,7 +34,7 @@ router.get('/', auth, async (req, res) => {
       JOIN users cr ON cr.id = d.created_by
       ${where}
       ORDER BY d.updated_at DESC
-    `)
+    `, params)
     res.json({ success: true, data: rows })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
