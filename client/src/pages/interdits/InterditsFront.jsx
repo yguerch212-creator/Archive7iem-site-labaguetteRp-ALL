@@ -153,7 +153,13 @@ export default function InterditsFront() {
                 <td style={td}>{i.ordonne_par_nom}{!i.actif && i.leve_par_nom ? <><br/><span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Levé par {i.leve_par_nom}</span></> : ''}</td>
                 {canCreate && (
                   <td style={td}>
-                    {i.actif && <button className="btn btn-sm btn-primary" style={{ fontSize: '0.75rem', padding: '4px 10px' }} onClick={() => lever(i.id)}>✅ Lever</button>}
+                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                      {i.actif && <button className="btn btn-sm btn-primary" style={{ fontSize: '0.75rem', padding: '4px 10px' }} onClick={() => lever(i.id)}>✅ Lever</button>}
+                      {user?.isAdmin && <button className="btn btn-sm" style={{ fontSize: '0.75rem', padding: '4px 8px', color: 'var(--danger)' }} onClick={async () => {
+                        if (!confirm('Supprimer cet interdit ?')) return
+                        try { await api.delete(`/interdits/${i.id}`); load() } catch (err) { alert('Erreur') }
+                      }}>🗑️</button>}
+                    </div>
                   </td>
                 )}
               </tr>

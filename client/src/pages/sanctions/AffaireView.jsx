@@ -94,7 +94,13 @@ export default function AffaireView() {
     <div className="container affaire-view">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-sm)' }}>
         <BackButton />
-        {canWrite && <Link to={`/sanctions/${id}/layout`} className="btn btn-secondary btn-small">🖋️ Mise en page</Link>}
+        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+          {canWrite && <Link to={`/sanctions/${id}/layout`} className="btn btn-secondary btn-small">🖋️ Mise en page</Link>}
+          {user?.isAdmin && <button className="btn btn-danger btn-small" onClick={async () => {
+            if (!confirm('Supprimer cette affaire et toutes ses données ?')) return
+            try { await api.delete(`/affaires/${id}`); navigate('/sanctions') } catch (err) { alert('Erreur') }
+          }}>🗑️ Supprimer</button>}
+        </div>
       </div>
       {message && <div className="alert alert-success">{message}</div>}
 

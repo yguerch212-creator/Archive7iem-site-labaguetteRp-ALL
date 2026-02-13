@@ -202,11 +202,17 @@ export default function PDS() {
               </tr>
             </tfoot>
           </table>
-          {user?.effectif_id === eff.effectif_id && (
-            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+          <div style={{ textAlign: 'center', marginTop: '1rem', display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
+            {user?.effectif_id === eff.effectif_id && (
               <button className="btn btn-primary" onClick={() => { setSelectedEffectif(null); setView('edit') }}>✏️ Éditer mon PDS</button>
-            </div>
-          )}
+            )}
+            {user?.isAdmin && eff.pds_id && (
+              <button className="btn btn-danger btn-small" onClick={async () => {
+                if (!confirm('Supprimer ce PDS ?')) return
+                try { await api.delete(`/pds/${eff.pds_id}`); setSelectedEffectif(null); load() } catch (err) { alert('Erreur') }
+              }}>🗑️ Supprimer</button>
+            )}
+          </div>
         </div>
       </div>
     )

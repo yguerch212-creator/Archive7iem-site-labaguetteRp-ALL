@@ -278,4 +278,13 @@ router.put('/permissions/:id/traiter', auth, async (req, res) => {
   }
 })
 
+// DELETE /api/pds/:id (admin only)
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) return res.status(403).json({ success: false, message: 'Admin requis' })
+    await pool.execute('DELETE FROM pds_semaines WHERE id = ?', [req.params.id])
+    res.json({ success: true })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
 module.exports = router

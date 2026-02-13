@@ -98,6 +98,12 @@ export default function Telegrammes() {
           {(t.expediteur_id === user?.effectif_id || t.destinataire_id === user?.effectif_id) && (
             <button className="btn btn-secondary btn-small" onClick={() => archiver(t.id)}>📦 Archiver</button>
           )}
+          {user?.isAdmin && (
+            <button className="btn btn-danger btn-small" onClick={async () => {
+              if (!confirm('Supprimer ce télégramme ?')) return
+              try { await api.delete(`/telegrammes/${t.id}`); setSelected(null); load() } catch (err) { alert(err.response?.data?.message || 'Erreur') }
+            }}>🗑️ Supprimer</button>
+          )}
         </div>
 
         <div className="telegram-paper">

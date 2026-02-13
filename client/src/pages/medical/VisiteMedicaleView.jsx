@@ -1,10 +1,13 @@
 import BackButton from '../../components/BackButton'
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 
 export default function VisiteMedicaleView() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -135,8 +138,14 @@ export default function VisiteMedicaleView() {
         </div>
       </div>
 
-      <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)' }}>
+      <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
         <button className="btn btn-secondary" onClick={() => window.print()}>🖨️ Imprimer</button>
+        {user?.isAdmin && (
+          <button className="btn btn-danger" onClick={async () => {
+            if (!confirm('Supprimer cette visite médicale ?')) return
+            try { await api.delete(`/medical/${id}`); navigate(-1) } catch (err) { alert('Erreur') }
+          }}>🗑️ Supprimer</button>
+        )}
       </div>
     </div>
   )

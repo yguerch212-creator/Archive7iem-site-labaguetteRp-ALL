@@ -1,11 +1,13 @@
 import BackButton from '../../components/BackButton'
 import React, { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../auth/useAuth'
 import apiClient from '../../api/client'
 
 export default function EffectifsList() {
   const { uniteId } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [effectifs, setEffectifs] = useState([])
   const [unite, setUnite] = useState(null)
   const [grades, setGrades] = useState([])
@@ -115,6 +117,19 @@ export default function EffectifsList() {
                 <div style={{ fontSize: '2rem', marginBottom: 6 }}>🔎</div>
                 <strong>Rechercher</strong>
               </button>
+              {user?.isAdmin && (
+                <button className="paper-card unit-card" style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-lg)', border: '1px solid var(--border-color)', background: 'rgba(180,40,40,0.05)' }} onClick={async () => {
+                  if (!confirm(`Supprimer ${selected.prenom} ${selected.nom} ?`)) return
+                  try {
+                    await apiClient.delete(`/effectifs/${selected.id}`)
+                    setEffectifs(prev => prev.filter(e => e.id !== selected.id))
+                    setSelected(null)
+                  } catch (err) { alert(err.response?.data?.message || 'Erreur') }
+                }}>
+                  <div style={{ fontSize: '2rem', marginBottom: 6 }}>🗑️</div>
+                  <strong style={{ color: 'var(--danger)' }}>Supprimer</strong>
+                </button>
+              )}
             </div>
             <div style={{ textAlign: 'center', marginTop: 'var(--space-md)' }}>
               <button className="btn btn-secondary btn-small" onClick={() => setSelected(null)}>Fermer</button>
