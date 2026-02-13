@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
+const { optionalAuth } = require('../middleware/auth')
 
 // Auto-number: TEL-YYYY-NNN
 async function nextNumero() {
@@ -11,7 +12,7 @@ async function nextNumero() {
 }
 
 // GET /api/telegrammes — inbox + sent for current user's effectif
-router.get('/', auth, async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const effectifId = req.user.effectif_id
     const tab = req.query.tab || 'recu' // recu, envoye, tous
@@ -58,7 +59,7 @@ router.get('/', auth, async (req, res) => {
 })
 
 // GET /api/telegrammes/:id
-router.get('/:id', auth, async (req, res) => {
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const row = await queryOne(`
       SELECT t.*,

@@ -2,10 +2,11 @@ const { logActivity } = require('../utils/logger')
 const router = require('express').Router()
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
+const { optionalAuth } = require('../middleware/auth')
 const recenseur = require('../middleware/recenseur')
 
 // GET /api/decorations — List all available decorations
-router.get('/', auth, async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const rows = await query('SELECT * FROM decorations ORDER BY categorie, rang DESC')
     res.json({ success: true, data: rows })

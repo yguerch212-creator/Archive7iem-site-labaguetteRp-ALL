@@ -1,10 +1,11 @@
 const router = require('express').Router()
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
+const { optionalAuth } = require('../middleware/auth')
 const recenseur = require('../middleware/recenseur')
 
 // GET /api/medical — Toutes les visites
-router.get('/', auth, async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const rows = await query(`
       SELECT v.*,
@@ -41,7 +42,7 @@ router.get('/effectif/:effectif_id', auth, async (req, res) => {
 })
 
 // GET /api/medical/:id — Single visite
-router.get('/:id', auth, async (req, res) => {
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const row = await queryOne(`
       SELECT v.*,

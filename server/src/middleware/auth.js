@@ -14,7 +14,7 @@ async function auth(req, res, next) {
     const decoded = jwt.verify(token, config.jwt.secret)
 
     const user = await queryOne(`
-      SELECT u.id, u.nom, u.prenom, u.username, u.role_level, u.unite_id, u.effectif_id,
+      SELECT u.id, u.nom, u.prenom, u.username, u.role_level, u.unite_id, u.effectif_id, u.must_change_password,
              un.nom AS unite_nom, un.code AS unite_code, g.nom_complet AS grade_nom, g.rang AS grade_rang,
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
               WHERE ug.user_id = u.id AND gp.name = 'Administration') > 0 AS isAdmin,
@@ -42,6 +42,7 @@ async function auth(req, res, next) {
     user.isFeldgendarmerie = !!user.isFeldgendarmerie
     user.isSanitaets = !!user.isSanitaets
     user.isGuest = false
+    user.mustChangePassword = !!user.must_change_password
     req.user = user
     next()
   } catch (err) {

@@ -1,9 +1,10 @@
 const router = require('express').Router()
 const { query } = require('../config/db')
 const auth = require('../middleware/auth')
+const { optionalAuth } = require('../middleware/auth')
 
 // GET /api/search?q=X&filter=all|effectif|rapport
-router.get('/', auth, async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const { q, filter = 'all' } = req.query
     if (!q) return res.json({ success: true, data: { effectifs: [], rapports: [], documentation: [] } })

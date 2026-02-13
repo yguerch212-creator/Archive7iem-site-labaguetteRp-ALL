@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const { query, queryOne } = require('../config/db')
 const auth = require('../middleware/auth')
+const { optionalAuth } = require('../middleware/auth')
 
 function canWrite(req) {
   return req.user.isAdmin || req.user.isOfficier || req.user.isFeldgendarmerie
@@ -17,7 +18,7 @@ async function nextNumero() {
 // ==================== AFFAIRES ====================
 
 // GET /api/affaires — list all
-router.get('/', auth, async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const rows = await query(`
       SELECT a.*,
@@ -36,7 +37,7 @@ router.get('/', auth, async (req, res) => {
 })
 
 // GET /api/affaires/:id — full detail
-router.get('/:id', auth, async (req, res) => {
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const affaire = await queryOne(`
       SELECT a.*, u.username AS created_by_username

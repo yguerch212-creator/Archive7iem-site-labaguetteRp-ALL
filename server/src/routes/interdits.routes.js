@@ -2,10 +2,11 @@ const { logActivity } = require('../utils/logger')
 const router = require('express').Router()
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
+const { optionalAuth } = require('../middleware/auth')
 const feldgendarmerie = require('../middleware/feldgendarmerie')
 
 // GET /api/interdits — Liste tous les interdits (actifs par défaut)
-router.get('/', auth, async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const showAll = req.query.all === '1'
     const rows = await query(`

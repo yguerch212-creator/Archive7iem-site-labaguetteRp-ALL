@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
+const { optionalAuth } = require('../middleware/auth')
 const admin = require('../middleware/admin')
 
 // Helper: can write docs (admin or officier)
@@ -11,7 +12,7 @@ function canSubmit(user) { return user.isAdmin || user.isOfficier || user.isRece
 function canApprove(user) { return user.isAdmin || user.isOfficier }
 
 // GET /api/documentation — all docs + folders
-router.get('/', auth, async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const showAll = canApprove(req.user) && req.query.all === '1'
     const where = showAll ? '' : "WHERE (d.statut = 'approuve' AND d.visible = 1) OR d.is_repertoire = 1"

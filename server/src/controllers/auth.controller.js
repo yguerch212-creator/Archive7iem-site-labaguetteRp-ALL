@@ -95,15 +95,20 @@ async function getMe(req, res) {
 
 async function changePassword(req, res) {
   try {
-    const { currentPassword, newPassword } = req.body
+    const { currentPassword, newPassword, forced } = req.body
     if (!newPassword || newPassword.length < 6) {
       return res.status(400).json({ success: false, message: 'Le nouveau mot de passe doit faire au moins 6 caractères' })
     }
-    const user = await queryOne('SELECT password_hash FROM users WHERE id = ?', [req.user.id])
+    const user = await queryOne('SELECT password_hash, must_change_password FROM users WHERE id = ?', [req.user.id])
     if (!user) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' })
 
-    const valid = await bcrypt.compare(currentPassword, user.password_hash)
-    if (!valid) return res.status(400).json({ success: false, message: 'Mot de passe actuel incorrect' })
+    // Skip current password check only if forced first-login change
+    if (forced && user.must_change_password) {
+      // OK — first login forced change
+    } else {
+      const valid = await bcrypt.compare(currentPassword, user.password_hash)
+      if (!valid) return res.status(400).json({ success: false, message: 'Mot de passe actuel incorrect' })
+    }
 
     const hash = await bcrypt.hash(newPassword, 10)
     await require('../config/db').pool.execute(

@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
+const { optionalAuth } = require('../middleware/auth')
 
 // Semaine RP: vendredi → jeudi (deadline vendredi 20h, samedi = cérémonie)
 // On utilise les numéros de semaine ISO mais la semaine RP commence le vendredi.
@@ -52,7 +53,7 @@ function parseCreneaux(text) {
 }
 
 // GET /api/pds?semaine=2026-W07 — All PDS for a week (everyone can see)
-router.get('/', auth, async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const semaine = req.query.semaine || getCurrentWeek()
 
