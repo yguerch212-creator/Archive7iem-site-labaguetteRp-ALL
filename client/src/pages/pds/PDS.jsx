@@ -208,6 +208,13 @@ export default function PDS() {
         </div>
       </div>
 
+      {/* Recap button for officers */}
+      {isPrivileged && (
+        <div style={{ textAlign: 'right', marginBottom: 'var(--space-sm)' }}>
+          <Link to={`/pds/recap?semaine=${semaine}`} className="btn btn-secondary btn-small">📊 Générer récapitulatif</Link>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="pds-tabs">
         {hasEffectif && <button className={`pds-tab ${tab === 'mon-pds' ? 'active' : ''}`} onClick={() => setTab('mon-pds')}>📝 Mon PDS</button>}

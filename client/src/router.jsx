@@ -18,6 +18,7 @@ import Search from './pages/Search'
 import AdminUsers from './pages/admin/AdminUsers'
 import AdminLogs from './pages/admin/AdminLogs'
 import PDS from './pages/pds/PDS'
+import PDSRecap from './pages/pds/PDSRecap'
 import InterditsFront from './pages/interdits/InterditsFront'
 import VisitesMedicales from './pages/medical/VisitesMedicales'
 import VisiteMedicaleView from './pages/medical/VisiteMedicaleView'
@@ -27,6 +28,7 @@ import DossierPersonnel from './pages/dossiers/DossierPersonnel'
 import DossierView from './pages/dossiers/DossierView'
 import Telegrammes from './pages/telegrammes/Telegrammes'
 import AdminStats from './pages/admin/AdminStats'
+import Moderation from './pages/admin/Moderation'
 
 function AppRouter() {
   const { user } = useAuth()
@@ -54,6 +56,7 @@ function AppRouter() {
       
       {/* PDS */}
       <Route path="/pds" element={<ProtectedRoute><PDS /></ProtectedRoute>} />
+      <Route path="/pds/recap" element={<ProtectedRoute><PDSRecap /></ProtectedRoute>} />
       
       {/* Interdits de front */}
       <Route path="/interdits" element={<ProtectedRoute><InterditsFront /></ProtectedRoute>} />
@@ -78,6 +81,7 @@ function AppRouter() {
       <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
       <Route path="/admin/logs" element={<ProtectedRoute><AdminLogs /></ProtectedRoute>} />
       <Route path="/admin/stats" element={<ProtectedRoute><AdminStats /></ProtectedRoute>} />
+      <Route path="/admin/moderation" element={<ProtectedRoute><Moderation /></ProtectedRoute>} />
       
       <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />

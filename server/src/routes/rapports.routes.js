@@ -163,4 +163,22 @@ router.delete('/:id', auth, admin, async (req, res) => {
   }
 })
 
+// PUT /api/rapports/:id/publish — Publish with auto-layout
+router.put('/:id/publish', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin && !req.user.isRecenseur && !req.user.isOfficier) {
+      return res.status(403).json({ success: false, message: 'Non autorisé' })
+    }
+    const { contenu_html, signature_nom, signature_grade, stamp } = req.body
+    await pool.execute(
+      'UPDATE rapports SET published = 1, contenu_html = ?, signature_nom = ?, signature_grade = ?, stamp = ? WHERE id = ?',
+      [contenu_html || null, signature_nom || null, signature_grade || null, stamp || null, req.params.id]
+    )
+    logActivity(req, 'publish_rapport', 'rapport', parseInt(req.params.id))
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
 module.exports = router

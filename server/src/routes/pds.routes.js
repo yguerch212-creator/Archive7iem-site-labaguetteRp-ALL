@@ -162,6 +162,48 @@ router.get('/historique/:effectif_id', auth, async (req, res) => {
   }
 })
 
+// GET /api/pds/recap?semaine=2026-W07 — Full recap for officers (all effectifs)
+router.get('/recap', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin && !req.user.isRecenseur && !req.user.isOfficier) {
+      return res.status(403).json({ success: false, message: 'Accès réservé' })
+    }
+    const semaine = req.query.semaine || getCurrentWeek()
+
+    const rows = await query(`
+      SELECT e.id AS effectif_id, e.nom, e.prenom, e.fonction,
+             g.nom_complet AS grade_nom, g.rang AS grade_rang,
+             u.nom AS unite_nom, u.code AS unite_code,
+             p.id AS pds_id, p.lundi, p.mardi, p.mercredi, p.jeudi, p.vendredi, p.vendredi_fin, p.samedi, p.dimanche,
+             p.total_heures, p.valide
+      FROM effectifs e
+      LEFT JOIN grades g ON g.id = e.grade_id
+      LEFT JOIN unites u ON u.id = e.unite_id
+      LEFT JOIN pds_semaines p ON p.effectif_id = e.id AND p.semaine = ?
+      WHERE e.actif = 'Actif'
+      ORDER BY u.code, COALESCE(g.rang, 0) DESC, e.nom
+    `, [semaine])
+
+    // Permissions active this week
+    const perms = await query(`
+      SELECT pa.*, e.prenom, e.nom AS eff_nom, g.nom_complet AS grade_nom
+      FROM permissions_absence pa
+      JOIN effectifs e ON e.id = pa.effectif_id
+      LEFT JOIN grades g ON g.id = e.grade_id
+      WHERE pa.statut = 'Approuvee'
+    `)
+
+    const total = rows.length
+    const remplis = rows.filter(r => r.pds_id).length
+    const valides = rows.filter(r => r.valide).length
+    const nonRemplis = rows.filter(r => !r.pds_id)
+
+    res.json({ success: true, data: { rows, perms, semaine, stats: { total, remplis, valides, nonRemplis: nonRemplis.length } } })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
 // ==========================================
 // PERMISSIONS D'ABSENCE
 // ==========================================

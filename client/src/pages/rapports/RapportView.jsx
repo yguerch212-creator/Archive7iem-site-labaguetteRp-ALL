@@ -1,120 +1,202 @@
 import BackButton from '../../components/BackButton'
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { useAuth } from '../../auth/useAuth'
 import apiClient from '../../api/client'
 import { exportToPdf } from '../../utils/exportPdf'
 
 const TYPE_LABELS = { rapport: 'Rapport Journalier', recommandation: 'Recommandation', incident: 'Rapport d\'Incident' }
+const STAMPS = [
+  { id: 'tempon916', label: '916. Grenadier', url: '/assets/stamps/tempon916.png' },
+]
 
 export default function RapportView() {
   const { id } = useParams()
+  const { user } = useAuth()
   const [rapport, setRapport] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showPublish, setShowPublish] = useState(false)
+  const [pubForm, setPubForm] = useState({ signature_nom: '', signature_grade: '', stamp: '' })
+  const [message, setMessage] = useState(null)
+
+  const canPublish = user?.isAdmin || user?.isOfficier || user?.isRecenseur
 
   useEffect(() => {
-    apiClient.get(`/rapports/${id}`).then(r => { setRapport(r.data.data); setLoading(false) }).catch(() => setLoading(false))
+    load()
   }, [id])
 
-  if (loading) return <><div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div></>
-  if (!rapport) return <><div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Rapport introuvable</div></>
+  const load = () => {
+    apiClient.get(`/rapports/${id}`).then(r => { setRapport(r.data.data); setLoading(false) }).catch(() => setLoading(false))
+  }
+
+  const autoPublish = async () => {
+    try {
+      // Generate HTML from the paper content
+      const el = document.getElementById('rapport-paper')
+      const html = el ? el.innerHTML : ''
+      await apiClient.put(`/rapports/${id}/publish`, {
+        contenu_html: html,
+        signature_nom: pubForm.signature_nom,
+        signature_grade: pubForm.signature_grade,
+        stamp: pubForm.stamp
+      })
+      setMessage({ type: 'success', text: 'Rapport publié ✓' })
+      setShowPublish(false)
+      load()
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur' })
+    }
+  }
+
+  if (loading) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div>
+  if (!rapport) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Rapport introuvable</div>
 
   const R = rapport
-  const media = R.fichier_media ? (typeof R.fichier_media === 'string' ? JSON.parse(R.fichier_media) : R.fichier_media) : []
+  const fmtDate = d => d ? new Date(d + 'T00:00').toLocaleDateString('fr-FR') : '—'
 
   return (
-    <>
-      
-      <div className="container" style={{ maxWidth: 980 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
-          <BackButton className="btn btn-secondary btn-small" label="← Retour" />
-          {!R.published && <Link to={`/rapports/${id}/layout`} className="btn btn-primary btn-small">🖋️ Mise en page</Link>}
+    <div className="container" style={{ maxWidth: 900, paddingBottom: 'var(--space-xxl)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
+        <BackButton label="← Retour" />
+        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+          <Link to={`/rapports/${id}/layout`} className="btn btn-secondary btn-small">🖋️ Mise en page</Link>
+          {canPublish && !R.published && (
+            <button className="btn btn-primary btn-small" onClick={() => setShowPublish(!showPublish)}>
+              {showPublish ? '✕' : '📜 Publier'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}
+
+      {/* Publish form */}
+      {showPublish && (
+        <div className="paper-card" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-lg)' }}>
+          <h3 style={{ marginTop: 0 }}>📜 Publier le rapport</h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Ajoute une signature et un tampon, puis publie le rapport en l'état.</p>
+          <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label className="form-label">Signataire</label>
+              <input type="text" className="form-input" value={pubForm.signature_nom} onChange={e => setPubForm(p => ({...p, signature_nom: e.target.value}))} placeholder={`${user?.prenom || ''} ${user?.nom || ''}`} />
+            </div>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label className="form-label">Grade du signataire</label>
+              <input type="text" className="form-input" value={pubForm.signature_grade} onChange={e => setPubForm(p => ({...p, signature_grade: e.target.value}))} placeholder={user?.grade_nom || 'Grade...'} />
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Tampon</label>
+            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+              <label style={{ cursor: 'pointer', border: pubForm.stamp === '' ? '2px solid var(--military-green)' : '2px solid var(--border-color)', borderRadius: 'var(--border-radius)', padding: 'var(--space-sm)', textAlign: 'center', minWidth: 80 }}>
+                <input type="radio" name="stamp" value="" checked={pubForm.stamp === ''} onChange={() => setPubForm(p => ({...p, stamp: ''}))} style={{ display: 'none' }} />
+                <div style={{ fontSize: '0.8rem' }}>Aucun</div>
+              </label>
+              {STAMPS.map(s => (
+                <label key={s.id} style={{ cursor: 'pointer', border: pubForm.stamp === s.id ? '2px solid var(--military-green)' : '2px solid var(--border-color)', borderRadius: 'var(--border-radius)', padding: 'var(--space-sm)', textAlign: 'center' }}>
+                  <input type="radio" name="stamp" value={s.id} checked={pubForm.stamp === s.id} onChange={() => setPubForm(p => ({...p, stamp: s.id}))} style={{ display: 'none' }} />
+                  <img src={s.url} alt={s.label} style={{ height: 50, opacity: 0.7 }} /><br/>
+                  <span style={{ fontSize: '0.7rem' }}>{s.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <button className="btn btn-primary" onClick={autoPublish}>📜 Publier avec mise en page auto</button>
+        </div>
+      )}
+
+      {/* Document */}
+      <div className="document-paper" id="rapport-paper" style={{ minHeight: 500 }}>
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)', borderBottom: '2px solid var(--border-color)', paddingBottom: 'var(--space-lg)' }}>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 4, fontFamily: 'var(--font-mono)' }}>{R.numero}</div>
+          <h2 style={{ margin: '0 0 6px', fontSize: '1.3rem' }}>📜 {TYPE_LABELS[R.type] || 'RAPPORT'}</h2>
+          <div style={{ fontSize: '1rem', fontWeight: 600 }}>{R.titre}</div>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: 8 }}>
+            Rédigé par <strong>{R.auteur_nom || 'Inconnu'}</strong>
+            {R.auteur_grade && <> — {R.auteur_grade}</>}
+            {R.personne_renseignee_nom && <><br/>Personne renseignée : <strong>{R.personne_renseignee_nom}</strong></>}
+          </div>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>
+            Date RP : {R.date_rp || '—'} — Date IRL : {fmtDate(R.date_irl)}
+          </div>
         </div>
 
-        <div className="document-paper" id="rapport-paper" style={{ minHeight: 600 }}>
-          {/* Si publié avec contenu_html, afficher tel quel */}
-          {R.published && R.contenu_html ? (
-            <div dangerouslySetInnerHTML={{ __html: R.contenu_html }} />
-          ) : (
-            <>
-              <div style={{ textAlign: 'center', marginBottom: 18 }}>
-                <h2 style={{ margin: '0 0 6px' }}>📜 {TYPE_LABELS[R.type] || 'RAPPORT'} : {R.titre}</h2>
-                <div style={{ opacity: 0.85 }}>
-                  Rédigé par {R.auteur_nom || 'Inconnu'}
-                  {R.personne_renseignee_nom && <> — Personne renseignée : {R.personne_renseignee_nom}</>}<br />
-                  Date RP : {R.date_rp || '—'} — Date IRL : {R.date_irl ? new Date(R.date_irl).toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit',year:'numeric'}) : '—'}
-                </div>
+        {/* Content by type */}
+        {R.type === 'rapport' && (
+          <>
+            {R.contexte && <Section title="I. CONTEXTE" content={R.contexte} />}
+            {R.resume && <Section title="II. RÉSUMÉ DES OPÉRATIONS" content={R.resume} />}
+            {R.bilan && <Section title="III. BILAN" content={R.bilan} />}
+            {R.remarques && <Section title="IV. REMARQUES" content={R.remarques} />}
+          </>
+        )}
+
+        {R.type === 'recommandation' && (
+          <>
+            <Section title="I. PERSONNE RECOMMANDÉE">
+              <strong>{R.recommande_nom}</strong>{R.recommande_grade && <> — {R.recommande_grade}</>}
+            </Section>
+            {R.raison_1 && <Section title="II. MOTIFS DE LA RECOMMANDATION" content={R.raison_1} />}
+            {R.recompense && <Section title="III. RÉCOMPENSE PROPOSÉE" content={R.recompense} />}
+          </>
+        )}
+
+        {R.type === 'incident' && (
+          <>
+            <Section title="I. INTRODUCTION">
+              <strong>{R.intro_nom}</strong>{R.intro_grade && <> — {R.intro_grade}</>}
+              {R.lieu_incident && <><br/>Lieu : <strong>{R.lieu_incident}</strong></>}
+            </Section>
+            <Section title="II. MISE EN CAUSE">
+              <strong>{R.mise_en_cause_nom}</strong>{R.mise_en_cause_grade && <> — {R.mise_en_cause_grade}</>}
+            </Section>
+            {R.compte_rendu && <Section title="III. COMPTE RENDU DES FAITS" content={R.compte_rendu} />}
+          </>
+        )}
+
+        {/* Signature + Stamp */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 'var(--space-xl)', borderTop: '2px solid var(--border-color)', marginTop: 'var(--space-xl)', flexWrap: 'wrap', gap: 'var(--space-lg)' }}>
+          <div>
+            {(R.signature_nom || R.auteur_nom) && (
+              <div style={{ fontSize: '0.85rem' }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: 4 }}>Signataire :</div>
+                <strong>{R.signature_nom || R.auteur_nom}</strong>
+                {(R.signature_grade || R.auteur_grade) && <div>{R.signature_grade || R.auteur_grade}</div>}
               </div>
-
-              {/* Rapport journalier */}
-              {R.type === 'rapport' && (
-                <>
-                  {R.contexte && <Block title="I. CONTEXTE">{R.contexte}</Block>}
-                  {R.resume && <Block title="II. RÉSUMÉ">{R.resume}</Block>}
-                  {R.bilan && <Block title="III. BILAN">{R.bilan}</Block>}
-                  {R.remarques && <Block title="IV. REMARQUES">{R.remarques}</Block>}
-                </>
-              )}
-
-              {/* Recommandation */}
-              {R.type === 'recommandation' && (
-                <>
-                  <Block title="I. PERSONNE RECOMMANDÉE">{R.recommande_nom} — {R.recommande_grade}</Block>
-                  {R.raison_1 && <Block title="II. MOTIFS">{R.raison_1}</Block>}
-                  {R.recompense && <Block title="III. RÉCOMPENSE PROPOSÉE">{R.recompense}</Block>}
-                </>
-              )}
-
-              {/* Incident */}
-              {R.type === 'incident' && (
-                <>
-                  <Block title="I. INTRODUCTION">{R.intro_nom} — {R.intro_grade}<br />Lieu : {R.lieu_incident}</Block>
-                  <Block title="II. MISE EN CAUSE">{R.mise_en_cause_nom} — {R.mise_en_cause_grade}</Block>
-                  {R.compte_rendu && <Block title="III. COMPTE RENDU">{R.compte_rendu}</Block>}
-                </>
-              )}
-
-              {/* Médias */}
-              {media.length > 0 && (
-                <div style={{ marginTop: 12 }}>
-                  <strong>Médias</strong><br />
-                  {media.map((m, i) => (
-                    <div key={i} style={{ marginTop: 8 }}>
-                      {/\.(mp4|webm)$/i.test(m.url) ? (
-                        <video controls src={m.url} style={{ maxWidth: '100%', borderRadius: 8 }} />
-                      ) : (
-                        <img src={m.url} alt="" style={{ maxWidth: '100%', borderRadius: 8 }} />
-                      )}
-                      {m.legend && <div style={{ opacity: 0.8, fontStyle: 'italic', marginTop: 4 }}>{m.legend}</div>}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Signature */}
-              {(R.signature_nom || R.signature_image) && (
-                <div style={{ textAlign: 'right', marginTop: 20 }}>
-                  {R.signature_nom}{R.signature_grade && ` — ${R.signature_grade}`}<br />
-                  {R.signature_image && <img src={R.signature_image} alt="Signature" style={{ maxHeight: 100 }} />}
-                </div>
-              )}
-            </>
+            )}
+            <div style={{ borderBottom: '1px solid var(--text-primary)', width: 200, height: 40, marginTop: 'var(--space-sm)' }}>
+              {R.signature_image && <img src={R.signature_image} alt="" style={{ maxHeight: 35, maxWidth: 180 }} />}
+            </div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2 }}>Signature</div>
+          </div>
+          {R.stamp && (
+            <div style={{ textAlign: 'center' }}>
+              <img src={STAMPS.find(s => s.id === R.stamp)?.url || `/assets/stamps/${R.stamp}.png`} alt="Tampon" style={{ height: 80, opacity: 0.6, transform: 'rotate(-5deg)' }} />
+            </div>
           )}
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
-          <button className="btn btn-primary" onClick={() => exportToPdf('rapport-paper', `Rapport_${R.titre?.replace(/\s/g, '_') || R.id}`)}>📄 Exporter en PDF</button>
-          <button className="btn btn-secondary" onClick={() => window.print()}>🖨️ Imprimer</button>
-        </div>
+        {R.published && (
+          <div style={{ textAlign: 'center', marginTop: 'var(--space-md)', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+            📜 Document publié — Archives 7e Armeekorps
+          </div>
+        )}
       </div>
-    </>
+
+      <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
+        <button className="btn btn-primary" onClick={() => exportToPdf('rapport-paper', `Rapport_${R.titre?.replace(/\s/g, '_') || R.id}`)}>📄 PDF</button>
+        <button className="btn btn-secondary" onClick={() => window.print()}>🖨️ Imprimer</button>
+      </div>
+    </div>
   )
 }
 
-function Block({ title, children }) {
+function Section({ title, content, children }) {
   return (
-    <div style={{ marginTop: 12 }}>
-      <strong>{title}</strong><br />
-      <span style={{ whiteSpace: 'pre-line' }}>{children}</span>
+    <div style={{ marginBottom: 'var(--space-lg)' }}>
+      <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--military-dark)', marginBottom: 'var(--space-xs)', paddingBottom: 'var(--space-xs)', borderBottom: '1px solid var(--border-color)' }}>{title}</h3>
+      {content ? <p style={{ whiteSpace: 'pre-line', fontSize: '0.85rem', lineHeight: 1.7 }}>{content}</p> : <div style={{ fontSize: '0.85rem', lineHeight: 1.7 }}>{children}</div>}
     </div>
   )
 }

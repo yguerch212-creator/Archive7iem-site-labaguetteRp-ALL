@@ -29,6 +29,9 @@ export default function Dashboard() {
     { icon: '🔎', title: 'Recherche', desc: 'Recherche globale', to: '/search' },
   ]
 
+  if (user?.isAdmin || user?.isOfficier || user?.isRecenseur) {
+    navCards.push({ icon: '🔔', title: 'Validation', desc: 'Modération & validation', to: '/admin/moderation' })
+  }
   if (user?.isAdmin) {
     navCards.push({ icon: '📊', title: 'Statistiques', desc: 'Vue d\'ensemble', to: '/admin/stats' })
     navCards.push({ icon: '⚙️', title: 'Administration', desc: 'Utilisateurs & permissions', to: '/admin/users' })
