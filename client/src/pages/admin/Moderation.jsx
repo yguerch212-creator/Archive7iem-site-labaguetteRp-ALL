@@ -1,12 +1,13 @@
 import BackButton from '../../components/BackButton'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
+import { formatDate } from '../../utils/dates'
 
 export default function Moderation() {
   const { user } = useAuth()
-  const [data, setData] = useState({ docs: [], permissions: [], rapports: [], interdits: [], media: [] })
+  const [data, setData] = useState({ docs: [], permissions: [], rapports: [], interdits: [], media: [], medical: [] })
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState(null)
   const [tab, setTab] = useState('docs')
@@ -16,13 +17,11 @@ export default function Moderation() {
   const load = async () => {
     try {
       const res = await api.get('/moderation/pending')
-      // Also load pending media
-      let mediaData = []
-      try {
-        const mRes = await api.get('/media/pending')
-        mediaData = mRes.data.data || []
-      } catch {}
-      setData({ ...res.data.data, media: mediaData })
+      // Also load pending media + medical
+      let mediaData = [], medicalData = []
+      try { const mRes = await api.get('/media/pending'); mediaData = mRes.data.data || [] } catch {}
+      try { const mdRes = await api.get('/medical/pending/list'); medicalData = mdRes.data.data || [] } catch {}
+      setData({ ...res.data.data, media: mediaData, medical: medicalData })
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
   }
@@ -45,6 +44,39 @@ export default function Moderation() {
       flash('success', statut === 'Approuvee' ? '✅ Permission approuvée' : '❌ Permission refusée')
       load()
     } catch { flash('error', 'Erreur') }
+  }
+
+  const [showSignCanvas, setShowSignCanvas] = useState(null) // medical id to validate
+  const [savedSignature, setSavedSignature] = useState(null)
+
+  // Load saved signature on mount
+  useEffect(() => {
+    api.get('/medical/my-signature').then(r => setSavedSignature(r.data.data)).catch(() => {})
+  }, [])
+
+  const validerVisite = async (id) => {
+    if (savedSignature) {
+      // Already has signature, apply directly
+      try {
+        await api.put(`/medical/${id}/valider`, { signature_data: savedSignature })
+        flash('success', '✅ Visite validée avec votre signature')
+        load()
+      } catch (err) { flash('error', 'Erreur') }
+    } else {
+      // Need to create signature first
+      setShowSignCanvas(id)
+    }
+  }
+
+  const signAndValidate = async (signatureData) => {
+    const id = showSignCanvas
+    setShowSignCanvas(null)
+    try {
+      await api.put(`/medical/${id}/valider`, { signature_data: signatureData })
+      setSavedSignature(signatureData) // Save for future use
+      flash('success', '✅ Visite validée — signature sauvegardée')
+      load()
+    } catch (err) { flash('error', 'Erreur') }
   }
 
   const leverInterdit = async (id) => {
@@ -70,6 +102,7 @@ export default function Moderation() {
     { key: 'rapports', label: '📝 Rapports récents', count: data.rapports.length },
     { key: 'interdits', label: '🚫 Interdits actifs', count: data.interdits.length },
     { key: 'media', label: '📸 Médias', count: data.media.length },
+    { key: 'medical', label: '🏥 Visites médicales', count: data.medical.length },
   ]
 
   return (
@@ -215,6 +248,41 @@ export default function Moderation() {
             </div>
           )}
 
+          {/* Visites médicales à valider */}
+          {tab === 'medical' && (
+            <div className="paper-card" style={{ overflow: 'auto' }}>
+              {data.medical.length === 0 ? (
+                <p style={{ textAlign: 'center', padding: 'var(--space-lg)', color: 'var(--text-muted)' }}>✅ Aucune visite en attente de validation</p>
+              ) : (
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                  <thead><tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+                    <th style={th}>Patient</th><th style={th}>Grade</th><th style={th}>Unité</th><th style={th}>Diagnostic</th><th style={th}>Aptitude</th><th style={th}>Date</th><th style={th}>Actions</th>
+                  </tr></thead>
+                  <tbody>
+                    {data.medical.map(v => (
+                      <tr key={v.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        <td style={td}><strong>{v.prenom} {v.nom}</strong></td>
+                        <td style={td}>{v.grade_nom || '—'}</td>
+                        <td style={td}>{v.unite_code || '—'}</td>
+                        <td style={td}>{v.diagnostic || '—'}</td>
+                        <td style={td}><span className={`badge ${v.aptitude === 'Apte' ? 'badge-green' : v.aptitude === 'Inapte' ? 'badge-red' : 'badge-warning'}`}>{v.aptitude}</span></td>
+                        <td style={td}>{v.date_visite ? fmtDate(v.date_visite) : '—'}</td>
+                        <td style={td}>
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <Link to={`/medical/${v.id}`} className="btn btn-sm btn-secondary" style={{ padding: '2px 8px', fontSize: '0.75rem' }}>👁️</Link>
+                            <button className="btn btn-sm btn-primary" style={{ padding: '2px 8px', fontSize: '0.75rem' }} onClick={() => validerVisite(v.id)}>
+                              ✅ Valider{savedSignature ? ' + signer' : ''}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+
           {/* Interdits actifs */}
           {tab === 'interdits' && (
             <div className="paper-card" style={{ overflow: 'auto' }}>
@@ -244,6 +312,46 @@ export default function Moderation() {
           )}
         </>
       )}
+      {showSignCanvas && (
+        <SignatureCanvasPopup
+          onSign={signAndValidate}
+          onClose={() => setShowSignCanvas(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+function SignatureCanvasPopup({ onSign, onClose }) {
+  const canvasRef = useRef(null)
+  const [drawing, setDrawing] = useState(false)
+  const [hasContent, setHasContent] = useState(false)
+
+  const getPos = (e) => {
+    const rect = canvasRef.current.getBoundingClientRect()
+    const touch = e.touches ? e.touches[0] : e
+    return { x: touch.clientX - rect.left, y: touch.clientY - rect.top }
+  }
+  const startDraw = (e) => { e.preventDefault(); const ctx = canvasRef.current.getContext('2d'); const pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); setDrawing(true) }
+  const draw = (e) => { if (!drawing) return; e.preventDefault(); const ctx = canvasRef.current.getContext('2d'); const pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.strokeStyle = '#1a1a2e'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.stroke(); setHasContent(true) }
+  const stopDraw = () => setDrawing(false)
+  const clear = () => { canvasRef.current.getContext('2d').clearRect(0, 0, 400, 150); setHasContent(false) }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
+      <div className="paper-card" style={{ maxWidth: 480, textAlign: 'center', padding: 'var(--space-lg)' }} onClick={e => e.stopPropagation()}>
+        <h3>✍️ Créez votre signature</h3>
+        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Elle sera sauvegardée pour vos futurs documents.</p>
+        <canvas ref={canvasRef} width={400} height={150}
+          style={{ border: '2px solid var(--border)', borderRadius: 4, cursor: 'crosshair', background: 'white', touchAction: 'none', display: 'block', margin: '0.8rem auto' }}
+          onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw}
+          onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw} />
+        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+          <button className="btn btn-primary" disabled={!hasContent} onClick={() => onSign(canvasRef.current.toDataURL('image/png'))}>✅ Signer & Valider</button>
+          <button className="btn" onClick={clear}>🗑️ Effacer</button>
+          <button className="btn" onClick={onClose}>Annuler</button>
+        </div>
+      </div>
     </div>
   )
 }

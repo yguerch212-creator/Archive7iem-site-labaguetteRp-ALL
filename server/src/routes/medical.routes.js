@@ -122,4 +122,63 @@ router.delete('/:id', auth, async (req, res) => {
   }
 })
 
+// PUT /api/medical/:id/valider — validate visite (officier sanitäts or admin)
+router.put('/:id/valider', auth, async (req, res) => {
+  // Only admin, officier, or sanitäts can validate
+  if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isSanitaets) {
+    return res.status(403).json({ success: false, message: 'Officier Sanitäts requis' })
+  }
+  const { signature_data } = req.body
+  try {
+    await pool.execute(
+      'UPDATE visites_medicales SET valide = 1, valide_par = ?, valide_at = NOW(), signature_medecin = ? WHERE id = ?',
+      [req.user.id, signature_data || null, req.params.id]
+    )
+    // Save personal signature if provided
+    if (signature_data && req.user.effectif_id) {
+      await pool.execute(
+        `INSERT INTO signatures_effectifs (effectif_id, signature_data) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE signature_data = VALUES(signature_data)`,
+        [req.user.effectif_id, signature_data]
+      )
+    }
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// GET /api/medical/pending — list unvalidated visites
+router.get('/pending/list', auth, async (req, res) => {
+  if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isSanitaets) {
+    return res.status(403).json({ success: false, message: 'Non autorisé' })
+  }
+  try {
+    const [rows] = await pool.execute(`
+      SELECT v.id, v.date_visite, v.diagnostic, v.aptitude, v.created_at,
+        e.nom, e.prenom, g.nom_complet AS grade_nom, u2.code AS unite_code
+      FROM visites_medicales v
+      LEFT JOIN effectifs e ON v.effectif_id = e.id
+      LEFT JOIN grades g ON g.id = e.grade_id
+      LEFT JOIN unites u2 ON u2.id = e.unite_id
+      WHERE v.valide = 0
+      ORDER BY v.created_at DESC
+    `)
+    res.json({ data: rows })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// GET /api/medical/my-signature — get saved signature
+router.get('/my-signature', auth, async (req, res) => {
+  if (!req.user.effectif_id) return res.json({ data: null })
+  try {
+    const [rows] = await pool.execute('SELECT signature_data FROM signatures_effectifs WHERE effectif_id = ?', [req.user.effectif_id])
+    res.json({ data: rows[0]?.signature_data || null })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
 module.exports = router

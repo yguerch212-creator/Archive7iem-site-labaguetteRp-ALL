@@ -107,7 +107,11 @@ app.get('/api/stats/pending', auth, async (req, res) => {
     const permsCount = permissions?.c || 0
     const interditsCount = interdits?.c || 0
     const mediaCount = media?.c || 0
-    res.json({ docs: docsCount, permissions: permsCount, interdits: interditsCount, media: mediaCount, total: docsCount + permsCount + interditsCount + mediaCount })
+    // Visites médicales en attente de validation sanitäts
+    const medicalPending = await queryOne("SELECT COUNT(*) as c FROM visites_medicales WHERE valide = 0")
+    const medicalCount = medicalPending?.c || 0
+    // interdits ne comptent PAS dans le total (accès rapide seulement)
+    res.json({ docs: docsCount, permissions: permsCount, interdits: interditsCount, media: mediaCount, medical: medicalCount, total: docsCount + permsCount + mediaCount + medicalCount })
   } catch (err) {
     res.json({ docs: 0, permissions: 0, total: 0 })
   }
