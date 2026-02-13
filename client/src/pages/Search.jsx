@@ -8,6 +8,7 @@ const CAT_ICONS = { Reglement: '📜', Procedure: '📋', Formation: '🎓', Lor
 export default function Search() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
+  const [selectedEffectif, setSelectedEffectif] = useState(null)
   const [filter, setFilter] = useState('all')
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -65,12 +66,12 @@ export default function Search() {
                   </tr></thead>
                   <tbody>
                     {results.effectifs.map(e => (
-                      <tr key={e.id} style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }} onClick={() => navigate(`/effectifs/${e.id}/soldbuch`)}>
+                      <tr key={e.id} style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }} onClick={() => setSelectedEffectif(e)}>
                         <td style={td}>{e.grade_nom || '—'}</td>
                         <td style={td}><strong>{e.nom}</strong></td>
                         <td style={td}>{e.prenom}</td>
                         <td style={td}>{e.unite_nom || '—'}</td>
-                        <td style={td}><span style={{ fontSize: '0.8rem' }}>📘 Soldbuch</span></td>
+                        <td style={td}><span style={{ fontSize: '0.8rem' }}>👆</span></td>
                       </tr>
                     ))}
                   </tbody>
@@ -134,6 +135,25 @@ export default function Search() {
         <div className="paper-card" style={{ textAlign: 'center', padding: '3rem' }}>
           <p style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏛️</p>
           <p style={{ color: 'var(--text-muted)' }}>Entrez un terme pour fouiller les archives.</p>
+        </div>
+      )}
+
+      {/* Popup effectif (même que EffectifsList) */}
+      {selectedEffectif && (
+        <div className="popup-overlay" onClick={() => setSelectedEffectif(null)}>
+          <div className="popup-content" style={{ maxWidth: 400, textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+            <button className="popup-close" onClick={() => setSelectedEffectif(null)}>✕</button>
+            <h3 style={{ marginBottom: '0.3rem' }}>{selectedEffectif.prenom} {selectedEffectif.nom}</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0 0 1.2rem' }}>
+              {selectedEffectif.grade_nom || '—'} — {selectedEffectif.unite_nom || '—'}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              <button className="btn btn-primary" onClick={() => navigate(`/effectifs/${selectedEffectif.id}/soldbuch`)}>📘 Soldbuch</button>
+              <button className="btn btn-secondary" onClick={() => navigate(`/dossiers/effectif/${selectedEffectif.id}`)}>📁 Dossier</button>
+              <button className="btn btn-secondary" onClick={() => navigate(`/effectifs/${selectedEffectif.id}/edit`)}>✏️ Modifier</button>
+              <button className="btn" onClick={() => { setQuery(`${selectedEffectif.prenom} ${selectedEffectif.nom}`); setSelectedEffectif(null) }}>🔎 Rechercher dans les archives</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
