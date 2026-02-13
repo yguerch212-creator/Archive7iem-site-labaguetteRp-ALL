@@ -15,9 +15,18 @@ export default function DossiersList() {
   const [form, setForm] = useState({ titre: '', type: 'thematique', description: '', visibilite: 'public' })
   const [message, setMessage] = useState(null)
 
+  const [myDossier, setMyDossier] = useState(null)
   const canCreate = user?.isAdmin || user?.isOfficier || user?.isRecenseur
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load(); loadMine() }, [])
+
+  const loadMine = async () => {
+    if (!user?.effectif_id) return
+    try {
+      const res = await api.get(`/dossiers/effectif/${user.effectif_id}`)
+      setMyDossier(res.data.data)
+    } catch (err) { console.error(err) }
+  }
 
   const load = async () => {
     try {
@@ -94,6 +103,34 @@ export default function DossiersList() {
             </div>
             <button type="submit" className="btn btn-primary">📁 Créer le dossier</button>
           </form>
+        </div>
+      )}
+
+      {/* My own dossier */}
+      {myDossier && (
+        <div className="dossier-section">
+          <h2 className="dossier-section-title">📋 Mon dossier personnel</h2>
+          <Link to={`/dossiers/effectif/${user.effectif_id}`} className="card dossier-my-card">
+            <div className="dossier-my-stats">
+              <div className="dossier-my-stat">
+                <span className="dossier-my-stat-num">{myDossier.rapports?.length || 0}</span>
+                <span className="dossier-my-stat-label">📋 Rapports</span>
+              </div>
+              <div className="dossier-my-stat">
+                <span className="dossier-my-stat-num">{myDossier.interdits?.length || 0}</span>
+                <span className="dossier-my-stat-label">🚫 Interdits</span>
+              </div>
+              <div className="dossier-my-stat">
+                <span className="dossier-my-stat-num">{myDossier.medical?.length || 0}</span>
+                <span className="dossier-my-stat-label">🏥 Visites</span>
+              </div>
+              <div className="dossier-my-stat">
+                <span className="dossier-my-stat-num">{myDossier.entrees?.length || 0}</span>
+                <span className="dossier-my-stat-label">📝 Notes</span>
+              </div>
+            </div>
+            <span className="btn btn-sm btn-primary" style={{ marginTop: '0.75rem' }}>Consulter mon dossier →</span>
+          </Link>
         </div>
       )}
 

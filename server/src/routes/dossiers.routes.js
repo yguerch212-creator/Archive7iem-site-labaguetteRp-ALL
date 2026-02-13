@@ -69,8 +69,8 @@ router.get('/effectif/:effectifId', auth, async (req, res) => {
       query(`SELECT i.*, ord.username AS ordonne_par_nom FROM interdits_front i
         JOIN users ord ON ord.id = i.ordonne_par WHERE i.effectif_id = ?
         ORDER BY i.created_at DESC`, [effectifId]),
-      query(`SELECT v.*, med.username AS medecin_nom FROM visites_medicales v
-        LEFT JOIN users med ON med.id = v.medecin_id WHERE v.effectif_id = ?
+      query(`SELECT v.*, cr.username AS created_by_nom FROM visites_medicales v
+        LEFT JOIN users cr ON cr.id = v.created_by WHERE v.effectif_id = ?
         ORDER BY v.date_visite DESC`, [effectifId]),
       query(`SELECT de.*, cr.username AS created_by_nom FROM dossier_entrees de
         JOIN users cr ON cr.id = de.created_by WHERE de.dossier_id = ?
