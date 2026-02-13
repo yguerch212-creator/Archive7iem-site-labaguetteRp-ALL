@@ -90,6 +90,42 @@ router.put('/users/:id/group', auth, admin, async (req, res) => {
   }
 })
 
+// GET /api/admin/users/:id/groups — Get all groups for a user
+router.get('/users/:id/groups', auth, admin, async (req, res) => {
+  try {
+    const rows = await query(`
+      SELECT g.id, g.name FROM \`groups\` g
+      JOIN user_groups ug ON ug.group_id = g.id
+      WHERE ug.user_id = ?
+    `, [req.params.id])
+    res.json({ success: true, data: rows.map(r => r.name) })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// DELETE /api/admin/users/:id — Delete user
+router.delete('/users/:id', auth, admin, async (req, res) => {
+  try {
+    if (parseInt(req.params.id) === req.user.id) return res.status(400).json({ success: false, message: 'Vous ne pouvez pas vous supprimer' })
+    await pool.execute('DELETE FROM user_groups WHERE user_id = ?', [req.params.id])
+    await pool.execute('DELETE FROM users WHERE id = ?', [req.params.id])
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// PUT /api/admin/users/:id/toggle-active
+router.put('/users/:id/toggle-active', auth, admin, async (req, res) => {
+  try {
+    await pool.execute('UPDATE users SET active = NOT active WHERE id = ?', [req.params.id])
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
 // GET /api/admin/groups — List all groups
 router.get('/groups', auth, admin, async (req, res) => {
   try {
