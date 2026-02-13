@@ -32,7 +32,7 @@ export default function Soldbuch() {
           </div>
         </div>
 
-        <div className="paper-card" id="soldbuch-paper" style={{ padding: 'var(--space-lg)' }}>
+        <div className="document-paper" id="soldbuch-paper">
           {/* En-tête */}
           <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)', borderBottom: '2px solid var(--border-color)', paddingBottom: 'var(--space-lg)' }}>
             <h2 style={{ margin: '0 0 6px', fontSize: '1.4rem' }}>📘 SOLDBUCH</h2>

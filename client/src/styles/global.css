@@ -104,6 +104,9 @@ a:hover { text-decoration: underline; }
 /* ============= PAPER CARD ============= */
 .paper-card {
   background: var(--paper-bg);
+  background-image: url('/paper.jpg');
+  background-size: cover;
+  background-blend-mode: lighten;
   border: 2px solid var(--border-color);
   border-radius: var(--border-radius);
   padding: var(--space-md);
@@ -111,6 +114,27 @@ a:hover { text-decoration: underline; }
   position: relative;
   margin-bottom: var(--space-md);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Document officiel (soldbuch, rapports) — fond parchemin marqué */
+.document-paper {
+  background: #e8dcc8;
+  background-image: url('/paper.jpg');
+  background-size: cover;
+  border: 2px solid #b8a88a;
+  border-radius: var(--border-radius);
+  padding: var(--space-lg);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 0 60px rgba(139,115,85,0.1);
+  position: relative;
+  color: #1a1a1a;
+}
+.document-paper::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(139,115,85,0.04);
+  pointer-events: none;
+  border-radius: inherit;
 }
 .paper-card:hover {
   box-shadow: var(--shadow-heavy);
@@ -414,7 +438,17 @@ tr:hover { background: rgba(0,0,0,0.02); }
 
 /* ============= PRINT ============= */
 @media print {
-  .topbar, .btn, .topbar-nav { display: none !important; }
+  .topbar, .btn, .topbar-nav, .btn-back { display: none !important; }
   .paper-card { box-shadow: none; border: none; }
+  .document-paper {
+    box-shadow: none;
+    border: none;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    background: #e8dcc8 !important;
+    background-image: url('/paper.jpg') !important;
+    background-size: cover !important;
+  }
   body { background: white; }
 }

@@ -28,7 +28,7 @@ export default function RapportView() {
           {!R.published && <Link to={`/rapports/${id}/layout`} className="btn btn-primary btn-small">🖋️ Mise en page</Link>}
         </div>
 
-        <div className="paper-card" id="rapport-paper" style={{ minHeight: 600, padding: 28 }}>
+        <div className="document-paper" id="rapport-paper" style={{ minHeight: 600 }}>
           {/* Si publié avec contenu_html, afficher tel quel */}
           {R.published && R.contenu_html ? (
             <div dangerouslySetInnerHTML={{ __html: R.contenu_html }} />
