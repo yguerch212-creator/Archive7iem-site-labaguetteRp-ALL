@@ -75,8 +75,22 @@ export default function Telegrammes() {
     const t = selected
     return (
       <div className="container telegrammes-page">
-        <div style={{ marginBottom: 'var(--space-md)', display: 'flex', gap: 'var(--space-sm)' }}>
+        <div style={{ marginBottom: 'var(--space-md)', display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
           <button className="btn btn-secondary btn-small" onClick={() => setSelected(null)}>← Retour</button>
+          {hasEffectif && t.expediteur_id !== user?.effectif_id && (
+            <button className="btn btn-primary btn-small" onClick={() => {
+              setForm({
+                destinataire_id: t.expediteur_id || '',
+                destinataire_nom: t.expediteur_nom || '',
+                destinataire_unite: t.expediteur_unite || '',
+                objet: `RE: ${t.objet}`,
+                contenu: '',
+                priorite: t.priorite
+              })
+              setSelected(null)
+              setShowForm(true)
+            }}>↩️ Répondre</button>
+          )}
           <button className="btn btn-secondary btn-small" onClick={() => archiver(t.id)}>📦 Archiver</button>
         </div>
 
@@ -176,6 +190,7 @@ export default function Telegrammes() {
           📥 Reçus {unread > 0 && <span className="badge-count">{unread}</span>}
         </button>
         <button className={`tel-tab ${tab === 'envoye' ? 'active' : ''}`} onClick={() => setTab('envoye')}>📤 Envoyés</button>
+        <button className={`tel-tab ${tab === 'archive' ? 'active' : ''}`} onClick={() => setTab('archive')}>📦 Archives</button>
         {(user?.isAdmin || user?.isOfficier || user?.isRecenseur) && (
           <button className={`tel-tab ${tab === 'tous' ? 'active' : ''}`} onClick={() => setTab('tous')}>📋 Tous</button>
         )}

@@ -277,3 +277,213 @@
   .dossier-timeline { padding-left: 1.5rem; }
   .timeline-dot { left: -1.5rem; }
 }
+
+/* ===== BOOK STYLE ===== */
+.book-container {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.book-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.book-nav-btn {
+  background: var(--military-dark, #2c3e2d);
+  color: var(--paper-bg, #faf6ef);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.book-nav-btn:hover:not(:disabled) { transform: scale(1.1); opacity: 0.9; }
+.book-nav-btn:disabled { opacity: 0.3; cursor: default; }
+
+.book-page-indicator {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  min-width: 120px;
+  text-align: center;
+}
+
+.book-page {
+  background: var(--paper-bg, #faf6ef);
+  border: 2px solid var(--border, #d4c8a5);
+  border-radius: 2px 8px 8px 2px;
+  min-height: 500px;
+  padding: 2.5rem 2rem;
+  position: relative;
+  box-shadow:
+    -4px 0 0 var(--border, #d4c8a5),
+    -6px 0 0 var(--paper-bg, #faf6ef),
+    -8px 0 0 var(--border, #d4c8a5),
+    4px 4px 12px rgba(0,0,0,0.15);
+  /* Paper texture lines */
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 28px,
+    rgba(180,170,140,0.15) 28px,
+    rgba(180,170,140,0.15) 29px
+  );
+  animation: pageFlip 0.3s ease-out;
+}
+
+@keyframes pageFlip {
+  0% { transform: rotateY(-5deg); opacity: 0.7; }
+  100% { transform: rotateY(0deg); opacity: 1; }
+}
+
+/* Binding edge effect */
+.book-page::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 30px;
+  background: linear-gradient(to right, rgba(0,0,0,0.08), transparent);
+  pointer-events: none;
+}
+
+/* Cover */
+.book-cover {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 420px;
+  position: relative;
+}
+.book-cover-stamp {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: rgba(180, 40, 40, 0.35);
+  border: 3px solid rgba(180, 40, 40, 0.35);
+  padding: 2px 12px;
+  transform: rotate(12deg);
+  letter-spacing: 3px;
+}
+.book-cover-emblem {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.5;
+}
+.book-cover-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 1.5rem;
+  margin: 0 0 0.5rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.book-cover-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  max-width: 400px;
+  margin: 0 0 2rem;
+}
+.book-cover-meta {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-family: 'IBM Plex Mono', monospace;
+}
+.book-cover-footer {
+  position: absolute;
+  bottom: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* Entry pages */
+.book-entry {
+  min-height: 400px;
+}
+.book-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.book-entry-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.book-entry-date {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.book-entry-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 1.15rem;
+  margin: 0 0 1rem;
+}
+.book-entry-content {
+  font-size: 0.95rem;
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+.book-entry-footer {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 2rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Page dots */
+.book-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 1rem;
+}
+.book-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s;
+}
+.book-dot.active {
+  background: var(--military-dark, #2c3e2d);
+  border-color: var(--military-dark, #2c3e2d);
+  transform: scale(1.3);
+}
+.book-dot:hover:not(.active) {
+  background: var(--border);
+}
+
+@media (max-width: 600px) {
+  .book-page { padding: 1.5rem 1rem; min-height: 400px; }
+  .book-cover-title { font-size: 1.2rem; }
+  .book-cover-emblem { font-size: 3rem; }
+}

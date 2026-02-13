@@ -21,11 +21,14 @@ router.get('/', optionalAuth, async (req, res) => {
     let where = ''
     const params = []
     if (tab === 'recu' && effectifId) {
-      where = 'WHERE t.destinataire_id = ?'
+      where = "WHERE t.destinataire_id = ? AND t.statut != 'Archivé'"
       params.push(effectifId)
     } else if (tab === 'envoye' && effectifId) {
-      where = 'WHERE t.expediteur_id = ?'
+      where = "WHERE t.expediteur_id = ? AND t.statut != 'Archivé'"
       params.push(effectifId)
+    } else if (tab === 'archive' && effectifId) {
+      where = "WHERE t.statut = 'Archivé' AND (t.destinataire_id = ? OR t.expediteur_id = ?)"
+      params.push(effectifId, effectifId)
     } else if (tab === 'tous' && isPrivileged) {
       where = '' // all
     } else if (effectifId) {
