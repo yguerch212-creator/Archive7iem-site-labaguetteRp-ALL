@@ -78,12 +78,12 @@ export default function Sanctions() {
         <div className="paper-card">
           <div className="sanctions-toolbar">
             <input type="text" placeholder="Rechercher (n°, titre, accusé)..." value={search}
-              onChange={e => setSearch(e.target.value)} className="input-field" />
-            <select value={filterStatut} onChange={e => setFilterStatut(e.target.value)} className="input-field" style={{width:'auto',minWidth:140}}>
+              onChange={e => setSearch(e.target.value)} className="form-input" />
+            <select value={filterStatut} onChange={e => setFilterStatut(e.target.value)} className="form-input" style={{width:'auto',minWidth:140}}>
               <option value="">Tous statuts</option>
               {STATUTS.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
-            <select value={filterType} onChange={e => setFilterType(e.target.value)} className="input-field" style={{width:'auto',minWidth:140}}>
+            <select value={filterType} onChange={e => setFilterType(e.target.value)} className="form-input" style={{width:'auto',minWidth:140}}>
               <option value="">Tous types</option>
               {TYPES_AFFAIRE.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
@@ -216,23 +216,23 @@ function NewAffaireForm({ onClose, onCreated }) {
         {error && <div className="alert alert-danger">{error}</div>}
         <form onSubmit={submit}>
           <div className="form-group"><label>Intitulé de l'affaire *</label>
-            <input className="input-field" value={form.titre} onChange={e => setForm(f => ({...f, titre: e.target.value}))} placeholder="Ex: Enquête sur désertion de Pvt. Müller" /></div>
+            <input className="form-input" value={form.titre} onChange={e => setForm(f => ({...f, titre: e.target.value}))} placeholder="Ex: Enquête sur désertion de Pvt. Müller" /></div>
           <div className="form-row">
             <div className="form-group"><label>Type</label>
-              <select className="input-field" value={form.type} onChange={e => setForm(f => ({...f, type: e.target.value}))}>
+              <select className="form-input" value={form.type} onChange={e => setForm(f => ({...f, type: e.target.value}))}>
                 {TYPES_AFFAIRE.map(t => <option key={t} value={t}>{t}</option>)}
               </select></div>
             <div className="form-group"><label>Gravité</label>
-              <select className="input-field" value={form.gravite} onChange={e => setForm(f => ({...f, gravite: parseInt(e.target.value)}))}>
+              <select className="form-input" value={form.gravite} onChange={e => setForm(f => ({...f, gravite: parseInt(e.target.value)}))}>
                 {[1,2,3,4,5].map(g => <option key={g} value={g}>Groupe {g}</option>)}
               </select></div>
           </div>
           <div className="form-group"><label>Résumé</label>
-            <textarea className="input-field" rows={3} value={form.resume} onChange={e => setForm(f => ({...f, resume: e.target.value}))} placeholder="Contexte de l'affaire..." /></div>
+            <textarea className="form-input" rows={3} value={form.resume} onChange={e => setForm(f => ({...f, resume: e.target.value}))} placeholder="Contexte de l'affaire..." /></div>
           <div className="form-row">
-            <div className="form-group"><label>Date RP</label><input className="input-field" value={form.date_ouverture_rp} onChange={e => setForm(f => ({...f, date_ouverture_rp: e.target.value}))} placeholder="Ex: 12 Juin 1944" /></div>
-            <div className="form-group"><label>Date IRL</label><input type="date" className="input-field" value={form.date_ouverture_irl} onChange={e => setForm(f => ({...f, date_ouverture_irl: e.target.value}))} /></div>
-            <div className="form-group"><label>Lieu</label><input className="input-field" value={form.lieu} onChange={e => setForm(f => ({...f, lieu: e.target.value}))} placeholder="Lieu..." /></div>
+            <div className="form-group"><label>Date RP</label><input className="form-input" value={form.date_ouverture_rp} onChange={e => setForm(f => ({...f, date_ouverture_rp: e.target.value}))} placeholder="Ex: 12 Juin 1944" /></div>
+            <div className="form-group"><label>Date IRL</label><input type="date" className="form-input" value={form.date_ouverture_irl} onChange={e => setForm(f => ({...f, date_ouverture_irl: e.target.value}))} /></div>
+            <div className="form-group"><label>Lieu</label><input className="form-input" value={form.lieu} onChange={e => setForm(f => ({...f, lieu: e.target.value}))} placeholder="Lieu..." /></div>
           </div>
           <div className="form-actions">
             <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? '...' : '📂 Ouvrir l\'affaire'}</button>

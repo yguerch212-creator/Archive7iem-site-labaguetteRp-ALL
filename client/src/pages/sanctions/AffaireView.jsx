@@ -219,7 +219,7 @@ function AddPersonnePopup({ onAdd, onClose }) {
         <button className="popup-close" onClick={onClose}>✕</button>
         <h2>👥 Ajouter une personne</h2>
         <div className="form-group"><label>Rôle *</label>
-          <select className="input-field" value={role} onChange={e => setRole(e.target.value)}>
+          <select className="form-input" value={role} onChange={e => setRole(e.target.value)}>
             {ROLES.map(r => <option key={r} value={r}>{ROLE_ICONS[r]} {ROLE_LABELS[r]}</option>)}
           </select>
         </div>
@@ -231,7 +231,7 @@ function AddPersonnePopup({ onAdd, onClose }) {
         </div>
         {useLibre ? (
           <div className="form-group"><label>Nom</label>
-            <input className="input-field" value={nom_libre} onChange={e => setNomLibre(e.target.value)} placeholder="Nom complet..." />
+            <input className="form-input" value={nom_libre} onChange={e => setNomLibre(e.target.value)} placeholder="Nom complet..." />
           </div>
         ) : (
           <div className="form-group"><label>Effectif</label>
@@ -239,7 +239,7 @@ function AddPersonnePopup({ onAdd, onClose }) {
           </div>
         )}
         <div className="form-group"><label>Notes</label>
-          <input className="input-field" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes optionnelles..." />
+          <input className="form-input" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes optionnelles..." />
         </div>
         <div className="form-actions">
           <button className="btn btn-primary" onClick={() => onAdd({ effectif_id: useLibre ? null : effectif_id, nom_libre: useLibre ? nom_libre : null, role, notes })}>
@@ -275,39 +275,39 @@ function AddPiecePopup({ onAdd, onClose, infractions }) {
         <h2>{PIECE_ICONS[form.type]} Nouvelle pièce</h2>
         <div className="form-row">
           <div className="form-group"><label>Type de pièce *</label>
-            <select className="input-field" value={form.type} onChange={e => setForm(f => ({...f, type: e.target.value}))}>
+            <select className="form-input" value={form.type} onChange={e => setForm(f => ({...f, type: e.target.value}))}>
               {TYPES_PIECE.map(t => <option key={t} value={t}>{PIECE_ICONS[t]} {t.replace(/-/g,' ')}</option>)}
             </select>
           </div>
           <div className="form-group" style={{flex:2}}><label>Titre *</label>
-            <input className="input-field" value={form.titre} onChange={e => setForm(f => ({...f, titre: e.target.value}))} placeholder="Intitulé de la pièce..." />
+            <input className="form-input" value={form.titre} onChange={e => setForm(f => ({...f, titre: e.target.value}))} placeholder="Intitulé de la pièce..." />
           </div>
         </div>
 
         {(form.type === 'Rapport-infraction' || form.type === 'Proces-verbal') && (
           <div className="form-row">
             <div className="form-group"><label>Infraction (Code Pénal)</label>
-              <select className="input-field" value={form.infraction_id} onChange={e => setForm(f => ({...f, infraction_id: e.target.value}))}>
+              <select className="form-input" value={form.infraction_id} onChange={e => setForm(f => ({...f, infraction_id: e.target.value}))}>
                 <option value="">— Hors code / Personnalisée —</option>
                 {infractions.map(i => <option key={i.id} value={i.id}>[Grp {i.groupe}] {i.nom}</option>)}
               </select>
             </div>
             {!form.infraction_id && (
               <div className="form-group"><label>Infraction personnalisée</label>
-                <input className="input-field" value={form.infraction_custom} onChange={e => setForm(f => ({...f, infraction_custom: e.target.value}))} placeholder="Intitulé..." />
+                <input className="form-input" value={form.infraction_custom} onChange={e => setForm(f => ({...f, infraction_custom: e.target.value}))} placeholder="Intitulé..." />
               </div>
             )}
           </div>
         )}
 
         <div className="form-group"><label>Contenu</label>
-          <textarea className="input-field piece-textarea" rows={10} value={form.contenu}
+          <textarea className="form-input piece-textarea" rows={10} value={form.contenu}
             onChange={e => setForm(f => ({...f, contenu: e.target.value}))}
             placeholder={placeholders[form.type] || 'Contenu de la pièce...'} />
         </div>
         <div className="form-row">
-          <div className="form-group"><label>Date RP</label><input className="input-field" value={form.date_rp} onChange={e => setForm(f => ({...f, date_rp: e.target.value}))} placeholder="Ex: 12 Juin 1944" /></div>
-          <div className="form-group"><label>Date IRL</label><input type="date" className="input-field" value={form.date_irl} onChange={e => setForm(f => ({...f, date_irl: e.target.value}))} /></div>
+          <div className="form-group"><label>Date RP</label><input className="form-input" value={form.date_rp} onChange={e => setForm(f => ({...f, date_rp: e.target.value}))} placeholder="Ex: 12 Juin 1944" /></div>
+          <div className="form-group"><label>Date IRL</label><input type="date" className="form-input" value={form.date_irl} onChange={e => setForm(f => ({...f, date_irl: e.target.value}))} /></div>
           <div className="form-group" style={{display:'flex',alignItems:'end'}}>
             <label style={{display:'flex',gap:'0.5rem',alignItems:'center',cursor:'pointer'}}>
               <input type="checkbox" checked={form.confidentiel} onChange={e => setForm(f => ({...f, confidentiel: e.target.checked}))} /> 🔒 Confidentiel
@@ -458,13 +458,13 @@ function AddSignatureSlot({ onAdd, onClose }) {
         <label><input type="checkbox" checked={useLibre} onChange={e => setUseLibre(e.target.checked)} /> Nom libre</label>
       </div>
       {useLibre ? (
-        <div className="form-group"><input className="input-field" value={nom_signataire} onChange={e => setNom(e.target.value)} placeholder="Nom du signataire..." /></div>
+        <div className="form-group"><input className="form-input" value={nom_signataire} onChange={e => setNom(e.target.value)} placeholder="Nom du signataire..." /></div>
       ) : (
         <div className="form-group">
           <EffectifAutocomplete value={effectif_display} onChange={(id, d) => { setEffectifId(id); setEffectifDisplay(d); setNom(d) }} placeholder="Effectif..." />
         </div>
       )}
-      <div className="form-group"><input className="input-field" value={role_signataire} onChange={e => setRole(e.target.value)} placeholder="Rôle (Ex: Enquêteur, Témoin, Juge...)" /></div>
+      <div className="form-group"><input className="form-input" value={role_signataire} onChange={e => setRole(e.target.value)} placeholder="Rôle (Ex: Enquêteur, Témoin, Juge...)" /></div>
       <div style={{display:'flex',gap:'0.5rem'}}>
         <button className="btn btn-sm btn-primary" onClick={() => onAdd({ effectif_id: useLibre ? null : effectif_id, nom_signataire: useLibre ? nom_signataire : effectif_display, role_signataire })}>Ajouter</button>
         <button className="btn btn-sm" onClick={onClose}>Annuler</button>
@@ -558,20 +558,20 @@ function EditAffairePopup({ affaire, onSave, onClose }) {
       <div className="popup-content" style={{maxWidth:650,maxHeight:'90vh',overflow:'auto'}} onClick={e => e.stopPropagation()}>
         <button className="popup-close" onClick={onClose}>✕</button>
         <h2>✏️ Modifier l'affaire</h2>
-        <div className="form-group"><label>Titre</label><input className="input-field" value={form.titre} onChange={e => setForm(f => ({...f, titre: e.target.value}))} /></div>
+        <div className="form-group"><label>Titre</label><input className="form-input" value={form.titre} onChange={e => setForm(f => ({...f, titre: e.target.value}))} /></div>
         <div className="form-row">
-          <div className="form-group"><label>Type</label><select className="input-field" value={form.type} onChange={e => setForm(f => ({...f, type: e.target.value}))}>{['Enquete','Proces','Disciplinaire','Administrative'].map(t => <option key={t}>{t}</option>)}</select></div>
-          <div className="form-group"><label>Statut</label><select className="input-field" value={form.statut} onChange={e => setForm(f => ({...f, statut: e.target.value}))}>{STATUTS.map(s => <option key={s}>{s}</option>)}</select></div>
-          <div className="form-group"><label>Gravité</label><select className="input-field" value={form.gravite} onChange={e => setForm(f => ({...f, gravite: parseInt(e.target.value)}))}>{[1,2,3,4,5].map(g => <option key={g} value={g}>Grp {g}</option>)}</select></div>
+          <div className="form-group"><label>Type</label><select className="form-input" value={form.type} onChange={e => setForm(f => ({...f, type: e.target.value}))}>{['Enquete','Proces','Disciplinaire','Administrative'].map(t => <option key={t}>{t}</option>)}</select></div>
+          <div className="form-group"><label>Statut</label><select className="form-input" value={form.statut} onChange={e => setForm(f => ({...f, statut: e.target.value}))}>{STATUTS.map(s => <option key={s}>{s}</option>)}</select></div>
+          <div className="form-group"><label>Gravité</label><select className="form-input" value={form.gravite} onChange={e => setForm(f => ({...f, gravite: parseInt(e.target.value)}))}>{[1,2,3,4,5].map(g => <option key={g} value={g}>Grp {g}</option>)}</select></div>
         </div>
-        <div className="form-group"><label>Résumé</label><textarea className="input-field" rows={3} value={form.resume || ''} onChange={e => setForm(f => ({...f, resume: e.target.value}))} /></div>
-        <div className="form-group"><label>⚖️ Verdict</label><textarea className="input-field" rows={2} value={form.verdict || ''} onChange={e => setForm(f => ({...f, verdict: e.target.value}))} placeholder="Décision du tribunal..." /></div>
-        <div className="form-group"><label>🔨 Sanction prononcée</label><textarea className="input-field" rows={2} value={form.sanction_prononcee || ''} onChange={e => setForm(f => ({...f, sanction_prononcee: e.target.value}))} placeholder="Peine appliquée..." /></div>
+        <div className="form-group"><label>Résumé</label><textarea className="form-input" rows={3} value={form.resume || ''} onChange={e => setForm(f => ({...f, resume: e.target.value}))} /></div>
+        <div className="form-group"><label>⚖️ Verdict</label><textarea className="form-input" rows={2} value={form.verdict || ''} onChange={e => setForm(f => ({...f, verdict: e.target.value}))} placeholder="Décision du tribunal..." /></div>
+        <div className="form-group"><label>🔨 Sanction prononcée</label><textarea className="form-input" rows={2} value={form.sanction_prononcee || ''} onChange={e => setForm(f => ({...f, sanction_prononcee: e.target.value}))} placeholder="Peine appliquée..." /></div>
         <div className="form-row">
-          <div className="form-group"><label>Clôture RP</label><input className="input-field" value={form.date_cloture_rp || ''} onChange={e => setForm(f => ({...f, date_cloture_rp: e.target.value}))} /></div>
-          <div className="form-group"><label>Clôture IRL</label><input type="date" className="input-field" value={form.date_cloture_irl || ''} onChange={e => setForm(f => ({...f, date_cloture_irl: e.target.value}))} /></div>
+          <div className="form-group"><label>Clôture RP</label><input className="form-input" value={form.date_cloture_rp || ''} onChange={e => setForm(f => ({...f, date_cloture_rp: e.target.value}))} /></div>
+          <div className="form-group"><label>Clôture IRL</label><input type="date" className="form-input" value={form.date_cloture_irl || ''} onChange={e => setForm(f => ({...f, date_cloture_irl: e.target.value}))} /></div>
         </div>
-        <div className="form-group"><label>🔒 Notes internes</label><textarea className="input-field" rows={2} value={form.notes_internes || ''} onChange={e => setForm(f => ({...f, notes_internes: e.target.value}))} /></div>
+        <div className="form-group"><label>🔒 Notes internes</label><textarea className="form-input" rows={2} value={form.notes_internes || ''} onChange={e => setForm(f => ({...f, notes_internes: e.target.value}))} /></div>
         <div className="form-actions">
           <button className="btn btn-primary" onClick={() => onSave(form)}>💾 Sauvegarder</button>
           <button className="btn" onClick={onClose}>Annuler</button>

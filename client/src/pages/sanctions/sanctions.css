@@ -27,7 +27,19 @@
   flex-wrap: wrap;
   align-items: center;
 }
-.sanctions-toolbar .input-field { flex: 1; min-width: 180px; }
+.sanctions-toolbar .form-input { flex: 1; min-width: 180px; }
+
+/* Table */
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.data-table thead tr { border-bottom: 2px solid var(--border-color); }
+.data-table th { text-align: left; padding: var(--space-sm) var(--space-md); font-weight: 700; color: var(--military-dark); white-space: nowrap; }
+.data-table td { padding: var(--space-sm) var(--space-md); vertical-align: middle; }
+.data-table tbody tr { border-bottom: 1px solid var(--border-color); }
+.clickable-row { cursor: pointer; transition: background 0.15s; }
+.clickable-row:hover { background: var(--military-light, rgba(107,143,60,0.08)); }
+.mono { font-family: var(--font-mono); font-size: 0.8rem; }
+.text-muted { color: var(--text-muted); }
+.empty-state { text-align: center; padding: 2rem; color: var(--text-muted); }
 
 .groupe-badge {
   display: inline-block;
