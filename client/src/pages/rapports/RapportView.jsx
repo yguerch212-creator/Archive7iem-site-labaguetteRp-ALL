@@ -1,5 +1,5 @@
 import BackButton from '../../components/BackButton'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import apiClient from '../../api/client'
@@ -16,13 +16,21 @@ export default function RapportView() {
   const [rapport, setRapport] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showPublish, setShowPublish] = useState(false)
-  const [pubForm, setPubForm] = useState({ signature_nom: '', signature_grade: '', stamp: '' })
+  const [pubForm, setPubForm] = useState({ signature_nom: '', signature_grade: '', stamp: '', signature_canvas: '' })
+  const [savedSig, setSavedSig] = useState(null)
+  const sigCanvasRef = useRef(null)
+  const [drawing, setDrawing] = useState(false)
+  const [hasSig, setHasSig] = useState(false)
   const [message, setMessage] = useState(null)
 
   const canPublish = user?.isAdmin || user?.isOfficier || user?.isRecenseur
 
   useEffect(() => {
     load()
+    // Load saved signature
+    apiClient.get('/affaires/my-signature').then(r => {
+      if (r.data.data) { setSavedSig(r.data.data); setPubForm(p => ({...p, signature_canvas: r.data.data})) }
+    }).catch(() => {})
   }, [id])
 
   const load = () => {
@@ -101,6 +109,36 @@ export default function RapportView() {
               ))}
             </div>
           </div>
+          {/* Signature manuscrite */}
+          <div className="form-group">
+            <label className="form-label">✍️ Signature manuscrite</label>
+            {savedSig ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ border: '1px solid var(--border)', borderRadius: 4, padding: '0.3rem', background: 'white' }}>
+                  <img src={savedSig} alt="Ma signature" style={{ height: 50 }} />
+                </div>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>✅ Signature sauvegardée</span>
+                <button className="btn btn-sm" onClick={() => { setSavedSig(null); setPubForm(p => ({...p, signature_canvas: ''})); setHasSig(false) }}>Redessiner</button>
+              </div>
+            ) : (
+              <div>
+                <canvas ref={sigCanvasRef} width={350} height={120}
+                  style={{ border: '2px solid var(--border)', borderRadius: 4, cursor: 'crosshair', background: 'white', touchAction: 'none', display: 'block' }}
+                  onMouseDown={e => { e.preventDefault(); const ctx = sigCanvasRef.current.getContext('2d'); const r = sigCanvasRef.current.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo(e.clientX-r.left, e.clientY-r.top); setDrawing(true) }}
+                  onMouseMove={e => { if (!drawing) return; const ctx = sigCanvasRef.current.getContext('2d'); const r = sigCanvasRef.current.getBoundingClientRect(); ctx.lineTo(e.clientX-r.left, e.clientY-r.top); ctx.strokeStyle='#1a1a2e'; ctx.lineWidth=2; ctx.lineCap='round'; ctx.stroke(); setHasSig(true) }}
+                  onMouseUp={() => { setDrawing(false); if (hasSig) setPubForm(p => ({...p, signature_canvas: sigCanvasRef.current.toDataURL('image/png')})) }}
+                  onMouseLeave={() => setDrawing(false)}
+                  onTouchStart={e => { e.preventDefault(); const ctx = sigCanvasRef.current.getContext('2d'); const r = sigCanvasRef.current.getBoundingClientRect(); const t=e.touches[0]; ctx.beginPath(); ctx.moveTo(t.clientX-r.left, t.clientY-r.top); setDrawing(true) }}
+                  onTouchMove={e => { if (!drawing) return; e.preventDefault(); const ctx = sigCanvasRef.current.getContext('2d'); const r = sigCanvasRef.current.getBoundingClientRect(); const t=e.touches[0]; ctx.lineTo(t.clientX-r.left, t.clientY-r.top); ctx.strokeStyle='#1a1a2e'; ctx.lineWidth=2; ctx.lineCap='round'; ctx.stroke(); setHasSig(true) }}
+                  onTouchEnd={() => { setDrawing(false); if (hasSig) setPubForm(p => ({...p, signature_canvas: sigCanvasRef.current.toDataURL('image/png')})) }}
+                />
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.3rem' }}>
+                  <button className="btn btn-sm" onClick={() => { sigCanvasRef.current.getContext('2d').clearRect(0,0,350,120); setHasSig(false); setPubForm(p => ({...p, signature_canvas: ''})) }}>🗑️ Effacer</button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <button className="btn btn-primary" onClick={autoPublish}>📜 Publier avec mise en page auto</button>
         </div>
       )}

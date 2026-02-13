@@ -97,8 +97,24 @@ router.post('/', auth, async (req, res) => {
 // PUT /api/rapports/:id/publish
 router.put('/:id/publish', auth, async (req, res) => {
   try {
-    const { contenu_html } = req.body
-    await pool.execute('UPDATE rapports SET contenu_html = ?, published = 1 WHERE id = ?', [contenu_html, req.params.id])
+    const { contenu_html, signature_nom, signature_grade, stamp, signature_canvas } = req.body
+    await pool.execute(
+      `UPDATE rapports SET contenu_html = ?, published = 1,
+        signature_nom = COALESCE(?, signature_nom),
+        signature_grade = COALESCE(?, signature_grade),
+        stamp = COALESCE(?, stamp),
+        signature_image = COALESCE(?, signature_image)
+       WHERE id = ?`,
+      [contenu_html, signature_nom || null, signature_grade || null, stamp || null, signature_canvas || null, req.params.id]
+    )
+    // Save personal signature if provided
+    if (signature_canvas && req.user.effectif_id) {
+      await pool.execute(
+        `INSERT INTO signatures_effectifs (effectif_id, signature_data) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE signature_data = VALUES(signature_data)`,
+        [req.user.effectif_id, signature_canvas]
+      )
+    }
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
