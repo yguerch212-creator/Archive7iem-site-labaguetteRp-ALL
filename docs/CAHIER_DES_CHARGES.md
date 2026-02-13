@@ -352,6 +352,28 @@ Afficher les médailles et décorations dans le soldbuch. Les données existent 
 
 ---
 
+## 15. MENTIONS LIBRES & RÉCONCILIATION AUTO
+**Priorité : 🟠 Important**
+
+### Concept
+Partout où on mentionne un effectif (rapports, interdits, visites médicales, etc.), on peut soit sélectionner un effectif existant, soit **taper un nom manuellement** si la personne n'est pas encore recensée.
+
+Quand cette personne est finalement créée dans les effectifs, le système **réconcilie automatiquement** : toutes les mentions du même nom sont liées à son dossier.
+
+### Pourquoi
+- Le site ne doit pas bloquer parce qu'un joueur n'est pas encore enregistré
+- Les rapports doivent pouvoir être rédigés en temps réel, même si le recensement n'est pas complet
+- Le dossier d'un effectif doit retrouver tout son historique dès sa création
+
+### À faire
+- [ ] **Champs "mention" hybrides** — combo autocomplete + saisie libre sur tous les formulaires (rapports, interdits, médical)
+- [ ] **Table `mentions`** — stocke les mentions (nom_texte, effectif_id nullable, source_type, source_id)
+- [ ] **Réconciliation auto** — quand un effectif est créé, matcher par nom/prénom et lier les mentions orphelines
+- [ ] **Réconciliation manuelle** — admin peut lier manuellement une mention à un effectif
+- [ ] **Vue dossier** — le dossier personnel agrège aussi les mentions réconciliées
+
+---
+
 ## ORDRE DE RÉALISATION RECOMMANDÉ
 
 ### Sprint 1 — Permissions & PDS (prioritaire)
