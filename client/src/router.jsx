@@ -16,6 +16,7 @@ import RapportView from './pages/rapports/RapportView'
 import RapportLayout from './pages/rapports/RapportLayout'
 import Search from './pages/Search'
 import AdminUsers from './pages/admin/AdminUsers'
+import AdminLogs from './pages/admin/AdminLogs'
 import PDS from './pages/pds/PDS'
 import InterditsFront from './pages/interdits/InterditsFront'
 import VisitesMedicales from './pages/medical/VisitesMedicales'
@@ -70,6 +71,7 @@ function AppRouter() {
       
       {/* Admin */}
       <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
+      <Route path="/admin/logs" element={<ProtectedRoute><AdminLogs /></ProtectedRoute>} />
       
       <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />

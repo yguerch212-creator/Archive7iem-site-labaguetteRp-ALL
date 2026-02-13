@@ -78,7 +78,10 @@ export default function AdminUsers() {
     <div className="page-container">
       <BackButton label="← Tableau de bord" />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
-        <h1 className="page-title" style={{ margin: 0 }}>⚙️ Gestion des utilisateurs</h1>
+        <div>
+          <h1 className="page-title" style={{ margin: 0 }}>⚙️ Gestion des utilisateurs</h1>
+          <Link to="/admin/logs" style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>📊 Journal d'activité →</Link>
+        </div>
         <button className="btn btn-primary" onClick={() => setShowCreate(!showCreate)}>
           {showCreate ? '✕ Annuler' : '+ Créer un compte'}
         </button>
