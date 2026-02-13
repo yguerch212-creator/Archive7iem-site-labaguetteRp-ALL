@@ -1,14 +1,16 @@
 import BackButton from '../../components/BackButton'
 import React, { useState, useEffect } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import apiClient from '../../api/client'
 
 export default function EffectifsList() {
   const { uniteId } = useParams()
+  const navigate = useNavigate()
   const [effectifs, setEffectifs] = useState([])
   const [unite, setUnite] = useState(null)
   const [grades, setGrades] = useState([])
   const [filters, setFilters] = useState({ nom: '', grade: '' })
+  const [selected, setSelected] = useState(null)
 
   useEffect(() => {
     apiClient.get(`/effectifs?unite_id=${uniteId}`).then(r => setEffectifs(r.data.data || [])).catch(() => {})
@@ -26,78 +28,97 @@ export default function EffectifsList() {
   })
 
   return (
-    <>
-      
-      <div className="container" style={{ }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
-          <BackButton className="btn btn-secondary btn-small" label="← Retour" />
-          <Link to={`/effectifs/new?unite_id=${uniteId}`} className="btn btn-primary btn-small">+ Ajouter</Link>
-        </div>
-
-        <h1 style={{ textAlign: 'center' }}>{unite ? `${unite.code}. ${unite.nom}` : 'Effectifs'}</h1>
-
-        {/* Filtres */}
-        <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', marginBottom: 'var(--space-lg)', flexWrap: 'wrap' }}>
-          <input
-            className="form-input"
-            style={{ maxWidth: 250 }}
-            placeholder="Nom / Prénom..."
-            value={filters.nom}
-            onChange={e => setFilters(f => ({ ...f, nom: e.target.value }))}
-          />
-          <select
-            className="form-select"
-            style={{ maxWidth: 200 }}
-            value={filters.grade}
-            onChange={e => setFilters(f => ({ ...f, grade: e.target.value }))}
-          >
-            <option value="">— Grade —</option>
-            {grades.map(g => <option key={g.id} value={g.nom_complet}>{g.nom_complet}</option>)}
-          </select>
-        </div>
-
-        {/* Tableau */}
-        <div className="paper-card" style={{ overflow: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
-                <th style={thStyle}>Prénom / Nom</th>
-                <th style={thStyle}>Grade</th>
-                <th style={thStyle}>Catégorie</th>
-                <th style={thStyle}>Fonction</th>
-                <th style={thStyle}>Spécialité</th>
-                <th style={thStyle}>Entrée RP</th>
-                <th style={thStyle}>Entrée IRL</th>
-                <th style={thStyle}>Soldbuch</th>
-                <th style={thStyle}>Rapports</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr><td colSpan={9} style={{ textAlign: 'center', padding: 'var(--space-lg)', color: 'var(--text-muted)' }}>Aucun effectif</td></tr>
-              ) : filtered.map(e => (
-                <tr key={e.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={tdStyle}><strong>{e.prenom} {e.nom}</strong></td>
-                  <td style={tdStyle}>{e.grade_nom || '—'}</td>
-                  <td style={tdStyle}><span className={`badge ${e.categorie === 'Officier' ? 'badge-warning' : e.categorie === 'Sous-officier' ? 'badge-success' : 'badge-muted'}`}>{e.categorie || e.grade_categorie || '—'}</span></td>
-                  <td style={tdStyle}>{e.fonction || '—'}</td>
-                  <td style={tdStyle}>{e.specialite || '—'}</td>
-                  <td style={tdStyle}>{e.date_entree_ig || '—'}</td>
-                  <td style={tdStyle}>{e.date_entree_irl ? new Date(e.date_entree_irl+'T00:00').toLocaleDateString('fr-FR') : '—'}</td>
-                  <td style={{ ...tdStyle, textAlign: 'center' }}>
-                    <Link to={`/effectifs/${e.id}/soldbuch`} title="Soldbuch">📘</Link>
-                    <Link to={`/dossiers/effectif/${e.id}`} title="Dossier">📁</Link>
-                  </td>
-                  <td style={{ ...tdStyle, textAlign: 'center' }}>
-                    <Link to={`/rapports?auteur=${encodeURIComponent(e.prenom + ' ' + e.nom)}`}>✏️</Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+    <div className="container" style={{ paddingBottom: 'var(--space-xxl)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
+        <BackButton className="btn btn-secondary btn-small" label="← Retour" />
+        <Link to={`/effectifs/new?unite_id=${uniteId}`} className="btn btn-primary btn-small">+ Ajouter</Link>
       </div>
-    </>
+
+      <h1 style={{ textAlign: 'center' }}>{unite ? `${unite.code}. ${unite.nom}` : 'Effectifs'}</h1>
+
+      {/* Filtres */}
+      <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', marginBottom: 'var(--space-lg)', flexWrap: 'wrap' }}>
+        <input
+          className="form-input"
+          style={{ maxWidth: 250 }}
+          placeholder="Nom / Prénom..."
+          value={filters.nom}
+          onChange={e => setFilters(f => ({ ...f, nom: e.target.value }))}
+        />
+        <select
+          className="form-select"
+          style={{ maxWidth: 200 }}
+          value={filters.grade}
+          onChange={e => setFilters(f => ({ ...f, grade: e.target.value }))}
+        >
+          <option value="">— Grade —</option>
+          {grades.map(g => <option key={g.id} value={g.nom_complet}>{g.nom_complet}</option>)}
+        </select>
+      </div>
+
+      {/* Tableau */}
+      <div className="paper-card" style={{ overflow: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+              <th style={thStyle}>Prénom / Nom</th>
+              <th style={thStyle}>Grade</th>
+              <th style={thStyle}>Catégorie</th>
+              <th style={thStyle}>Fonction</th>
+              <th style={thStyle}>Spécialité</th>
+              <th style={thStyle}>Entrée IRL</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 ? (
+              <tr><td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-lg)', color: 'var(--text-muted)' }}>Aucun effectif</td></tr>
+            ) : filtered.map(e => (
+              <tr key={e.id} onClick={() => setSelected(e)} style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={ev => ev.currentTarget.style.background = 'var(--military-light)'} onMouseLeave={ev => ev.currentTarget.style.background = ''}>
+                <td style={tdStyle}><strong>{e.prenom} {e.nom}</strong></td>
+                <td style={tdStyle}>{e.grade_nom || '—'}</td>
+                <td style={tdStyle}><span className={`badge ${e.categorie === 'Officier' ? 'badge-warning' : e.categorie === 'Sous-officier' ? 'badge-success' : 'badge-muted'}`}>{e.categorie || e.grade_categorie || '—'}</span></td>
+                <td style={tdStyle}>{e.fonction || '—'}</td>
+                <td style={tdStyle}>{e.specialite || '—'}</td>
+                <td style={tdStyle}>{e.date_entree_irl ? new Date(e.date_entree_irl+'T00:00').toLocaleDateString('fr-FR') : '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Quick actions popup */}
+      {selected && (
+        <div onClick={() => setSelected(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div onClick={ev => ev.stopPropagation()} style={{ background: 'var(--paper-bg)', border: '2px solid var(--border-color)', borderRadius: 'var(--border-radius)', padding: 'var(--space-xl)', maxWidth: 500, width: '90%', boxShadow: 'var(--shadow-heavy)' }}>
+            <div style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>
+              <h2 style={{ margin: '0 0 4px' }}>{selected.prenom} {selected.nom}</h2>
+              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.85rem' }}>{selected.grade_nom || '—'} — {selected.fonction || '—'}</p>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)' }}>
+              <button className="paper-card unit-card" style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-lg)', border: '1px solid var(--border-color)' }} onClick={() => navigate(`/effectifs/${selected.id}/soldbuch`)}>
+                <div style={{ fontSize: '2rem', marginBottom: 6 }}>📘</div>
+                <strong>Soldbuch</strong>
+              </button>
+              <button className="paper-card unit-card" style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-lg)', border: '1px solid var(--border-color)' }} onClick={() => navigate(`/dossiers/effectif/${selected.id}`)}>
+                <div style={{ fontSize: '2rem', marginBottom: 6 }}>📁</div>
+                <strong>Dossier</strong>
+              </button>
+              <button className="paper-card unit-card" style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-lg)', border: '1px solid var(--border-color)' }} onClick={() => navigate(`/effectifs/${selected.id}/edit`)}>
+                <div style={{ fontSize: '2rem', marginBottom: 6 }}>✏️</div>
+                <strong>Modifier</strong>
+              </button>
+              <button className="paper-card unit-card" style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-lg)', border: '1px solid var(--border-color)' }} onClick={() => navigate(`/search?q=${encodeURIComponent(selected.prenom + ' ' + selected.nom)}`)}>
+                <div style={{ fontSize: '2rem', marginBottom: 6 }}>🔎</div>
+                <strong>Rechercher</strong>
+              </button>
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 'var(--space-md)' }}>
+              <button className="btn btn-secondary btn-small" onClick={() => setSelected(null)}>Fermer</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 

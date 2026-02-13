@@ -29,6 +29,25 @@ function nextWeek(w) {
   return `${y}-W${String(wn + 1).padStart(2, '0')}`
 }
 
+// "Semaine du ven. 07/02 au ven. 14/02"
+function weekLabel(w) {
+  try {
+    const [y, wn] = w.split('-W').map(Number)
+    // ISO week to date: Monday of that week
+    const jan4 = new Date(Date.UTC(y, 0, 4))
+    const dayOfWeek = jan4.getUTCDay() || 7
+    const monday = new Date(jan4)
+    monday.setUTCDate(jan4.getUTCDate() - dayOfWeek + 1 + (wn - 1) * 7)
+    // RP week: vendredi = monday + 4
+    const friday = new Date(monday)
+    friday.setUTCDate(monday.getUTCDate() + 4)
+    const nextFriday = new Date(friday)
+    nextFriday.setUTCDate(friday.getUTCDate() + 7)
+    const fmt = d => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+    return `Semaine du ven. ${fmt(friday)} au ven. ${fmt(nextFriday)}`
+  } catch { return w }
+}
+
 // Parse "17h30-17h50, 19h40-22h" → decimal hours
 function parseCreneaux(text) {
   if (!text || text.trim().toUpperCase() === 'X' || text.trim() === '') return 0
@@ -179,7 +198,7 @@ export default function PDS() {
         <div className="pds-week-nav">
           <button className="btn-ghost" onClick={() => setSemaine(prevWeek(semaine))}>◀</button>
           <span className="pds-week-label">
-            {semaine}
+            {weekLabel(semaine)}
             {semaine === semaineActuelle && <span className="badge badge-green">En cours</span>}
           </span>
           <button className="btn-ghost" onClick={() => setSemaine(nextWeek(semaine))}>▶</button>

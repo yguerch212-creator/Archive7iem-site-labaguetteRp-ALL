@@ -65,7 +65,11 @@ export default function Login() {
         </form>
 
         <div className="login-footer">
-          Accès réservé aux personnels autorisés du 84e Corps d'Armée
+          Accès réservé aux personnels autorisés du 7e Armeekorps<br/>
+          <span style={{ fontSize: '0.65rem', fontStyle: 'italic', marginTop: 4, display: 'block' }}>
+            Ce site est dédié exclusivement à la simulation RP (jeu de rôle) sur Garry's Mod.<br/>
+            Aucune affiliation avec des mouvements historiques ou politiques.
+          </span>
         </div>
       </div>
 

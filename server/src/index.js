@@ -4,7 +4,8 @@ const helmet = require('helmet')
 const rateLimit = require('express-rate-limit')
 require('./config/env')
 
-const { queryOne } = require('./config/db')
+const { queryOne, query } = require('./config/db')
+const auth = require('./middleware/auth')
 
 // Routes
 const authRoutes = require('./routes/auth.routes')
@@ -84,6 +85,19 @@ app.get('/api/stats', async (req, res) => {
   } catch (err) {
     console.error('Stats error:', err)
     res.json({ effectifs: 0, rapports: 0, unites: 0, parUnite: [], derniers: [] })
+  }
+})
+
+// Pending items for validation queue
+app.get('/api/stats/pending', auth, async (req, res) => {
+  try {
+    const docs = await queryOne("SELECT COUNT(*) as c FROM moderation_queue WHERE statut = 'En attente'")
+    const permissions = await queryOne("SELECT COUNT(*) as c FROM permissions_absence WHERE statut = 'En attente'")
+    const docsCount = docs?.c || 0
+    const permsCount = permissions?.c || 0
+    res.json({ docs: docsCount, permissions: permsCount, total: docsCount + permsCount })
+  } catch (err) {
+    res.json({ docs: 0, permissions: 0, total: 0 })
   }
 })
 
