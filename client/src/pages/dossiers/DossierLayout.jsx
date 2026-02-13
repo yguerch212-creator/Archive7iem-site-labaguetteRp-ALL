@@ -14,18 +14,12 @@ export default function DossierLayout() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [showImport, setShowImport] = useState(false)
-  const [importCat, setImportCat] = useState(null)
-  const [importItems, setImportItems] = useState([])
   const [importSearch, setImportSearch] = useState('')
+  const [importResults, setImportResults] = useState(null) // { rapports, visites, interdits, telegrammes }
   const [importLoading, setImportLoading] = useState(false)
+  const [allData, setAllData] = useState(null) // cached full lists
   const searchRef = useRef(null)
-
-  const IMPORT_CATS = [
-    { key: 'rapport', label: 'Rapports', icon: '📋', endpoint: '/rapports', map: r => ({ id: r.id, title: `${r.titre || r.type}`, sub: `${r.auteur_nom || '?'} — ${r.date_rp || ''}`, badge: r.type, url: `/rapports/${r.id}` }) },
-    { key: 'visite', label: 'Visites médicales', icon: '🏥', endpoint: '/medical', map: r => ({ id: r.id, title: `${r.effectif_prenom || ''} ${r.effectif_nom || ''}`, sub: `${r.diagnostic || '—'} — ${r.aptitude || ''}`, badge: r.statut || 'visite', url: `/medical/${r.id}` }) },
-    { key: 'interdit', label: 'Interdits de front', icon: '⛔', endpoint: '/interdits', map: r => ({ id: r.id, title: `${r.effectif_prenom || ''} ${r.effectif_nom || ''}`, sub: `${(r.motif || '').substring(0, 60)}`, badge: r.statut || 'actif', url: `/interdits` }) },
-    { key: 'telegramme', label: 'Télégrammes', icon: '📨', endpoint: '/telegrammes', map: r => ({ id: r.id, title: `${r.numero || 'TEL'} — ${(r.objet || '').substring(0, 40)}`, sub: `${r.expediteur_texte || '?'} → ${r.destinataire_texte || '?'}`, badge: r.priorite || 'normal', url: `/telegrammes` }) },
-  ]
+  const debounceRef = useRef(null)
 
   useEffect(() => { loadData() }, [id])
 
@@ -48,25 +42,46 @@ export default function DossierLayout() {
     setLoading(false)
   }
 
-  const openImport = () => {
+  const openImport = async () => {
     setShowImport(true)
-    setImportCat(null)
-    setImportItems([])
     setImportSearch('')
+    setImportResults(null)
+    setTimeout(() => searchRef.current?.focus(), 150)
+
+    // Load all data once on first open
+    if (!allData) {
+      setImportLoading(true)
+      try {
+        const [rRes, vRes, iRes, tRes] = await Promise.all([
+          api.get('/rapports'), api.get('/medical'), api.get('/interdits'), api.get('/telegrammes')
+        ])
+        const d = {
+          rapports: (rRes.data?.data || []).map(r => ({ id: r.id, title: r.titre || r.type, sub: `${r.auteur_nom || '?'} — ${r.date_rp || ''}`, badge: r.type, cat: 'rapport', icon: '📋', url: `/rapports/${r.id}` })),
+          visites: (vRes.data?.data || []).map(r => ({ id: r.id, title: `${r.effectif_prenom || ''} ${r.effectif_nom || ''}`, sub: `${r.diagnostic || '—'} — ${r.aptitude || ''}`, badge: 'visite', cat: 'visite', icon: '🏥', url: `/medical/${r.id}` })),
+          interdits: (iRes.data?.data || []).map(r => ({ id: r.id, title: `${r.effectif_prenom || ''} ${r.effectif_nom || ''}`, sub: `${(r.motif || '').substring(0, 60)}`, badge: r.statut || 'actif', cat: 'interdit', icon: '⛔', url: `/interdits` })),
+          telegrammes: (tRes.data?.data || []).map(r => ({ id: r.id, title: `${r.numero || 'TEL'} — ${(r.objet || '').substring(0, 40)}`, sub: `${r.expediteur_texte || '?'} → ${r.destinataire_texte || '?'}`, badge: r.priorite || 'normal', cat: 'telegramme', icon: '📨', url: `/telegrammes` })),
+        }
+        setAllData(d)
+        setImportResults(d)
+      } catch { setAllData({ rapports: [], visites: [], interdits: [], telegrammes: [] }) }
+      setImportLoading(false)
+    } else {
+      setImportResults(allData)
+    }
   }
 
-  const selectCat = async (cat) => {
-    setImportCat(cat)
-    setImportSearch('')
-    setImportLoading(true)
-    try {
-      const res = await api.get(cat.endpoint)
-      const raw = res.data?.data || res.data || []
-      setImportItems((Array.isArray(raw) ? raw : []).map(cat.map))
-    } catch { setImportItems([]) }
-    setImportLoading(false)
-    setTimeout(() => searchRef.current?.focus(), 100)
-  }
+  // Filter all data when search changes
+  useEffect(() => {
+    if (!allData || !showImport) return
+    if (!importSearch.trim()) { setImportResults(allData); return }
+    const q = importSearch.toLowerCase()
+    setImportResults({
+      rapports: allData.rapports.filter(i => `${i.title} ${i.sub}`.toLowerCase().includes(q)),
+      visites: allData.visites.filter(i => `${i.title} ${i.sub}`.toLowerCase().includes(q)),
+      interdits: allData.interdits.filter(i => `${i.title} ${i.sub}`.toLowerCase().includes(q)),
+      telegrammes: allData.telegrammes.filter(i => `${i.title} ${i.sub}`.toLowerCase().includes(q)),
+    })
+  }, [importSearch, allData, showImport])
 
   const generateBlocks = (dos, entries) => {
     const b = []
@@ -103,6 +118,7 @@ export default function DossierLayout() {
   const importPiece = (item) => {
     const maxY = blocks.reduce((max, bl) => Math.max(max, (bl.y || 0) + (bl.h || 50)), 100)
     const newId = `doc-${Date.now()}`
+    const catLabels = { rapport: 'Rapports', visite: 'Visites médicales', interdit: 'Interdits de front', telegramme: 'Télégrammes' }
     setBlocks(prev => [
       ...prev,
       {
@@ -118,7 +134,7 @@ export default function DossierLayout() {
           label: item.title,
           sub: item.sub,
           badge: item.badge,
-          category: importCat.label,
+          category: catLabels[item.cat] || item.cat,
           url: item.url
         }
       }
@@ -145,9 +161,27 @@ export default function DossierLayout() {
 
   if (loading) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div>
 
-  const filteredImport = importItems.filter(it =>
-    !importSearch || `${it.title} ${it.sub}`.toLowerCase().includes(importSearch.toLowerCase())
-  )
+  const totalResults = importResults ? Object.values(importResults).reduce((s, arr) => s + arr.length, 0) : 0
+
+  const renderSection = (label, icon, items) => {
+    if (!items || items.length === 0) return null
+    return (
+      <div className="import-section" key={label}>
+        <div className="import-section-header">{icon} {label} <span className="import-section-count">{items.length}</span></div>
+        {items.slice(0, 15).map(item => (
+          <button key={`${item.cat}-${item.id}`} className="import-picker-item" onClick={() => importPiece(item)}>
+            <div className="import-item-top">
+              <span className="import-item-icon">{item.icon}</span>
+              <span className="import-item-label">{item.title}</span>
+              {item.badge && <span className="import-item-badge">{item.badge}</span>}
+            </div>
+            {item.sub && <div className="import-item-sub">{item.sub}</div>}
+          </button>
+        ))}
+        {items.length > 15 && <p className="import-more">… et {items.length - 15} autres — affinez votre recherche</p>}
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: '1rem', maxWidth: 1100, margin: '0 auto' }}>
@@ -159,57 +193,33 @@ export default function DossierLayout() {
         </div>
       </div>
 
-      {/* Import picker modal */}
+      {/* Import picker — global search */}
       {showImport && (
         <div className="popup-overlay" onClick={() => setShowImport(false)}>
           <div className="popup-content import-picker-modal" onClick={e => e.stopPropagation()}>
             <button className="popup-close" onClick={() => setShowImport(false)}>✕</button>
+            <h2 className="import-picker-title">📎 Épingler un document</h2>
 
-            {!importCat ? (
-              <>
-                <h2 className="import-picker-title">📎 Épingler un document</h2>
-                <p className="import-picker-hint">Choisissez le type de document à épingler sur le dossier :</p>
-                <div className="import-picker-grid">
-                  {IMPORT_CATS.map(cat => (
-                    <button key={cat.key} className="import-picker-cat" onClick={() => selectCat(cat)}>
-                      <span className="import-cat-icon">{cat.icon}</span>
-                      <span className="import-cat-label">{cat.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </>
+            <input
+              ref={searchRef}
+              className="form-input import-picker-search"
+              placeholder="🔍 Rechercher un rapport, une visite, un télégramme..."
+              value={importSearch}
+              onChange={e => setImportSearch(e.target.value)}
+            />
+
+            {importLoading ? (
+              <p className="import-picker-empty">Chargement des archives...</p>
+            ) : !importResults ? null : totalResults === 0 ? (
+              <p className="import-picker-empty">Aucun résultat pour « {importSearch} »</p>
             ) : (
-              <>
-                <div className="import-picker-nav">
-                  <button className="btn btn-sm btn-secondary" onClick={() => { setImportCat(null); setImportItems([]) }}>← Retour</button>
-                  <span className="import-picker-nav-title">{importCat.icon} {importCat.label}</span>
-                  <span className="import-picker-count">{filteredImport.length}</span>
-                </div>
-                <input
-                  ref={searchRef}
-                  className="form-input import-picker-search"
-                  placeholder="🔍 Filtrer..."
-                  value={importSearch}
-                  onChange={e => setImportSearch(e.target.value)}
-                />
-                {importLoading ? (
-                  <p className="import-picker-empty">Chargement...</p>
-                ) : filteredImport.length === 0 ? (
-                  <p className="import-picker-empty">Aucun document trouvé</p>
-                ) : (
-                  <div className="import-picker-list">
-                    {filteredImport.map(item => (
-                      <button key={item.id} className="import-picker-item" onClick={() => importPiece(item)}>
-                        <div className="import-item-top">
-                          <span className="import-item-label">{item.title}</span>
-                          {item.badge && <span className="import-item-badge">{item.badge}</span>}
-                        </div>
-                        {item.sub && <div className="import-item-sub">{item.sub}</div>}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </>
+              <div className="import-picker-results">
+                {!importSearch.trim() && <p className="import-picker-hint">Tapez pour filtrer, ou parcourez les archives ci-dessous</p>}
+                {renderSection('Rapports', '📋', importResults.rapports)}
+                {renderSection('Visites médicales', '🏥', importResults.visites)}
+                {renderSection('Interdits de front', '⛔', importResults.interdits)}
+                {renderSection('Télégrammes', '📨', importResults.telegrammes)}
+              </div>
             )}
           </div>
         </div>

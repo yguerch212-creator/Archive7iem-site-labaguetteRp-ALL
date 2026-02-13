@@ -513,66 +513,24 @@
 
 /* ===== IMPORT PICKER (Dossier Layout) ===== */
 .import-picker-modal {
-  max-width: 500px;
+  max-width: 550px;
   width: 95%;
 }
 .import-picker-title {
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.75rem;
   font-size: 1.05rem;
 }
 .import-picker-hint {
-  font-size: 0.75rem;
-  color: #888;
-  margin: 0 0 1rem;
-}
-.import-picker-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-}
-.import-picker-cat {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.85rem 1rem;
-  background: #faf8f0;
-  border: 1px solid #d4c9a8;
-  border-radius: 6px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.82rem;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.import-picker-cat:hover {
-  background: #f0ead8;
-  border-color: #5c6b3c;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-.import-cat-icon { font-size: 1.4rem; }
-.import-cat-label { font-weight: 600; }
-.import-picker-nav {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-.import-picker-nav-title {
-  font-weight: 600;
-  font-size: 0.85rem;
-  flex: 1;
-}
-.import-picker-count {
-  font-size: 0.7rem;
-  color: #666;
-  background: #e8e2d0;
-  padding: 0.15rem 0.5rem;
-  border-radius: 10px;
-  font-weight: 600;
+  font-size: 0.72rem;
+  color: #999;
+  margin: 0 0 0.5rem;
+  text-align: center;
+  font-style: italic;
 }
 .import-picker-search {
-  margin-bottom: 0.75rem;
-  font-size: 0.82rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  padding: 0.65rem 0.8rem;
 }
 .import-picker-empty {
   text-align: center;
@@ -580,36 +538,66 @@
   color: #999;
   font-size: 0.82rem;
 }
-.import-picker-list {
-  max-height: 340px;
+.import-picker-results {
+  max-height: 400px;
   overflow-y: auto;
+}
+.import-section {
+  margin-bottom: 0.75rem;
+}
+.import-section-header {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #5c6b3c;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #d4c9a8;
+  margin-bottom: 0.35rem;
   display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
+  align-items: center;
+  gap: 0.4rem;
+}
+.import-section-count {
+  font-size: 0.65rem;
+  font-weight: 600;
+  background: #e8e2d0;
+  color: #666;
+  padding: 0.1rem 0.4rem;
+  border-radius: 8px;
+}
+.import-more {
+  font-size: 0.68rem;
+  color: #aaa;
+  text-align: center;
+  margin: 0.3rem 0 0;
+  font-style: italic;
 }
 .import-picker-item {
   display: block;
   width: 100%;
   text-align: left;
-  padding: 0.6rem 0.8rem;
+  padding: 0.5rem 0.7rem;
   background: #fff;
-  border: 1px solid #e8e2d0;
-  border-left: 3px solid #b8a88a;
+  border: 1px solid #ece6d6;
+  border-left: 3px solid transparent;
   border-radius: 3px;
   cursor: pointer;
   font-family: 'IBM Plex Mono', monospace;
   transition: all 0.12s;
+  margin-bottom: 0.2rem;
 }
 .import-picker-item:hover {
   background: #f5f0e0;
   border-left-color: #5c6b3c;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .import-item-top {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+}
+.import-item-icon {
+  font-size: 0.85rem;
+  flex-shrink: 0;
 }
 .import-item-label {
   font-size: 0.78rem;
@@ -622,20 +610,22 @@
   min-width: 0;
 }
 .import-item-badge {
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   text-transform: uppercase;
   background: #5c6b3c;
   color: #fff;
-  padding: 0.1rem 0.4rem;
+  padding: 0.1rem 0.35rem;
   border-radius: 3px;
   white-space: nowrap;
   flex-shrink: 0;
+  letter-spacing: 0.3px;
 }
 .import-item-sub {
   font-size: 0.68rem;
-  color: #777;
-  margin-top: 0.2rem;
+  color: #888;
+  margin-top: 0.15rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  padding-left: 1.25rem;
 }
