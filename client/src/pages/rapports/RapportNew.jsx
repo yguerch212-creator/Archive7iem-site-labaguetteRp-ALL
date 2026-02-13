@@ -1,27 +1,57 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { useAuth } from '../../auth/useAuth'
 import apiClient from '../../api/client'
+
+const DRAFT_KEY = 'rapport_draft'
+
+function loadDraft() {
+  try { const d = JSON.parse(localStorage.getItem(DRAFT_KEY)); return d && d.titre ? d : null } catch { return null }
+}
 
 export default function RapportNew() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [unites, setUnites] = useState([])
   const [grades, setGrades] = useState([])
   const [effectifs, setEffectifs] = useState([])
   const [error, setError] = useState('')
-  const [form, setForm] = useState({
-    type: 'rapport', titre: '', date_rp: '', date_irl: '',
-    auteur_nom: '', auteur_id: '', unite_id: '', grade_id: '',
+  const [hasDraft, setHasDraft] = useState(false)
+  
+  const today = new Date().toLocaleDateString('fr-FR')
+  const defaultForm = {
+    type: 'rapport', titre: '', date_rp: '', date_irl: today,
+    auteur_nom: user ? `${user.prenom || ''} ${user.nom || ''}`.trim() : '',
+    auteur_id: '', unite_id: user?.unite_id || '', grade_id: '',
     contexte: '', resume: '', bilan: '', remarques: '',
     personne_renseignee_nom: '',
-    // Recommandation
     recommande_nom: '', recommande_grade: '', raison_1: '', recompense: '',
-    // Incident
     intro_nom: '', intro_grade: '', mise_en_cause_nom: '', mise_en_cause_grade: '',
     lieu_incident: '', compte_rendu: '',
-    signature_nom: '', signature_grade: ''
+    signature_nom: user ? `${user.prenom || ''} ${user.nom || ''}`.trim() : '',
+    signature_grade: user?.grade_nom || ''
+  }
+  
+  const [form, setForm] = useState(() => {
+    const draft = loadDraft()
+    return draft || defaultForm
   })
 
+  // Auto-save draft
+  const saveTimer = useRef(null)
   useEffect(() => {
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => {
+      if (form.titre || form.resume || form.compte_rendu || form.raison_1) {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(form))
+        setHasDraft(true)
+      }
+    }, 1000)
+    return () => clearTimeout(saveTimer.current)
+  }, [form])
+
+  useEffect(() => {
+    setHasDraft(!!loadDraft())
     apiClient.get('/unites').then(r => setUnites(r.data.data || []))
     apiClient.get('/effectifs/all').then(r => setEffectifs(r.data.data || [])).catch(() => {})
   }, [])
@@ -38,6 +68,7 @@ export default function RapportNew() {
     setError('')
     try {
       const res = await apiClient.post('/rapports', form)
+      localStorage.removeItem(DRAFT_KEY)
       const id = res.data.data?.id
       if (id) navigate(`/rapports/${id}/layout`)
       else navigate('/rapports')
@@ -50,8 +81,18 @@ export default function RapportNew() {
     <>
       
       <div className="container" style={{ maxWidth: 900 }}>
-        <Link to="/rapports" className="btn btn-secondary btn-small">← Retour</Link>
+        <Link to="/rapports" className="btn btn-secondary btn-small">← Retour aux rapports</Link>
         <h1 style={{ textAlign: 'center' }}>Nouveau Rapport</h1>
+        
+        {hasDraft && (
+          <div style={{ textAlign: 'center', marginBottom: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>
+            <span style={{ color: 'var(--military-accent)' }}>💾 Brouillon auto-sauvegardé</span>
+            {' — '}
+            <button onClick={() => { localStorage.removeItem(DRAFT_KEY); setForm(defaultForm); setHasDraft(false) }} style={{ background: 'none', border: 'none', color: 'var(--error, #c33)', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'inherit', fontSize: 'inherit' }}>
+              Effacer le brouillon
+            </button>
+          </div>
+        )}
 
         {error && <div style={{ color: 'var(--error)', textAlign: 'center', marginBottom: '1rem' }}>{error}</div>}
 

@@ -17,6 +17,7 @@ const adminRoutes = require('./routes/admin.routes')
 const pdsRoutes = require('./routes/pds.routes')
 const interditsRoutes = require('./routes/interdits.routes')
 const medicalRoutes = require('./routes/medical.routes')
+const documentationRoutes = require('./routes/documentation.routes')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -46,6 +47,7 @@ app.use('/api/admin', adminRoutes)
 app.use('/api/pds', pdsRoutes)
 app.use('/api/interdits', interditsRoutes)
 app.use('/api/medical', medicalRoutes)
+app.use('/api/documentation', documentationRoutes)
 
 // Stats endpoint
 app.get('/api/stats', async (req, res) => {

@@ -19,6 +19,7 @@ import AdminUsers from './pages/admin/AdminUsers'
 import PDS from './pages/pds/PDS'
 import InterditsFront from './pages/interdits/InterditsFront'
 import VisitesMedicales from './pages/medical/VisitesMedicales'
+import Documentation from './pages/documentation/Documentation'
 
 function AppRouter() {
   const { user } = useAuth()
@@ -52,6 +53,9 @@ function AppRouter() {
       
       {/* Médical */}
       <Route path="/medical" element={<ProtectedRoute><VisitesMedicales /></ProtectedRoute>} />
+      
+      {/* Documentation */}
+      <Route path="/documentation" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
       
       {/* Search */}
       <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />

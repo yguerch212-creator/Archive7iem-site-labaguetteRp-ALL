@@ -17,6 +17,7 @@ export default function Dashboard() {
     { icon: '⏱️', title: 'PDS', desc: 'Prise De Service', to: '/pds' },
     { icon: '🚫', title: 'Interdits de front', desc: 'Sanctions & restrictions', to: '/interdits' },
     { icon: '🏥', title: 'Médical', desc: 'Visites médicales', to: '/medical' },
+    { icon: '📚', title: 'Documentation', desc: 'Liens & règlements', to: '/documentation' },
     { icon: '🔎', title: 'Recherche', desc: 'Recherche globale', to: '/search' },
   ]
 
