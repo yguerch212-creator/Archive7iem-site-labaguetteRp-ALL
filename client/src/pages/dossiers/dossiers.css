@@ -360,6 +360,21 @@
 }
 
 /* Cover */
+/* The cover page gets a special military dossier look */
+.book-page:has(.book-cover) {
+  background: linear-gradient(145deg, #4a4636 0%, #5a5440 25%, #4e4a38 50%, #44412e 75%, #3e3b2c 100%);
+  background-image: none; /* remove paper lines */
+  border-color: #6b6348;
+  box-shadow:
+    -4px 0 0 #5a5440,
+    -6px 0 0 #4a4636,
+    -8px 0 0 #5a5440,
+    4px 4px 15px rgba(0,0,0,0.25);
+  color: #d4c9a8;
+}
+.book-page:has(.book-cover)::before {
+  background: linear-gradient(to right, rgba(0,0,0,0.15), transparent);
+}
 .book-cover {
   display: flex;
   flex-direction: column;
@@ -368,51 +383,70 @@
   text-align: center;
   flex: 1;
   position: relative;
+  /* Gold border frame */
+  border: 2px solid rgba(180,160,100,0.3);
+  border-radius: 4px;
+  margin: -0.5rem;
+  padding: 1rem;
+}
+.book-cover::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(180,160,100,0.15);
+  border-radius: 3px;
+  pointer-events: none;
 }
 .book-cover-stamp {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 15px;
+  right: 15px;
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 900;
-  color: rgba(180, 40, 40, 0.35);
-  border: 3px solid rgba(180, 40, 40, 0.35);
+  color: rgba(180, 50, 50, 0.45);
+  border: 3px solid rgba(180, 50, 50, 0.4);
   padding: 2px 12px;
   transform: rotate(12deg);
   letter-spacing: 3px;
 }
 .book-cover-emblem {
-  font-size: 4rem;
-  margin-bottom: 1.5rem;
-  opacity: 0.5;
+  font-size: 3.5rem;
+  margin-bottom: 1.2rem;
+  opacity: 0.45;
+  color: #b4a878;
 }
 .book-cover-title {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   margin: 0 0 0.5rem;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
   text-transform: uppercase;
+  color: #e0d8c0;
+  border-bottom: 1px solid rgba(180,160,100,0.3);
+  padding-bottom: 0.5rem;
 }
 .book-cover-desc {
-  font-size: 0.9rem;
-  color: var(--text-muted);
+  font-size: 0.85rem;
+  color: #b8ad90;
   max-width: 400px;
-  margin: 0 0 2rem;
+  margin: 0.5rem 0 1.5rem;
+  font-style: italic;
 }
 .book-cover-meta {
   display: flex;
   gap: 1.5rem;
-  font-size: 0.8rem;
-  color: var(--text-muted);
+  font-size: 0.75rem;
+  color: #a09878;
   font-family: 'IBM Plex Mono', monospace;
 }
 .book-cover-footer {
   position: absolute;
-  bottom: 1rem;
-  font-size: 0.8rem;
-  color: var(--text-muted);
+  bottom: 1.2rem;
+  font-size: 0.75rem;
+  color: #908870;
   font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.5px;
 }
 
 /* Entry pages */
@@ -756,10 +790,10 @@
   overflow: hidden;
 }
 .dossier-book-page.is-cover {
-  background: linear-gradient(135deg, #5c5840 0%, #6b6650 30%, #5c5840 60%, #4f4b38 100%);
+  background: linear-gradient(145deg, #4a4636 0%, #5a5440 25%, #4e4a38 50%, #44412e 75%, #3e3b2c 100%);
   color: #d4c9a8;
-  border-color: #4a4630;
-  box-shadow: 2px 2px 12px rgba(0,0,0,0.2), inset 0 0 50px rgba(0,0,0,0.15);
+  border-color: #6b6348;
+  box-shadow: 2px 2px 12px rgba(0,0,0,0.2), inset 0 0 40px rgba(0,0,0,0.1);
 }
 
 /* Blocks */
@@ -864,7 +898,8 @@
   font-family: 'IBM Plex Mono', monospace;
 }
 .book-layout-page.is-cover {
-  background: linear-gradient(135deg, #5c5840 0%, #6b6650 30%, #5c5840 60%, #4f4b38 100%);
+  background: linear-gradient(145deg, #4a4636 0%, #5a5440 25%, #4e4a38 50%, #44412e 75%, #3e3b2c 100%);
   color: #d4c9a8;
   border-radius: 3px;
+  border: 2px solid rgba(180,160,100,0.3);
 }
