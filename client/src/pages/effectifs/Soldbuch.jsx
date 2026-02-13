@@ -17,7 +17,8 @@ export default function Soldbuch() {
   const [decoForm, setDecoForm] = useState({ decoration_id: '', nom_custom: '', date_attribution: '', attribue_par: '', motif: '' })
   const [decoMsg, setDecoMsg] = useState(null)
 
-  const canManageDecos = user?.isAdmin || user?.isRecenseur
+  const isSelf = user?.effectif_id && String(user.effectif_id) === String(id)
+  const canManageDecos = user?.isAdmin || user?.isRecenseur || isSelf
 
   const loadDecos = () => apiClient.get(`/decorations/effectif/${id}`).then(r => setDecorations(r.data.data || []))
 
@@ -198,7 +199,7 @@ export default function Soldbuch() {
             )}
           </div>
           {/* Manage existing decorations */}
-          {!showDecoForm && decorations.length > 0 && (
+          {!showDecoForm && decorations.length > 0 && (user?.isAdmin || user?.isRecenseur) && (
             <div className="card" style={{ padding: 'var(--space-sm)' }}>
               {decorations.map(d => (
                 <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid var(--border-color)' }}>

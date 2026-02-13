@@ -25,6 +25,7 @@ import DossiersList from './pages/dossiers/DossiersList'
 import DossierPersonnel from './pages/dossiers/DossierPersonnel'
 import DossierView from './pages/dossiers/DossierView'
 import Telegrammes from './pages/telegrammes/Telegrammes'
+import AdminStats from './pages/admin/AdminStats'
 
 function AppRouter() {
   const { user } = useAuth()
@@ -74,6 +75,7 @@ function AppRouter() {
       {/* Admin */}
       <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
       <Route path="/admin/logs" element={<ProtectedRoute><AdminLogs /></ProtectedRoute>} />
+      <Route path="/admin/stats" element={<ProtectedRoute><AdminStats /></ProtectedRoute>} />
       
       <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />

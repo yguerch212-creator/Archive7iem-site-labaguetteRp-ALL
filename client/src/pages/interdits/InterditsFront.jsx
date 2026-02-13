@@ -1,26 +1,22 @@
 import BackButton from '../../components/BackButton'
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import EffectifAutocomplete from '../../components/EffectifAutocomplete'
-import './interdits.css'
 
 export default function InterditsFront() {
   const { user } = useAuth()
   const [interdits, setInterdits] = useState([])
   const [showAll, setShowAll] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  const [effectifs, setEffectifs] = useState([])
   const [message, setMessage] = useState(null)
   const [form, setForm] = useState({ effectif_id: '', effectif_nom: '', motif: '', type: 'Disciplinaire', date_debut: new Date().toISOString().slice(0, 10), date_fin: '', notes: '' })
 
-  const canCreate = user?.isAdmin || user?.isOfficier || user?.unite_code === '254'
+  // Officiers, Feldgendarmerie (254), Sanitäts sous-off+ can create
+  const canCreate = user?.isAdmin || user?.isOfficier || user?.unite_code === '254' ||
+    (user?.unite_code === '916S' && (user?.isRecenseur || (user?.grade_rang && user?.grade_rang >= 35)))
 
-  useEffect(() => {
-    load()
-    api.get('/effectifs/all').then(r => setEffectifs(r.data.data)).catch(() => {})
-  }, [showAll])
+  useEffect(() => { load() }, [showAll])
 
   const load = async () => {
     try {
@@ -35,7 +31,8 @@ export default function InterditsFront() {
       await api.post('/interdits', form)
       setShowForm(false)
       setForm({ effectif_id: '', effectif_nom: '', motif: '', type: 'Disciplinaire', date_debut: new Date().toISOString().slice(0, 10), date_fin: '', notes: '' })
-      setMessage({ type: 'success', text: 'Interdit de front prononcé' })
+      setMessage({ type: 'success', text: 'Interdit de front prononcé ✓' })
+      setTimeout(() => setMessage(null), 3000)
       load()
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur' })
@@ -47,61 +44,49 @@ export default function InterditsFront() {
     if (!motif) return
     try {
       await api.put(`/interdits/${id}/lever`, { motif_levee: motif })
-      setMessage({ type: 'success', text: 'Interdit levé' })
+      setMessage({ type: 'success', text: 'Interdit levé ✓' })
+      setTimeout(() => setMessage(null), 3000)
       load()
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur' })
     }
   }
 
-  const supprimer = async (id) => {
-    if (!confirm('Supprimer définitivement cet interdit ?')) return
-    try {
-      await api.delete(`/interdits/${id}`)
-      load()
-    } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur' })
-    }
-  }
+  const fmtDate = d => d ? new Date(d + 'T00:00').toLocaleDateString('fr-FR') : '—'
 
   return (
-    <div className="interdits-page">
-      <BackButton label="← Tableau de bord" />
-      <div className="interdits-header">
-        <h1>🚫 Interdits de Front</h1>
-        <div className="interdits-actions">
-          <label className="toggle-label">
+    <div className="container" style={{ paddingBottom: 'var(--space-xxl)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
+        <BackButton label="← Tableau de bord" />
+        <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
+          <label style={{ fontSize: '0.8rem', display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
             <input type="checkbox" checked={showAll} onChange={e => setShowAll(e.target.checked)} />
             Voir les levés
           </label>
           {canCreate && (
-            <button className="btn btn-danger" onClick={() => setShowForm(!showForm)}>
+            <button className="btn btn-primary btn-small" onClick={() => setShowForm(!showForm)}>
               {showForm ? '✕ Annuler' : '+ Prononcer un interdit'}
             </button>
           )}
         </div>
       </div>
 
-      {message && (
-        <div className={`alert alert-${message.type}`}>
-          {message.text}
-          <button onClick={() => setMessage(null)} className="alert-close">✕</button>
-        </div>
-      )}
+      <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>🚫 Interdits de Front</h1>
+
+      {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}
 
       {showForm && (
-        <div className="card interdit-form">
-          <h3>Prononcer un interdit de front</h3>
+        <div className="paper-card" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-lg)' }}>
+          <h3 style={{ marginTop: 0 }}>Prononcer un interdit de front</h3>
           <form onSubmit={submit}>
-            <div className="form-row">
-              <div className="form-group">
+            <div className="form-row" style={{ display: 'flex', gap: 'var(--space-md)' }}>
+              <div className="form-group" style={{ flex: 2 }}>
                 <label className="form-label">Effectif concerné *</label>
                 <EffectifAutocomplete
-                  effectifs={effectifs}
                   value={form.effectif_nom}
                   onChange={(text, eff) => setForm(p => ({...p, effectif_nom: text, effectif_id: eff?.id || ''}))}
-                  placeholder="Rechercher ou saisir un nom..."
-                  required
+                  onSelect={eff => setForm(p => ({...p, effectif_id: eff.id, effectif_nom: `${eff.prenom} ${eff.nom}`}))}
+                  placeholder="Rechercher un effectif..."
                 />
               </div>
               <div className="form-group">
@@ -113,7 +98,7 @@ export default function InterditsFront() {
                 </select>
               </div>
             </div>
-            <div className="form-row">
+            <div className="form-row" style={{ display: 'flex', gap: 'var(--space-md)' }}>
               <div className="form-group">
                 <label className="form-label">Date début *</label>
                 <input type="date" className="form-input" value={form.date_debut} onChange={e => setForm(p => ({...p, date_debut: e.target.value}))} required />
@@ -125,53 +110,60 @@ export default function InterditsFront() {
             </div>
             <div className="form-group">
               <label className="form-label">Motif *</label>
-              <textarea className="form-input form-textarea" value={form.motif} onChange={e => setForm(p => ({...p, motif: e.target.value}))} required rows={3} placeholder="Raison de l'interdit de front..." />
+              <textarea className="form-input" value={form.motif} onChange={e => setForm(p => ({...p, motif: e.target.value}))} required rows={3} placeholder="Raison de l'interdit de front..." style={{ resize: 'vertical' }} />
             </div>
-            <div className="form-group">
-              <label className="form-label">Notes complémentaires</label>
-              <textarea className="form-input form-textarea" value={form.notes} onChange={e => setForm(p => ({...p, notes: e.target.value}))} rows={2} placeholder="Optionnel..." />
-            </div>
-            <button type="submit" className="btn btn-danger">🚫 Prononcer l'interdit</button>
+            <button type="submit" className="btn btn-primary">🚫 Prononcer l'interdit</button>
           </form>
         </div>
       )}
 
-      {interdits.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-          <p style={{ fontSize: '2rem' }}>✅</p>
-          <p>Aucun interdit de front {showAll ? '' : 'actif'}</p>
-        </div>
-      ) : (
-        <div className="interdits-list">
-          {interdits.map(i => (
-            <div key={i.id} className={`card interdit-card ${i.actif ? 'interdit-actif' : 'interdit-leve'}`}>
-              <div className="interdit-badge">
-                {i.actif ? '🔴 ACTIF' : '✅ LEVÉ'}
-              </div>
-              <div className="interdit-header">
-                <div>
-                  <span className="interdit-name">{i.effectif_grade ? `${i.effectif_grade} ` : ''}{i.effectif_prenom} {i.effectif_nom}</span>
-                  <span className="interdit-unite">{i.effectif_unite_code}</span>
-                </div>
-                <span className={`interdit-type type-${i.type.toLowerCase()}`}>{i.type}</span>
-              </div>
-              <div className="interdit-motif">{i.motif}</div>
-              <div className="interdit-meta">
-                <span>📅 Du {i.date_debut ? new Date(i.date_debut+'T00:00').toLocaleDateString('fr-FR') : '?'}{i.date_fin ? ` au ${new Date(i.date_fin+'T00:00').toLocaleDateString('fr-FR')}` : ' — indéterminé'}</span>
-                <span>👤 Ordonné par {i.ordonne_par_nom}</span>
-                {!i.actif && i.leve_par_nom && <span>✅ Levé par {i.leve_par_nom}</span>}
-              </div>
-              {i.notes && <div className="interdit-notes">{i.notes}</div>}
-              {i.actif && canCreate && (
-                <div className="interdit-actions">
-                  <button className="btn btn-sm btn-success" onClick={() => lever(i.id)}>✅ Lever l'interdit</button>
-                  {user?.isAdmin && <button className="btn btn-sm btn-ghost" onClick={() => supprimer(i.id)}>🗑️ Supprimer</button>}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Table */}
+      <div className="paper-card" style={{ overflow: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+              <th style={th}>Statut</th>
+              <th style={th}>Effectif</th>
+              <th style={th}>Type</th>
+              <th style={th}>Motif</th>
+              <th style={th}>Du</th>
+              <th style={th}>Au</th>
+              <th style={th}>Ordonné par</th>
+              {canCreate && <th style={th}>Actions</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {interdits.length === 0 ? (
+              <tr><td colSpan={canCreate ? 8 : 7} style={{ textAlign: 'center', padding: 'var(--space-lg)', color: 'var(--text-muted)' }}>
+                ✅ Aucun interdit de front {showAll ? '' : 'actif'}
+              </td></tr>
+            ) : interdits.map(i => (
+              <tr key={i.id} style={{ borderBottom: '1px solid var(--border-color)', background: i.actif ? 'rgba(139,74,71,0.04)' : '' }}>
+                <td style={td}>
+                  {i.actif
+                    ? <span style={{ color: 'var(--danger)', fontWeight: 700, fontSize: '0.8rem' }}>🔴 ACTIF</span>
+                    : <span style={{ color: 'var(--success)', fontSize: '0.8rem' }}>✅ Levé</span>
+                  }
+                </td>
+                <td style={td}><strong>{i.effectif_grade ? `${i.effectif_grade} ` : ''}{i.effectif_prenom} {i.effectif_nom}</strong><br/><span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{i.effectif_unite_code || ''}</span></td>
+                <td style={td}><span className={`badge ${i.type === 'Disciplinaire' ? 'badge-red' : i.type === 'Medical' ? 'badge-warning' : 'badge-muted'}`}>{i.type}</span></td>
+                <td style={{ ...td, maxWidth: 250 }}>{i.motif}</td>
+                <td style={td}>{fmtDate(i.date_debut)}</td>
+                <td style={td}>{i.date_fin ? fmtDate(i.date_fin) : 'Indéterminé'}</td>
+                <td style={td}>{i.ordonne_par_nom}{!i.actif && i.leve_par_nom ? <><br/><span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Levé par {i.leve_par_nom}</span></> : ''}</td>
+                {canCreate && (
+                  <td style={td}>
+                    {i.actif && <button className="btn btn-sm btn-primary" style={{ fontSize: '0.75rem', padding: '4px 10px' }} onClick={() => lever(i.id)}>✅ Lever</button>}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
+
+const th = { textAlign: 'left', padding: 'var(--space-sm) var(--space-md)', fontWeight: 700, color: 'var(--military-dark)', whiteSpace: 'nowrap' }
+const td = { padding: 'var(--space-sm) var(--space-md)', verticalAlign: 'top' }

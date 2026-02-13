@@ -1,10 +1,8 @@
 import BackButton from '../../components/BackButton'
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import EffectifAutocomplete from '../../components/EffectifAutocomplete'
-import './medical.css'
 
 const APTITUDES = ['Apte', 'Inapte temporaire', 'Inapte definitif', 'Apte avec reserves']
 const APTITUDE_ICONS = { 'Apte': '🟢', 'Inapte temporaire': '🟡', 'Inapte definitif': '🔴', 'Apte avec reserves': '🟠' }
@@ -13,9 +11,9 @@ export default function VisitesMedicales() {
   const { user } = useAuth()
   const [visites, setVisites] = useState([])
   const [showForm, setShowForm] = useState(false)
-  const [effectifs, setEffectifs] = useState([])
   const [message, setMessage] = useState(null)
   const [filterAptitude, setFilterAptitude] = useState('')
+  const [search, setSearch] = useState('')
   const [form, setForm] = useState({
     effectif_id: '', effectif_nom: '', date_visite: new Date().toISOString().slice(0, 10),
     medecin: '', diagnostic: '', aptitude: 'Apte', restrictions: '', notes_confidentielles: ''
@@ -23,10 +21,7 @@ export default function VisitesMedicales() {
 
   const canCreate = user?.isAdmin || user?.isRecenseur || user?.unite_code === '916S'
 
-  useEffect(() => {
-    load()
-    api.get('/effectifs/all').then(r => setEffectifs(r.data.data)).catch(() => {})
-  }, [])
+  useEffect(() => { load() }, [])
 
   const load = async () => {
     try {
@@ -41,95 +36,54 @@ export default function VisitesMedicales() {
       await api.post('/medical', form)
       setShowForm(false)
       setForm({ effectif_id: '', effectif_nom: '', date_visite: new Date().toISOString().slice(0, 10), medecin: '', diagnostic: '', aptitude: 'Apte', restrictions: '', notes_confidentielles: '' })
-      setMessage({ type: 'success', text: 'Visite médicale enregistrée' })
+      setMessage({ type: 'success', text: 'Visite médicale enregistrée ✓' })
+      setTimeout(() => setMessage(null), 3000)
       load()
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur' })
     }
   }
 
-  const filtered = filterAptitude ? visites.filter(v => v.aptitude === filterAptitude) : visites
+  const fmtDate = d => d ? new Date(d + 'T00:00').toLocaleDateString('fr-FR') : '—'
 
-  // Group by effectif for quick overview
-  const latestByEffectif = {}
-  visites.forEach(v => {
-    if (!latestByEffectif[v.effectif_id] || v.date_visite > latestByEffectif[v.effectif_id].date_visite) {
-      latestByEffectif[v.effectif_id] = v
-    }
+  const filtered = visites.filter(v => {
+    if (filterAptitude && v.aptitude !== filterAptitude) return false
+    if (search && !`${v.effectif_prenom} ${v.effectif_nom} ${v.medecin || ''}`.toLowerCase().includes(search.toLowerCase())) return false
+    return true
   })
-  const inaptes = Object.values(latestByEffectif).filter(v => v.aptitude !== 'Apte')
 
   return (
-    <div className="medical-page">
-      <BackButton label="← Tableau de bord" />
-      <div className="medical-header">
-        <h1>🏥 Visites Médicales</h1>
+    <div className="container" style={{ paddingBottom: 'var(--space-xxl)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
+        <BackButton label="← Tableau de bord" />
         {canCreate && (
-          <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
+          <button className="btn btn-primary btn-small" onClick={() => setShowForm(!showForm)}>
             {showForm ? '✕ Annuler' : '+ Nouvelle visite'}
           </button>
         )}
       </div>
 
-      {/* Quick stats */}
-      <div className="medical-stats">
-        <div className="stat-card">
-          <div className="stat-value">{visites.length}</div>
-          <div className="stat-label">Visites totales</div>
-        </div>
-        <div className="stat-card stat-green">
-          <div className="stat-value">{Object.values(latestByEffectif).filter(v => v.aptitude === 'Apte').length}</div>
-          <div className="stat-label">Aptes</div>
-        </div>
-        <div className="stat-card stat-orange">
-          <div className="stat-value">{inaptes.length}</div>
-          <div className="stat-label">Non aptes</div>
-        </div>
-      </div>
+      <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>🏥 Visites Médicales</h1>
 
-      {/* Inaptes alert */}
-      {inaptes.length > 0 && (
-        <div className="medical-alert">
-          <strong>⚠️ Effectifs non aptes :</strong>
-          {inaptes.map(v => (
-            <span key={v.effectif_id} className="inapte-badge">
-              {APTITUDE_ICONS[v.aptitude]} {v.effectif_prenom} {v.effectif_nom} — {v.aptitude}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {message && (
-        <div className={`alert alert-${message.type}`}>
-          {message.text}
-          <button onClick={() => setMessage(null)} className="alert-close">✕</button>
-        </div>
-      )}
+      {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}
 
       {showForm && (
-        <div className="card medical-form">
-          <h3>Nouvelle visite médicale</h3>
+        <div className="paper-card" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-lg)' }}>
+          <h3 style={{ marginTop: 0 }}>Nouvelle visite médicale</h3>
           <form onSubmit={submit}>
-            <div className="form-row">
-              <div className="form-group">
+            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ flex: 2, minWidth: 200 }}>
                 <label className="form-label">Effectif *</label>
                 <EffectifAutocomplete
-                  effectifs={effectifs}
                   value={form.effectif_nom}
                   onChange={(text, eff) => setForm(p => ({...p, effectif_nom: text, effectif_id: eff?.id || ''}))}
-                  placeholder="Rechercher ou saisir un nom..."
-                  required
+                  onSelect={eff => setForm(p => ({...p, effectif_id: eff.id, effectif_nom: `${eff.prenom} ${eff.nom}`}))}
+                  placeholder="Rechercher un effectif..."
                 />
               </div>
               <div className="form-group">
                 <label className="form-label">Date visite *</label>
                 <input type="date" className="form-input" value={form.date_visite} onChange={e => setForm(p => ({...p, date_visite: e.target.value}))} required />
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Médecin</label>
-                <input type="text" className="form-input" value={form.medecin} onChange={e => setForm(p => ({...p, medecin: e.target.value}))} placeholder="Nom du médecin RP" />
               </div>
               <div className="form-group">
                 <label className="form-label">Aptitude</label>
@@ -138,64 +92,66 @@ export default function VisitesMedicales() {
                 </select>
               </div>
             </div>
+            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label className="form-label">Médecin</label>
+                <input type="text" className="form-input" value={form.medecin} onChange={e => setForm(p => ({...p, medecin: e.target.value}))} placeholder="Nom du médecin RP" />
+              </div>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label className="form-label">Restrictions</label>
+                <input type="text" className="form-input" value={form.restrictions} onChange={e => setForm(p => ({...p, restrictions: e.target.value}))} placeholder="Repos, interdit arme lourde..." />
+              </div>
+            </div>
             <div className="form-group">
               <label className="form-label">Diagnostic</label>
-              <textarea className="form-input form-textarea" value={form.diagnostic} onChange={e => setForm(p => ({...p, diagnostic: e.target.value}))} rows={3} placeholder="Diagnostic médical..." />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Restrictions</label>
-              <input type="text" className="form-input" value={form.restrictions} onChange={e => setForm(p => ({...p, restrictions: e.target.value}))} placeholder="Ex: Interdit de port d'arme lourde, repos 2 semaines..." />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Notes confidentielles</label>
-              <textarea className="form-input form-textarea" value={form.notes_confidentielles} onChange={e => setForm(p => ({...p, notes_confidentielles: e.target.value}))} rows={2} placeholder="Visible uniquement par le personnel médical..." />
+              <textarea className="form-input" value={form.diagnostic} onChange={e => setForm(p => ({...p, diagnostic: e.target.value}))} rows={3} placeholder="Diagnostic médical..." style={{ resize: 'vertical' }} />
             </div>
             <button type="submit" className="btn btn-primary">🏥 Enregistrer la visite</button>
           </form>
         </div>
       )}
 
-      {/* Filter */}
-      <div className="medical-filters">
-        <select value={filterAptitude} onChange={e => setFilterAptitude(e.target.value)}>
+      {/* Filters */}
+      <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', marginBottom: 'var(--space-lg)', flexWrap: 'wrap' }}>
+        <input className="form-input" style={{ maxWidth: 250 }} placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} />
+        <select className="form-input" style={{ maxWidth: 200 }} value={filterAptitude} onChange={e => setFilterAptitude(e.target.value)}>
           <option value="">Toutes les aptitudes</option>
           {APTITUDES.map(a => <option key={a} value={a}>{APTITUDE_ICONS[a]} {a}</option>)}
         </select>
       </div>
 
-      {/* Visites list */}
-      {filtered.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-          <p style={{ fontSize: '2rem' }}>📋</p>
-          <p>Aucune visite médicale enregistrée</p>
-        </div>
-      ) : (
-        <div className="visites-list">
-          {filtered.map(v => (
-            <div key={v.id} className="card visite-card">
-              <div className="visite-header">
-                <div>
-                  <span className="visite-name">{v.effectif_grade ? `${v.effectif_grade} ` : ''}{v.effectif_prenom} {v.effectif_nom}</span>
-                  <span className="visite-unite">{v.effectif_unite_code}</span>
-                </div>
-                <span className={`aptitude-badge aptitude-${v.aptitude.replace(/\s/g, '-').toLowerCase()}`}>
-                  {APTITUDE_ICONS[v.aptitude]} {v.aptitude}
-                </span>
-              </div>
-              <div className="visite-meta">
-                <span>📅 {v.date_visite ? new Date(v.date_visite+'T00:00').toLocaleDateString('fr-FR') : '—'}</span>
-                {v.medecin && <span>👨‍⚕️ Dr. {v.medecin}</span>}
-                <span>📝 Par {v.created_by_nom}</span>
-              </div>
-              {v.diagnostic && <div className="visite-diagnostic">{v.diagnostic}</div>}
-              {v.restrictions && <div className="visite-restrictions">⚠️ Restrictions : {v.restrictions}</div>}
-              {v.notes_confidentielles && (user?.isAdmin || user?.isRecenseur || user?.unite_code === '916S') && (
-                <div className="visite-confidentiel">🔒 {v.notes_confidentielles}</div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Table */}
+      <div className="paper-card" style={{ overflow: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+              <th style={th}>Aptitude</th>
+              <th style={th}>Effectif</th>
+              <th style={th}>Date visite</th>
+              <th style={th}>Médecin</th>
+              <th style={th}>Diagnostic</th>
+              <th style={th}>Restrictions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 ? (
+              <tr><td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-lg)', color: 'var(--text-muted)' }}>Aucune visite médicale</td></tr>
+            ) : filtered.map(v => (
+              <tr key={v.id} style={{ borderBottom: '1px solid var(--border-color)', background: v.aptitude === 'Inapte definitif' ? 'rgba(139,74,71,0.04)' : v.aptitude === 'Inapte temporaire' ? 'rgba(161,124,71,0.04)' : '' }}>
+                <td style={td}><span style={{ whiteSpace: 'nowrap' }}>{APTITUDE_ICONS[v.aptitude]} {v.aptitude}</span></td>
+                <td style={td}><strong>{v.effectif_grade ? `${v.effectif_grade} ` : ''}{v.effectif_prenom} {v.effectif_nom}</strong><br/><span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{v.effectif_unite_code || ''}</span></td>
+                <td style={td}>{fmtDate(v.date_visite)}</td>
+                <td style={td}>{v.medecin || '—'}</td>
+                <td style={{ ...td, maxWidth: 250 }}>{v.diagnostic || '—'}</td>
+                <td style={td}>{v.restrictions || '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
+
+const th = { textAlign: 'left', padding: 'var(--space-sm) var(--space-md)', fontWeight: 700, color: 'var(--military-dark)', whiteSpace: 'nowrap' }
+const td = { padding: 'var(--space-sm) var(--space-md)', verticalAlign: 'top' }

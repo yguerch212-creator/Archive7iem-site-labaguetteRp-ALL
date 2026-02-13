@@ -30,8 +30,12 @@ router.get('/effectif/:id', auth, async (req, res) => {
   }
 })
 
-// POST /api/decorations/effectif/:id — Award decoration (recenseur+)
-router.post('/effectif/:id', auth, recenseur, async (req, res) => {
+// POST /api/decorations/effectif/:id — Award decoration (recenseur+ or self)
+router.post('/effectif/:id', auth, async (req, res) => {
+  const targetId = parseInt(req.params.id)
+  const isSelf = req.user.effectif_id === targetId
+  const isPrivileged = req.user.isAdmin || req.user.isRecenseur
+  if (!isSelf && !isPrivileged) return res.status(403).json({ success: false, message: 'Non autorisé' })
   try {
     const { decoration_id, nom_custom, date_attribution, attribue_par, motif } = req.body
     if (!decoration_id && !nom_custom) return res.status(400).json({ success: false, message: 'Sélectionnez une décoration ou saisissez un nom' })
