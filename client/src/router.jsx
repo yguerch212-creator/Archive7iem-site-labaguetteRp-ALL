@@ -28,6 +28,7 @@ import DossierPersonnel from './pages/dossiers/DossierPersonnel'
 import DossierView from './pages/dossiers/DossierView'
 import Telegrammes from './pages/telegrammes/Telegrammes'
 import Sanctions from './pages/sanctions/Sanctions'
+import AffaireView from './pages/sanctions/AffaireView'
 import AdminStats from './pages/admin/AdminStats'
 import Moderation from './pages/admin/Moderation'
 
@@ -75,6 +76,7 @@ function AppRouter() {
       <Route path="/dossiers/:id" element={<ProtectedRoute><DossierView /></ProtectedRoute>} />
       <Route path="/telegrammes" element={<ProtectedRoute><Telegrammes /></ProtectedRoute>} />
       <Route path="/sanctions" element={<ProtectedRoute><Sanctions /></ProtectedRoute>} />
+      <Route path="/sanctions/:id" element={<ProtectedRoute><AffaireView /></ProtectedRoute>} />
       
       {/* Search */}
       <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />

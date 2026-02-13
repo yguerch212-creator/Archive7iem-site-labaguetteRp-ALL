@@ -24,7 +24,7 @@ export default function Dashboard() {
     { icon: '🚫', title: 'Interdits de front', desc: 'Sanctions & restrictions', to: '/interdits' },
     { icon: '🏥', title: 'Médical', desc: 'Visites médicales', to: '/medical' },
     { icon: '📁', title: 'Dossiers', desc: 'Dossiers & enquêtes', to: '/dossiers' },
-    { icon: '⚖️', title: 'Sanctions', desc: 'Casier judiciaire & code pénal', to: '/sanctions' },
+    { icon: '⚖️', title: 'Justice Militaire', desc: 'Affaires, enquêtes & tribunal', to: '/sanctions' },
     { icon: '⚡', title: 'Télégrammes', desc: 'Messages entre unités', to: '/telegrammes' },
     { icon: '📚', title: 'Documentation', desc: 'Liens & règlements', to: '/documentation' },
     { icon: '🔎', title: 'Recherche', desc: 'Recherche globale', to: '/search' },

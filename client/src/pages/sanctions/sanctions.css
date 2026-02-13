@@ -1,3 +1,5 @@
+/* Justice Militaire */
+
 .sanctions-tabs {
   display: flex;
   gap: 0;
@@ -15,15 +17,8 @@
   cursor: pointer;
   transition: all 0.2s;
 }
-.sanctions-tabs button:hover {
-  color: var(--text);
-  background: rgba(107, 143, 60, 0.05);
-}
-.sanctions-tabs button.active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
-  font-weight: 600;
-}
+.sanctions-tabs button:hover { color: var(--text); background: rgba(107,143,60,0.05); }
+.sanctions-tabs button.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
 
 .sanctions-toolbar {
   display: flex;
@@ -32,15 +27,7 @@
   flex-wrap: wrap;
   align-items: center;
 }
-.sanctions-toolbar .input-field {
-  flex: 1;
-  min-width: 180px;
-}
-.sanctions-toolbar select.input-field {
-  flex: 0 0 auto;
-  width: auto;
-  min-width: 150px;
-}
+.sanctions-toolbar .input-field { flex: 1; min-width: 180px; }
 
 .groupe-badge {
   display: inline-block;
@@ -52,126 +39,15 @@
   font-family: 'IBM Plex Mono', monospace;
   margin-right: 0.3rem;
 }
-
-/* Code Pénal */
-.code-penal .code-intro {
-  background: rgba(107, 143, 60, 0.08);
-  border-left: 4px solid var(--primary);
-  padding: 1rem 1.2rem;
-  margin-bottom: 1.5rem;
-  font-style: italic;
-}
-.groupe-section {
-  margin-bottom: 2rem;
-}
-.groupe-section h3 {
-  font-family: 'IBM Plex Mono', monospace;
-  margin-bottom: 0.8rem;
-  padding-bottom: 0.4rem;
-  border-bottom: 1px solid var(--border);
-}
-
-/* Accréditations */
-.accred-table td {
-  vertical-align: middle;
-}
-.accred-note {
-  margin-top: 1rem;
-  padding: 0.8rem;
-  background: rgba(192, 57, 43, 0.08);
-  border-left: 4px solid #c0392b;
-  font-size: 0.9rem;
-}
-
-/* Sanction detail popup */
-.sanction-detail {
-  max-width: 650px;
-}
-.sanction-detail h2 {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  margin-bottom: 1.2rem;
-}
-.sanction-detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem 1.5rem;
-  margin-bottom: 1.2rem;
-}
-.sanction-detail-grid > div {
-  display: flex;
-  flex-direction: column;
-}
-.sanction-detail-grid label {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.sanction-detail-grid span {
-  font-weight: 500;
-}
-.sanction-desc {
-  margin-bottom: 1rem;
-}
-.sanction-desc label {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  display: block;
-  margin-bottom: 0.3rem;
-}
-.sanction-desc p {
-  background: rgba(0,0,0,0.03);
-  padding: 0.6rem;
-  border-radius: 4px;
-  white-space: pre-wrap;
-}
-.notes-internes {
-  border-left: 3px solid #c0392b;
-  padding-left: 0.8rem;
-}
-
-/* Form popup */
-.sanction-form-popup {
-  max-width: 750px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-.form-row {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-.form-row .form-group {
-  flex: 1;
-  min-width: 200px;
-}
-.form-group {
-  margin-bottom: 1rem;
-}
-.form-group label {
-  display: block;
-  font-size: 0.85rem;
+.statut-badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 3px;
+  color: #fff;
   font-weight: 600;
-  margin-bottom: 0.3rem;
-  color: var(--text);
+  font-size: 0.8rem;
+  margin-right: 0.3rem;
 }
-.checkbox-group label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-}
-.form-actions {
-  display: flex;
-  gap: 0.8rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
-}
-
 .page-subtitle {
   font-size: 0.9rem;
   color: var(--text-muted);
@@ -179,3 +55,138 @@
   margin-bottom: 1.5rem;
   font-style: italic;
 }
+
+/* Code Pénal */
+.code-penal .code-intro {
+  background: rgba(107,143,60,0.08);
+  border-left: 4px solid var(--primary);
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+}
+.groupe-section { margin-bottom: 2rem; }
+.groupe-section h3 {
+  font-family: 'IBM Plex Mono', monospace;
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+.accred-note {
+  margin-top: 1rem;
+  padding: 0.8rem;
+  background: rgba(192,57,43,0.08);
+  border-left: 4px solid #c0392b;
+  font-size: 0.9rem;
+}
+
+/* ==================== AFFAIRE VIEW ==================== */
+.affaire-view { max-width: 900px; margin: 0 auto; }
+
+.affaire-header { margin-bottom: 1.5rem; }
+.affaire-header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.affaire-header-top h1 { font-size: 1.3rem; }
+.affaire-meta { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; margin-top: 0.3rem; font-size: 0.85rem; }
+.affaire-resume { margin-top: 0.8rem; padding: 0.8rem; background: rgba(0,0,0,0.03); border-radius: 4px; white-space: pre-wrap; }
+.affaire-dates { display: flex; gap: 1.2rem; margin-top: 0.6rem; font-size: 0.85rem; color: var(--text-muted); }
+.affaire-verdict, .affaire-sanction {
+  margin-top: 0.6rem;
+  padding: 0.6rem;
+  border-radius: 4px;
+}
+.affaire-verdict { background: rgba(39,174,96,0.08); border-left: 3px solid #27ae60; }
+.affaire-sanction { background: rgba(192,57,43,0.08); border-left: 3px solid #c0392b; }
+
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.section-header h2 { margin: 0; font-size: 1.1rem; }
+
+/* Personnes */
+.personnes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.8rem; }
+.personne-card {
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  position: relative;
+  transition: transform 0.1s;
+}
+.personne-card:hover { transform: translateY(-1px); }
+.personne-card.role-accuse { border-left: 3px solid #c0392b; }
+.personne-card.role-temoin { border-left: 3px solid #2980b9; }
+.personne-card.role-victime { border-left: 3px solid #8e44ad; }
+.personne-card.role-enqueteur { border-left: 3px solid #27ae60; }
+.personne-card.role-juge { border-left: 3px solid #b8860b; }
+.personne-card.role-defenseur { border-left: 3px solid #16a085; }
+.personne-role { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 0.2rem; }
+.personne-nom { font-weight: 600; font-size: 0.9rem; }
+.personne-unite { font-size: 0.75rem; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; }
+.personne-notes { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem; font-style: italic; }
+.personne-remove { position: absolute; top: 4px; right: 6px; background: none; border: none; cursor: pointer; font-size: 0.8rem; color: var(--text-muted); }
+.personne-remove:hover { color: var(--danger); }
+
+/* Notes internes */
+.notes-internes-section { border-left: 3px solid #c0392b; }
+
+/* Piece view */
+.piece-view-popup { max-width: 750px; max-height: 90vh; overflow-y: auto; }
+.piece-document { font-family: 'IBM Plex Mono', monospace; }
+.piece-doc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
+.piece-type-badge {
+  font-size: 0.85rem;
+  padding: 0.2rem 0.6rem;
+  background: var(--border);
+  border-radius: 3px;
+  font-weight: 600;
+}
+.piece-confidentiel { color: #c0392b; font-weight: 700; font-size: 0.8rem; }
+.piece-doc-title { font-size: 1.2rem; margin: 0 0 1rem; text-align: center; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; }
+.piece-infraction { padding: 0.5rem; background: rgba(192,57,43,0.06); border-radius: 4px; margin-bottom: 1rem; font-size: 0.85rem; }
+.piece-doc-content {
+  min-height: 150px;
+  padding: 1rem;
+  background: rgba(255,252,240,0.5);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  white-space: pre-wrap;
+  line-height: 1.6;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+.piece-doc-footer { display: flex; gap: 1.5rem; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+.piece-textarea { font-family: 'IBM Plex Mono', monospace; line-height: 1.6; }
+
+/* Signatures */
+.piece-signatures { border-top: 2px solid var(--border); padding-top: 1rem; margin-top: 1rem; }
+.signatures-list { display: flex; flex-direction: column; gap: 0.8rem; }
+.signature-slot {
+  padding: 0.8rem;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+}
+.signature-slot.signed { border-style: solid; border-color: #27ae60; background: rgba(39,174,96,0.04); }
+.sig-info { margin-bottom: 0.4rem; }
+.sig-info strong { font-size: 0.9rem; }
+.sig-role { font-size: 0.75rem; color: var(--text-muted); margin-left: 0.5rem; font-style: italic; }
+.sig-canvas-display img { max-height: 60px; border-bottom: 1px solid var(--text); }
+.sig-date { font-size: 0.7rem; color: var(--text-muted); }
+.sig-placeholder { font-size: 0.8rem; color: var(--text-muted); font-style: italic; margin-bottom: 0.4rem; letter-spacing: 1px; }
+.sig-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.sig-telegram-sent { font-size: 0.75rem; color: #27ae60; }
+
+/* Signature Canvas */
+.signature-canvas-popup { max-width: 480px; text-align: center; }
+.signature-canvas {
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  cursor: crosshair;
+  background: white;
+  touch-action: none;
+  display: block;
+  margin: 0.8rem auto;
+  max-width: 100%;
+}
+
+/* Form helpers */
+.form-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+.form-row .form-group { flex: 1; min-width: 160px; }
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.3rem; }
+.form-actions { display: flex; gap: 0.8rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
