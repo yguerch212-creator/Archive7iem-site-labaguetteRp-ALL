@@ -2,6 +2,8 @@ const router = require('express').Router()
 const { query, queryOne } = require('../config/db')
 const auth = require('../middleware/auth')
 const { optionalAuth } = require('../middleware/auth')
+const recenseur = require('../middleware/recenseur')
+const admin = require('../middleware/admin')
 
 // GET /api/effectifs?unite_id=X (guest accessible)
 router.get('/', optionalAuth, async (req, res) => {
@@ -51,11 +53,8 @@ router.get('/:id', optionalAuth, async (req, res) => {
 })
 
 // POST /api/effectifs (admin ou recenseur)
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, recenseur, async (req, res) => {
   try {
-    if (!req.user.isAdmin && !req.user.isRecenseur) {
-      return res.status(403).json({ success: false, message: 'Accès réservé aux administrateurs et recenseurs' })
-    }
     const f = req.body
     const [result] = await require('../config/db').pool.execute(
       `INSERT INTO effectifs (nom, prenom, surnom, unite_id, grade_id, fonction, categorie, specialite, 
@@ -77,8 +76,8 @@ router.post('/', auth, async (req, res) => {
   }
 })
 
-// PUT /api/effectifs/:id
-router.put('/:id', auth, async (req, res) => {
+// PUT /api/effectifs/:id (admin ou recenseur)
+router.put('/:id', auth, recenseur, async (req, res) => {
   try {
     const f = req.body
     await require('../config/db').pool.execute(
@@ -103,7 +102,7 @@ router.put('/:id', auth, async (req, res) => {
 })
 
 // DELETE /api/effectifs/:id (admin only)
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, admin, async (req, res) => {
   try {
     await require('../config/db').pool.execute('DELETE FROM effectifs WHERE id = ?', [req.params.id])
     res.json({ success: true })

@@ -29,15 +29,19 @@ export default function AdminUsers() {
     }
   }
 
-  const toggleAdmin = async (userId, currentlyAdmin) => {
+  const toggleGroup = async (userId, group, currentlyActive) => {
     try {
-      await apiClient.put(`/admin/users/${userId}/group`, { action: currentlyAdmin ? 'remove' : 'add' })
+      await apiClient.put(`/admin/users/${userId}/group`, { action: currentlyActive ? 'remove' : 'add', group })
       fetchAll()
-      setMessage({ type: 'success', text: currentlyAdmin ? 'Droits admin retirés' : 'Droits admin accordés' })
+      const label = group === 'Administration' ? 'admin' : 'recenseur'
+      setMessage({ type: 'success', text: currentlyActive ? `Droits ${label} retirés` : `Droits ${label} accordés` })
     } catch {
       setMessage({ type: 'error', text: 'Erreur' })
     }
   }
+
+  const toggleAdmin = (userId, current) => toggleGroup(userId, 'Administration', current)
+  const toggleRecenseur = (userId, current) => toggleGroup(userId, 'Recenseur', current)
 
   const createUser = async (e) => {
     e.preventDefault()
@@ -135,6 +139,7 @@ export default function AdminUsers() {
                 <th>Grade</th>
                 <th>Unité</th>
                 <th>Admin</th>
+                <th>Recenseur</th>
                 <th>Actif</th>
                 <th>Actions</th>
               </tr>
@@ -153,18 +158,31 @@ export default function AdminUsers() {
                     </span>
                   </td>
                   <td>
+                    <span className={`badge ${u.is_recenseur ? 'badge-info' : 'badge-muted'}`}>
+                      {u.is_recenseur ? '📋 Recenseur' : '—'}
+                    </span>
+                  </td>
+                  <td>
                     <span className={`badge ${u.active ? 'badge-success' : 'badge-danger'}`}>
                       {u.active ? 'Actif' : 'Inactif'}
                     </span>
                   </td>
-                  <td>
+                  <td style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                     {u.id !== user.id && (
-                      <button
-                        className="btn btn-sm"
-                        onClick={() => toggleAdmin(u.id, u.is_admin)}
-                      >
-                        {u.is_admin ? '🔓 Retirer admin' : '🔒 Donner admin'}
-                      </button>
+                      <>
+                        <button
+                          className="btn btn-sm"
+                          onClick={() => toggleAdmin(u.id, u.is_admin)}
+                        >
+                          {u.is_admin ? '🔓 Retirer admin' : '🔒 Admin'}
+                        </button>
+                        <button
+                          className="btn btn-sm"
+                          onClick={() => toggleRecenseur(u.id, u.is_recenseur)}
+                        >
+                          {u.is_recenseur ? '📋 Retirer recenseur' : '📋 Recenseur'}
+                        </button>
+                      </>
                     )}
                   </td>
                 </tr>

@@ -39,7 +39,7 @@ export default function PDS() {
 
   const load = useCallback(async () => {
     try {
-      const res = await api.get('/api/pds', { params: { semaine } })
+      const res = await api.get('/pds', { params: { semaine } })
       setData(res.data.data)
       setStats(res.data.stats)
       setSemaineActuelle(res.data.semaineActuelle)
@@ -68,11 +68,11 @@ export default function PDS() {
           rapport_so_fait: vals.rapport_so_fait || false,
           notes: vals.notes || null
         }))
-        await api.put('/api/pds/saisie-batch', { entries, semaine })
+        await api.put('/pds/saisie-batch', { entries, semaine })
       } else {
         // Individual save for regular user (own entry only)
         for (const [effectif_id, vals] of Object.entries(edits)) {
-          await api.put('/api/pds/saisie', {
+          await api.put('/pds/saisie', {
             effectif_id: parseInt(effectif_id),
             semaine,
             heures: parseFloat(vals.heures) || 0,
