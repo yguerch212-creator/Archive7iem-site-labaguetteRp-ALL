@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import './pds.css'
@@ -169,6 +170,7 @@ export default function PDS() {
 
   return (
     <div className="pds-page">
+      <Link to="/dashboard" className="btn-back">← Tableau de bord</Link>
       <div className="pds-header">
         <h1>📋 Prise De Service</h1>
         <div className="pds-week-nav">

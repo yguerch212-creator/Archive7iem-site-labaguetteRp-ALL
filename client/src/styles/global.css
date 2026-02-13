@@ -201,6 +201,18 @@ a:hover { text-decoration: underline; }
   color: var(--military-dark);
   white-space: nowrap;
 }
+
+/* Back button */
+.btn-back {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--military-accent);
+  text-decoration: none;
+  margin-bottom: var(--space-md);
+}
+.btn-back:hover { color: var(--military-green); text-decoration: underline; }
+
 .topbar-nav {
   display: flex;
   gap: var(--space-xs);

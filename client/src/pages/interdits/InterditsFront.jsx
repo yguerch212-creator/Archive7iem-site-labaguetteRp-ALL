@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import './interdits.css'
@@ -63,6 +64,7 @@ export default function InterditsFront() {
 
   return (
     <div className="interdits-page">
+      <Link to="/dashboard" className="btn-back">← Tableau de bord</Link>
       <div className="interdits-header">
         <h1>🚫 Interdits de Front</h1>
         <div className="interdits-actions">

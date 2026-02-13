@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import './medical.css'
@@ -58,6 +59,7 @@ export default function VisitesMedicales() {
 
   return (
     <div className="medical-page">
+      <Link to="/dashboard" className="btn-back">← Tableau de bord</Link>
       <div className="medical-header">
         <h1>🏥 Visites Médicales</h1>
         {canCreate && (
