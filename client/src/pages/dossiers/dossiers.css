@@ -853,3 +853,15 @@
   .dossier-book-page { width: 100%; min-height: 400px; }
   .dossier-layout-header { flex-direction: column; align-items: flex-start; }
 }
+
+/* ===== LAYOUT-RENDERED BOOK PAGE ===== */
+.book-layout-page {
+  width: 100%;
+  height: 100%;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.book-layout-page.is-cover {
+  background: linear-gradient(135deg, #3a3a2a 0%, #4a4a38 50%, #3a3a2a 100%);
+  color: #d4c9a8;
+  border-radius: 4px;
+}
