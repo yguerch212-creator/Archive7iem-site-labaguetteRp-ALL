@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
+import EffectifAutocomplete from '../../components/EffectifAutocomplete'
 import './medical.css'
 
 const APTITUDES = ['Apte', 'Inapte temporaire', 'Inapte definitif', 'Apte avec reserves']
@@ -15,7 +16,7 @@ export default function VisitesMedicales() {
   const [message, setMessage] = useState(null)
   const [filterAptitude, setFilterAptitude] = useState('')
   const [form, setForm] = useState({
-    effectif_id: '', date_visite: new Date().toISOString().slice(0, 10),
+    effectif_id: '', effectif_nom: '', date_visite: new Date().toISOString().slice(0, 10),
     medecin: '', diagnostic: '', aptitude: 'Apte', restrictions: '', notes_confidentielles: ''
   })
 
@@ -38,7 +39,7 @@ export default function VisitesMedicales() {
     try {
       await api.post('/medical', form)
       setShowForm(false)
-      setForm({ effectif_id: '', date_visite: new Date().toISOString().slice(0, 10), medecin: '', diagnostic: '', aptitude: 'Apte', restrictions: '', notes_confidentielles: '' })
+      setForm({ effectif_id: '', effectif_nom: '', date_visite: new Date().toISOString().slice(0, 10), medecin: '', diagnostic: '', aptitude: 'Apte', restrictions: '', notes_confidentielles: '' })
       setMessage({ type: 'success', text: 'Visite médicale enregistrée' })
       load()
     } catch (err) {
@@ -111,12 +112,13 @@ export default function VisitesMedicales() {
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Effectif *</label>
-                <select className="form-input" value={form.effectif_id} onChange={e => setForm(p => ({...p, effectif_id: e.target.value}))} required>
-                  <option value="">— Sélectionner —</option>
-                  {effectifs.map(e => (
-                    <option key={e.id} value={e.id}>{e.prenom} {e.nom}</option>
-                  ))}
-                </select>
+                <EffectifAutocomplete
+                  effectifs={effectifs}
+                  value={form.effectif_nom}
+                  onChange={(text, eff) => setForm(p => ({...p, effectif_nom: text, effectif_id: eff?.id || ''}))}
+                  placeholder="Rechercher ou saisir un nom..."
+                  required
+                />
               </div>
               <div className="form-group">
                 <label className="form-label">Date visite *</label>

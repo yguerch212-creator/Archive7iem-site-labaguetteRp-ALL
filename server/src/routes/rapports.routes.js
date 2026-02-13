@@ -3,6 +3,7 @@ const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
 const { optionalAuth } = require('../middleware/auth')
 const admin = require('../middleware/admin')
+const { saveMention } = require('../utils/mentions')
 
 // GET /api/rapports/next-number?type=rapport
 router.get('/next-number', auth, async (req, res) => {
@@ -71,7 +72,21 @@ router.post('/', auth, async (req, res) => {
        f.lieu_incident || null, f.compte_rendu || null, f.signature_nom || null, f.signature_grade || null,
        f.date_rp || null, f.date_irl || null]
     )
-    res.json({ success: true, data: { id: result.insertId } })
+    const rapportId = result.insertId
+
+    // Save mentions for name fields
+    const mentionFields = [
+      ['auteur_nom', f.auteur_nom, f.auteur_id],
+      ['recommande_nom', f.recommande_nom, null],
+      ['mise_en_cause_nom', f.mise_en_cause_nom, null],
+      ['intro_nom', f.intro_nom, null],
+      ['personne_renseignee_nom', f.personne_renseignee_nom, null]
+    ]
+    for (const [champ, nom, effId] of mentionFields) {
+      if (nom) saveMention('rapport', rapportId, champ, nom, effId || null).catch(() => {})
+    }
+
+    res.json({ success: true, data: { id: rapportId } })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
   }

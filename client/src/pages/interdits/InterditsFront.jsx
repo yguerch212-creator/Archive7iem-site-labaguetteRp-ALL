@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
+import EffectifAutocomplete from '../../components/EffectifAutocomplete'
 import './interdits.css'
 
 export default function InterditsFront() {
@@ -11,7 +12,7 @@ export default function InterditsFront() {
   const [showForm, setShowForm] = useState(false)
   const [effectifs, setEffectifs] = useState([])
   const [message, setMessage] = useState(null)
-  const [form, setForm] = useState({ effectif_id: '', motif: '', type: 'Disciplinaire', date_debut: new Date().toISOString().slice(0, 10), date_fin: '', notes: '' })
+  const [form, setForm] = useState({ effectif_id: '', effectif_nom: '', motif: '', type: 'Disciplinaire', date_debut: new Date().toISOString().slice(0, 10), date_fin: '', notes: '' })
 
   const canCreate = user?.isAdmin || user?.isOfficier || user?.unite_code === '254'
 
@@ -32,7 +33,7 @@ export default function InterditsFront() {
     try {
       await api.post('/interdits', form)
       setShowForm(false)
-      setForm({ effectif_id: '', motif: '', type: 'Disciplinaire', date_debut: new Date().toISOString().slice(0, 10), date_fin: '', notes: '' })
+      setForm({ effectif_id: '', effectif_nom: '', motif: '', type: 'Disciplinaire', date_debut: new Date().toISOString().slice(0, 10), date_fin: '', notes: '' })
       setMessage({ type: 'success', text: 'Interdit de front prononcé' })
       load()
     } catch (err) {
@@ -94,12 +95,13 @@ export default function InterditsFront() {
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Effectif concerné *</label>
-                <select className="form-input" value={form.effectif_id} onChange={e => setForm(p => ({...p, effectif_id: e.target.value}))} required>
-                  <option value="">— Sélectionner —</option>
-                  {effectifs.map(e => (
-                    <option key={e.id} value={e.id}>{e.prenom} {e.nom}</option>
-                  ))}
-                </select>
+                <EffectifAutocomplete
+                  effectifs={effectifs}
+                  value={form.effectif_nom}
+                  onChange={(text, eff) => setForm(p => ({...p, effectif_nom: text, effectif_id: eff?.id || ''}))}
+                  placeholder="Rechercher ou saisir un nom..."
+                  required
+                />
               </div>
               <div className="form-group">
                 <label className="form-label">Type</label>

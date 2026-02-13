@@ -48,15 +48,34 @@ router.get('/effectif/:effectif_id', auth, async (req, res) => {
 // POST /api/interdits — Créer un interdit de front (feldgendarmerie/officier/admin)
 router.post('/', auth, feldgendarmerie, async (req, res) => {
   try {
-    const { effectif_id, motif, type, date_debut, date_fin, notes } = req.body
-    if (!effectif_id || !motif) {
-      return res.status(400).json({ success: false, message: 'effectif_id et motif requis' })
+    const { effectif_id, effectif_nom, motif, type, date_debut, date_fin, notes } = req.body
+    if (!effectif_id && !effectif_nom) {
+      return res.status(400).json({ success: false, message: 'Effectif requis (sélection ou nom)' })
+    }
+    if (!motif) {
+      return res.status(400).json({ success: false, message: 'Motif requis' })
+    }
+
+    // If free-text name without effectif_id, try to find a match
+    let resolvedId = effectif_id || null
+    if (!resolvedId && effectif_nom) {
+      const parts = effectif_nom.trim().split(/\s+/)
+      if (parts.length >= 2) {
+        const match = await queryOne(
+          'SELECT id FROM effectifs WHERE (prenom = ? AND nom = ?) OR (prenom = ? AND nom = ?)',
+          [parts[0], parts.slice(1).join(' '), parts.slice(1).join(' '), parts[0]]
+        )
+        if (match) resolvedId = match.id
+      }
+    }
+    if (!resolvedId) {
+      return res.status(400).json({ success: false, message: `Effectif "${effectif_nom}" non trouvé. Créez d'abord l'effectif.` })
     }
 
     const [result] = await pool.execute(
       `INSERT INTO interdits_front (effectif_id, motif, type, date_debut, date_fin, ordonne_par, notes)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [effectif_id, motif, type || 'Disciplinaire', date_debut || new Date().toISOString().slice(0, 10), date_fin || null, req.user.id, notes || null]
+      [resolvedId, motif, type || 'Disciplinaire', date_debut || new Date().toISOString().slice(0, 10), date_fin || null, req.user.id, notes || null]
     )
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {

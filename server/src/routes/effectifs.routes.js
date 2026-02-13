@@ -7,6 +7,7 @@ const admin = require('../middleware/admin')
 const { upload, handleUploadError } = require('../middleware/upload')
 const bcrypt = require('bcryptjs')
 const crypto = require('crypto')
+const { reconcileForEffectif } = require('../utils/mentions')
 
 // GET /api/effectifs?unite_id=X (guest accessible)
 router.get('/', optionalAuth, async (req, res) => {
@@ -83,6 +84,11 @@ router.post('/', auth, recenseur, async (req, res) => {
        f.discord_id || null]
     )
     const effectifId = result.insertId
+
+    // Auto-reconcile mentions
+    if (f.nom && f.prenom) {
+      reconcileForEffectif(effectifId, f.nom, f.prenom).catch(() => {})
+    }
 
     // Auto-create user account
     const username = `${(f.prenom || '').toLowerCase()}.${(f.nom || '').toLowerCase()}`.replace(/[^a-z0-9.]/g, '')
