@@ -80,6 +80,8 @@ router.post('/', auth, feldgendarmerie, async (req, res) => {
       [resolvedId, motif, type || 'Disciplinaire', date_debut || new Date().toISOString().slice(0, 10), date_fin || null, req.user.id, notes || null]
     )
     logActivity(req, 'create_interdit', 'interdit', result.insertId, `${type}: ${motif?.slice(0, 100)}`)
+    const { notifyInterdit } = require('../utils/discordNotify')
+    notifyInterdit({ effectif_nom: effectif_nom || 'Inconnu', type, motif, ordonne_par: `${req.user.prenom || ''} ${req.user.nom || req.user.username}`.trim() }).catch(() => {})
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })

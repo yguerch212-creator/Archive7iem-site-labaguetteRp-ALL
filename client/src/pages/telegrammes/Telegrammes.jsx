@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import EffectifAutocomplete from '../../components/EffectifAutocomplete'
+import { exportCsv } from '../../utils/exportCsv'
 import './telegrammes.css'
 
 const PRIORITY_ICONS = { Normal: '📨', Urgent: '🔴', Secret: '🔒', 'Sehr Geheim': '☠️' }
@@ -199,9 +200,16 @@ export default function Telegrammes() {
       <BackButton label="← Tableau de bord" />
       <div className="telegrammes-header">
         <h1>⚡ Télégrammes</h1>
-        {hasEffectif && (
-          <button className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>+ Nouveau télégramme</button>
-        )}
+        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+          {user?.isAdmin && <button className="btn btn-secondary btn-sm" onClick={() => exportCsv(telegrammes, [
+            { key: 'numero', label: 'N°' }, { key: 'priorite', label: 'Priorité' },
+            { key: 'expediteur_nom', label: 'De' }, { key: 'destinataire_nom', label: 'À' },
+            { key: 'objet', label: 'Objet' }, { key: r => formatDate(r.created_at), label: 'Date' }
+          ], 'Telegrammes')}>📥 CSV</button>}
+          {hasEffectif && (
+            <button className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>+ Nouveau télégramme</button>
+          )}
+        </div>
       </div>
 
       {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}

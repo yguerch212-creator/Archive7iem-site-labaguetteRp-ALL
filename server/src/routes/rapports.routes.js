@@ -76,6 +76,10 @@ router.post('/', auth, async (req, res) => {
     const rapportId = result.insertId
     logActivity(req, 'create_rapport', 'rapport', rapportId, `${f.type}: ${f.titre}`)
 
+    // Discord notification
+    const { notifyRapport } = require('../utils/discordNotify')
+    notifyRapport({ type: f.type, titre: f.titre, numero: '', date_rp: f.date_rp }, f.auteur_nom).catch(() => {})
+
     // Save mentions for name fields
     const mentionFields = [
       ['auteur_nom', f.auteur_nom, f.auteur_id],

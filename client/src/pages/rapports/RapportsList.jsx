@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import apiClient from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
+import { exportCsv } from '../../utils/exportCsv'
 
 const TYPE_LABELS = { rapport: 'Rapport', recommandation: 'Recommandation', incident: 'Incident' }
 const TYPE_CLASSES = { rapport: 'type-rapport', recommandation: 'type-recommandation', incident: 'type-incident' }
@@ -40,6 +41,11 @@ export default function RapportsList() {
       <div className="container" style={{ }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
           <BackButton className="btn btn-secondary btn-small" label="← Retour" />
+          {user?.isAdmin && <button className="btn btn-secondary btn-small" onClick={() => exportCsv(filtered, [
+            { key: 'numero', label: 'N°' }, { key: 'type', label: 'Type' }, { key: 'titre', label: 'Titre' },
+            { key: 'auteur_nom', label: 'Auteur' }, { key: 'date_rp', label: 'Date RP' },
+            { key: r => r.date_irl ? new Date(r.date_irl+'T00:00').toLocaleDateString('fr-FR') : '', label: 'Date IRL' }
+          ], 'Rapports')}>📥 CSV</button>}
           <Link to="/rapports/new" className="btn btn-primary btn-small">+ Nouveau rapport</Link>
         </div>
 

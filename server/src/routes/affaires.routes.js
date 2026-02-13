@@ -84,6 +84,8 @@ router.post('/', auth, async (req, res) => {
       [numero, titre, type || 'Enquete', gravite || 1, resume || null,
        date_ouverture_rp || null, date_ouverture_irl || null, lieu || null, req.user.id]
     )
+    const { notifyAffaire } = require('../utils/discordNotify')
+    notifyAffaire({ titulo: titre, numero, type: type || 'Enquete', gravite: gravite || 1, titre }).catch(() => {})
     res.status(201).json({ id: result.insertId, numero })
   } catch (err) { console.error(err); res.status(500).json({ error: 'Erreur serveur' }) }
 })

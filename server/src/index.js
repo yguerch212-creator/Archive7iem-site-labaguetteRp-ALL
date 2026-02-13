@@ -74,6 +74,12 @@ app.get('/api/stats', async (req, res) => {
     const effectifs = await queryOne('SELECT COUNT(*) as c FROM effectifs')
     const rapports = await queryOne('SELECT COUNT(*) as c FROM rapports')
     const unites = await queryOne('SELECT COUNT(*) as c FROM unites')
+    const telegrammes = await queryOne('SELECT COUNT(*) as c FROM telegrammes')
+    const interdits = await queryOne('SELECT COUNT(*) as c FROM interdits_front WHERE actif = 1')
+    const affaires = await queryOne('SELECT COUNT(*) as c FROM affaires')
+    const visites = await queryOne('SELECT COUNT(*) as c FROM visites_medicales')
+    const users = await queryOne('SELECT COUNT(*) as c FROM users WHERE active = 1')
+    const decorations = await queryOne('SELECT COUNT(*) as c FROM effectif_decorations')
     
     // Effectifs par unité
     const parUnite = await query(`
@@ -82,14 +88,77 @@ app.get('/api/stats', async (req, res) => {
       LEFT JOIN effectifs e ON e.unite_id = u.id
       GROUP BY u.id ORDER BY count DESC
     `)
-    
-    // 5 derniers rapports
-    const derniers = await query(`
-      SELECT id, titre, type, auteur_nom, date_irl, created_at
-      FROM rapports ORDER BY created_at DESC LIMIT 5
+
+    // Rapports par type
+    const rapportsParType = await query(`
+      SELECT type, COUNT(*) as count FROM rapports GROUP BY type
+    `)
+
+    // Activité par semaine (8 dernières semaines)
+    const activiteParSemaine = await query(`
+      SELECT 
+        YEARWEEK(created_at, 1) as semaine,
+        DATE_FORMAT(MIN(created_at), '%d/%m') as debut,
+        SUM(CASE WHEN source = 'rapport' THEN 1 ELSE 0 END) as rapports,
+        SUM(CASE WHEN source = 'telegramme' THEN 1 ELSE 0 END) as telegrammes,
+        SUM(CASE WHEN source = 'interdit' THEN 1 ELSE 0 END) as interdits,
+        SUM(CASE WHEN source = 'medical' THEN 1 ELSE 0 END) as medical,
+        COUNT(*) as total
+      FROM (
+        SELECT created_at, 'rapport' as source FROM rapports
+        UNION ALL SELECT created_at, 'telegramme' FROM telegrammes
+        UNION ALL SELECT NOW() as created_at, 'interdit' FROM interdits_front WHERE actif = 1
+        UNION ALL SELECT created_at, 'medical' FROM visites_medicales
+      ) combined
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL 8 WEEK)
+      GROUP BY YEARWEEK(created_at, 1)
+      ORDER BY semaine DESC
+      LIMIT 8
+    `)
+
+    // Top contributeurs (rapports)
+    const topContributeurs = await query(`
+      SELECT auteur_nom, COUNT(*) as count 
+      FROM rapports WHERE auteur_nom IS NOT NULL
+      GROUP BY auteur_nom ORDER BY count DESC LIMIT 5
+    `)
+
+    // Grades répartition
+    const gradesRepartition = await query(`
+      SELECT 
+        CASE 
+          WHEN g.rang >= 60 THEN 'Officier'
+          WHEN g.rang >= 35 THEN 'Sous-officier'
+          ELSE 'Troupe'
+        END as categorie,
+        COUNT(*) as count
+      FROM effectifs e
+      LEFT JOIN grades g ON g.id = e.grade_id
+      GROUP BY categorie
     `)
     
-    res.json({ effectifs: effectifs.c, rapports: rapports.c, unites: unites.c, parUnite, derniers })
+    // 10 derniers rapports
+    const derniers = await query(`
+      SELECT id, titre, type, auteur_nom, date_irl, created_at
+      FROM rapports ORDER BY created_at DESC LIMIT 10
+    `)
+
+    // PDS stats current week
+    const pdsStats = await queryOne(`
+      SELECT COUNT(*) as saisis, SUM(CASE WHEN total_heures >= 6 THEN 1 ELSE 0 END) as valides
+      FROM pds_semaines WHERE semaine = (
+        SELECT MAX(semaine) FROM pds_semaines
+      )
+    `)
+    
+    res.json({
+      effectifs: effectifs.c, rapports: rapports.c, unites: unites.c,
+      telegrammes: telegrammes.c, interdits_actifs: interdits.c, affaires: affaires.c,
+      visites: visites.c, users: users.c, decorations: decorations.c,
+      parUnite, rapportsParType, activiteParSemaine: activiteParSemaine.reverse(),
+      topContributeurs, gradesRepartition, derniers,
+      pds: { saisis: pdsStats?.saisis || 0, valides: pdsStats?.valides || 0 }
+    })
   } catch (err) {
     console.error('Stats error:', err)
     res.json({ effectifs: 0, rapports: 0, unites: 0, parUnite: [], derniers: [] })

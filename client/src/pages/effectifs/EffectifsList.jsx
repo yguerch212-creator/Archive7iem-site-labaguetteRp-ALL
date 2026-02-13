@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import apiClient from '../../api/client'
+import { exportCsv } from '../../utils/exportCsv'
 
 export default function EffectifsList() {
   const { uniteId } = useParams()
@@ -33,7 +34,15 @@ export default function EffectifsList() {
     <div className="container" style={{ paddingBottom: 'var(--space-xxl)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
         <BackButton className="btn btn-secondary btn-small" label="← Retour" />
-        <Link to={`/effectifs/new?unite_id=${uniteId}`} className="btn btn-primary btn-small">+ Ajouter</Link>
+        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+          {user?.isAdmin && <button className="btn btn-secondary btn-small" onClick={() => exportCsv(filtered, [
+            { key: 'prenom', label: 'Prénom' }, { key: 'nom', label: 'Nom' },
+            { key: 'grade_nom', label: 'Grade' }, { key: 'categorie', label: 'Catégorie' },
+            { key: 'fonction', label: 'Fonction' }, { key: 'specialite', label: 'Spécialité' },
+            { key: r => r.date_entree_irl ? new Date(r.date_entree_irl+'T00:00').toLocaleDateString('fr-FR') : '', label: 'Entrée IRL' }
+          ], `Effectifs_${unite?.code || 'all'}`)}>📥 CSV</button>}
+          <Link to={`/effectifs/new?unite_id=${uniteId}`} className="btn btn-primary btn-small">+ Ajouter</Link>
+        </div>
       </div>
 
       <h1 style={{ textAlign: 'center' }}>{unite ? `${unite.code}. ${unite.nom}` : 'Effectifs'}</h1>

@@ -123,6 +123,10 @@ router.post('/', auth, async (req, res) => {
       objet, contenu, priorite || 'Normal', req.body.prive ? 1 : 0, req.user.id
     ])
 
+    // Discord notification
+    const { notifyTelegramme } = require('../utils/discordNotify')
+    notifyTelegramme({ numero, expediteur_nom: expNom, destinataire_nom, objet, priorite: priorite || 'Normal', prive: req.body.prive }).catch(() => {})
+
     res.json({ success: true, data: { id: result.insertId, numero } })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })

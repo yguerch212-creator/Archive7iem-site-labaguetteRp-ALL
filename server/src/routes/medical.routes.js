@@ -97,6 +97,8 @@ router.post('/', auth, async (req, res) => {
         (req.user.isAdmin || req.user.isOfficier) ? req.user.id : null,
         (req.user.isAdmin || req.user.isOfficier) ? new Date() : null]
     )
+    const { notifyMedical } = require('../utils/discordNotify')
+    notifyMedical({ aptitude: aptitude || 'Apte', effectif_nom: `Effectif #${effectif_id}`, medecin_nom: medecin || 'Inconnu' }).catch(() => {})
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })

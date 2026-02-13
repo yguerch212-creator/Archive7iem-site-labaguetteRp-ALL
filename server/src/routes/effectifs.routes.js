@@ -88,6 +88,10 @@ router.post('/', auth, recenseur, async (req, res) => {
 
     logActivity(req, 'create_effectif', 'effectif', effectifId, `${f.prenom} ${f.nom}`)
 
+    // Discord notification
+    const { notifyEffectif } = require('../utils/discordNotify')
+    notifyEffectif({ prenom: f.prenom, nom: f.nom, grade_nom: '', unite_nom: '' }).catch(() => {})
+
     // Auto-reconcile mentions
     if (f.nom && f.prenom) {
       reconcileForEffectif(effectifId, f.nom, f.prenom).catch(() => {})

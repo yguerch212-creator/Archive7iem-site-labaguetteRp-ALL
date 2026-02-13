@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import { exportToPdf } from '../../utils/exportPdf'
+import { exportCsv } from '../../utils/exportCsv'
 import './pds.css'
 
 const JOURS = ['vendredi', 'samedi', 'dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi_fin']
@@ -286,6 +287,12 @@ export default function PDS() {
           {hasEffectif && <button className="btn btn-primary btn-small" onClick={() => setView('edit')}>✏️ Mon PDS</button>}
           <button className="btn btn-secondary btn-small" onClick={() => setView('permissions')}>🏖️ Permissions</button>
           {isPrivileged && <button className="btn btn-secondary btn-small" onClick={() => exportToPdf('pds-table', `PDS_${semaine}`)}>📄 PDF</button>}
+          {isPrivileged && <button className="btn btn-secondary btn-small" onClick={() => exportCsv(filteredAll, [
+            { key: r => `${r.grade_nom || ''} ${r.prenom} ${r.nom}`, label: 'Effectif' },
+            { key: 'unite_code', label: 'Unité' },
+            { key: r => formatHeures(r.total_heures), label: 'Total' },
+            { key: r => r.valide ? 'Validé' : 'Insuffisant', label: 'Statut' }
+          ], `PDS_${semaine}`)}>📥 CSV</button>}
         </div>
       </div>
 
