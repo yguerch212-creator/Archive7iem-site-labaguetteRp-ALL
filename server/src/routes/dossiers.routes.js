@@ -48,12 +48,24 @@ router.get('/effectif/:effectifId', auth, async (req, res) => {
       dossier = await queryOne('SELECT * FROM dossiers WHERE id = ?', [result.insertId])
     }
 
+    // Get effectif name for matching
+    const eff = await queryOne('SELECT nom, prenom FROM effectifs WHERE id = ?', [effectifId])
+    const fullName1 = eff ? `${eff.prenom} ${eff.nom}` : ''
+    const fullName2 = eff ? `${eff.nom} ${eff.prenom}` : ''
+    const lastName = eff ? eff.nom : ''
+
     // Auto-aggregate: fetch related records
     const [rapports, interdits, medical, entrees] = await Promise.all([
-      query(`SELECT id, titre, type, date_rp, date_irl, created_at FROM rapports 
-        WHERE auteur_id = ? OR recommande_nom IN (SELECT CONCAT(prenom,' ',nom) FROM effectifs WHERE id = ?)
-        OR mise_en_cause_nom IN (SELECT CONCAT(prenom,' ',nom) FROM effectifs WHERE id = ?)
-        ORDER BY created_at DESC`, [effectifId, effectifId, effectifId]),
+      query(`SELECT DISTINCT r.id, r.titre, r.type, r.date_rp, r.date_irl, r.created_at FROM rapports r
+        WHERE r.auteur_id = ?
+        OR r.auteur_nom IN (?, ?, ?)
+        OR r.recommande_nom IN (?, ?, ?)
+        OR r.mise_en_cause_nom IN (?, ?, ?)
+        OR r.intro_nom IN (?, ?, ?)
+        OR r.personne_renseignee_nom IN (?, ?, ?)
+        OR r.id IN (SELECT source_id FROM mentions WHERE source_type = 'rapport' AND effectif_id = ?)
+        ORDER BY r.created_at DESC`, 
+        [effectifId, fullName1, fullName2, lastName, fullName1, fullName2, lastName, fullName1, fullName2, lastName, fullName1, fullName2, lastName, fullName1, fullName2, lastName, effectifId]),
       query(`SELECT i.*, ord.username AS ordonne_par_nom FROM interdits_front i
         JOIN users ord ON ord.id = i.ordonne_par WHERE i.effectif_id = ?
         ORDER BY i.created_at DESC`, [effectifId]),
@@ -64,19 +76,6 @@ router.get('/effectif/:effectifId', auth, async (req, res) => {
         JOIN users cr ON cr.id = de.created_by WHERE de.dossier_id = ?
         ORDER BY de.created_at DESC`, [dossier.id])
     ])
-
-    // Also check mentions
-    const mentionRapports = await query(`
-      SELECT DISTINCT r.id, r.titre, r.type, r.date_rp, r.created_at
-      FROM mentions m
-      JOIN rapports r ON r.id = m.source_id AND m.source_type = 'rapport'
-      WHERE m.effectif_id = ?
-      ORDER BY r.created_at DESC
-    `, [effectifId])
-
-    // Merge mention-based rapports with direct ones
-    const allRapportIds = new Set(rapports.map(r => r.id))
-    mentionRapports.forEach(r => { if (!allRapportIds.has(r.id)) rapports.push(r) })
 
     res.json({
       success: true,
