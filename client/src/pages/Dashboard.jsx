@@ -64,6 +64,9 @@ export default function Dashboard() {
             {pending.permissions > 0 && (
               <Link to="/pds" className="btn btn-sm btn-secondary">🏖️ {pending.permissions} permission{pending.permissions > 1 ? 's' : ''} en attente</Link>
             )}
+            {pending.interdits > 0 && (
+              <Link to="/interdits" className="btn btn-sm btn-secondary">🚫 {pending.interdits} interdit{pending.interdits > 1 ? 's' : ''} de front actif{pending.interdits > 1 ? 's' : ''}</Link>
+            )}
           </div>
         </div>
       )}

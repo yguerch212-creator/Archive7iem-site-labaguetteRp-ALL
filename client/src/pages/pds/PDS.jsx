@@ -282,104 +282,103 @@ export default function PDS() {
       {/* ===== TAB: TOUS ===== */}
       {tab === 'tous' && (
         <>
-          <div className="pds-stats">
-            <div className="stat-card">
-              <div className="stat-value">{stats.total || 0}</div>
-              <div className="stat-label">Effectifs</div>
+          <div className="paper-card">
+            <div className="pds-tous-toolbar">
+              <div className="pds-tous-stats">
+                <span className="pds-stat-chip">{stats.saisis || 0} remplis</span>
+                <span className="pds-stat-chip chip-green">{stats.valides || 0} validés</span>
+                <span className="pds-stat-chip chip-red">{(stats.saisis || 0) - (stats.valides || 0)} insuffisants</span>
+              </div>
+              <div className="pds-tous-filters">
+                <select value={filterUnite} onChange={e => setFilterUnite(e.target.value)} className="input-field">
+                  <option value="">Toutes les unités</option>
+                  {unites.map(u => <option key={u} value={u}>{u}</option>)}
+                </select>
+              </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-value">{stats.saisis || 0}</div>
-              <div className="stat-label">PDS remplis</div>
-            </div>
-            <div className="stat-card stat-green">
-              <div className="stat-value">{stats.valides || 0}</div>
-              <div className="stat-label">Validés (≥6h)</div>
-            </div>
-            <div className="stat-card stat-red">
-              <div className="stat-value">{(stats.saisis || 0) - (stats.valides || 0)}</div>
-              <div className="stat-label">Non validés</div>
-            </div>
+
+            {filteredAll.length === 0 ? (
+              <p className="empty-state">Aucun PDS rempli pour cette semaine</p>
+            ) : (
+              <div className="pds-table-wrap">
+                <table className="data-table pds-full-table">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>Effectif</th>
+                      <th>Unité</th>
+                      <th>Grade</th>
+                      {JOURS.map(j => <th key={j} className="th-jour">{JOURS_LABELS[j].replace('Vendredi (20h →)', 'Ven. →').replace('Vendredi (→ 20h)', '→ Ven.').replace('Samedi','Sam.').replace('Dimanche','Dim.').replace('Lundi','Lun.').replace('Mardi','Mar.').replace('Mercredi','Mer.').replace('Jeudi','Jeu.')}</th>)}
+                      <th className="th-total">Total</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAll.map(eff => (
+                      <tr key={eff.effectif_id} className={`clickable-row ${eff.valide ? 'row-valid' : 'row-invalid'}`} onClick={() => setSelectedEffectif(eff)}>
+                        <td>
+                          <span className={`pastille ${eff.valide ? 'pastille-green' : 'pastille-red'}`}></span>
+                        </td>
+                        <td className="td-name-compact">{eff.prenom} {eff.nom}</td>
+                        <td className="mono">{eff.unite_code}</td>
+                        <td className="td-grade-sm">{eff.grade_nom || '—'}</td>
+                        {JOURS.map(j => (
+                          <td key={j} className="td-creneau">{eff[j] || '—'}</td>
+                        ))}
+                        <td className={`td-total-num ${eff.valide ? 'total-ok' : 'total-ko'}`}>
+                          <strong>{formatHeures(eff.total_heures)}</strong>
+                        </td>
+                        <td>
+                          {user?.effectif_id === eff.effectif_id && (
+                            <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setTab('mon-pds') }} title="Éditer mon PDS">✏️</button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
-          <div className="pds-filters">
-            <select value={filterUnite} onChange={e => setFilterUnite(e.target.value)}>
-              <option value="">Toutes les unités</option>
-              {unites.map(u => <option key={u} value={u}>{u}</option>)}
-            </select>
-          </div>
-
-          {/* Detail panel (shown when clicking a name) */}
+          {/* Detail popup */}
           {selectedEffectif && (
-            <div className="pds-detail-overlay" onClick={() => setSelectedEffectif(null)}>
-              <div className="pds-detail-panel" onClick={e => e.stopPropagation()}>
-                <button className="pds-detail-close" onClick={() => setSelectedEffectif(null)}>✕</button>
-                <div className="pds-detail-header">
-                  <strong>Prise de service :</strong>
-                  <div className="pds-detail-identity">[{selectedEffectif.prenom} {selectedEffectif.nom}]</div>
-                  <div className="pds-detail-identity">[{selectedEffectif.grade_nom || '—'}]</div>
-                  <div className="pds-detail-identity">[{selectedEffectif.unite_code}. {selectedEffectif.unite_nom}]</div>
+            <div className="popup-overlay" onClick={() => setSelectedEffectif(null)}>
+              <div className="popup-content pds-detail-popup" onClick={e => e.stopPropagation()}>
+                <button className="popup-close" onClick={() => setSelectedEffectif(null)}>✕</button>
+                <h2>📋 Prise de service</h2>
+                <div className="pds-detail-identity-block">
+                  <div><strong>{selectedEffectif.prenom} {selectedEffectif.nom}</strong></div>
+                  <div>{selectedEffectif.grade_nom || '—'} — {selectedEffectif.unite_code} {selectedEffectif.unite_nom}</div>
                 </div>
-                <div className="pds-detail-body">
-                  <strong>Présence sur le front :</strong>
-                  {JOURS.map(j => (
-                    <div key={j} className="pds-detail-jour">
-                      <span className="pds-detail-jour-label">{JOURS_LABELS[j]} :</span>
-                      <span className="pds-detail-jour-value">
-                        {selectedEffectif[j] ? selectedEffectif[j] : '—'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <div className={`pds-detail-total ${selectedEffectif.valide ? 'total-valid' : selectedEffectif.pds_id ? 'total-invalid' : ''}`}>
-                  <strong>Total Semaine : {selectedEffectif.pds_id ? formatHeures(selectedEffectif.total_heures) : 'Non renseigné'}</strong>
-                </div>
+                <table className="data-table">
+                  <thead>
+                    <tr><th>Jour</th><th>Créneaux</th><th>Heures</th></tr>
+                  </thead>
+                  <tbody>
+                    {JOURS.map(j => (
+                      <tr key={j}>
+                        <td><strong>{JOURS_LABELS[j]}</strong></td>
+                        <td className="mono">{selectedEffectif[j] || '—'}</td>
+                        <td>{selectedEffectif[j] ? formatHeures(parseCreneaux(selectedEffectif[j])) : '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className={selectedEffectif.valide ? 'row-valid' : 'row-invalid'}>
+                      <td colSpan={2}><strong>Total Semaine</strong></td>
+                      <td><strong>{formatHeures(selectedEffectif.total_heures)}</strong> {selectedEffectif.valide ? '✅' : '❌ < 6h'}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+                {user?.effectif_id === selectedEffectif.effectif_id && (
+                  <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                    <button className="btn btn-primary" onClick={() => { setSelectedEffectif(null); setTab('mon-pds') }}>✏️ Éditer mon PDS</button>
+                  </div>
+                )}
               </div>
             </div>
           )}
-
-          {Object.entries(grouped).map(([code, { nom, effectifs }]) => (
-            <div key={code} className="pds-unite-section">
-              <h2 className="pds-unite-title">
-                {code} — {nom}
-                <span className="pds-unite-stats">
-                  {effectifs.filter(e => e.valide).length}/{effectifs.length} validés
-                </span>
-              </h2>
-              <table className="pds-table">
-                <thead>
-                  <tr>
-                    <th style={{width:'30px'}}></th>
-                    <th>Effectif</th>
-                    <th className="th-fonction">Fonction</th>
-                    <th style={{textAlign:'right'}}>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {effectifs.map(eff => {
-                    const filled = eff.pds_id !== null
-                    return (
-                      <tr key={eff.effectif_id}
-                          className={`pds-row-clickable ${filled ? (eff.valide ? 'row-valid' : 'row-invalid') : 'row-empty'}`}
-                          onClick={() => setSelectedEffectif(eff)}
-                      >
-                        <td className="td-pastille">
-                          <span className={`pastille ${filled ? (eff.valide ? 'pastille-green' : 'pastille-red') : 'pastille-grey'}`}></span>
-                        </td>
-                        <td className="td-name">
-                          <span className="effectif-name">{eff.prenom} {eff.nom}</span>
-                          {eff.grade_nom && <span className="effectif-grade">{eff.grade_nom}</span>}
-                        </td>
-                        <td className="td-fonction">{eff.fonction || '—'}</td>
-                        <td className={`td-total ${eff.valide ? 'total-ok' : filled ? 'total-ko' : ''}`}>
-                          {filled ? formatHeures(eff.total_heures) : '—'}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ))}
         </>
       )}
 
