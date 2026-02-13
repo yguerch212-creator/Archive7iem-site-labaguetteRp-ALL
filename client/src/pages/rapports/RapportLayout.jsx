@@ -96,8 +96,10 @@ export default function RapportLayout() {
 
   const handlePublish = async (html, publishedBlocks) => {
     try {
+      // Save layout blocks + publish HTML
+      await api.put(`/rapports/${id}/layout`, { blocks: publishedBlocks || blocks, html_published: html })
       await api.put(`/rapports/${id}/publish`, { contenu_html: html })
-      setMessage('📜 Rapport publié')
+      setMessage('📜 Rapport publié ! Redirection...')
       setTimeout(() => navigate(`/rapports/${id}`), 1500)
     } catch (err) { setMessage('❌ Erreur') }
   }

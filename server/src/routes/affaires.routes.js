@@ -1,5 +1,5 @@
 const router = require('express').Router()
-const { query, queryOne } = require('../config/db')
+const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
 const { optionalAuth } = require('../middleware/auth')
 

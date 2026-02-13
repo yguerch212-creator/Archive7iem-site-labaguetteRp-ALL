@@ -20,17 +20,14 @@ export default function SoldbuchLayout() {
 
   const loadData = async () => {
     try {
-      const [effRes, layoutRes] = await Promise.all([
-        api.get(`/effectifs/${id}`),
-        api.get(`/effectifs/${id}/layout`).catch(() => ({ data: { blocks: null } }))
-      ])
-      const eff = effRes.data.data || effRes.data
+      const res = await api.get(`/soldbuch/${id}`)
+      const eff = res.data.data.effectif
+      const layout = res.data.data.layout
       setEffectif(eff)
 
-      if (layoutRes.data?.blocks) {
-        setBlocks(layoutRes.data.blocks)
+      if (layout?.blocks) {
+        setBlocks(layout.blocks)
       } else {
-        // Generate default soldbuch blocks from effectif data
         setBlocks(generateDefaultBlocks(eff))
       }
     } catch (err) { console.error(err) }
@@ -94,9 +91,9 @@ export default function SoldbuchLayout() {
 
   const handleSave = async (newBlocks) => {
     try {
-      await api.put(`/effectifs/${id}/layout`, { blocks: newBlocks })
+      await api.put(`/soldbuch/${id}/layout`, { layout: { blocks: newBlocks } })
       setMessage('💾 Mise en page sauvegardée')
-      setTimeout(() => setMessage(''), 2000)
+      setTimeout(() => setMessage(''), 3000)
     } catch (err) {
       setMessage('❌ Erreur: ' + (err.response?.data?.message || err.message))
     }
@@ -104,8 +101,8 @@ export default function SoldbuchLayout() {
 
   const handlePublish = async (html, publishedBlocks) => {
     try {
-      await api.put(`/effectifs/${id}/layout`, { blocks: publishedBlocks || blocks, html_published: html })
-      setMessage('📜 Soldbuch publié')
+      await api.put(`/soldbuch/${id}/layout`, { layout: { blocks: publishedBlocks || blocks, html_published: html } })
+      setMessage('📜 Soldbuch publié ! Redirection...')
       setTimeout(() => navigate(`/effectifs/${id}/soldbuch`), 1500)
     } catch (err) {
       setMessage('❌ Erreur')
