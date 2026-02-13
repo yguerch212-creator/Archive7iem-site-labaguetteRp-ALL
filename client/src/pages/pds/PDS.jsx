@@ -317,9 +317,8 @@ export default function PDS() {
                 <thead>
                   <tr>
                     <th style={{width:'30px'}}></th>
-                    <th>Grade</th>
-                    <th>Nom</th>
-                    <th>Fonction</th>
+                    <th>Effectif</th>
+                    <th className="th-fonction">Fonction</th>
                     <th style={{textAlign:'right'}}>Total</th>
                   </tr>
                 </thead>
@@ -334,8 +333,10 @@ export default function PDS() {
                         <td className="td-pastille">
                           <span className={`pastille ${filled ? (eff.valide ? 'pastille-green' : 'pastille-red') : 'pastille-grey'}`}></span>
                         </td>
-                        <td className="td-grade">{eff.grade_nom || '—'}</td>
-                        <td className="td-name">{eff.prenom} {eff.nom}</td>
+                        <td className="td-name">
+                          <span className="effectif-name">{eff.prenom} {eff.nom}</span>
+                          {eff.grade_nom && <span className="effectif-grade">{eff.grade_nom}</span>}
+                        </td>
                         <td className="td-fonction">{eff.fonction || '—'}</td>
                         <td className={`td-total ${eff.valide ? 'total-ok' : filled ? 'total-ko' : ''}`}>
                           {filled ? formatHeures(eff.total_heures) : '—'}
