@@ -14,6 +14,7 @@ const rapportsRoutes = require('./routes/rapports.routes')
 const soldbuchRoutes = require('./routes/soldbuch.routes')
 const searchRoutes = require('./routes/search.routes')
 const adminRoutes = require('./routes/admin.routes')
+const pdsRoutes = require('./routes/pds.routes')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -40,6 +41,7 @@ app.use('/api/rapports', rapportsRoutes)
 app.use('/api/soldbuch', soldbuchRoutes)
 app.use('/api/search', searchRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/pds', pdsRoutes)
 
 // Stats endpoint
 app.get('/api/stats', async (req, res) => {

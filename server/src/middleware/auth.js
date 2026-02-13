@@ -16,7 +16,9 @@ module.exports = async function auth(req, res, next) {
       SELECT u.id, u.nom, u.prenom, u.username, u.role_level, u.unite_id,
              un.nom AS unite_nom, g.nom_complet AS grade_nom,
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
-              WHERE ug.user_id = u.id AND gp.name = 'Administration') > 0 AS isAdmin
+              WHERE ug.user_id = u.id AND gp.name = 'Administration') > 0 AS isAdmin,
+             (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
+              WHERE ug.user_id = u.id AND gp.name = 'Recenseur') > 0 AS isRecenseur
       FROM users u
       LEFT JOIN unites un ON u.unite_id = un.id
       LEFT JOIN grades g ON g.id = u.grade_id
@@ -28,6 +30,7 @@ module.exports = async function auth(req, res, next) {
     }
 
     user.isAdmin = !!user.isAdmin
+    user.isRecenseur = !!user.isRecenseur
     req.user = user
     next()
   } catch (err) {

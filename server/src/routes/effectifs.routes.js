@@ -49,9 +49,12 @@ router.get('/:id', auth, async (req, res) => {
   }
 })
 
-// POST /api/effectifs
+// POST /api/effectifs (admin ou recenseur)
 router.post('/', auth, async (req, res) => {
   try {
+    if (!req.user.isAdmin && !req.user.isRecenseur) {
+      return res.status(403).json({ success: false, message: 'Accès réservé aux administrateurs et recenseurs' })
+    }
     const f = req.body
     const [result] = await require('../config/db').pool.execute(
       `INSERT INTO effectifs (nom, prenom, surnom, unite_id, grade_id, fonction, categorie, specialite, 

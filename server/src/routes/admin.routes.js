@@ -11,7 +11,9 @@ router.get('/users', auth, admin, async (req, res) => {
       SELECT u.id, u.nom, u.prenom, u.username, u.role_level, u.must_change_password, u.active,
              g.nom_complet AS grade_nom, un.nom AS unite_nom,
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
-              WHERE ug.user_id = u.id AND gp.name = 'Administration') > 0 AS is_admin
+              WHERE ug.user_id = u.id AND gp.name = 'Administration') > 0 AS is_admin,
+             (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
+              WHERE ug.user_id = u.id AND gp.name = 'Recenseur') > 0 AS is_recenseur
       FROM users u
       LEFT JOIN grades g ON g.id = u.grade_id
       LEFT JOIN unites un ON un.id = u.unite_id
@@ -70,16 +72,27 @@ router.post('/users', auth, admin, async (req, res) => {
 // PUT /api/admin/users/:id/group
 router.put('/users/:id/group', auth, admin, async (req, res) => {
   try {
-    const { action } = req.body // 'add' or 'remove'
-    const adminGroup = await queryOne("SELECT id FROM `groups` WHERE name = 'Administration'")
-    if (!adminGroup) return res.status(500).json({ success: false, message: 'Groupe Administration introuvable' })
+    const { action, group } = req.body // action: 'add'|'remove', group: 'Administration'|'Recenseur'
+    const groupName = group || 'Administration'
+    const grp = await queryOne("SELECT id FROM `groups` WHERE name = ?", [groupName])
+    if (!grp) return res.status(500).json({ success: false, message: `Groupe ${groupName} introuvable` })
 
     if (action === 'add') {
-      await pool.execute('INSERT IGNORE INTO user_groups (user_id, group_id) VALUES (?, ?)', [req.params.id, adminGroup.id])
+      await pool.execute('INSERT IGNORE INTO user_groups (user_id, group_id) VALUES (?, ?)', [req.params.id, grp.id])
     } else {
-      await pool.execute('DELETE FROM user_groups WHERE user_id = ? AND group_id = ?', [req.params.id, adminGroup.id])
+      await pool.execute('DELETE FROM user_groups WHERE user_id = ? AND group_id = ?', [req.params.id, grp.id])
     }
     res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// GET /api/admin/groups — List all groups
+router.get('/groups', auth, admin, async (req, res) => {
+  try {
+    const groups = await query('SELECT * FROM `groups` ORDER BY name')
+    res.json({ success: true, data: groups })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
   }

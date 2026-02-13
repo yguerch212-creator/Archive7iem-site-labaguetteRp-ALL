@@ -31,13 +31,20 @@ async function login(req, res) {
       return res.status(401).json({ success: false, message: 'Nom ou mot de passe incorrect' })
     }
 
-    // Check admin group
+    // Check groups
     const adminCheck = await queryOne(`
       SELECT COUNT(*) as c FROM user_groups ug
       JOIN \`groups\` g ON g.id = ug.group_id
       WHERE ug.user_id = ? AND g.name = 'Administration'
     `, [user.id])
     const isAdmin = adminCheck.c > 0
+
+    const recenseurCheck = await queryOne(`
+      SELECT COUNT(*) as c FROM user_groups ug
+      JOIN \`groups\` g ON g.id = ug.group_id
+      WHERE ug.user_id = ? AND g.name = 'Recenseur'
+    `, [user.id])
+    const isRecenseur = recenseurCheck.c > 0
 
     const token = jwt.sign({ userId: user.id }, config.jwt.secret, { expiresIn: config.jwt.expiresIn })
 
@@ -53,6 +60,7 @@ async function login(req, res) {
         grade: user.grade_nom,
         unite_id: user.unite_id,
         isAdmin,
+        isRecenseur,
         mustChangePassword: !!user.must_change_password
       }
     })

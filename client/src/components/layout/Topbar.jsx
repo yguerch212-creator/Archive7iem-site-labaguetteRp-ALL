@@ -19,6 +19,7 @@ export default function Topbar() {
           <Link to="/dashboard" className={isActive('/dashboard')}>Tableau de bord</Link>
           <Link to="/effectifs" className={isActive('/effectifs')}>Effectifs</Link>
           <Link to="/rapports" className={isActive('/rapports')}>Rapports</Link>
+          <Link to="/pds" className={isActive('/pds')}>PDS</Link>
           <Link to="/search" className={isActive('/search')}>Recherche</Link>
           {user?.isAdmin && (
             <Link to="/admin/users" className={isActive('/admin')}>Admin</Link>

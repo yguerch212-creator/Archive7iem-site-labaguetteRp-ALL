@@ -16,6 +16,7 @@ import RapportView from './pages/rapports/RapportView'
 import RapportLayout from './pages/rapports/RapportLayout'
 import Search from './pages/Search'
 import AdminUsers from './pages/admin/AdminUsers'
+import PDS from './pages/pds/PDS'
 
 function AppRouter() {
   const { user } = useAuth()
@@ -40,6 +41,9 @@ function AppRouter() {
       <Route path="/rapports/new" element={<ProtectedRoute><RapportNew /></ProtectedRoute>} />
       <Route path="/rapports/:id" element={<ProtectedRoute><RapportView /></ProtectedRoute>} />
       <Route path="/rapports/:id/layout" element={<ProtectedRoute><RapportLayout /></ProtectedRoute>} />
+      
+      {/* PDS */}
+      <Route path="/pds" element={<ProtectedRoute><PDS /></ProtectedRoute>} />
       
       {/* Search */}
       <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
