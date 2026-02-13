@@ -269,22 +269,42 @@ Les nouveaux joueurs n'ont pas encore de compte. Le workflow :
 
 ---
 
-## 10. DOSSIERS PERSONNELS
+## 10. DOSSIERS
 **Priorité : 🟡 Souhaité**
 
-### Concept
-Chaque effectif a un dossier complet : personnel, médical, formation, missions, évaluations.
+### 10.1 — Dossier personnel (auto-généré)
+Chaque effectif a un dossier personnel qui agrège automatiquement tout ce qui le concerne :
+- PDS (historique semaines)
+- Rapports (où il est mentionné ou auteur)
+- Soldbuch
+- Visites médicales
+- Interdits de front
+- Dates auto-remplies
 
-### Ce qui existe
-- ✅ Table `dossiers` dans schema.sql
-- ❌ Pas de routes ni de frontend
+Le dossier peut être **public** (visible par tous) ou **privé** (visible uniquement par l'intéressé + admin).
+L'effectif peut y ajouter du contenu perso : photos, vidéos, texte libre.
+
+### 10.2 — Dossiers libres (créés manuellement)
+N'importe qui (avec les droits) peut créer un dossier indépendant :
+- **Dossier de présentation** — CV RP d'un personnage
+- **Dossier d'enquête** — accumulation de preuves contre quelqu'un (Feldgendarmerie)
+- **Dossier de formation** — supports, notes
+- Visibilité : **Public** / **Privé** / **Lien** (accessible via URL uniquement)
+- Titre libre, contenu libre
+
+### 10.3 — Layout livre
+Le rendu du dossier est en **format livre avec pages qui se tournent** (type flipbook).
+Similaire au soldbuch mais paginé, avec navigation page par page.
+Librairie potentielle : turn.js, StPageFlip, ou CSS 3D transforms custom.
 
 ### À faire
-- [ ] **Routes API** — CRUD `/api/dossiers`
-- [ ] **Page dossiers** — accessible depuis la fiche effectif
-- [ ] **Types** : Personnel, Médical, Formation, Mission, Évaluation
-- [ ] **Confidentialité** — champ `confidentiel` pour restreindre l'accès
-- [ ] **Upload fichiers** — pièces jointes (multer)
+- [ ] Table `dossiers` (titre, type, visibilité, effectif_id nullable, contenu JSON, created_by)
+- [ ] Table `dossier_pages` (dossier_id, ordre, contenu, medias)
+- [ ] Auto-agrégation du dossier personnel (requêtes cross-tables)
+- [ ] Upload médias (photos, vidéos) via multer
+- [ ] Layout flipbook (turn.js ou équivalent)
+- [ ] Permissions : privé/public/lien
+- [ ] Page création dossier + éditeur de pages
 
 ---
 
@@ -353,17 +373,22 @@ Afficher les médailles et décorations dans le soldbuch. Les données existent 
 12. Workflow recensement (création compte depuis effectif)
 13. Accès invité
 
-### Sprint 4 — Polish
-14. InteractJS layouts (soldbuch + rapports)
-15. Export PDF/Image
-16. HTTPS + nom de domaine
-17. Dossiers personnels
-18. Décorations soldbuch
+### Sprint 4 — Dossiers & Polish
+14. Dossiers personnels auto-générés (agrégation cross-tables)
+15. Dossiers libres (création, visibilité public/privé/lien)
+16. Layout flipbook (pages qui se tournent)
+17. Upload médias (photos, vidéos)
 
-### Sprint 5 — Futur
-19. Télégramme RP
-20. Carte stratégique
-21. Convocations/Tribunaux
+### Sprint 5 — Finitions
+18. InteractJS layouts (soldbuch + rapports)
+19. Export PDF/Image
+20. HTTPS + nom de domaine
+21. Décorations soldbuch
+
+### Sprint 6 — Futur
+22. Télégramme RP
+23. Carte stratégique
+24. Convocations/Tribunaux
 
 ---
 
