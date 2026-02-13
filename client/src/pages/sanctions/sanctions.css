@@ -1,0 +1,181 @@
+.sanctions-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--border);
+}
+.sanctions-tabs button {
+  padding: 0.7rem 1.2rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sanctions-tabs button:hover {
+  color: var(--text);
+  background: rgba(107, 143, 60, 0.05);
+}
+.sanctions-tabs button.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+.sanctions-toolbar {
+  display: flex;
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.sanctions-toolbar .input-field {
+  flex: 1;
+  min-width: 180px;
+}
+.sanctions-toolbar select.input-field {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 150px;
+}
+
+.groupe-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  font-family: 'IBM Plex Mono', monospace;
+  margin-right: 0.3rem;
+}
+
+/* Code Pénal */
+.code-penal .code-intro {
+  background: rgba(107, 143, 60, 0.08);
+  border-left: 4px solid var(--primary);
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+}
+.groupe-section {
+  margin-bottom: 2rem;
+}
+.groupe-section h3 {
+  font-family: 'IBM Plex Mono', monospace;
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Accréditations */
+.accred-table td {
+  vertical-align: middle;
+}
+.accred-note {
+  margin-top: 1rem;
+  padding: 0.8rem;
+  background: rgba(192, 57, 43, 0.08);
+  border-left: 4px solid #c0392b;
+  font-size: 0.9rem;
+}
+
+/* Sanction detail popup */
+.sanction-detail {
+  max-width: 650px;
+}
+.sanction-detail h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+}
+.sanction-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem 1.5rem;
+  margin-bottom: 1.2rem;
+}
+.sanction-detail-grid > div {
+  display: flex;
+  flex-direction: column;
+}
+.sanction-detail-grid label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.sanction-detail-grid span {
+  font-weight: 500;
+}
+.sanction-desc {
+  margin-bottom: 1rem;
+}
+.sanction-desc label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 0.3rem;
+}
+.sanction-desc p {
+  background: rgba(0,0,0,0.03);
+  padding: 0.6rem;
+  border-radius: 4px;
+  white-space: pre-wrap;
+}
+.notes-internes {
+  border-left: 3px solid #c0392b;
+  padding-left: 0.8rem;
+}
+
+/* Form popup */
+.sanction-form-popup {
+  max-width: 750px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.form-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.form-row .form-group {
+  flex: 1;
+  min-width: 200px;
+}
+.form-group {
+  margin-bottom: 1rem;
+}
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  color: var(--text);
+}
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+.form-actions {
+  display: flex;
+  gap: 0.8rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.page-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-top: -0.5rem;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+}
