@@ -5,9 +5,9 @@ import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import './pds.css'
 
-// Semaine RP : vendredi → jeudi (deadline vendredi 20h, samedi = cérémonie)
-const JOURS = ['vendredi', 'samedi', 'dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi']
-const JOURS_LABELS = { vendredi: 'Vendredi', samedi: 'Samedi', dimanche: 'Dimanche', lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi' }
+// Semaine RP : vendredi 20h → vendredi 20h (deadline vendredi 20h, samedi = cérémonie)
+const JOURS = ['vendredi', 'samedi', 'dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi_fin']
+const JOURS_LABELS = { vendredi: 'Vendredi (20h →)', samedi: 'Samedi', dimanche: 'Dimanche', lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi_fin: 'Vendredi (→ 20h)' }
 
 function getWeekString(date = new Date()) {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
@@ -92,10 +92,11 @@ export default function PDS() {
         const d = res.data.data
         setMyPds({
           lundi: d.lundi || '', mardi: d.mardi || '', mercredi: d.mercredi || '',
-          jeudi: d.jeudi || '', vendredi: d.vendredi || '', samedi: d.samedi || '', dimanche: d.dimanche || ''
+          jeudi: d.jeudi || '', vendredi: d.vendredi || '', vendredi_fin: d.vendredi_fin || '',
+          samedi: d.samedi || '', dimanche: d.dimanche || ''
         })
       } else {
-        setMyPds({ lundi: '', mardi: '', mercredi: '', jeudi: '', vendredi: '', samedi: '', dimanche: '' })
+        setMyPds({ lundi: '', mardi: '', mercredi: '', jeudi: '', vendredi: '', vendredi_fin: '', samedi: '', dimanche: '' })
       }
     } catch (err) { console.error(err) }
   }, [semaine, hasEffectif])

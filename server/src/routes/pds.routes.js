@@ -60,7 +60,7 @@ router.get('/', auth, async (req, res) => {
       SELECT e.id AS effectif_id, e.nom, e.prenom, e.fonction, e.categorie,
              g.nom_complet AS grade_nom, g.rang AS grade_rang,
              u.nom AS unite_nom, u.code AS unite_code, u.id AS unite_id,
-             p.id AS pds_id, p.lundi, p.mardi, p.mercredi, p.jeudi, p.vendredi, p.samedi, p.dimanche,
+             p.id AS pds_id, p.lundi, p.mardi, p.mercredi, p.jeudi, p.vendredi, p.vendredi_fin, p.samedi, p.dimanche,
              p.total_heures, p.valide
       FROM effectifs e
       LEFT JOIN grades g ON g.id = e.grade_id
@@ -110,7 +110,7 @@ router.get('/mine', auth, async (req, res) => {
 // PUT /api/pds/saisie — Update own PDS (self-service)
 router.put('/saisie', auth, async (req, res) => {
   try {
-    const { effectif_id, semaine, lundi, mardi, mercredi, jeudi, vendredi, samedi, dimanche } = req.body
+    const { effectif_id, semaine, lundi, mardi, mercredi, jeudi, vendredi, vendredi_fin, samedi, dimanche } = req.body
     
     if (!effectif_id || !semaine) {
       return res.status(400).json({ success: false, message: 'effectif_id et semaine requis' })
@@ -125,19 +125,19 @@ router.put('/saisie', auth, async (req, res) => {
     // Compute total hours from creneaux
     const totalHeures = 
       parseCreneaux(lundi) + parseCreneaux(mardi) + parseCreneaux(mercredi) +
-      parseCreneaux(jeudi) + parseCreneaux(vendredi) + parseCreneaux(samedi) + parseCreneaux(dimanche)
+      parseCreneaux(jeudi) + parseCreneaux(vendredi) + parseCreneaux(vendredi_fin) + parseCreneaux(samedi) + parseCreneaux(dimanche)
 
     await pool.execute(`
-      INSERT INTO pds_semaines (effectif_id, semaine, lundi, mardi, mercredi, jeudi, vendredi, samedi, dimanche, total_heures)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO pds_semaines (effectif_id, semaine, lundi, mardi, mercredi, jeudi, vendredi, vendredi_fin, samedi, dimanche, total_heures)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         lundi = VALUES(lundi), mardi = VALUES(mardi), mercredi = VALUES(mercredi),
-        jeudi = VALUES(jeudi), vendredi = VALUES(vendredi), samedi = VALUES(samedi),
+        jeudi = VALUES(jeudi), vendredi = VALUES(vendredi), vendredi_fin = VALUES(vendredi_fin), samedi = VALUES(samedi),
         dimanche = VALUES(dimanche), total_heures = VALUES(total_heures)
     `, [
       effectif_id, semaine,
       lundi || null, mardi || null, mercredi || null,
-      jeudi || null, vendredi || null, samedi || null, dimanche || null,
+      jeudi || null, vendredi || null, vendredi_fin || null, samedi || null, dimanche || null,
       Math.round(totalHeures * 10) / 10
     ])
 
