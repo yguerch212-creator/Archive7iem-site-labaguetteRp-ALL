@@ -217,6 +217,7 @@ export default function PDS() {
 
             <div className="mon-pds-form">
               <p className="mon-pds-subtitle"><strong>Présence sur le front :</strong></p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic', margin: '0 0 var(--space-sm)' }}>💡 Même si votre PDS n'est pas terminé, sauvegardez régulièrement !</p>
               {JOURS.map(jour => {
                 const heures = parseCreneaux(myPds[jour])
                 return (

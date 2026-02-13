@@ -63,23 +63,26 @@ router.get('/', auth, async (req, res) => {
              p.id AS pds_id, p.lundi, p.mardi, p.mercredi, p.jeudi, p.vendredi, p.vendredi_fin, p.samedi, p.dimanche,
              p.total_heures, p.valide
       FROM effectifs e
+      INNER JOIN pds_semaines p ON p.effectif_id = e.id AND p.semaine = ?
       LEFT JOIN grades g ON g.id = e.grade_id
       LEFT JOIN unites u ON u.id = e.unite_id
-      LEFT JOIN pds_semaines p ON p.effectif_id = e.id AND p.semaine = ?
       WHERE e.actif = 'Actif'
       ORDER BY u.code, COALESCE(g.rang, 0) DESC, e.nom
     `, [semaine])
 
-    const total = rows.length
-    const saisis = rows.filter(r => r.pds_id !== null).length
+    const saisis = rows.length
     const valides = rows.filter(r => r.valide).length
+
+    // Total active effectifs (for context)
+    const totalRow = await queryOne('SELECT COUNT(*) AS cnt FROM effectifs WHERE actif = "Actif"')
+    const totalEffectifs = totalRow?.cnt || 0
 
     res.json({
       success: true,
       data: rows,
       semaine,
       semaineActuelle: getCurrentWeek(),
-      stats: { total, saisis, valides }
+      stats: { total: totalEffectifs, saisis, valides }
     })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
