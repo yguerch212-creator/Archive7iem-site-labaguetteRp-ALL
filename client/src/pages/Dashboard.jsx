@@ -7,15 +7,29 @@ export default function Dashboard() {
   const { user } = useAuth()
   const [stats, setStats] = useState({ effectifs: 0, rapports: 0, unites: 0, parUnite: [], derniers: [] })
   const [pending, setPending] = useState({ docs: 0, permissions: 0, total: 0 })
+  const [notifs, setNotifs] = useState({ telegrammes: 0, total: 0 })
 
   const isPrivileged = user?.isAdmin || user?.isRecenseur || user?.isOfficier
 
   useEffect(() => {
+    if (user?.isGuest) return
     apiClient.get('/stats').then(r => setStats(s => ({ ...s, ...r.data }))).catch(() => {})
     if (isPrivileged) {
       apiClient.get('/stats/pending').then(r => setPending(r.data)).catch(() => {})
     }
+    // Notifications
+    if (user?.effectif_id) {
+      apiClient.get('/telegrammes', { params: { tab: 'recu' } }).then(r => {
+        const unread = r.data.unread || 0
+        setNotifs(n => ({ ...n, telegrammes: unread, total: unread + (isPrivileged ? (pending?.total || 0) : 0) }))
+      }).catch(() => {})
+    }
   }, [])
+
+  // Update total notifs when pending changes
+  useEffect(() => {
+    setNotifs(n => ({ ...n, total: n.telegrammes + (isPrivileged ? pending.total : 0) }))
+  }, [pending.total])
 
   const navCards = [
     { icon: '📋', title: 'Effectifs', desc: 'Fiches & soldbücher', to: '/effectifs' },
@@ -41,7 +55,24 @@ export default function Dashboard() {
   return (
     <div className="container">
       {/* En-tête */}
-      <div className="paper-card" style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
+      <div className="paper-card" style={{ textAlign: 'center', marginBottom: 'var(--space-xl)', position: 'relative' }}>
+        {/* Notification bell */}
+        {notifs.total > 0 && (
+          <div style={{ position: 'absolute', top: 12, right: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            {notifs.telegrammes > 0 && (
+              <Link to="/telegrammes" style={{ position: 'relative', textDecoration: 'none', fontSize: '1.3rem' }} title={`${notifs.telegrammes} télégramme${notifs.telegrammes > 1 ? 's' : ''} non lu${notifs.telegrammes > 1 ? 's' : ''}`}>
+                ⚡
+                <span style={{ position: 'absolute', top: -6, right: -8, background: 'var(--danger)', color: 'white', fontSize: '0.6rem', fontWeight: 700, borderRadius: '50%', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{notifs.telegrammes}</span>
+              </Link>
+            )}
+            {isPrivileged && pending.total > 0 && (
+              <Link to="/admin/moderation" style={{ position: 'relative', textDecoration: 'none', fontSize: '1.3rem' }} title={`${pending.total} élément${pending.total > 1 ? 's' : ''} en attente`}>
+                🔔
+                <span style={{ position: 'absolute', top: -6, right: -8, background: 'var(--danger)', color: 'white', fontSize: '0.6rem', fontWeight: 700, borderRadius: '50%', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{pending.total}</span>
+              </Link>
+            )}
+          </div>
+        )}
         <h1 style={{ marginBottom: 'var(--space-xs)' }}>Archives 7e Armeekorps</h1>
         <p style={{ margin: 0, color: 'var(--text-muted)' }}>
           {user?.grade || ''} {user?.username || ''} — {user?.unite || 'Commandement'}

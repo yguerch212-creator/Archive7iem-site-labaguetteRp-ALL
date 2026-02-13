@@ -29,8 +29,8 @@ router.get('/', optionalAuth, async (req, res) => {
     } else if (tab === 'archive' && effectifId) {
       where = "WHERE t.statut = 'Archivé' AND (t.destinataire_id = ? OR t.expediteur_id = ?)"
       params.push(effectifId, effectifId)
-    } else if (tab === 'tous' && isPrivileged) {
-      where = '' // all
+    } else if (tab === 'tous') {
+      where = "WHERE t.statut != 'Archivé'"
     } else if (effectifId) {
       where = 'WHERE t.destinataire_id = ? OR t.expediteur_id = ?'
       params.push(effectifId, effectifId)
@@ -115,12 +115,12 @@ router.post('/', auth, async (req, res) => {
 
     const [result] = await pool.execute(`
       INSERT INTO telegrammes (numero, expediteur_id, expediteur_nom, expediteur_grade, expediteur_unite,
-        destinataire_id, destinataire_nom, destinataire_unite, objet, contenu, priorite, created_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        destinataire_id, destinataire_nom, destinataire_unite, objet, contenu, priorite, prive, created_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       numero, expId, expNom, expGrade, expUnite,
       destinataire_id || null, destinataire_nom || 'Inconnu', destinataire_unite || null,
-      objet, contenu, priorite || 'Normal', req.user.id
+      objet, contenu, priorite || 'Normal', req.body.prive ? 1 : 0, req.user.id
     ])
 
     res.json({ success: true, data: { id: result.insertId, numero } })

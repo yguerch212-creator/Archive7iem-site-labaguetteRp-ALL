@@ -1,10 +1,20 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
+import api from '../../api/client'
 
 export default function Topbar() {
   const { user, logout } = useAuth()
   const location = useLocation()
+  const [unreadTel, setUnreadTel] = useState(0)
+
+  useEffect(() => {
+    if (user?.effectif_id && !user?.isGuest) {
+      api.get('/telegrammes', { params: { tab: 'recu' } })
+        .then(r => setUnreadTel(r.data.unread || 0))
+        .catch(() => {})
+    }
+  }, [location.pathname])
 
   const isActive = (path) => location.pathname.startsWith(path) ? 'active' : ''
 
@@ -24,7 +34,10 @@ export default function Topbar() {
           <Link to="/sanctions" className={isActive('/sanctions')}>⚖️ Sanctions</Link>
           <Link to="/medical" className={isActive('/medical')}>Médical</Link>
           <Link to="/dossiers" className={isActive('/dossiers')}>Dossiers</Link>
-          <Link to="/telegrammes" className={isActive('/telegrammes')}>⚡ Télégrammes</Link>
+          <Link to="/telegrammes" className={isActive('/telegrammes')} style={{ position: 'relative' }}>
+            ⚡ Télégrammes
+            {unreadTel > 0 && <span style={{ position: 'absolute', top: -4, right: -8, background: '#e74c3c', color: 'white', fontSize: '0.55rem', fontWeight: 700, borderRadius: '50%', width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{unreadTel}</span>}
+          </Link>
           <Link to="/documentation" className={isActive('/documentation')}>Docs</Link>
           <Link to="/search" className={isActive('/search')}>Recherche</Link>
           {user?.isAdmin && (

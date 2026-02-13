@@ -55,3 +55,18 @@
 .tel-form .form-row { display: flex; gap: var(--space-md); }
 .tel-form .form-row > .form-group { flex: 1; }
 .tel-form textarea { min-height: 150px; font-family: var(--font-mono); }
+
+/* Privé badge */
+.telegram-prive-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #8e44ad;
+  border: 2px solid #8e44ad;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transform: rotate(-3deg);
+}
