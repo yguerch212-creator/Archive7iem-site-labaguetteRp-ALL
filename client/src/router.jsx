@@ -17,6 +17,8 @@ import RapportLayout from './pages/rapports/RapportLayout'
 import Search from './pages/Search'
 import AdminUsers from './pages/admin/AdminUsers'
 import PDS from './pages/pds/PDS'
+import InterditsFront from './pages/interdits/InterditsFront'
+import VisitesMedicales from './pages/medical/VisitesMedicales'
 
 function AppRouter() {
   const { user } = useAuth()
@@ -44,6 +46,12 @@ function AppRouter() {
       
       {/* PDS */}
       <Route path="/pds" element={<ProtectedRoute><PDS /></ProtectedRoute>} />
+      
+      {/* Interdits de front */}
+      <Route path="/interdits" element={<ProtectedRoute><InterditsFront /></ProtectedRoute>} />
+      
+      {/* Médical */}
+      <Route path="/medical" element={<ProtectedRoute><VisitesMedicales /></ProtectedRoute>} />
       
       {/* Search */}
       <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />

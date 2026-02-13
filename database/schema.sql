@@ -305,3 +305,49 @@ FROM casiers c
 LEFT JOIN effectifs e ON c.effectif_id = e.id
 LEFT JOIN unites u ON c.unite_id = u.id
 LEFT JOIN users creator ON c.created_by = creator.id;
+-- ============================================================================
+-- INTERDITS DE FRONT
+-- ============================================================================
+
+CREATE TABLE interdits_front (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    effectif_id INT NOT NULL,
+    motif TEXT NOT NULL,
+    type ENUM('Disciplinaire', 'Medical', 'Administratif') NOT NULL DEFAULT 'Disciplinaire',
+    date_debut DATE NOT NULL,
+    date_fin DATE NULL,
+    ordonne_par INT NOT NULL,
+    leve_par INT NULL,
+    date_levee TIMESTAMP NULL,
+    actif BOOLEAN DEFAULT TRUE,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (effectif_id) REFERENCES effectifs(id) ON DELETE CASCADE,
+    FOREIGN KEY (ordonne_par) REFERENCES users(id),
+    FOREIGN KEY (leve_par) REFERENCES users(id),
+    INDEX idx_effectif (effectif_id),
+    INDEX idx_actif (actif)
+);
+
+-- ============================================================================
+-- VISITES MÉDICALES
+-- ============================================================================
+
+CREATE TABLE visites_medicales (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    effectif_id INT NOT NULL,
+    date_visite DATE NOT NULL,
+    medecin VARCHAR(100),
+    diagnostic TEXT,
+    aptitude ENUM('Apte', 'Inapte temporaire', 'Inapte definitif', 'Apte avec reserves') DEFAULT 'Apte',
+    restrictions TEXT,
+    notes_confidentielles TEXT,
+    created_by INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (effectif_id) REFERENCES effectifs(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id),
+    INDEX idx_effectif (effectif_id),
+    INDEX idx_aptitude (aptitude)
+);

@@ -15,7 +15,7 @@ async function auth(req, res, next) {
 
     const user = await queryOne(`
       SELECT u.id, u.nom, u.prenom, u.username, u.role_level, u.unite_id, u.effectif_id,
-             un.nom AS unite_nom, g.nom_complet AS grade_nom,
+             un.nom AS unite_nom, un.code AS unite_code, g.nom_complet AS grade_nom, g.rang AS grade_rang,
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
               WHERE ug.user_id = u.id AND gp.name = 'Administration') > 0 AS isAdmin,
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
