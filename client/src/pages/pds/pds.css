@@ -330,6 +330,111 @@
 .perm-meta { font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-light); }
 .perm-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
 
+/* ===== PASTILLES ===== */
+.td-pastille { width: 30px; text-align: center; }
+.pastille {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.pastille-green { background: #2d7a3a; box-shadow: 0 0 4px rgba(45,122,58,0.4); }
+.pastille-red { background: #c33; box-shadow: 0 0 4px rgba(204,51,51,0.4); }
+.pastille-grey { background: #ccc; }
+
+.pds-row-clickable { cursor: pointer; transition: background 0.15s; }
+.pds-row-clickable:hover { background: rgba(139,115,85,0.1) !important; }
+
+/* ===== DETAIL PANEL (overlay) ===== */
+.pds-detail-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.pds-detail-panel {
+  background: var(--bg-paper, #f5f0e1);
+  background-image: var(--paper-bg, none);
+  border-radius: 8px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  font-family: var(--font-mono);
+}
+
+.pds-detail-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--ink-light);
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+.pds-detail-close:hover { background: rgba(0,0,0,0.05); }
+
+.pds-detail-header {
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.pds-detail-identity {
+  color: var(--ink-light);
+}
+
+.pds-detail-body {
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.pds-detail-body strong {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.pds-detail-jour {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.pds-detail-jour-label {
+  font-weight: 600;
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.pds-detail-jour-value {
+  flex: 1;
+  text-align: right;
+  color: var(--ink);
+}
+
+.pds-detail-total {
+  font-size: 1rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+  text-align: center;
+}
+.pds-detail-total.total-valid { background: rgba(45,122,58,0.1); color: #2d7a3a; }
+.pds-detail-total.total-invalid { background: rgba(204,51,51,0.1); color: #c33; }
+
 /* Responsive */
 @media (max-width: 768px) {
   .pds-header { flex-direction: column; align-items: flex-start; }

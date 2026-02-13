@@ -58,6 +58,7 @@ export default function PDS() {
   const [semaineActuelle, setSemaineActuelle] = useState('')
   const [filterUnite, setFilterUnite] = useState('')
   const [message, setMessage] = useState('')
+  const [selectedEffectif, setSelectedEffectif] = useState(null) // for detail panel
 
   // Mon PDS state
   const [myPds, setMyPds] = useState({})
@@ -275,6 +276,35 @@ export default function PDS() {
             </select>
           </div>
 
+          {/* Detail panel (shown when clicking a name) */}
+          {selectedEffectif && (
+            <div className="pds-detail-overlay" onClick={() => setSelectedEffectif(null)}>
+              <div className="pds-detail-panel" onClick={e => e.stopPropagation()}>
+                <button className="pds-detail-close" onClick={() => setSelectedEffectif(null)}>✕</button>
+                <div className="pds-detail-header">
+                  <strong>Prise de service :</strong>
+                  <div className="pds-detail-identity">[{selectedEffectif.prenom} {selectedEffectif.nom}]</div>
+                  <div className="pds-detail-identity">[{selectedEffectif.grade_nom || '—'}]</div>
+                  <div className="pds-detail-identity">[{selectedEffectif.unite_code}. {selectedEffectif.unite_nom}]</div>
+                </div>
+                <div className="pds-detail-body">
+                  <strong>Présence sur le front :</strong>
+                  {JOURS.map(j => (
+                    <div key={j} className="pds-detail-jour">
+                      <span className="pds-detail-jour-label">{JOURS_LABELS[j]} :</span>
+                      <span className="pds-detail-jour-value">
+                        {selectedEffectif[j] ? selectedEffectif[j] : '—'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className={`pds-detail-total ${selectedEffectif.valide ? 'total-valid' : selectedEffectif.pds_id ? 'total-invalid' : ''}`}>
+                  <strong>Total Semaine : {selectedEffectif.pds_id ? formatHeures(selectedEffectif.total_heures) : 'Non renseigné'}</strong>
+                </div>
+              </div>
+            </div>
+          )}
+
           {Object.entries(grouped).map(([code, { nom, effectifs }]) => (
             <div key={code} className="pds-unite-section">
               <h2 className="pds-unite-title">
@@ -286,30 +316,27 @@ export default function PDS() {
               <table className="pds-table">
                 <thead>
                   <tr>
+                    <th style={{width:'30px'}}></th>
                     <th>Grade</th>
                     <th>Nom</th>
-                    <th className="th-jour">Lun</th>
-                    <th className="th-jour">Mar</th>
-                    <th className="th-jour">Mer</th>
-                    <th className="th-jour">Jeu</th>
-                    <th className="th-jour">Ven</th>
-                    <th className="th-jour">Sam</th>
-                    <th className="th-jour">Dim</th>
-                    <th>Total</th>
+                    <th>Fonction</th>
+                    <th style={{textAlign:'right'}}>Total</th>
                   </tr>
                 </thead>
                 <tbody>
                   {effectifs.map(eff => {
                     const filled = eff.pds_id !== null
                     return (
-                      <tr key={eff.effectif_id} className={filled ? (eff.valide ? 'row-valid' : 'row-invalid') : 'row-empty'}>
+                      <tr key={eff.effectif_id}
+                          className={`pds-row-clickable ${filled ? (eff.valide ? 'row-valid' : 'row-invalid') : 'row-empty'}`}
+                          onClick={() => setSelectedEffectif(eff)}
+                      >
+                        <td className="td-pastille">
+                          <span className={`pastille ${filled ? (eff.valide ? 'pastille-green' : 'pastille-red') : 'pastille-grey'}`}></span>
+                        </td>
                         <td className="td-grade">{eff.grade_nom || '—'}</td>
                         <td className="td-name">{eff.prenom} {eff.nom}</td>
-                        {JOURS.map(j => (
-                          <td key={j} className="td-jour">
-                            {eff[j] ? (eff[j].trim().toUpperCase() === 'X' ? <span className="jour-x">X</span> : <span className="jour-filled" title={eff[j]}>{formatHeures(parseCreneaux(eff[j]))}</span>) : '—'}
-                          </td>
-                        ))}
+                        <td className="td-fonction">{eff.fonction || '—'}</td>
                         <td className={`td-total ${eff.valide ? 'total-ok' : filled ? 'total-ko' : ''}`}>
                           {filled ? formatHeures(eff.total_heures) : '—'}
                         </td>
