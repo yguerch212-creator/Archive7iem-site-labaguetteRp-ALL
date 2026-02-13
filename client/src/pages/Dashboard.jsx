@@ -57,18 +57,18 @@ export default function Dashboard() {
       {/* En-tête */}
       <div className="paper-card" style={{ textAlign: 'center', marginBottom: 'var(--space-xl)', position: 'relative' }}>
         {/* Notification bell */}
-        {notifs.total > 0 && (
-          <div style={{ position: 'absolute', top: 12, right: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+        {(notifs.telegrammes > 0 || pending.total > 0) && (
+          <div style={{ position: 'absolute', top: 12, right: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
             {notifs.telegrammes > 0 && (
-              <Link to="/telegrammes" style={{ position: 'relative', textDecoration: 'none', fontSize: '1.3rem' }} title={`${notifs.telegrammes} télégramme${notifs.telegrammes > 1 ? 's' : ''} non lu${notifs.telegrammes > 1 ? 's' : ''}`}>
+              <Link to="/telegrammes" style={{ position: 'relative', textDecoration: 'none', fontSize: '1.4rem', lineHeight: 1 }} title={`${notifs.telegrammes} télégramme${notifs.telegrammes > 1 ? 's' : ''} non lu${notifs.telegrammes > 1 ? 's' : ''}`}>
                 ⚡
-                <span style={{ position: 'absolute', top: -6, right: -8, background: 'var(--danger)', color: 'white', fontSize: '0.6rem', fontWeight: 700, borderRadius: '50%', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{notifs.telegrammes}</span>
+                <span style={{ position: 'absolute', top: -8, right: -10, background: '#e74c3c', color: 'white', fontSize: '0.6rem', fontWeight: 700, borderRadius: '50%', minWidth: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>{notifs.telegrammes}</span>
               </Link>
             )}
             {isPrivileged && pending.total > 0 && (
-              <Link to="/admin/moderation" style={{ position: 'relative', textDecoration: 'none', fontSize: '1.3rem' }} title={`${pending.total} élément${pending.total > 1 ? 's' : ''} en attente`}>
+              <Link to="/admin/moderation" style={{ position: 'relative', textDecoration: 'none', fontSize: '1.4rem', lineHeight: 1 }} title={`${pending.total} élément${pending.total > 1 ? 's' : ''} en attente`}>
                 🔔
-                <span style={{ position: 'absolute', top: -6, right: -8, background: 'var(--danger)', color: 'white', fontSize: '0.6rem', fontWeight: 700, borderRadius: '50%', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{pending.total}</span>
+                <span style={{ position: 'absolute', top: -8, right: -10, background: '#e74c3c', color: 'white', fontSize: '0.6rem', fontWeight: 700, borderRadius: '50%', minWidth: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>{pending.total}</span>
               </Link>
             )}
           </div>

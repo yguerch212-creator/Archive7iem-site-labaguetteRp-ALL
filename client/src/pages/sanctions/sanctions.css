@@ -190,3 +190,47 @@
 .form-group { margin-bottom: 1rem; }
 .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.3rem; }
 .form-actions { display: flex; gap: 0.8rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+/* Affaire view: judicial dossier style */
+.affaire-view {
+  max-width: 850px;
+  margin: 0 auto;
+  padding-bottom: 4rem;
+}
+
+.affaire-view .affaire-header {
+  position: relative;
+  border-left: 4px solid var(--military-dark, #2c3e2d);
+  background-image: repeating-linear-gradient(
+    transparent, transparent 28px,
+    rgba(180,170,140,0.1) 28px, rgba(180,170,140,0.1) 29px
+  );
+}
+
+.affaire-view .affaire-header::before {
+  content: 'DOSSIER JUDICIAIRE';
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  color: rgba(180,40,40,0.3);
+  font-weight: 900;
+}
+
+.affaire-view .paper-card {
+  border-left: 4px solid var(--border, #d4c8a5);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+}
+
+.affaire-section-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 2px solid var(--border, #d4c8a5);
+  padding-bottom: 0.3rem;
+  margin-bottom: 1rem;
+  color: var(--military-dark, #2c3e2d);
+}

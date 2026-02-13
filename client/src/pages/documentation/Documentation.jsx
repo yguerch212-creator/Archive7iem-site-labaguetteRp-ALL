@@ -226,7 +226,7 @@ export default function Documentation() {
                     {children.length === 0 ? (
                       <p style={{ padding: 'var(--space-md)', margin: 0, color: 'var(--text-muted)', fontSize: '0.85rem' }}>Répertoire vide</p>
                     ) : children.map(doc => (
-                      <DocRow key={doc.id} doc={doc} isOfficier={isOfficier} isAdmin={user?.isAdmin} onEdit={startEdit} onRemove={remove} />
+                      <DocRow key={doc.id} doc={doc} isOfficier={isOfficier} isAdmin={user?.isAdmin} onEdit={startEdit} onRemove={remove} onApprove={approve} />
                     ))}
                   </div>
                 )}
@@ -244,7 +244,7 @@ export default function Documentation() {
               <div key={cat} style={{ marginBottom: 'var(--space-lg)' }}>
                 <h2 style={{ fontSize: '1rem', marginBottom: 'var(--space-sm)', color: 'var(--military-dark)' }}>{CAT_ICONS[cat]} {CAT_LABELS[cat]}</h2>
                 <div className="paper-card">
-                  {items.map(doc => <DocRow key={doc.id} doc={doc} isOfficier={isOfficier} isAdmin={user?.isAdmin} onEdit={startEdit} onRemove={remove} />)}
+                  {items.map(doc => <DocRow key={doc.id} doc={doc} isOfficier={isOfficier} isAdmin={user?.isAdmin} onEdit={startEdit} onRemove={remove} onApprove={approve} />)}
                 </div>
               </div>
             ))
@@ -290,7 +290,7 @@ function getEmbedUrl(url) {
 const URL_TYPE_ICONS = { gdoc: '📝', gsheet: '📊', gslide: '📽️', gdrive: '☁️', pdf: '📕', image: '🖼️', link: '🔗', none: '📄' }
 const URL_TYPE_LABELS = { gdoc: 'Google Doc', gsheet: 'Google Sheet', gslide: 'Google Slides', gdrive: 'Google Drive', pdf: 'PDF', image: 'Image', link: 'Lien externe', none: 'Document' }
 
-function DocRow({ doc, isOfficier, isAdmin, onEdit, onRemove }) {
+function DocRow({ doc, isOfficier, isAdmin, onEdit, onRemove, onApprove }) {
   const [showViewer, setShowViewer] = useState(false)
   const urlType = getUrlType(doc.url)
   const embedUrl = getEmbedUrl(doc.url)
@@ -331,6 +331,12 @@ function DocRow({ doc, isOfficier, isAdmin, onEdit, onRemove }) {
             <div className="doc-viewer-header">
               <h3>{doc.titre}</h3>
               <div className="doc-viewer-toolbar">
+                {doc.statut === 'en_attente' && (isOfficier || isAdmin) && onApprove && (
+                  <>
+                    <button className="btn btn-sm btn-primary" onClick={() => { onApprove(doc.id, 'approuve'); setShowViewer(false) }}>✅ Valider</button>
+                    <button className="btn btn-sm" style={{ color: 'var(--danger)' }} onClick={() => { onApprove(doc.id, 'refuse'); setShowViewer(false) }}>❌ Refuser</button>
+                  </>
+                )}
                 <a href={doc.url} target="_blank" rel="noopener noreferrer" className="btn btn-sm">↗️ Nouvel onglet</a>
                 <button className="btn btn-sm" onClick={() => setShowViewer(false)}>✕ Fermer</button>
               </div>

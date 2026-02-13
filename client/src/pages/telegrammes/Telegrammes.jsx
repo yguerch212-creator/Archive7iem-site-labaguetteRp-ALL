@@ -147,8 +147,9 @@ export default function Telegrammes() {
                 value={form.destinataire_nom}
                 onChange={val => setForm(p => ({ ...p, destinataire_nom: val, destinataire_id: '' }))}
                 onSelect={handleDestSelect}
-                placeholder="Rechercher un effectif..."
+                placeholder="Nom ou rechercher un effectif..."
               />
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Sélectionnez un effectif ou saisissez un nom librement</span>
             </div>
 
             <div className="form-row">

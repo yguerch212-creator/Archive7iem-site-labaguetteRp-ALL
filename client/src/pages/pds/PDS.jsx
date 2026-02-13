@@ -5,9 +5,9 @@ import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import './pds.css'
 
-// Semaine RP : vendredi 20h → vendredi 20h (deadline vendredi 20h, samedi = cérémonie)
 const JOURS = ['vendredi', 'samedi', 'dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi_fin']
 const JOURS_LABELS = { vendredi: 'Vendredi (20h →)', samedi: 'Samedi', dimanche: 'Dimanche', lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi_fin: 'Vendredi (→ 20h)' }
+const JOURS_SHORT = { vendredi: 'Ven.→', samedi: 'Sam.', dimanche: 'Dim.', lundi: 'Lun.', mardi: 'Mar.', mercredi: 'Mer.', jeudi: 'Jeu.', vendredi_fin: '→Ven.' }
 
 function getWeekString(date = new Date()) {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
@@ -18,75 +18,55 @@ function getWeekString(date = new Date()) {
   return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`
 }
 
-function prevWeek(w) {
-  const [y, wn] = w.split('-W').map(Number)
-  if (wn <= 1) return `${y - 1}-W52`
-  return `${y}-W${String(wn - 1).padStart(2, '0')}`
-}
-function nextWeek(w) {
-  const [y, wn] = w.split('-W').map(Number)
-  if (wn >= 52) return `${y + 1}-W01`
-  return `${y}-W${String(wn + 1).padStart(2, '0')}`
-}
+function prevWeek(w) { const [y, wn] = w.split('-W').map(Number); return wn <= 1 ? `${y-1}-W52` : `${y}-W${String(wn-1).padStart(2,'0')}` }
+function nextWeek(w) { const [y, wn] = w.split('-W').map(Number); return wn >= 52 ? `${y+1}-W01` : `${y}-W${String(wn+1).padStart(2,'0')}` }
 
-// "Semaine du ven. 07/02 au ven. 14/02"
 function weekLabel(w) {
   try {
     const [y, wn] = w.split('-W').map(Number)
-    // ISO week to date: Monday of that week
     const jan4 = new Date(Date.UTC(y, 0, 4))
     const dayOfWeek = jan4.getUTCDay() || 7
     const monday = new Date(jan4)
     monday.setUTCDate(jan4.getUTCDate() - dayOfWeek + 1 + (wn - 1) * 7)
-    // RP week: vendredi = monday + 4
-    const friday = new Date(monday)
-    friday.setUTCDate(monday.getUTCDate() + 4)
-    const nextFriday = new Date(friday)
-    nextFriday.setUTCDate(friday.getUTCDate() + 7)
+    const friday = new Date(monday); friday.setUTCDate(monday.getUTCDate() + 4)
+    const nextFriday = new Date(friday); nextFriday.setUTCDate(friday.getUTCDate() + 7)
     const fmt = d => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
     return `Semaine du ven. ${fmt(friday)} au ven. ${fmt(nextFriday)}`
   } catch { return w }
 }
 
-// Parse "17h30-17h50, 19h40-22h" → decimal hours
 function parseCreneaux(text) {
   if (!text || text.trim().toUpperCase() === 'X' || text.trim() === '') return 0
   let total = 0
-  const slots = text.split(',').map(s => s.trim()).filter(Boolean)
-  for (const slot of slots) {
-    const match = slot.match(/(\d{1,2})h?(\d{0,2})\s*-\s*(\d{1,2})h?(\d{0,2})/)
-    if (match) {
-      const start = parseInt(match[1]) + (parseInt(match[2] || 0) / 60)
-      const end = parseInt(match[3]) + (parseInt(match[4] || 0) / 60)
-      if (end > start) total += (end - start)
-    }
+  for (const slot of text.split(',').map(s => s.trim()).filter(Boolean)) {
+    const m = slot.match(/(\d{1,2})h?(\d{0,2})\s*-\s*(\d{1,2})h?(\d{0,2})/)
+    if (m) { const s = parseInt(m[1])+(parseInt(m[2]||0)/60), e = parseInt(m[3])+(parseInt(m[4]||0)/60); if (e>s) total+=(e-s) }
   }
   return Math.round(total * 100) / 100
 }
 
 function formatHeures(h) {
   if (!h || h === 0) return '0h00'
-  const hrs = Math.floor(h)
-  const mins = Math.round((h - hrs) * 60)
+  const hrs = Math.floor(h), mins = Math.round((h - hrs) * 60)
   return `${hrs}h${String(mins).padStart(2, '0')}`
 }
 
 export default function PDS() {
   const { user } = useAuth()
-  const [tab, setTab] = useState('mon-pds') // 'mon-pds', 'tous', 'permissions'
+  const [view, setView] = useState('list') // 'list', 'edit', 'detail', 'permissions'
   const [semaine, setSemaine] = useState(getWeekString())
   const [allData, setAllData] = useState([])
   const [stats, setStats] = useState({})
   const [semaineActuelle, setSemaineActuelle] = useState('')
   const [filterUnite, setFilterUnite] = useState('')
   const [message, setMessage] = useState('')
-  const [selectedEffectif, setSelectedEffectif] = useState(null) // for detail panel
+  const [selectedEffectif, setSelectedEffectif] = useState(null)
 
-  // Mon PDS state
+  // Edit PDS state
   const [myPds, setMyPds] = useState({})
   const [saving, setSaving] = useState(false)
 
-  // Permissions state
+  // Permissions
   const [permissions, setPermissions] = useState([])
   const [showPermForm, setShowPermForm] = useState(false)
   const [permForm, setPermForm] = useState({ date_debut: '', date_fin: '', raison: '' })
@@ -97,10 +77,8 @@ export default function PDS() {
   const loadAll = useCallback(async () => {
     try {
       const res = await api.get('/pds', { params: { semaine } })
-      setAllData(res.data.data)
-      setStats(res.data.stats)
-      setSemaineActuelle(res.data.semaineActuelle)
-    } catch (err) { console.error(err) }
+      setAllData(res.data.data); setStats(res.data.stats); setSemaineActuelle(res.data.semaineActuelle)
+    } catch {}
   }, [semaine])
 
   const loadMine = useCallback(async () => {
@@ -109,51 +87,28 @@ export default function PDS() {
       const res = await api.get('/pds/mine', { params: { semaine } })
       if (res.data.data) {
         const d = res.data.data
-        setMyPds({
-          lundi: d.lundi || '', mardi: d.mardi || '', mercredi: d.mercredi || '',
-          jeudi: d.jeudi || '', vendredi: d.vendredi || '', vendredi_fin: d.vendredi_fin || '',
-          samedi: d.samedi || '', dimanche: d.dimanche || ''
-        })
+        setMyPds({ lundi: d.lundi||'', mardi: d.mardi||'', mercredi: d.mercredi||'', jeudi: d.jeudi||'', vendredi: d.vendredi||'', vendredi_fin: d.vendredi_fin||'', samedi: d.samedi||'', dimanche: d.dimanche||'' })
       } else {
-        setMyPds({ lundi: '', mardi: '', mercredi: '', jeudi: '', vendredi: '', vendredi_fin: '', samedi: '', dimanche: '' })
+        setMyPds({ lundi:'', mardi:'', mercredi:'', jeudi:'', vendredi:'', vendredi_fin:'', samedi:'', dimanche:'' })
       }
-    } catch (err) { console.error(err) }
+    } catch {}
   }, [semaine, hasEffectif])
 
-  const loadPermissions = async () => {
-    try {
-      const res = await api.get('/pds/permissions')
-      setPermissions(res.data.data)
-    } catch (err) { console.error(err) }
-  }
+  useEffect(() => { loadAll(); loadMine() }, [loadAll, loadMine])
+  useEffect(() => { if (view === 'permissions') loadPermissions() }, [view])
 
-  useEffect(() => {
-    loadAll()
-    loadMine()
-  }, [loadAll, loadMine])
+  const loadPermissions = async () => { try { const r = await api.get('/pds/permissions'); setPermissions(r.data.data) } catch {} }
 
-  useEffect(() => {
-    if (tab === 'permissions') loadPermissions()
-  }, [tab])
-
-  // Compute my total
   const myTotal = JOURS.reduce((sum, j) => sum + parseCreneaux(myPds[j]), 0)
   const myValide = myTotal >= 6
 
   const saveMine = async () => {
     setSaving(true)
     try {
-      await api.put('/pds/saisie', {
-        effectif_id: user.effectif_id,
-        semaine,
-        ...myPds
-      })
-      setMessage('PDS sauvegardé ✓')
-      setTimeout(() => setMessage(''), 2000)
-      loadAll()
-    } catch (err) {
-      setMessage('Erreur: ' + (err.response?.data?.message || err.message))
-    }
+      await api.put('/pds/saisie', { effectif_id: user.effectif_id, semaine, ...myPds })
+      setMessage('PDS sauvegardé ✓'); setTimeout(() => setMessage(''), 2000)
+      loadAll(); setView('list')
+    } catch (err) { setMessage('Erreur: ' + (err.response?.data?.message || err.message)) }
     setSaving(false)
   }
 
@@ -161,295 +116,249 @@ export default function PDS() {
     e.preventDefault()
     try {
       await api.post('/pds/permissions', permForm)
-      setShowPermForm(false)
-      setPermForm({ date_debut: '', date_fin: '', raison: '' })
-      setMessage('Demande de permission envoyée')
-      setTimeout(() => setMessage(''), 2000)
-      loadPermissions()
-    } catch (err) {
-      setMessage('Erreur: ' + (err.response?.data?.message || err.message))
-    }
+      setShowPermForm(false); setPermForm({ date_debut:'', date_fin:'', raison:'' })
+      setMessage('Demande envoyée'); setTimeout(() => setMessage(''), 2000); loadPermissions()
+    } catch (err) { setMessage('Erreur') }
   }
 
   const traiterPermission = async (id, statut) => {
     const notes = statut === 'Refusee' ? prompt('Motif du refus :') : null
-    try {
-      await api.put(`/pds/permissions/${id}/traiter`, { statut, notes })
-      loadPermissions()
-    } catch (err) {
-      setMessage('Erreur: ' + (err.response?.data?.message || err.message))
-    }
+    try { await api.put(`/pds/permissions/${id}/traiter`, { statut, notes }); loadPermissions() } catch {}
   }
 
-  // Group by unite for "tous"
   const unites = [...new Set(allData.map(d => d.unite_code))].sort()
   const filteredAll = filterUnite ? allData.filter(d => d.unite_code === filterUnite) : allData
-  const grouped = {}
-  filteredAll.forEach(d => {
-    if (!grouped[d.unite_code]) grouped[d.unite_code] = { nom: d.unite_nom, effectifs: [] }
-    grouped[d.unite_code].effectifs.push(d)
-  })
 
-  return (
-    <div className="pds-page">
-      <BackButton label="← Tableau de bord" />
-      <div className="pds-header">
-        <h1>📋 Prise De Service</h1>
-        <div className="pds-week-nav">
-          <button className="btn-ghost" onClick={() => setSemaine(prevWeek(semaine))}>◀</button>
-          <span className="pds-week-label">
-            {weekLabel(semaine)}
-            {semaine === semaineActuelle && <span className="badge badge-green">En cours</span>}
-          </span>
-          <button className="btn-ghost" onClick={() => setSemaine(nextWeek(semaine))}>▶</button>
-          {semaine !== semaineActuelle && (
-            <button className="btn-sm" onClick={() => setSemaine(getWeekString())}>Semaine actuelle</button>
+  // ===== EDIT VIEW =====
+  if (view === 'edit') {
+    return (
+      <div className="pds-page">
+        <button className="btn btn-secondary btn-small" onClick={() => setView('list')} style={{ marginBottom: 'var(--space-md)' }}>← Retour</button>
+        <h2 style={{ marginBottom: 'var(--space-lg)' }}>✏️ Mon PDS — {weekLabel(semaine)}</h2>
+
+        <div className="paper-card" style={{ padding: 'var(--space-lg)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div>
+              <strong>{user?.prenom} {user?.nom}</strong><br/>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{user?.grade_nom || '—'} — {user?.unite || '—'}</span>
+            </div>
+            <div className={`mon-pds-total ${myValide ? 'total-valid' : 'total-invalid'}`}>
+              <span className="total-value">{formatHeures(myTotal)}</span>
+              <span className="total-label">{myValide ? '✅ Validé (≥6h)' : '❌ < 6h minimum'}</span>
+            </div>
+          </div>
+
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic', margin: '0 0 var(--space-sm)' }}>
+            💡 Format : 17h30-19h, 20h-22h — ou X si absent. Sauvegardez régulièrement !
+          </p>
+
+          {JOURS.map(jour => {
+            const heures = parseCreneaux(myPds[jour])
+            return (
+              <div key={jour} className="jour-row">
+                <label className="jour-label">{JOURS_LABELS[jour]}</label>
+                <input type="text" className="jour-input" value={myPds[jour] || ''} onChange={e => setMyPds(p => ({ ...p, [jour]: e.target.value }))} placeholder="17h30-19h, 20h-22h ou X" />
+                <span className={`jour-heures ${heures > 0 ? 'has-hours' : ''}`}>
+                  {myPds[jour] && myPds[jour].trim().toUpperCase() !== 'X' ? formatHeures(heures) : '—'}
+                </span>
+              </div>
+            )
+          })}
+
+          <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center', marginTop: 'var(--space-lg)' }}>
+            <button className="btn btn-primary" onClick={saveMine} disabled={saving}>{saving ? 'Sauvegarde...' : '💾 Sauvegarder'}</button>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Total : <strong>{formatHeures(myTotal)}</strong></span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ===== DETAIL POPUP =====
+  const DetailPopup = () => {
+    if (!selectedEffectif) return null
+    const eff = selectedEffectif
+    return (
+      <div className="popup-overlay" onClick={() => setSelectedEffectif(null)}>
+        <div className="popup-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 550 }}>
+          <button className="popup-close" onClick={() => setSelectedEffectif(null)}>✕</button>
+          <h2 style={{ marginTop: 0 }}>📋 PDS — {eff.prenom} {eff.nom}</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{eff.grade_nom || '—'} — {eff.unite_code} {eff.unite_nom}</p>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+            <thead><tr style={{ borderBottom: '2px solid var(--border-color)' }}><th style={thS}>Jour</th><th style={thS}>Créneaux</th><th style={thS}>Heures</th></tr></thead>
+            <tbody>
+              {JOURS.map(j => (
+                <tr key={j} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                  <td style={tdS}><strong>{JOURS_LABELS[j]}</strong></td>
+                  <td style={{ ...tdS, fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>{eff[j] || '—'}</td>
+                  <td style={tdS}>{eff[j] ? formatHeures(parseCreneaux(eff[j])) : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr style={{ borderTop: '2px solid var(--border-color)' }}>
+                <td colSpan={2} style={tdS}><strong>Total</strong></td>
+                <td style={tdS}><strong style={{ color: eff.valide ? 'var(--success)' : 'var(--danger)' }}>{formatHeures(eff.total_heures)} {eff.valide ? '✅' : '❌'}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+          {user?.effectif_id === eff.effectif_id && (
+            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+              <button className="btn btn-primary" onClick={() => { setSelectedEffectif(null); setView('edit') }}>✏️ Éditer mon PDS</button>
+            </div>
           )}
         </div>
       </div>
+    )
+  }
 
-      {/* Recap button for officers */}
-      {isPrivileged && (
-        <div style={{ textAlign: 'right', marginBottom: 'var(--space-sm)' }}>
-          <Link to={`/pds/recap?semaine=${semaine}`} className="btn btn-secondary btn-small">📊 Générer récapitulatif</Link>
+  // ===== PERMISSIONS VIEW =====
+  if (view === 'permissions') {
+    return (
+      <div className="pds-page">
+        <button className="btn btn-secondary btn-small" onClick={() => setView('list')} style={{ marginBottom: 'var(--space-md)' }}>← Retour</button>
+        <h2>🏖️ Permissions d'absence</h2>
+        {hasEffectif && (
+          <div style={{ marginBottom: '1rem' }}>
+            <button className="btn btn-primary" onClick={() => setShowPermForm(!showPermForm)}>{showPermForm ? '✕ Annuler' : '+ Demander une permission'}</button>
+          </div>
+        )}
+        {showPermForm && (
+          <div className="paper-card" style={{ marginBottom: '1rem', padding: 'var(--space-lg)' }}>
+            <form onSubmit={submitPermission}>
+              <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', marginBottom: '0.8rem' }}>
+                <div className="form-group"><label className="form-label">Du *</label><input type="date" className="form-input" value={permForm.date_debut} onChange={e => setPermForm(p => ({...p, date_debut: e.target.value}))} required /></div>
+                <div className="form-group"><label className="form-label">Au *</label><input type="date" className="form-input" value={permForm.date_fin} onChange={e => setPermForm(p => ({...p, date_fin: e.target.value}))} required /></div>
+              </div>
+              <div className="form-group"><label className="form-label">Raison *</label><textarea className="form-input" value={permForm.raison} onChange={e => setPermForm(p => ({...p, raison: e.target.value}))} required rows={2} /></div>
+              <button type="submit" className="btn btn-primary">📨 Envoyer</button>
+            </form>
+          </div>
+        )}
+        {permissions.length === 0 ? (
+          <div className="paper-card" style={{ textAlign: 'center', padding: '2rem' }}>Aucune demande</div>
+        ) : (
+          <div className="paper-card" style={{ overflow: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+              <thead><tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+                <th style={thS}>Effectif</th><th style={thS}>Du</th><th style={thS}>Au</th><th style={thS}>Raison</th><th style={thS}>Statut</th>
+                {(isPrivileged || user?.isOfficier) && <th style={thS}>Actions</th>}
+              </tr></thead>
+              <tbody>
+                {permissions.map(p => (
+                  <tr key={p.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                    <td style={tdS}><strong>{p.grade_nom ? `${p.grade_nom} ` : ''}{p.prenom} {p.nom}</strong><br/><span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.unite_code}</span></td>
+                    <td style={tdS}>{p.date_debut ? new Date(p.date_debut+'T00:00').toLocaleDateString('fr-FR') : '?'}</td>
+                    <td style={tdS}>{p.date_fin ? new Date(p.date_fin+'T00:00').toLocaleDateString('fr-FR') : '?'}</td>
+                    <td style={tdS}>{p.raison}</td>
+                    <td style={tdS}><span className={`badge ${p.statut === 'Approuvee' ? 'badge-green' : p.statut === 'Refusee' ? 'badge-red' : 'badge-warning'}`}>{p.statut === 'Approuvee' ? '✅ Approuvée' : p.statut === 'Refusee' ? '❌ Refusée' : '⏳ En attente'}</span></td>
+                    {(isPrivileged || user?.isOfficier) && (
+                      <td style={tdS}>{p.statut === 'En attente' && (
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button className="btn btn-sm btn-primary" style={{ padding: '2px 8px', fontSize: '0.75rem' }} onClick={() => traiterPermission(p.id, 'Approuvee')}>✅</button>
+                          <button className="btn btn-sm" style={{ padding: '2px 8px', fontSize: '0.75rem', color: 'var(--danger)' }} onClick={() => traiterPermission(p.id, 'Refusee')}>❌</button>
+                        </div>
+                      )}</td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ===== LIST VIEW (default) =====
+  return (
+    <div className="pds-page">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <BackButton label="← Tableau de bord" />
+        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+          {hasEffectif && <button className="btn btn-primary btn-small" onClick={() => setView('edit')}>✏️ Mon PDS</button>}
+          <button className="btn btn-secondary btn-small" onClick={() => setView('permissions')}>🏖️ Permissions</button>
+          {isPrivileged && <Link to={`/pds/recap?semaine=${semaine}`} className="btn btn-secondary btn-small">📊 Récap</Link>}
         </div>
-      )}
+      </div>
 
-      {/* Tabs */}
-      <div className="pds-tabs">
-        {hasEffectif && <button className={`pds-tab ${tab === 'mon-pds' ? 'active' : ''}`} onClick={() => setTab('mon-pds')}>📝 Mon PDS</button>}
-        <button className={`pds-tab ${tab === 'tous' ? 'active' : ''}`} onClick={() => setTab('tous')}>👥 Tous les effectifs</button>
-        <button className={`pds-tab ${tab === 'permissions' ? 'active' : ''}`} onClick={() => setTab('permissions')}>🏖️ Permissions</button>
+      <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-md)' }}>📋 Prise De Service</h1>
+
+      {/* Week nav */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-lg)' }}>
+        <button className="btn btn-secondary btn-small" onClick={() => setSemaine(prevWeek(semaine))}>◀</button>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem' }}>
+          {weekLabel(semaine)}
+          {semaine === semaineActuelle && <span className="badge badge-green" style={{ marginLeft: 8 }}>En cours</span>}
+        </span>
+        <button className="btn btn-secondary btn-small" onClick={() => setSemaine(nextWeek(semaine))}>▶</button>
+        {semaine !== semaineActuelle && (
+          <button className="btn btn-sm" onClick={() => setSemaine(getWeekString())}>Actuelle</button>
+        )}
       </div>
 
       {message && <div className="pds-message-bar">{message}</div>}
 
-      {/* ===== TAB: MON PDS ===== */}
-      {tab === 'mon-pds' && (
-        hasEffectif ? (
-          <div className="mon-pds">
-            <div className="mon-pds-header">
-              <div>
-                <strong>Prise de service :</strong><br />
-                <span className="mon-pds-identity">[{user.prenom} {user.nom}]</span><br />
-                <span className="mon-pds-identity">[{user.grade_nom || '—'}]</span><br />
-                <span className="mon-pds-identity">[{user.unite_nom || '—'}]</span>
-              </div>
-              <div className={`mon-pds-total ${myValide ? 'total-valid' : 'total-invalid'}`}>
-                <span className="total-value">{formatHeures(myTotal)}</span>
-                <span className="total-label">{myValide ? '✅ Validé' : '❌ < 6h minimum'}</span>
-              </div>
-            </div>
+      {/* Stats chips */}
+      <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
+        <span className="pds-stat-chip">{stats.saisis || 0} remplis</span>
+        <span className="pds-stat-chip chip-green">{stats.valides || 0} validés</span>
+        <span className="pds-stat-chip chip-red">{(stats.saisis || 0) - (stats.valides || 0)} insuffisants</span>
+      </div>
 
-            <div className="mon-pds-form">
-              <p className="mon-pds-subtitle"><strong>Présence sur le front :</strong></p>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic', margin: '0 0 var(--space-sm)' }}>💡 Même si votre PDS n'est pas terminé, sauvegardez régulièrement !</p>
-              {JOURS.map(jour => {
-                const heures = parseCreneaux(myPds[jour])
-                return (
-                  <div key={jour} className="jour-row">
-                    <label className="jour-label">{JOURS_LABELS[jour]}</label>
-                    <input
-                      type="text"
-                      className="jour-input"
-                      value={myPds[jour] || ''}
-                      onChange={e => setMyPds(p => ({ ...p, [jour]: e.target.value }))}
-                      placeholder="17h30-19h, 20h-22h ou X"
-                    />
-                    <span className={`jour-heures ${heures > 0 ? 'has-hours' : ''}`}>
-                      {myPds[jour] && myPds[jour].trim().toUpperCase() !== 'X' ? formatHeures(heures) : '—'}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
+      {/* Filter */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-md)' }}>
+        <select value={filterUnite} onChange={e => setFilterUnite(e.target.value)} className="form-input" style={{ maxWidth: 220 }}>
+          <option value="">Toutes les unités</option>
+          {unites.map(u => <option key={u} value={u}>{u}</option>)}
+        </select>
+      </div>
 
-            <div className="mon-pds-actions">
-              <button className="btn btn-primary" onClick={saveMine} disabled={saving}>
-                {saving ? 'Sauvegarde...' : '💾 Sauvegarder mon PDS'}
-              </button>
-              <span className="total-recap">Total Semaine : <strong>{formatHeures(myTotal)}</strong></span>
-            </div>
-          </div>
-        ) : (
-          <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-            <p>Votre compte n'est pas lié à un effectif.</p>
-            <p className="text-muted">Contactez un administrateur pour lier votre compte.</p>
-          </div>
-        )
-      )}
-
-      {/* ===== TAB: TOUS ===== */}
-      {tab === 'tous' && (
-        <>
-          <div className="paper-card">
-            <div className="pds-tous-toolbar">
-              <div className="pds-tous-stats">
-                <span className="pds-stat-chip">{stats.saisis || 0} remplis</span>
-                <span className="pds-stat-chip chip-green">{stats.valides || 0} validés</span>
-                <span className="pds-stat-chip chip-red">{(stats.saisis || 0) - (stats.valides || 0)} insuffisants</span>
-              </div>
-              <div className="pds-tous-filters">
-                <select value={filterUnite} onChange={e => setFilterUnite(e.target.value)} className="input-field">
-                  <option value="">Toutes les unités</option>
-                  {unites.map(u => <option key={u} value={u}>{u}</option>)}
-                </select>
-              </div>
-            </div>
-
-            {filteredAll.length === 0 ? (
-              <p className="empty-state">Aucun PDS rempli pour cette semaine</p>
-            ) : (
-              <div className="pds-table-wrap">
-                <table className="data-table pds-full-table">
-                  <thead>
-                    <tr>
-                      <th></th>
-                      <th>Effectif</th>
-                      <th>Unité</th>
-                      <th>Grade</th>
-                      {JOURS.map(j => <th key={j} className="th-jour">{JOURS_LABELS[j].replace('Vendredi (20h →)', 'Ven. →').replace('Vendredi (→ 20h)', '→ Ven.').replace('Samedi','Sam.').replace('Dimanche','Dim.').replace('Lundi','Lun.').replace('Mardi','Mar.').replace('Mercredi','Mer.').replace('Jeudi','Jeu.')}</th>)}
-                      <th className="th-total">Total</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredAll.map(eff => (
-                      <tr key={eff.effectif_id} className={`clickable-row ${eff.valide ? 'row-valid' : 'row-invalid'}`} onClick={() => setSelectedEffectif(eff)}>
-                        <td>
-                          <span className={`pastille ${eff.valide ? 'pastille-green' : 'pastille-red'}`}></span>
-                        </td>
-                        <td className="td-name-compact">{eff.prenom} {eff.nom}</td>
-                        <td className="mono">{eff.unite_code}</td>
-                        <td className="td-grade-sm">{eff.grade_nom || '—'}</td>
-                        {JOURS.map(j => (
-                          <td key={j} className="td-creneau">{eff[j] || '—'}</td>
-                        ))}
-                        <td className={`td-total-num ${eff.valide ? 'total-ok' : 'total-ko'}`}>
-                          <strong>{formatHeures(eff.total_heures)}</strong>
-                        </td>
-                        <td>
-                          {user?.effectif_id === eff.effectif_id && (
-                            <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setTab('mon-pds') }} title="Éditer mon PDS">✏️</button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* Detail popup */}
-          {selectedEffectif && (
-            <div className="popup-overlay" onClick={() => setSelectedEffectif(null)}>
-              <div className="popup-content pds-detail-popup" onClick={e => e.stopPropagation()}>
-                <button className="popup-close" onClick={() => setSelectedEffectif(null)}>✕</button>
-                <h2>📋 Prise de service</h2>
-                <div className="pds-detail-identity-block">
-                  <div><strong>{selectedEffectif.prenom} {selectedEffectif.nom}</strong></div>
-                  <div>{selectedEffectif.grade_nom || '—'} — {selectedEffectif.unite_code} {selectedEffectif.unite_nom}</div>
-                </div>
-                <table className="data-table">
-                  <thead>
-                    <tr><th>Jour</th><th>Créneaux</th><th>Heures</th></tr>
-                  </thead>
-                  <tbody>
-                    {JOURS.map(j => (
-                      <tr key={j}>
-                        <td><strong>{JOURS_LABELS[j]}</strong></td>
-                        <td className="mono">{selectedEffectif[j] || '—'}</td>
-                        <td>{selectedEffectif[j] ? formatHeures(parseCreneaux(selectedEffectif[j])) : '—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className={selectedEffectif.valide ? 'row-valid' : 'row-invalid'}>
-                      <td colSpan={2}><strong>Total Semaine</strong></td>
-                      <td><strong>{formatHeures(selectedEffectif.total_heures)}</strong> {selectedEffectif.valide ? '✅' : '❌ < 6h'}</td>
-                    </tr>
-                  </tfoot>
-                </table>
-                {user?.effectif_id === selectedEffectif.effectif_id && (
-                  <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                    <button className="btn btn-primary" onClick={() => { setSelectedEffectif(null); setTab('mon-pds') }}>✏️ Éditer mon PDS</button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* ===== TAB: PERMISSIONS ===== */}
-      {tab === 'permissions' && (
-        <>
-          {hasEffectif && (
-            <div style={{ marginBottom: '1rem' }}>
-              <button className="btn btn-primary" onClick={() => setShowPermForm(!showPermForm)}>
-                {showPermForm ? '✕ Annuler' : '+ Demander une permission'}
-              </button>
-            </div>
-          )}
-
-          {showPermForm && (
-            <div className="card perm-form">
-              <h3>Demande de permission</h3>
-              <form onSubmit={submitPermission}>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">Du *</label>
-                    <input type="date" className="form-input" value={permForm.date_debut} onChange={e => setPermForm(p => ({...p, date_debut: e.target.value}))} required />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Au *</label>
-                    <input type="date" className="form-input" value={permForm.date_fin} onChange={e => setPermForm(p => ({...p, date_fin: e.target.value}))} required />
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Raison *</label>
-                  <textarea className="form-input form-textarea" value={permForm.raison} onChange={e => setPermForm(p => ({...p, raison: e.target.value}))} required rows={2} placeholder="Raison de votre absence..." />
-                </div>
-                <button type="submit" className="btn btn-primary">📨 Envoyer la demande</button>
-              </form>
-            </div>
-          )}
-
-          {permissions.length === 0 ? (
-            <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
-              <p>Aucune demande de permission</p>
-            </div>
-          ) : (
-            <div className="perm-list">
-              {permissions.map(p => (
-                <div key={p.id} className={`card perm-card perm-${p.statut.toLowerCase().replace(/\s/g, '-')}`}>
-                  <div className="perm-header">
-                    <div>
-                      <span className="perm-name">{p.grade_nom ? `${p.grade_nom} ` : ''}{p.prenom} {p.nom}</span>
-                      <span className="perm-unite">{p.unite_code}</span>
-                    </div>
-                    <span className={`perm-statut statut-${p.statut.toLowerCase().replace(/\s/g, '-')}`}>{
-                      p.statut === 'En attente' ? '⏳ En attente' :
-                      p.statut === 'Approuvee' ? '✅ Approuvée' : '❌ Refusée'
-                    }</span>
-                  </div>
-                  <div className="perm-dates">📅 Du {p.date_debut ? new Date(p.date_debut+'T00:00').toLocaleDateString('fr-FR') : '?'} au {p.date_fin ? new Date(p.date_fin+'T00:00').toLocaleDateString('fr-FR') : '?'}</div>
-                  <div className="perm-raison">{p.raison}</div>
-                  {p.notes_traitement && <div className="perm-notes">💬 {p.notes_traitement}</div>}
-                  {p.traite_par_nom && <div className="perm-meta">Traité par {p.traite_par_nom}</div>}
-                  {p.statut === 'En attente' && (isPrivileged || user?.isOfficier) && (
-                    <div className="perm-actions">
-                      <button className="btn btn-sm btn-success" onClick={() => traiterPermission(p.id, 'Approuvee')}>✅ Approuver</button>
-                      <button className="btn btn-sm btn-danger-sm" onClick={() => traiterPermission(p.id, 'Refusee')}>❌ Refuser</button>
-                    </div>
-                  )}
-                </div>
+      {/* Table */}
+      {filteredAll.length === 0 ? (
+        <div className="paper-card" style={{ textAlign: 'center', padding: '2rem' }}>
+          <p style={{ color: 'var(--text-muted)' }}>Aucun PDS rempli pour cette semaine</p>
+        </div>
+      ) : (
+        <div className="paper-card" style={{ overflow: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+            <thead>
+              <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+                <th style={thS}>Effectif</th>
+                <th style={thS}>Unité</th>
+                <th style={thS}>Total</th>
+                <th style={thS}>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredAll.map(eff => (
+                <tr key={eff.effectif_id}
+                  onClick={() => setSelectedEffectif(eff)}
+                  style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer', transition: 'background 0.15s' }}
+                  onMouseEnter={ev => ev.currentTarget.style.background = 'var(--military-light, rgba(107,143,60,0.08))'}
+                  onMouseLeave={ev => ev.currentTarget.style.background = ''}
+                >
+                  <td style={tdS}>
+                    <strong>{eff.grade_nom ? `${eff.grade_nom} ` : ''}{eff.prenom} {eff.nom}</strong>
+                  </td>
+                  <td style={tdS}>{eff.unite_code}</td>
+                  <td style={tdS}><strong style={{ color: eff.valide ? 'var(--success)' : 'var(--danger)' }}>{formatHeures(eff.total_heures)}</strong></td>
+                  <td style={tdS}>
+                    {eff.valide
+                      ? <span className="badge badge-green">✅ Validé</span>
+                      : <span className="badge badge-red">❌ &lt; 6h</span>}
+                  </td>
+                </tr>
               ))}
-            </div>
-          )}
-        </>
+            </tbody>
+          </table>
+        </div>
       )}
+
+      <DetailPopup />
     </div>
   )
 }
+
+const thS = { textAlign: 'left', padding: 'var(--space-sm) var(--space-md)', fontWeight: 700, color: 'var(--military-dark)', whiteSpace: 'nowrap' }
+const tdS = { padding: 'var(--space-sm) var(--space-md)', verticalAlign: 'middle' }
