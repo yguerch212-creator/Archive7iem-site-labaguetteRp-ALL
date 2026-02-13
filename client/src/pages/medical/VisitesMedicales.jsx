@@ -29,8 +29,16 @@ export default function VisitesMedicales() {
   const [form, setForm] = useState({ ...defaultForm })
 
   const canCreate = user?.isAdmin || user?.isRecenseur || user?.unite_code === '916S'
+  const [effectifInfo, setEffectifInfo] = useState(null)
 
   useEffect(() => { load() }, [])
+
+  // Load effectif info if filtered
+  useEffect(() => {
+    if (effectifFilter) {
+      api.get(`/effectifs/${effectifFilter}`).then(r => setEffectifInfo(r.data.data || r.data)).catch(() => {})
+    }
+  }, [effectifFilter])
 
   const load = async () => {
     try {
@@ -73,7 +81,18 @@ export default function VisitesMedicales() {
         )}
       </div>
 
-      <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>🏥 Visites Médicales</h1>
+      <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-sm)' }}>🏥 {effectifFilter ? 'Dossier Médical' : 'Visites Médicales'}</h1>
+      {effectifFilter && effectifInfo && (
+        <div className="paper-card" style={{ textAlign: 'center', padding: 'var(--space-md)', marginBottom: 'var(--space-lg)', borderLeft: '3px solid var(--primary)' }}>
+          <strong style={{ fontSize: '1.1rem' }}>{effectifInfo.prenom} {effectifInfo.nom}</strong>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            {effectifInfo.grade_nom || '—'} — {effectifInfo.unite_nom || '—'}
+          </div>
+          {filtered.length === 0 && (
+            <p style={{ margin: 'var(--space-md) 0 0', color: 'var(--text-muted)' }}>Aucune visite médicale enregistrée pour cet effectif.</p>
+          )}
+        </div>
+      )}
 
       {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}
 
