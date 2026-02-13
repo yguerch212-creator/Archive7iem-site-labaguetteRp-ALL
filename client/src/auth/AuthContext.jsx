@@ -43,20 +43,42 @@ export function AuthProvider({ children }) {
     }
   }
 
+  const loginAsGuest = () => {
+    const guestUser = {
+      id: 0, nom: 'Invité', prenom: '', username: 'guest',
+      isGuest: true, isAdmin: false, isRecenseur: false, isOfficier: false,
+      isFeldgendarmerie: false, isSanitaets: false
+    }
+    localStorage.setItem('guestMode', 'true')
+    setUser(guestUser)
+    return { success: true }
+  }
+
   const logout = async () => {
     try {
-      await apiClient.post('/auth/logout')
+      if (!localStorage.getItem('guestMode')) {
+        await apiClient.post('/auth/logout')
+      }
     } catch (error) {
       console.log('Logout error:', error)
     } finally {
       localStorage.removeItem('authToken')
+      localStorage.removeItem('guestMode')
       setUser(null)
     }
   }
 
+  // Restore guest mode on refresh
+  useEffect(() => {
+    if (!user && !loading && localStorage.getItem('guestMode')) {
+      loginAsGuest()
+    }
+  }, [loading])
+
   const value = {
     user,
     login,
+    loginAsGuest,
     logout,
     loading
   }

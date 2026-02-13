@@ -33,12 +33,21 @@ export default function Topbar() {
         </nav>
 
         <div className="topbar-user">
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            {user?.unite || ''} — {user?.username || ''}
-          </span>
-          <button className="btn btn-small btn-secondary" onClick={logout}>
-            Déconnexion
-          </button>
+          {user?.isGuest ? (
+            <>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>👁️ Mode invité</span>
+              <Link to="/" className="btn btn-small btn-primary" onClick={logout}>Se connecter</Link>
+            </>
+          ) : (
+            <>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                {user?.unite || ''} — {user?.username || ''}
+              </span>
+              <button className="btn btn-small btn-secondary" onClick={logout}>
+                Déconnexion
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

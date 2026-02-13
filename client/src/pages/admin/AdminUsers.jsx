@@ -180,7 +180,10 @@ export default function AdminUsers() {
                       {u.is_admin && <span style={badge('#e74c3c')}>👑 Admin</span>}
                       {u.is_recenseur && <span style={badge('#3498db')}>📋 Recenseur</span>}
                       {u.is_officier && <span style={badge('#f39c12')}>⭐ Officier</span>}
-                      {!u.is_admin && !u.is_recenseur && !u.is_officier && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Aucun rôle</span>}
+                      {u.is_sousofficier && <span style={badge('#27ae60')}>🎖️ Sous-off</span>}
+                      {u.is_feldgendarmerie && <span style={badge('#8e44ad')}>🛡️ Feld</span>}
+                      {u.is_sanitaets && <span style={badge('#1abc9c')}>🏥 Sanit.</span>}
+                      {!u.is_admin && !u.is_recenseur && !u.is_officier && !u.is_sousofficier && !u.is_feldgendarmerie && !u.is_sanitaets && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Aucun rôle</span>}
                     </div>
                   </td>
                   <td style={td}>

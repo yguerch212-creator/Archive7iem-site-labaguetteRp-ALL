@@ -1,108 +1,115 @@
-import BackButton from '../../components/BackButton'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
+import BackButton from '../../components/BackButton'
+import './pds.css'
 
 const JOURS = ['vendredi', 'samedi', 'dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi_fin']
-const JOURS_SHORT = ['Ven.', 'Sam.', 'Dim.', 'Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.']
+const JOURS_SHORT = { vendredi: 'Ven.→', samedi: 'Sam.', dimanche: 'Dim.', lundi: 'Lun.', mardi: 'Mar.', mercredi: 'Mer.', jeudi: 'Jeu.', vendredi_fin: '→Ven.' }
+
+function formatHeures(h) {
+  if (!h || h === 0) return '0h00'
+  const hrs = Math.floor(h)
+  const mins = Math.round((h - hrs) * 60)
+  return `${hrs}h${String(mins).padStart(2, '0')}`
+}
+
+function weekLabel(w) {
+  try {
+    const [y, wn] = w.split('-W').map(Number)
+    const jan4 = new Date(Date.UTC(y, 0, 4))
+    const dayOfWeek = jan4.getUTCDay() || 7
+    const monday = new Date(jan4)
+    monday.setUTCDate(jan4.getUTCDate() - dayOfWeek + 1 + (wn - 1) * 7)
+    const friday = new Date(monday)
+    friday.setUTCDate(monday.getUTCDate() + 4)
+    const nextFriday = new Date(friday)
+    nextFriday.setUTCDate(friday.getUTCDate() + 7)
+    const fmt = d => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    return `${fmt(friday)} — ${fmt(nextFriday)}`
+  } catch { return w }
+}
 
 export default function PDSRecap() {
-  const [params] = useSearchParams()
-  const semaine = params.get('semaine') || ''
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [searchParams] = useSearchParams()
+  const semaine = searchParams.get('semaine') || ''
+  const [data, setData] = useState([])
+  const [stats, setStats] = useState({})
+  const [filterUnite, setFilterUnite] = useState('')
 
   useEffect(() => {
-    api.get('/pds/recap', { params: { semaine } }).then(r => { setData(r.data.data); setLoading(false) }).catch(() => setLoading(false))
+    if (semaine) {
+      api.get('/pds', { params: { semaine } }).then(r => {
+        setData(r.data.data)
+        setStats(r.data.stats)
+      }).catch(() => {})
+    }
   }, [semaine])
 
-  if (loading) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div>
-  if (!data) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Erreur</div>
-
-  // Group by unite
+  const unites = [...new Set(data.map(d => d.unite_code))].sort()
+  const filtered = filterUnite ? data.filter(d => d.unite_code === filterUnite) : data
   const grouped = {}
-  data.rows.forEach(r => {
-    const key = r.unite_code || 'Sans unité'
-    if (!grouped[key]) grouped[key] = { nom: r.unite_nom, effectifs: [] }
-    grouped[key].effectifs.push(r)
+  filtered.forEach(d => {
+    if (!grouped[d.unite_code]) grouped[d.unite_code] = { nom: d.unite_nom, effectifs: [] }
+    grouped[d.unite_code].effectifs.push(d)
   })
 
   return (
-    <div className="container" style={{ maxWidth: 1100, paddingBottom: 'var(--space-xxl)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }} className="no-print">
-        <BackButton label="← Retour PDS" />
-        <button className="btn btn-primary btn-small" onClick={() => window.print()}>🖨️ Imprimer</button>
+    <div className="container pds-recap-page">
+      <div className="no-print" style={{ marginBottom: '1.5rem' }}>
+        <BackButton />
+        <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <select value={filterUnite} onChange={e => setFilterUnite(e.target.value)} className="input-field" style={{ width: 'auto', minWidth: 180 }}>
+            <option value="">Toutes les unités</option>
+            {unites.map(u => <option key={u} value={u}>{u}</option>)}
+          </select>
+          <button className="btn btn-primary" onClick={() => window.print()}>🖨️ Imprimer / PDF</button>
+        </div>
       </div>
 
-      <div className="document-paper" id="pds-recap">
-        <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)', borderBottom: '2px solid var(--border-color)', paddingBottom: 'var(--space-lg)' }}>
-          <h2 style={{ margin: '0 0 6px', fontSize: '1.3rem' }}>📋 RÉCAPITULATIF PDS</h2>
-          <div style={{ fontSize: '0.9rem' }}>{data.semaine}</div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>7e Armeekorps — Prise De Service</div>
-        </div>
-
-        {/* Stats */}
-        <div style={{ display: 'flex', gap: 'var(--space-lg)', justifyContent: 'center', marginBottom: 'var(--space-xl)', fontSize: '0.9rem' }}>
-          <div style={{ textAlign: 'center' }}><strong style={{ fontSize: '1.5rem' }}>{data.stats.total}</strong><br/>Effectifs</div>
-          <div style={{ textAlign: 'center' }}><strong style={{ fontSize: '1.5rem', color: 'var(--military-green)' }}>{data.stats.remplis}</strong><br/>Remplis</div>
-          <div style={{ textAlign: 'center' }}><strong style={{ fontSize: '1.5rem', color: 'var(--success)' }}>{data.stats.valides}</strong><br/>Validés (≥6h)</div>
-          <div style={{ textAlign: 'center' }}><strong style={{ fontSize: '1.5rem', color: 'var(--danger)' }}>{data.stats.nonRemplis}</strong><br/>Non remplis</div>
-        </div>
-
-        {/* Per unit tables */}
-        {Object.entries(grouped).map(([code, { nom, effectifs }]) => {
-          const filled = effectifs.filter(e => e.pds_id)
-          const valid = effectifs.filter(e => e.valide)
-          return (
-            <div key={code} style={{ marginBottom: 'var(--space-xl)' }}>
-              <h3 style={{ margin: '0 0 var(--space-sm)', fontSize: '0.95rem', borderBottom: '1px solid var(--border-color)', paddingBottom: 4 }}>
-                {code}. {nom} — {valid.length}/{effectifs.length} validés
-              </h3>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
-                <thead>
-                  <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
-                    <th style={th}>Effectif</th>
-                    <th style={th}>Grade</th>
-                    {JOURS_SHORT.map((j, i) => <th key={i} style={{ ...th, textAlign: 'center', minWidth: 40 }}>{j}</th>)}
-                    <th style={{ ...th, textAlign: 'right' }}>Total</th>
-                    <th style={{ ...th, textAlign: 'center' }}>✓</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {effectifs.map(e => (
-                    <tr key={e.effectif_id} style={{ borderBottom: '1px solid var(--border-color)', background: !e.pds_id ? 'rgba(139,74,71,0.04)' : e.valide ? '' : 'rgba(161,124,71,0.04)' }}>
-                      <td style={td}>{e.prenom} {e.nom}</td>
-                      <td style={{ ...td, fontSize: '0.7rem' }}>{e.grade_nom || '—'}</td>
-                      {JOURS.map((j, i) => <td key={i} style={{ ...td, textAlign: 'center', fontSize: '0.7rem', maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis' }}>{e[j] || '—'}</td>)}
-                      <td style={{ ...td, textAlign: 'right', fontWeight: 700 }}>{e.pds_id ? `${Math.round((e.total_heures || 0) * 10) / 10}h` : '—'}</td>
-                      <td style={{ ...td, textAlign: 'center' }}>{e.valide ? '✅' : e.pds_id ? '❌' : '⬜'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )
-        })}
-
-        {/* Permissions */}
-        {data.perms.length > 0 && (
-          <div style={{ marginTop: 'var(--space-xl)' }}>
-            <h3 style={{ margin: '0 0 var(--space-sm)', fontSize: '0.95rem', borderBottom: '1px solid var(--border-color)', paddingBottom: 4 }}>🏖️ Permissions approuvées</h3>
-            {data.perms.map(p => (
-              <div key={p.id} style={{ fontSize: '0.8rem', padding: '2px 0' }}>
-                • {p.grade_nom ? `${p.grade_nom} ` : ''}{p.prenom} {p.eff_nom} — du {p.date_debut} au {p.date_fin} : {p.raison}
-              </div>
-            ))}
+      <div className="recap-document">
+        <div className="recap-header">
+          <h1>RÉCAPITULATIF — PRISE DE SERVICE</h1>
+          <h2>{weekLabel(semaine)}</h2>
+          <div className="recap-stats-line">
+            <span>{stats.saisis || 0} effectifs — {stats.valides || 0} validés (≥6h) — {(stats.saisis || 0) - (stats.valides || 0)} insuffisants</span>
           </div>
-        )}
+        </div>
 
-        <div style={{ textAlign: 'center', marginTop: 'var(--space-xl)', paddingTop: 'var(--space-md)', borderTop: '2px solid var(--border-color)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          Document généré automatiquement — Archives 7e Armeekorps
+        {Object.entries(grouped).map(([code, { nom, effectifs }]) => (
+          <div key={code} className="recap-unite">
+            <h3>{code} — {nom} ({effectifs.filter(e => e.valide).length}/{effectifs.length} validés)</h3>
+            <table className="recap-table">
+              <thead>
+                <tr>
+                  <th>Grade</th>
+                  <th>Nom</th>
+                  {JOURS.map(j => <th key={j}>{JOURS_SHORT[j]}</th>)}
+                  <th>Total</th>
+                  <th>✓</th>
+                </tr>
+              </thead>
+              <tbody>
+                {effectifs.map(eff => (
+                  <tr key={eff.effectif_id} className={eff.valide ? '' : 'row-ko'}>
+                    <td className="td-grade">{eff.grade_nom || '—'}</td>
+                    <td className="td-name">{eff.prenom} {eff.nom}</td>
+                    {JOURS.map(j => <td key={j} className="td-slot">{eff[j] || '—'}</td>)}
+                    <td className="td-total"><strong>{formatHeures(eff.total_heures)}</strong></td>
+                    <td>{eff.valide ? '✅' : '❌'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
+
+        <div className="recap-footer">
+          <p>Document généré le {new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+          <p>Archives du 7e Armeekorps — Axe | LaBaguetteRP</p>
         </div>
       </div>
     </div>
   )
 }
-
-const th = { textAlign: 'left', padding: '4px 8px', fontWeight: 700, color: 'var(--military-dark)', whiteSpace: 'nowrap', fontSize: '0.75rem' }
-const td = { padding: '4px 8px' }

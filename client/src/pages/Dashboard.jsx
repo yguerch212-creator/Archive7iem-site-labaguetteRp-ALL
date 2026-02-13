@@ -52,36 +52,26 @@ export default function Dashboard() {
       </div>
 
       {/* Validation queue (privileged only) */}
-      {isPrivileged && (pending.total > 0 || pending.interdits > 0) && (
+      {isPrivileged && pending.total > 0 && (
         <div className="paper-card" style={{ marginBottom: 'var(--space-xl)', borderLeft: '3px solid var(--warning)' }}>
-          {pending.total > 0 && (
-            <>
-              <h3 style={{ margin: '0 0 var(--space-sm)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                🔔 En attente de validation
-                <span style={{ background: 'var(--danger)', color: 'white', fontSize: '0.7rem', padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>{pending.total}</span>
-              </h3>
-              <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', marginBottom: pending.interdits > 0 ? 'var(--space-md)' : 0 }}>
-                {pending.docs > 0 && (
-                  <Link to="/documentation" className="btn btn-sm btn-secondary">📚 {pending.docs} document{pending.docs > 1 ? 's' : ''} à valider</Link>
-                )}
-                {pending.permissions > 0 && (
-                  <Link to="/pds" className="btn btn-sm btn-secondary">🏖️ {pending.permissions} permission{pending.permissions > 1 ? 's' : ''} en attente</Link>
-                )}
-                {pending.media > 0 && (
-                  <Link to="/admin/moderation" className="btn btn-sm btn-secondary">📸 {pending.media} média{pending.media > 1 ? 's' : ''} à modérer</Link>
-                )}
-                {pending.medical > 0 && (
-                  <Link to="/medical" className="btn btn-sm btn-secondary">🏥 {pending.medical} visite{pending.medical > 1 ? 's' : ''} à valider</Link>
-                )}
-              </div>
-            </>
-          )}
-          {/* Accès rapide interdits (pas dans le compteur total) */}
-          {pending.interdits > 0 && (
-            <div style={{ borderTop: pending.total > 0 ? '1px solid var(--border)' : 'none', paddingTop: pending.total > 0 ? 'var(--space-sm)' : 0 }}>
-              <Link to="/interdits" className="btn btn-sm" style={{ opacity: 0.8 }}>🚫 {pending.interdits} interdit{pending.interdits > 1 ? 's' : ''} actif{pending.interdits > 1 ? 's' : ''} — Accès rapide</Link>
-            </div>
-          )}
+          <h3 style={{ margin: '0 0 var(--space-sm)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            🔔 En attente de validation
+            <span style={{ background: 'var(--danger)', color: 'white', fontSize: '0.7rem', padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>{pending.total}</span>
+          </h3>
+          <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+            {pending.docs > 0 && (
+              <Link to="/documentation" className="btn btn-sm btn-secondary">📚 {pending.docs} document{pending.docs > 1 ? 's' : ''} à valider</Link>
+            )}
+            {pending.permissions > 0 && (
+              <Link to="/pds" className="btn btn-sm btn-secondary">🏖️ {pending.permissions} permission{pending.permissions > 1 ? 's' : ''} en attente</Link>
+            )}
+            {pending.media > 0 && (
+              <Link to="/admin/moderation" className="btn btn-sm btn-secondary">📸 {pending.media} média{pending.media > 1 ? 's' : ''} à modérer</Link>
+            )}
+            {pending.medical > 0 && (
+              <Link to="/medical" className="btn btn-sm btn-secondary">🏥 {pending.medical} visite{pending.medical > 1 ? 's' : ''} à valider</Link>
+            )}
+          </div>
         </div>
       )}
 

@@ -124,8 +124,8 @@ export default function Documentation() {
                 {doc.url && <> · <a href={doc.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem' }}>🔗 lien</a></>}
               </div>
               <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
-                <button className="btn btn-sm btn-primary" style={{ padding: '2px 10px', fontSize: '0.75rem' }} onClick={() => approve(doc.id, 'approuve')}>✅</button>
-                <button className="btn btn-sm btn-secondary" style={{ padding: '2px 10px', fontSize: '0.75rem' }} onClick={() => approve(doc.id, 'refuse')}>❌</button>
+                <button className="btn btn-sm btn-primary" style={{ padding: '4px 12px', fontSize: '0.8rem' }} onClick={() => approve(doc.id, 'approuve')}>✅ Valider</button>
+                <button className="btn btn-sm" style={{ padding: '4px 12px', fontSize: '0.8rem', color: 'var(--danger)' }} onClick={() => approve(doc.id, 'refuse')}>❌ Refuser</button>
               </div>
             </div>
           ))}

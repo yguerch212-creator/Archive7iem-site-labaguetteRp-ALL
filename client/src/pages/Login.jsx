@@ -7,7 +7,7 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
+  const { login, loginAsGuest } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
@@ -63,6 +63,13 @@ export default function Login() {
             {loading ? 'Connexion...' : 'Se connecter'}
           </button>
         </form>
+
+        <div style={{ textAlign: 'center', margin: '1rem 0' }}>
+          <button className="btn btn-secondary" style={{ opacity: 0.7, fontSize: '0.8rem' }}
+            onClick={() => { loginAsGuest(); navigate('/dashboard') }}>
+            👁️ Accès invité (lecture seule)
+          </button>
+        </div>
 
         <div className="login-footer">
           Accès réservé aux personnels autorisés du 7e Armeekorps<br/>

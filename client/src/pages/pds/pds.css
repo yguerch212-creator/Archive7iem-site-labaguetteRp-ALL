@@ -523,3 +523,34 @@
   background: rgba(107,143,60,0.05);
   border-left: 3px solid var(--primary);
 }
+
+/* === PDS Recap (printable) === */
+.pds-recap-page { max-width: 1100px; margin: 0 auto; }
+
+.recap-document { font-family: 'IBM Plex Mono', monospace; }
+.recap-header { text-align: center; margin-bottom: 2rem; border-bottom: 3px double var(--border); padding-bottom: 1rem; }
+.recap-header h1 { font-size: 1.3rem; margin: 0; letter-spacing: 2px; }
+.recap-header h2 { font-size: 1rem; margin: 0.3rem 0; color: var(--text-muted); }
+.recap-stats-line { font-size: 0.85rem; margin-top: 0.5rem; }
+
+.recap-unite { margin-bottom: 1.5rem; }
+.recap-unite h3 { font-size: 0.95rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
+
+.recap-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+.recap-table th, .recap-table td { border: 1px solid var(--border); padding: 3px 5px; }
+.recap-table th { background: rgba(107,143,60,0.1); font-size: 0.7rem; text-align: center; }
+.recap-table .td-grade { font-size: 0.65rem; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recap-table .td-name { white-space: nowrap; font-weight: 600; }
+.recap-table .td-slot { text-align: center; font-size: 0.65rem; max-width: 70px; overflow: hidden; text-overflow: ellipsis; }
+.recap-table .td-total { text-align: right; }
+.recap-table .row-ko { background: rgba(192,57,43,0.05); }
+
+.recap-footer { text-align: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-muted); }
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white !important; }
+  .recap-document { font-size: 10pt; }
+  .recap-table { font-size: 8pt; }
+  .recap-table th, .recap-table td { padding: 2px 4px; }
+}
