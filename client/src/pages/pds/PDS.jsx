@@ -4,8 +4,9 @@ import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import './pds.css'
 
-const JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
-const JOURS_LABELS = { lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi: 'Vendredi', samedi: 'Samedi', dimanche: 'Dimanche' }
+// Semaine RP : vendredi → jeudi (deadline vendredi 20h, samedi = cérémonie)
+const JOURS = ['vendredi', 'samedi', 'dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi']
+const JOURS_LABELS = { vendredi: 'Vendredi', samedi: 'Samedi', dimanche: 'Dimanche', lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi' }
 
 function getWeekString(date = new Date()) {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))

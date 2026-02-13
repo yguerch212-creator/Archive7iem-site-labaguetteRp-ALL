@@ -2,15 +2,36 @@ const router = require('express').Router()
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
 
-// Helper: current ISO week
+// Semaine RP: vendredi → jeudi (deadline vendredi 20h, samedi = cérémonie)
+// On utilise les numéros de semaine ISO mais la semaine RP commence le vendredi.
+// Si on est vendredi après 20h ou samedi-jeudi, on est dans la semaine ISO suivante côté RP.
 function getCurrentWeek() {
   const now = new Date()
+  const utcDay = now.getUTCDay() // 0=dim, 5=ven
+  const utcHour = now.getUTCHours()
+  
+  // Si vendredi >= 20h UTC ou samedi-jeudi → semaine RP = semaine ISO courante + ajustement
+  // On calcule la semaine ISO du vendredi de début de cette semaine RP
   const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()))
-  const dayNum = d.getUTCDay() || 7
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7)
-  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`
+  
+  // Si on est vendredi < 20h, on est encore dans la semaine RP précédente
+  if (utcDay === 5 && utcHour < 20) {
+    d.setUTCDate(d.getUTCDate() - 7) // vendredi dernier
+  } else if (utcDay < 5) {
+    // Lun-Jeu: le vendredi de début était la semaine dernière
+    d.setUTCDate(d.getUTCDate() - ((utcDay + 2) % 7)) // reculer au vendredi
+  }
+  // Si samedi ou dimanche, le vendredi était hier ou avant-hier → OK, d est déjà bon ou ajuster
+  if (utcDay === 0) d.setUTCDate(d.getUTCDate() - 2) // dimanche → vendredi
+  if (utcDay === 6) d.setUTCDate(d.getUTCDate() - 1) // samedi → vendredi
+  
+  // Calculer la semaine ISO de ce vendredi de référence
+  const ref = new Date(d)
+  const dayNum = ref.getUTCDay() || 7
+  ref.setUTCDate(ref.getUTCDate() + 4 - dayNum)
+  const yearStart = new Date(Date.UTC(ref.getUTCFullYear(), 0, 1))
+  const weekNo = Math.ceil((((ref - yearStart) / 86400000) + 1) / 7)
+  return `${ref.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`
 }
 
 // Helper: parse time slots and compute hours
