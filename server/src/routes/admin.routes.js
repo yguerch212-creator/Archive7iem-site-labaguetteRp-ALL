@@ -60,8 +60,8 @@ router.post('/users', auth, admin, async (req, res) => {
     const username = `${eff.prenom.toLowerCase()}.${eff.nom.toLowerCase()}`.replace(/\s/g, '')
     
     await pool.execute(
-      'INSERT INTO users (nom, prenom, username, password_hash, unite_id, grade_id, role_level, must_change_password, active) VALUES (?, ?, ?, ?, ?, ?, 1, 1, 1)',
-      [eff.nom, eff.prenom, username, hash, eff.unite_id, eff.grade_id]
+      'INSERT INTO users (nom, prenom, username, password_hash, unite_id, grade_id, effectif_id, role_level, must_change_password, active) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, 1)',
+      [eff.nom, eff.prenom, username, hash, eff.unite_id, eff.grade_id, eff.id]
     )
     res.json({ success: true, message: `Compte créé pour ${eff.prenom} ${eff.nom} (${username}) — mdp: ${password || 'Wehrmacht123'}` })
   } catch (err) {

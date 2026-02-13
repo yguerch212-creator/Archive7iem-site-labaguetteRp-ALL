@@ -56,6 +56,8 @@
 .pds-empty { text-align: center; color: var(--text-secondary); font-style: italic; padding: 2rem; }
 
 .badge-green { background: #2d6a2e; color: #fff; font-size: 0.65rem; padding: 0.15rem 0.4rem; border-radius: 3px; margin-left: 0.5rem; }
+.badge-me { background: #4a6741; color: #e8dcc8; font-size: 0.6rem; padding: 0.1rem 0.3rem; border-radius: 3px; margin-left: 0.3rem; font-weight: 600; }
+.row-me { background: rgba(74, 103, 65, 0.1) !important; border-left: 3px solid #4a6741; }
 
 /* Mobile */
 @media (max-width: 768px) {

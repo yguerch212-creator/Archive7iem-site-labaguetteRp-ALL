@@ -34,7 +34,8 @@ export default function PDS() {
   const [filterUnite, setFilterUnite] = useState('')
   const [filterStatus, setFilterStatus] = useState('') // '', 'valide', 'nonvalide', 'nonsaisi'
   const [message, setMessage] = useState('')
-  const canEdit = user?.isAdmin || user?.isRecenseur
+  const canEditAll = user?.isAdmin || user?.isRecenseur
+  const myEffectifId = user?.effectif_id
 
   const load = useCallback(async () => {
     try {
@@ -59,13 +60,27 @@ export default function PDS() {
   const saveAll = async () => {
     setSaving(true)
     try {
-      const entries = Object.entries(edits).map(([effectif_id, vals]) => ({
-        effectif_id: parseInt(effectif_id),
-        heures: parseFloat(vals.heures) || 0,
-        rapport_so_fait: vals.rapport_so_fait || false,
-        notes: vals.notes || null
-      }))
-      await api.put('/api/pds/saisie-batch', { entries, semaine })
+      if (canEditAll) {
+        // Batch save for admin/recenseur
+        const entries = Object.entries(edits).map(([effectif_id, vals]) => ({
+          effectif_id: parseInt(effectif_id),
+          heures: parseFloat(vals.heures) || 0,
+          rapport_so_fait: vals.rapport_so_fait || false,
+          notes: vals.notes || null
+        }))
+        await api.put('/api/pds/saisie-batch', { entries, semaine })
+      } else {
+        // Individual save for regular user (own entry only)
+        for (const [effectif_id, vals] of Object.entries(edits)) {
+          await api.put('/api/pds/saisie', {
+            effectif_id: parseInt(effectif_id),
+            semaine,
+            heures: parseFloat(vals.heures) || 0,
+            rapport_so_fait: vals.rapport_so_fait || false,
+            notes: vals.notes || null
+          })
+        }
+      }
       setEdits({})
       setMessage('Sauvegardé ✓')
       setTimeout(() => setMessage(''), 2000)
@@ -148,7 +163,7 @@ export default function PDS() {
           <option value="nonvalide">❌ Non validés</option>
           <option value="nonsaisi">⬜ Non saisis</option>
         </select>
-        {canEdit && Object.keys(edits).length > 0 && (
+        {Object.keys(edits).length > 0 && (
           <button className="btn-primary" onClick={saveAll} disabled={saving}>
             {saving ? 'Sauvegarde...' : `💾 Sauvegarder (${Object.keys(edits).length})`}
           </button>
@@ -177,7 +192,7 @@ export default function PDS() {
                   <th>Heures</th>
                   <th>Statut</th>
                   {effectifs.some(e => e.categorie === 'Sous-officier') && <th>Rapport SO</th>}
-                  {canEdit && <th>Notes</th>}
+                  {canEditAll && <th>Notes</th>}
                 </tr>
               </thead>
               <tbody>
@@ -186,14 +201,16 @@ export default function PDS() {
                   const heures = edited.heures !== undefined ? edited.heures : (eff.heures ?? '')
                   const rapportFait = edited.rapport_so_fait !== undefined ? edited.rapport_so_fait : !!eff.rapport_so_fait
                   const isSO = eff.categorie === 'Sous-officier' || eff.categorie === 'Officier'
+                  const canEditThis = canEditAll || (myEffectifId && myEffectifId === eff.id)
+                  const isMe = myEffectifId && myEffectifId === eff.id
                   
                   return (
-                    <tr key={eff.id} className={eff.valide ? 'row-valid' : heures === '' ? 'row-empty' : 'row-invalid'}>
+                    <tr key={eff.id} className={`${eff.valide ? 'row-valid' : heures === '' ? 'row-empty' : 'row-invalid'} ${isMe ? 'row-me' : ''}`}>
                       <td className="td-grade">{eff.grade_nom || '—'}</td>
-                      <td className="td-name">{eff.prenom} {eff.nom}</td>
+                      <td className="td-name">{eff.prenom} {eff.nom} {isMe && <span className="badge-me">MOI</span>}</td>
                       <td className="td-fonction">{eff.fonction || '—'}</td>
                       <td className="td-heures">
-                        {canEdit ? (
+                        {canEditThis ? (
                           <input
                             type="number"
                             step="0.5"
@@ -214,7 +231,7 @@ export default function PDS() {
                       {effectifs.some(e => e.categorie === 'Sous-officier') && (
                         <td className="td-rapport">
                           {isSO ? (
-                            canEdit ? (
+                            canEditThis ? (
                               <input
                                 type="checkbox"
                                 checked={rapportFait}
@@ -226,7 +243,7 @@ export default function PDS() {
                           ) : '—'}
                         </td>
                       )}
-                      {canEdit && (
+                      {canEditAll && (
                         <td className="td-notes">
                           <input
                             type="text"

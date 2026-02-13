@@ -1,9 +1,10 @@
 const router = require('express').Router()
 const { query, queryOne } = require('../config/db')
 const auth = require('../middleware/auth')
+const { optionalAuth } = require('../middleware/auth')
 
-// GET /api/effectifs?unite_id=X
-router.get('/', auth, async (req, res) => {
+// GET /api/effectifs?unite_id=X (guest accessible)
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const { unite_id } = req.query
     let sql = `
@@ -32,8 +33,8 @@ router.get('/all', auth, async (req, res) => {
   }
 })
 
-// GET /api/effectifs/:id
-router.get('/:id', auth, async (req, res) => {
+// GET /api/effectifs/:id (guest accessible)
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const row = await queryOne(`
       SELECT e.*, g.nom_complet AS grade_nom, u.nom AS unite_nom, u.code AS unite_code

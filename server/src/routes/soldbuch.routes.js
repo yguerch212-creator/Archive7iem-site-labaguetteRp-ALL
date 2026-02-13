@@ -1,9 +1,10 @@
 const router = require('express').Router()
 const { queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
+const { optionalAuth } = require('../middleware/auth')
 
-// GET /api/soldbuch/:effectif_id
-router.get('/:effectifId', auth, async (req, res) => {
+// GET /api/soldbuch/:effectif_id (guest can view)
+router.get('/:effectifId', optionalAuth, async (req, res) => {
   try {
     const effectif = await queryOne(`
       SELECT e.*, g.nom_complet AS grade_nom, u.nom AS unite_nom, u.code AS unite_code
@@ -28,9 +29,13 @@ router.get('/:effectifId', auth, async (req, res) => {
   }
 })
 
-// PUT /api/soldbuch/:effectif_id/layout
+// PUT /api/soldbuch/:effectif_id/layout (owner, admin, or recenseur)
 router.put('/:effectifId/layout', auth, async (req, res) => {
   try {
+    const isOwner = req.user.effectif_id === parseInt(req.params.effectifId)
+    if (!isOwner && !req.user.isAdmin && !req.user.isRecenseur) {
+      return res.status(403).json({ success: false, message: 'Vous ne pouvez modifier que votre propre Soldbuch' })
+    }
     const { layout } = req.body
     const json = JSON.stringify(layout)
     const existing = await queryOne('SELECT id FROM effectif_layouts WHERE effectif_id = ?', [req.params.effectifId])

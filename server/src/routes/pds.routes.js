@@ -70,16 +70,18 @@ router.get('/historique/:effectif_id', auth, async (req, res) => {
   }
 })
 
-// PUT /api/pds/saisie — Saisie/mise à jour heures (admin ou recenseur)
+// PUT /api/pds/saisie — Saisie heures (admin/recenseur = tous, sinon = son propre effectif)
 router.put('/saisie', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin && !req.user.isRecenseur) {
-      return res.status(403).json({ success: false, message: 'Accès non autorisé' })
-    }
-    
     const { effectif_id, semaine, heures, rapport_so_fait, notes } = req.body
     if (!effectif_id || !semaine) {
       return res.status(400).json({ success: false, message: 'effectif_id et semaine requis' })
+    }
+
+    // Check: admin/recenseur can edit anyone, user can only edit own
+    const isPrivileged = req.user.isAdmin || req.user.isRecenseur
+    if (!isPrivileged && req.user.effectif_id !== effectif_id) {
+      return res.status(403).json({ success: false, message: 'Vous ne pouvez modifier que vos propres heures' })
     }
 
     await pool.execute(`

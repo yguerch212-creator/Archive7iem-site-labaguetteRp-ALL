@@ -1,15 +1,21 @@
 const router = require('express').Router()
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
+const { optionalAuth } = require('../middleware/auth')
 const admin = require('../middleware/admin')
 
-// GET /api/rapports
-router.get('/', auth, async (req, res) => {
+// GET /api/rapports (guest: only published+approved, user: all)
+router.get('/', optionalAuth, async (req, res) => {
   try {
+    let where = ''
+    if (req.user.isGuest) {
+      where = "WHERE published = 1 AND (moderation_statut = 'approuve' OR moderation_statut IS NULL OR moderation_statut = 'brouillon')"
+    }
     const rows = await query(`
-      SELECT id, titre, auteur_nom, personne_renseignee_nom, recommande_nom, mise_en_cause_nom, type, date_rp, date_irl, published, created_at,
+      SELECT id, titre, auteur_nom, personne_renseignee_nom, recommande_nom, mise_en_cause_nom, 
+        type, date_rp, date_irl, published, moderation_statut, a_images, created_at,
         COALESCE(personne_renseignee_nom, recommande_nom, mise_en_cause_nom) AS personne_mentionnee
-      FROM rapports ORDER BY created_at DESC
+      FROM rapports ${where} ORDER BY created_at DESC
     `)
     res.json({ success: true, data: rows })
   } catch (err) {
@@ -59,6 +65,54 @@ router.put('/:id/publish', auth, async (req, res) => {
   try {
     const { contenu_html } = req.body
     await pool.execute('UPDATE rapports SET contenu_html = ?, published = 1 WHERE id = ?', [contenu_html, req.params.id])
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// PUT /api/rapports/:id/redact — Officier censure des zones
+router.put('/:id/redact', auth, async (req, res) => {
+  try {
+    if (!req.user.isOfficier && !req.user.isAdmin) {
+      return res.status(403).json({ success: false, message: 'Réservé aux officiers' })
+    }
+    const { redactions } = req.body // Array of {field, start, end} or {field, value: "█████"}
+    await pool.execute('UPDATE rapports SET redactions = ? WHERE id = ?', [JSON.stringify(redactions), req.params.id])
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// GET /api/rapports/moderation — Rapports en attente (admin)
+router.get('/moderation/queue', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) return res.status(403).json({ success: false, message: 'Admin requis' })
+    const rows = await query(`
+      SELECT id, titre, auteur_nom, type, a_images, moderation_statut, created_at
+      FROM rapports WHERE moderation_statut = 'en_attente'
+      ORDER BY created_at ASC
+    `)
+    res.json({ success: true, data: rows })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// PUT /api/rapports/:id/moderate — Approuver/refuser (admin)
+router.put('/:id/moderate', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) return res.status(403).json({ success: false, message: 'Admin requis' })
+    const { decision, raison } = req.body // decision: 'approuve' | 'refuse'
+    await pool.execute('UPDATE rapports SET moderation_statut = ? WHERE id = ?', [decision, req.params.id])
+    
+    if (decision === 'refuse' && raison) {
+      await pool.execute(`
+        INSERT INTO moderation_queue (type, record_id, statut, soumis_par, modere_par, raison_refus, modere_at)
+        SELECT 'rapport', ?, 'refuse', auteur_id, ?, ?, NOW() FROM rapports WHERE id = ?
+      `, [req.params.id, req.user.id, raison, req.params.id])
+    }
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })

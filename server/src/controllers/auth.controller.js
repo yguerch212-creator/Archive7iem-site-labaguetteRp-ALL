@@ -46,6 +46,13 @@ async function login(req, res) {
     `, [user.id])
     const isRecenseur = recenseurCheck.c > 0
 
+    const officierCheck = await queryOne(`
+      SELECT COUNT(*) as c FROM user_groups ug
+      JOIN \`groups\` g ON g.id = ug.group_id
+      WHERE ug.user_id = ? AND g.name = 'Officier'
+    `, [user.id])
+    const isOfficier = officierCheck.c > 0
+
     const token = jwt.sign({ userId: user.id }, config.jwt.secret, { expiresIn: config.jwt.expiresIn })
 
     res.json({
@@ -61,6 +68,8 @@ async function login(req, res) {
         unite_id: user.unite_id,
         isAdmin,
         isRecenseur,
+        isOfficier,
+        effectif_id: user.effectif_id || null,
         mustChangePassword: !!user.must_change_password
       }
     })
