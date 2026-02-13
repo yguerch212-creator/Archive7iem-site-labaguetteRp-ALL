@@ -123,9 +123,9 @@ export default function AffaireLayout() {
     } catch { setMessage('❌ Erreur') }
   }
 
-  const handlePublish = async (html) => {
+  const handlePublish = async (html, publishedBlocks) => {
     try {
-      await api.put(`/affaires/${id}/layout`, { blocks, html_published: html })
+      await api.put(`/affaires/${id}/layout`, { blocks: publishedBlocks || blocks, html_published: html })
       setMessage('📜 Dossier judiciaire publié')
       setTimeout(() => navigate(`/sanctions/${id}`), 1500)
     } catch { setMessage('❌ Erreur') }

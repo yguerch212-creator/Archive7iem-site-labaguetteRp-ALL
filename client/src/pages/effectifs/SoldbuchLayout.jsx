@@ -102,9 +102,9 @@ export default function SoldbuchLayout() {
     }
   }
 
-  const handlePublish = async (html) => {
+  const handlePublish = async (html, publishedBlocks) => {
     try {
-      await api.put(`/effectifs/${id}/layout`, { blocks, html_published: html })
+      await api.put(`/effectifs/${id}/layout`, { blocks: publishedBlocks || blocks, html_published: html })
       setMessage('📜 Soldbuch publié')
       setTimeout(() => navigate(`/effectifs/${id}/soldbuch`), 1500)
     } catch (err) {

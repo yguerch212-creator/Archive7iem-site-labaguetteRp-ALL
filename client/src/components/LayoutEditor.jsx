@@ -26,8 +26,22 @@ const GRID = 5
 
 let blockCounter = Date.now()
 
-export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPublish, title = 'Éditeur de mise en page', width = 800, height = 1100, readOnly = false, affaireId = null }) {
+export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPublish, title = 'Éditeur de mise en page', width = 800, height = 1100, readOnly = false, affaireId = null, onBlocksChange = null }) {
   const [blocks, setBlocks] = useState(initialBlocks)
+
+  // Sync if parent pushes new blocks (e.g. import)
+  useEffect(() => {
+    if (initialBlocks && initialBlocks.length !== blocks.length) {
+      // Check if parent added blocks we don't have
+      const ourIds = new Set(blocks.map(b => b.id))
+      const newFromParent = initialBlocks.filter(b => !ourIds.has(b.id))
+      if (newFromParent.length > 0) {
+        const merged = [...blocks, ...newFromParent]
+        setBlocks(merged)
+        pushHistory(merged)
+      }
+    }
+  }, [initialBlocks])
   const [selectedId, setSelectedId] = useState(null)
   const [history, setHistory] = useState([initialBlocks])
   const [historyIdx, setHistoryIdx] = useState(0)
@@ -207,7 +221,7 @@ export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPub
       el.removeAttribute('data-x')
       el.removeAttribute('data-y')
     })
-    onPublish(clone.innerHTML)
+    onPublish(clone.innerHTML, blocks)
   }
 
   const handleImageUpload = (blockId) => {

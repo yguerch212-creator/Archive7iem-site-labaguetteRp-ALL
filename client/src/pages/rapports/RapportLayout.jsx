@@ -94,7 +94,7 @@ export default function RapportLayout() {
     } catch (err) { setMessage('❌ Erreur') }
   }
 
-  const handlePublish = async (html) => {
+  const handlePublish = async (html, publishedBlocks) => {
     try {
       await api.put(`/rapports/${id}/publish`, { contenu_html: html })
       setMessage('📜 Rapport publié')

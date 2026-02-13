@@ -151,9 +151,9 @@ export default function DossierLayout() {
     } catch { setMessage('❌ Erreur') }
   }
 
-  const handlePublish = async (html) => {
+  const handlePublish = async (html, publishedBlocks) => {
     try {
-      await api.put(`/dossiers/${id}/layout`, { blocks, html_published: html })
+      await api.put(`/dossiers/${id}/layout`, { blocks: publishedBlocks || blocks, html_published: html })
       setMessage('📜 Dossier publié')
       setTimeout(() => navigate(`/dossiers/${id}`), 1500)
     } catch { setMessage('❌ Erreur') }
