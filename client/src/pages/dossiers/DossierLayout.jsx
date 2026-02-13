@@ -146,17 +146,25 @@ export default function DossierLayout() {
   const handleSave = async (newBlocks) => {
     try {
       await api.put(`/dossiers/${id}/layout`, { blocks: newBlocks })
-      setMessage('💾 Sauvegardé')
-      setTimeout(() => setMessage(''), 2000)
-    } catch { setMessage('❌ Erreur') }
+      setMessage('💾 Sauvegardé !')
+      setTimeout(() => setMessage(''), 3000)
+    } catch (err) {
+      console.error('Save error:', err)
+      setMessage('❌ Erreur de sauvegarde')
+    }
   }
 
   const handlePublish = async (html, publishedBlocks) => {
     try {
-      await api.put(`/dossiers/${id}/layout`, { blocks: publishedBlocks || blocks, html_published: html })
-      setMessage('📜 Dossier publié')
+      const payload = { blocks: publishedBlocks || blocks, html_published: html }
+      console.log('Publishing layout:', { blocksCount: payload.blocks?.length, htmlLength: payload.html_published?.length })
+      await api.put(`/dossiers/${id}/layout`, payload)
+      setMessage('📜 Dossier publié ! Redirection...')
       setTimeout(() => navigate(`/dossiers/${id}`), 1500)
-    } catch { setMessage('❌ Erreur') }
+    } catch (err) {
+      console.error('Publish error:', err)
+      setMessage('❌ Erreur de publication')
+    }
   }
 
   if (loading) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div>
@@ -189,9 +197,14 @@ export default function DossierLayout() {
         <BackButton label="← Retour au dossier" />
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <button className="btn btn-secondary btn-small" onClick={openImport}>📎 Épingler un document</button>
-          {message && <span style={{ fontSize: '0.85rem' }}>{message}</span>}
         </div>
       </div>
+
+      {message && (
+        <div className={`alert ${message.includes('❌') ? 'alert-danger' : 'alert-success'}`} style={{ marginBottom: '0.75rem', textAlign: 'center', fontWeight: 600 }}>
+          {message}
+        </div>
+      )}
 
       {/* Import picker — global search */}
       {showImport && (

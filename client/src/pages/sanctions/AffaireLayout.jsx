@@ -137,7 +137,11 @@ export default function AffaireLayout() {
     <div style={{ padding: '1rem', maxWidth: 1100, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <BackButton label="← Retour à l'affaire" />
-        {message && <span style={{ fontSize: '0.85rem' }}>{message}</span>}
+        {message && (
+            <div className={`alert ${message.includes('❌') ? 'alert-danger' : 'alert-success'}`} style={{ margin: '0.5rem 0', textAlign: 'center', fontWeight: 600 }}>
+              {message}
+            </div>
+          )}
       </div>
       <LayoutEditor
         blocks={blocks}
