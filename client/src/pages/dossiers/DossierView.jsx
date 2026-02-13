@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import './dossiers.css'
@@ -68,11 +68,14 @@ export default function DossierView() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap', gap: '0.5rem' }}>
         <button onClick={() => navigate(-1)} className="btn btn-secondary btn-small">← Retour</button>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          {canWrite && (
-            <button className="btn btn-primary btn-small" onClick={() => { setShowForm(!showForm); setCurrentPage(totalPages) }}>
-              {showForm ? '✕' : '+ Ajouter une note'}
-            </button>
-          )}
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {canWrite && <Link to={`/dossiers/${id}/layout`} className="btn btn-secondary btn-small">🖋️ Mise en page</Link>}
+            {canWrite && (
+              <button className="btn btn-primary btn-small" onClick={() => { setShowForm(!showForm); setCurrentPage(totalPages) }}>
+                {showForm ? '✕' : '+ Ajouter une note'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import BackButton from '../../components/BackButton'
@@ -92,7 +92,10 @@ export default function AffaireView() {
 
   return (
     <div className="container affaire-view">
-      <BackButton />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-sm)' }}>
+        <BackButton />
+        {canWrite && <Link to={`/sanctions/${id}/layout`} className="btn btn-secondary btn-small">🖋️ Mise en page</Link>}
+      </div>
       {message && <div className="alert alert-success">{message}</div>}
 
       {/* Header */}

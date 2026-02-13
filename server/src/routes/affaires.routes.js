@@ -296,4 +296,28 @@ router.get('/ref/infractions', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }) }
 })
 
+// GET /api/affaires/:id/layout
+router.get('/:id/layout', auth, async (req, res) => {
+  try {
+    const row = await queryOne('SELECT layout_json FROM affaire_layouts WHERE affaire_id = ?', [req.params.id])
+    if (!row || !row.layout_json) return res.json({ blocks: null })
+    const data = typeof row.layout_json === 'string' ? JSON.parse(row.layout_json) : row.layout_json
+    res.json(data)
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
+// PUT /api/affaires/:id/layout
+router.put('/:id/layout', auth, async (req, res) => {
+  try {
+    const { blocks, html_published } = req.body
+    const json = JSON.stringify({ blocks, html_published })
+    await pool.execute(
+      `INSERT INTO affaire_layouts (affaire_id, layout_json) VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE layout_json = VALUES(layout_json)`,
+      [req.params.id, json]
+    )
+    res.json({ success: true })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
 module.exports = router
