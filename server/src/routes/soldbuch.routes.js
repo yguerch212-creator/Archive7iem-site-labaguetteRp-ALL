@@ -16,12 +16,16 @@ router.get('/:effectifId', optionalAuth, async (req, res) => {
     if (!effectif) return res.status(404).json({ success: false, message: 'Effectif non trouvé' })
 
     const layout = await queryOne('SELECT layout_json FROM effectif_layouts WHERE effectif_id = ?', [req.params.effectifId])
+    let layoutData = {}
+    if (layout && layout.layout_json) {
+      layoutData = typeof layout.layout_json === 'string' ? JSON.parse(layout.layout_json) : layout.layout_json
+    }
 
     res.json({
       success: true,
       data: {
         effectif,
-        layout: layout ? JSON.parse(layout.layout_json || '{}') : {}
+        layout: layoutData
       }
     })
   } catch (err) {
