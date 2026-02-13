@@ -29,7 +29,14 @@ router.get('/', optionalAuth, async (req, res) => {
 // GET /api/effectifs/all (for dropdowns)
 router.get('/all', auth, async (req, res) => {
   try {
-    const rows = await query('SELECT id, nom, prenom, unite_id FROM effectifs ORDER BY nom, prenom')
+    const rows = await query(`
+      SELECT e.id, e.nom, e.prenom, e.unite_id, e.grade_id,
+        g.nom_complet AS grade_nom, u.code AS unite_code
+      FROM effectifs e
+      LEFT JOIN grades g ON e.grade_id = g.id
+      LEFT JOIN unites u ON e.unite_id = u.id
+      ORDER BY e.nom, e.prenom
+    `)
     res.json({ success: true, data: rows })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })

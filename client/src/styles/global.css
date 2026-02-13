@@ -452,3 +452,47 @@ tr:hover { background: rgba(0,0,0,0.02); }
   }
   body { background: white; }
 }
+
+/* ============= AUTOCOMPLETE ============= */
+.autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--parchment-light, #faf6ef);
+  border: 1px solid var(--border);
+  border-top: none;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+.autocomplete-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  gap: 0.5rem;
+}
+.autocomplete-item:hover,
+.autocomplete-active {
+  background: var(--military-green);
+  color: #fff;
+}
+.autocomplete-active .autocomplete-meta {
+  color: rgba(255,255,255,0.7);
+}
+.autocomplete-name {
+  font-weight: 500;
+}
+.autocomplete-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}

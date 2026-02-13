@@ -4,6 +4,23 @@ const auth = require('../middleware/auth')
 const { optionalAuth } = require('../middleware/auth')
 const admin = require('../middleware/admin')
 
+// GET /api/rapports/next-number?type=rapport
+router.get('/next-number', auth, async (req, res) => {
+  try {
+    const type = req.query.type || 'rapport'
+    const prefix = type === 'rapport' ? 'RJ' : type === 'recommandation' ? 'RC' : 'IN'
+    const year = new Date().getFullYear()
+    const row = await queryOne(
+      `SELECT COUNT(*) as cnt FROM rapports WHERE type = ? AND YEAR(created_at) = ?`,
+      [type, year]
+    )
+    const num = String((row?.cnt || 0) + 1).padStart(3, '0')
+    res.json({ success: true, data: { numero: `${prefix}-${year}-${num}` } })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
 // GET /api/rapports (guest: only published+approved, user: all)
 router.get('/', optionalAuth, async (req, res) => {
   try {
