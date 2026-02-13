@@ -286,17 +286,14 @@ function AddPiecePopup({ onAdd, onClose, infractions }) {
 
         {(form.type === 'Rapport-infraction' || form.type === 'Proces-verbal') && (
           <div className="form-row">
-            <div className="form-group"><label>Infraction (Code Pénal)</label>
-              <select className="form-input" value={form.infraction_id} onChange={e => setForm(f => ({...f, infraction_id: e.target.value}))}>
-                <option value="">— Hors code / Personnalisée —</option>
-                {infractions.map(i => <option key={i.id} value={i.id}>[Grp {i.groupe}] {i.nom}</option>)}
-              </select>
+            <div className="form-group" style={{ flex: 2 }}><label>Infraction (Code Pénal ou personnalisée)</label>
+              <InfractionSearch
+                infractions={infractions}
+                value={form.infraction_id ? infractions.find(i => String(i.id) === String(form.infraction_id))?.nom || '' : form.infraction_custom}
+                onSelect={(inf) => setForm(f => ({...f, infraction_id: inf.id, infraction_custom: ''}))}
+                onCustom={(text) => setForm(f => ({...f, infraction_id: '', infraction_custom: text}))}
+              />
             </div>
-            {!form.infraction_id && (
-              <div className="form-group"><label>Infraction personnalisée</label>
-                <input className="form-input" value={form.infraction_custom} onChange={e => setForm(f => ({...f, infraction_custom: e.target.value}))} placeholder="Intitulé..." />
-              </div>
-            )}
           </div>
         )}
 
@@ -577,6 +574,54 @@ function EditAffairePopup({ affaire, onSave, onClose }) {
           <button className="btn" onClick={onClose}>Annuler</button>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ==================== Infraction Search ====================
+function InfractionSearch({ infractions, value, onSelect, onCustom }) {
+  const [text, setText] = useState(value || '')
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => { setText(value || '') }, [value])
+
+  const filtered = infractions.filter(i =>
+    `${i.nom} ${i.description || ''} Grp ${i.groupe}`.toLowerCase().includes(text.toLowerCase())
+  ).slice(0, 10)
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <input
+        className="form-input"
+        value={text}
+        onChange={e => { setText(e.target.value); setOpen(true); onCustom(e.target.value) }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 200)}
+        placeholder="🔍 Rechercher une infraction ou saisir librement..."
+      />
+      {open && text.length > 0 && filtered.length > 0 && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+          background: '#faf8f2', border: '2px solid var(--border-color)',
+          borderRadius: 'var(--border-radius)', maxHeight: 220, overflowY: 'auto',
+          boxShadow: 'var(--shadow-medium)'
+        }}>
+          {filtered.map(i => (
+            <div key={i.id}
+              onMouseDown={() => { onSelect(i); setText(i.nom); setOpen(false) }}
+              style={{
+                padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.8rem',
+                borderBottom: '1px solid var(--border-color)', transition: 'background 0.1s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(107,143,60,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.background = ''}
+            >
+              <strong>[Grp {i.groupe}]</strong> {i.nom}
+              {i.sanction_min && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: 8 }}>({i.sanction_min})</span>}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
