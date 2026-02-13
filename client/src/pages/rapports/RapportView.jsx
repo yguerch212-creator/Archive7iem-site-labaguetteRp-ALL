@@ -4,6 +4,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import apiClient from '../../api/client'
 import { exportToPdf } from '../../utils/exportPdf'
+import EffectifAutocomplete from '../../components/EffectifAutocomplete'
 
 const TYPE_LABELS = { rapport: 'Rapport Journalier', recommandation: 'Recommandation', incident: 'Rapport d\'Incident' }
 const STAMPS = [
@@ -86,7 +87,12 @@ export default function RapportView() {
           <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
             <div className="form-group" style={{ flex: 1 }}>
               <label className="form-label">Signataire</label>
-              <input type="text" className="form-input" value={pubForm.signature_nom} onChange={e => setPubForm(p => ({...p, signature_nom: e.target.value}))} placeholder={`${user?.prenom || ''} ${user?.nom || ''}`} />
+              <EffectifAutocomplete
+                value={pubForm.signature_nom}
+                onChange={val => setPubForm(p => ({...p, signature_nom: val}))}
+                onSelect={eff => setPubForm(p => ({...p, signature_nom: `${eff.prenom} ${eff.nom}`, signature_grade: eff.grade_nom || p.signature_grade}))}
+                placeholder={`${user?.prenom || ''} ${user?.nom || ''}`}
+              />
             </div>
             <div className="form-group" style={{ flex: 1 }}>
               <label className="form-label">Grade du signataire</label>

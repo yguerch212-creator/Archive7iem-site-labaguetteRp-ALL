@@ -317,7 +317,12 @@ export default function RapportNew() {
         <div className="grid grid-cols-2" style={{ gap: 'var(--space-md)' }}>
           <div className="form-group">
             <label className="form-label">Nom Prénom</label>
-            <input className="form-input" value={form.signature_nom} onChange={e => set('signature_nom', e.target.value)} />
+            <EffectifAutocomplete
+              value={form.signature_nom}
+              onChange={val => set('signature_nom', val)}
+              onSelect={eff => { set('signature_nom', `${eff.prenom} ${eff.nom}`); if (eff.grade_nom) set('signature_grade', eff.grade_nom) }}
+              placeholder="Rechercher ou saisir..."
+            />
           </div>
           <div className="form-group">
             <label className="form-label">Grade</label>

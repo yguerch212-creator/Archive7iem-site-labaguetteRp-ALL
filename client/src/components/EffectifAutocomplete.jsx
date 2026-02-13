@@ -1,20 +1,33 @@
 import { useState, useRef, useEffect } from 'react'
+import api from '../api/client'
 
 /**
  * Autocomplete input that searches effectifs by name.
  * Props:
- *  - effectifs: array of {id, nom, prenom, grade_nom, unite_code}
+ *  - effectifs: optional array (auto-fetches if not provided)
  *  - value: current text value
- *  - onChange(text, effectif|null): called on change; effectif is set if picked from list
+ *  - onChange(text, effectif|null): called on text change
+ *  - onSelect(effectif): called when an effectif is picked from list
  *  - placeholder
  *  - required
  *  - className
  */
-export default function EffectifAutocomplete({ effectifs = [], value, onChange, placeholder, required, className = 'form-input' }) {
+export default function EffectifAutocomplete({ effectifs: externalEffectifs, value, onChange, onSelect, placeholder, required, className = 'form-input' }) {
   const [open, setOpen] = useState(false)
   const [highlighted, setHighlighted] = useState(-1)
+  const [internalEffectifs, setInternalEffectifs] = useState([])
   const ref = useRef(null)
-  const listRef = useRef(null)
+
+  // Auto-fetch if no effectifs prop
+  useEffect(() => {
+    if (!externalEffectifs) {
+      api.get('/effectifs/all').then(r => {
+        setInternalEffectifs(r.data.data || r.data || [])
+      }).catch(() => {})
+    }
+  }, [externalEffectifs])
+
+  const effectifs = externalEffectifs || internalEffectifs
 
   const q = (value || '').toLowerCase().trim()
   const filtered = q.length >= 1
@@ -28,8 +41,16 @@ export default function EffectifAutocomplete({ effectifs = [], value, onChange, 
   }, [])
 
   const pick = (eff) => {
-    onChange(`${eff.prenom} ${eff.nom}`, eff)
+    const display = `${eff.prenom} ${eff.nom}`
+    if (onChange) onChange(display, eff)
+    if (onSelect) onSelect(eff)
     setOpen(false)
+    setHighlighted(-1)
+  }
+
+  const handleChange = (e) => {
+    if (onChange) onChange(e.target.value, null)
+    setOpen(true)
     setHighlighted(-1)
   }
 
@@ -47,7 +68,7 @@ export default function EffectifAutocomplete({ effectifs = [], value, onChange, 
         type="text"
         className={className}
         value={value}
-        onChange={e => { onChange(e.target.value, null); setOpen(true); setHighlighted(-1) }}
+        onChange={handleChange}
         onFocus={() => { if (q.length >= 1) setOpen(true) }}
         onKeyDown={handleKey}
         placeholder={placeholder || 'Nom ou saisie libre...'}
@@ -55,7 +76,7 @@ export default function EffectifAutocomplete({ effectifs = [], value, onChange, 
         autoComplete="off"
       />
       {open && filtered.length > 0 && (
-        <ul ref={listRef} className="autocomplete-list">
+        <ul className="autocomplete-list">
           {filtered.map((eff, i) => (
             <li
               key={eff.id}
