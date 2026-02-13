@@ -668,12 +668,42 @@
   gap: 0.5rem;
 }
 
+/* Block toolbar */
+.dossier-block-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: #e8e2d0;
+  border: 1px solid #d4c9a8;
+  border-radius: 4px;
+  flex-wrap: wrap;
+}
+.toolbar-block-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3rem 0.55rem;
+  background: #f5f2e8;
+  border: 1px solid #c4b896;
+  border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.toolbar-block-btn:hover {
+  background: #ede8d4;
+  border-color: #5c6b3c;
+}
+
 /* Page tabs */
 .dossier-layout-nav {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 .dossier-page-tabs {
   display: flex;
@@ -683,109 +713,99 @@
   padding: 0.25rem 0;
 }
 .dossier-page-tab {
-  padding: 0.35rem 0.75rem;
+  padding: 0.3rem 0.65rem;
   border: 1px solid #d4c9a8;
-  background: #f5f2e8;
+  background: #ede8d8;
   border-radius: 4px 4px 0 0;
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s;
 }
-.dossier-page-tab:hover {
-  background: #ede8d8;
-}
+.dossier-page-tab:hover { background: #e4ddc8; }
 .dossier-page-tab.active {
-  background: #faf8f0;
-  border-bottom-color: #faf8f0;
+  background: #f5f0e2;
+  border-bottom-color: #f5f0e2;
   font-weight: 700;
   color: #5c6b3c;
 }
 .dossier-page-add {
   border-style: dashed;
   color: #999;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.8rem;
 }
-.dossier-page-add:hover {
-  color: #5c6b3c;
-  border-color: #5c6b3c;
-}
+.dossier-page-add:hover { color: #5c6b3c; border-color: #5c6b3c; }
 
-/* Block toolbar */
-.dossier-block-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-  padding: 0.4rem 0.6rem;
-  background: #eee8d8;
-  border-radius: 4px;
-}
-.dossier-toolbar-hint {
-  font-size: 0.65rem;
-  color: #999;
-  margin-left: auto;
-  font-style: italic;
-}
-
-/* The book page canvas */
+/* The book page canvas — PARCHMENT texture */
 .dossier-book-editor {
   display: flex;
   justify-content: center;
-  padding: 1rem 0;
+  padding: 0.5rem 0 1rem;
 }
 .dossier-book-page {
   position: relative;
   width: 720px;
   min-height: 540px;
-  background: #faf8f0;
-  border: 1px solid #b8a88a;
-  border-radius: 2px;
-  box-shadow: 3px 3px 15px rgba(0,0,0,0.15), inset 0 0 30px rgba(0,0,0,0.03);
+  background: #f5f0e2;
+  border: 1px solid #c4b896;
+  border-radius: 3px;
+  box-shadow: 2px 2px 12px rgba(0,0,0,0.1), inset 0 0 40px rgba(139,119,80,0.06);
   font-family: 'IBM Plex Mono', monospace;
   overflow: hidden;
 }
 .dossier-book-page.is-cover {
-  background: linear-gradient(135deg, #3a3a2a 0%, #4a4a38 50%, #3a3a2a 100%);
+  background: linear-gradient(135deg, #5c5840 0%, #6b6650 30%, #5c5840 60%, #4f4b38 100%);
   color: #d4c9a8;
-  border-color: #2a2a1a;
+  border-color: #4a4630;
+  box-shadow: 2px 2px 12px rgba(0,0,0,0.2), inset 0 0 50px rgba(0,0,0,0.15);
 }
 
-/* Blocks inside pages */
+/* Blocks */
 .book-block {
   position: absolute;
   cursor: move;
   padding: 2px 4px;
-  border: 1px solid transparent;
+  border: 1px dashed transparent;
   border-radius: 2px;
   transition: border-color 0.1s;
   box-sizing: border-box;
   font-family: 'IBM Plex Mono', monospace;
   overflow: hidden;
 }
-.book-block:hover {
-  border-color: rgba(92,107,60,0.3);
-}
+.book-block:hover { border-color: rgba(92,107,60,0.25); }
 .book-block.selected {
   border-color: #5c6b3c;
-  box-shadow: 0 0 0 1px #5c6b3c;
+  border-style: solid;
+  box-shadow: 0 0 0 1px rgba(92,107,60,0.3);
 }
-.book-block-content {
+.book-block-text {
   width: 100%;
   height: 100%;
   outline: none;
   overflow: hidden;
   word-wrap: break-word;
 }
-.book-block-content:focus {
-  outline: none;
+.book-block-text:focus { outline: none; }
+.book-block-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #b8a88a;
+  border-radius: 3px;
+  color: #998;
+  font-size: 0.75rem;
+  cursor: pointer;
+  background: rgba(245,240,226,0.5);
 }
+.book-block-placeholder:hover { background: rgba(230,220,195,0.5); border-color: #5c6b3c; }
 .book-block-resize {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 10px;
-  height: 10px;
+  right: 0; bottom: 0;
+  width: 10px; height: 10px;
   cursor: se-resize;
 }
 .book-block.selected .book-block-resize {
@@ -793,60 +813,43 @@
   border-radius: 0 0 2px 0;
 }
 
-/* Block tools */
+/* Block tools — warm toolbar */
 .book-block-tools {
   position: absolute;
-  top: -28px;
-  left: 0;
+  top: -28px; left: 0;
   display: flex;
   gap: 0.25rem;
   align-items: center;
-  background: #3a3a2a;
+  background: #4a4630;
   padding: 2px 6px;
   border-radius: 3px;
   z-index: 200;
   white-space: nowrap;
 }
 .book-block-tools button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 0.75rem;
-  padding: 1px 4px;
+  background: none; border: none;
+  cursor: pointer; font-size: 0.75rem;
+  padding: 1px 4px; color: #d4c9a8;
 }
+.book-block-tools button:hover { color: #fff; }
 .book-block-style-select {
-  font-size: 0.65rem;
-  background: #555;
-  color: #eee;
+  font-size: 0.63rem;
+  background: #6b6550;
+  color: #e8e0cc;
   border: none;
   border-radius: 2px;
-  padding: 1px 4px;
+  padding: 2px 4px;
   font-family: 'IBM Plex Mono', monospace;
 }
 
 .dossier-empty-page {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  color: #bbb;
+  color: #b8a88a;
   font-size: 0.82rem;
   text-align: center;
   font-style: italic;
-}
-
-/* ===== PUBLISHED LAYOUT VIEW ===== */
-.layout-published-view {
-  max-width: 850px;
-  margin: 0 auto;
-  padding: 1rem;
-}
-.layout-published-view .layout-canvas {
-  background: #faf8f0;
-  border: 1px solid #b8a88a;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  border-radius: 4px;
-  padding: 2rem;
 }
 
 @media (max-width: 768px) {
@@ -854,14 +857,14 @@
   .dossier-layout-header { flex-direction: column; align-items: flex-start; }
 }
 
-/* ===== LAYOUT-RENDERED BOOK PAGE ===== */
+/* ===== LAYOUT-RENDERED BOOK PAGE (DossierView) ===== */
 .book-layout-page {
   width: 100%;
   height: 100%;
   font-family: 'IBM Plex Mono', monospace;
 }
 .book-layout-page.is-cover {
-  background: linear-gradient(135deg, #3a3a2a 0%, #4a4a38 50%, #3a3a2a 100%);
+  background: linear-gradient(135deg, #5c5840 0%, #6b6650 30%, #5c5840 60%, #4f4b38 100%);
   color: #d4c9a8;
-  border-radius: 4px;
+  border-radius: 3px;
 }
