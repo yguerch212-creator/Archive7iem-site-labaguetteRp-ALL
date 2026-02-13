@@ -174,4 +174,28 @@ router.delete('/:id', auth, admin, async (req, res) => {
   }
 })
 
+// GET /api/effectifs/:id/layout — Get layout blocks
+router.get('/:id/layout', auth, async (req, res) => {
+  try {
+    const row = await queryOne('SELECT layout_json FROM effectif_layouts WHERE effectif_id = ?', [req.params.id])
+    if (!row || !row.layout_json) return res.json({ blocks: null })
+    const data = typeof row.layout_json === 'string' ? JSON.parse(row.layout_json) : row.layout_json
+    res.json(data)
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
+// PUT /api/effectifs/:id/layout — Save layout blocks
+router.put('/:id/layout', auth, async (req, res) => {
+  try {
+    const { blocks, html_published } = req.body
+    const json = JSON.stringify({ blocks, html_published })
+    await pool.execute(
+      `INSERT INTO effectif_layouts (effectif_id, layout_json) VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE layout_json = VALUES(layout_json)`,
+      [req.params.id, json]
+    )
+    res.json({ success: true })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
 module.exports = router

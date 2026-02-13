@@ -197,4 +197,28 @@ router.put('/:id/publish', auth, async (req, res) => {
   }
 })
 
+// GET /api/rapports/:id/layout — Get layout blocks
+router.get('/:id/layout', auth, async (req, res) => {
+  try {
+    const row = await queryOne('SELECT layout_json FROM rapport_layouts WHERE rapport_id = ?', [req.params.id])
+    if (!row || !row.layout_json) return res.json({ blocks: null })
+    const data = typeof row.layout_json === 'string' ? JSON.parse(row.layout_json) : row.layout_json
+    res.json(data)
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
+// PUT /api/rapports/:id/layout — Save layout blocks
+router.put('/:id/layout', auth, async (req, res) => {
+  try {
+    const { blocks } = req.body
+    const json = JSON.stringify({ blocks })
+    await pool.execute(
+      `INSERT INTO rapport_layouts (rapport_id, layout_json) VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE layout_json = VALUES(layout_json)`,
+      [req.params.id, json]
+    )
+    res.json({ success: true })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
 module.exports = router
