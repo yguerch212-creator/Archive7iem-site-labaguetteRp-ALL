@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
-import './dossiers.css'
+import './dossiers.css' // keep for timeline in DossierPersonnel
 
 const TYPE_ICONS = { personnel: '📁', thematique: '📂', enquete: '🔍', autre: '📋' }
 const TYPE_LABELS = { personnel: 'Personnel', thematique: 'Thématique', enquete: 'Enquête', autre: 'Autre' }
@@ -141,24 +141,18 @@ export default function DossiersList() {
                 </select>
               </div>
             </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Visibilité</label>
-                <select className="form-input" value={form.visibilite} onChange={e => setForm(p => ({...p, visibilite: e.target.value}))}>
-                  <option value="public">🌐 Public</option>
-                  <option value="prive">🔒 Privé</option>
-                  <option value="lien">🔗 Par lien</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Accès réservé à</label>
-                <select className="form-input" value={form.access_group} onChange={e => setForm(p => ({...p, access_group: e.target.value}))}>
-                  <option value="tous">🌐 Tous</option>
-                  <option value="officier">⭐ Officiers uniquement</option>
-                  <option value="sous_officier">🎖️ Sous-officiers et +</option>
-                  <option value="militaire">🪖 Militaires du rang et +</option>
-                </select>
-              </div>
+            <div className="form-group">
+              <label className="form-label">Qui peut voir ce dossier ?</label>
+              <select className="form-input" value={form.access_group} onChange={e => {
+                const v = e.target.value
+                setForm(p => ({...p, access_group: v, visibilite: v === 'prive' ? 'prive' : 'public'}))
+              }}>
+                <option value="tous">🌐 Tout le monde (public)</option>
+                <option value="officier">⭐ Officiers uniquement</option>
+                <option value="sous_officier">🎖️ Sous-officiers et supérieurs</option>
+                <option value="militaire">🪖 Tous les militaires</option>
+                <option value="prive">🔒 Privé (moi seul + admins)</option>
+              </select>
             </div>
             <div className="form-group">
               <label className="form-label">Description</label>

@@ -6,10 +6,10 @@ const auth = require('../middleware/auth')
 router.get('/', auth, async (req, res) => {
   try {
     const { q, filter = 'all' } = req.query
-    if (!q) return res.json({ success: true, data: { effectifs: [], rapports: [] } })
+    if (!q) return res.json({ success: true, data: { effectifs: [], rapports: [], documentation: [] } })
 
     const like = `%${q}%`
-    const result = { effectifs: [], rapports: [] }
+    const result = { effectifs: [], rapports: [], documentation: [] }
 
     if (filter === 'all' || filter === 'effectif') {
       result.effectifs = await query(`
@@ -29,6 +29,15 @@ router.get('/', auth, async (req, res) => {
         WHERE titre LIKE ? OR auteur_nom LIKE ? OR personne_renseignee_nom LIKE ?
         ORDER BY created_at DESC LIMIT 20
       `, [like, like, like])
+    }
+
+    if (filter === 'all' || filter === 'documentation') {
+      result.documentation = await query(`
+        SELECT id, titre, description, url, categorie, is_repertoire
+        FROM documentation
+        WHERE visible = 1 AND (titre LIKE ? OR description LIKE ?)
+        ORDER BY ordre, titre LIMIT 20
+      `, [like, like])
     }
 
     res.json({ success: true, data: result })

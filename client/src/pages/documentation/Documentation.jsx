@@ -1,9 +1,7 @@
 import BackButton from '../../components/BackButton'
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
-import './documentation.css'
 
 const CATEGORIES = ['Reglement', 'Procedure', 'Formation', 'Lore', 'Outil', 'Autre']
 const CAT_ICONS = { Reglement: '📜', Procedure: '📋', Formation: '🎓', Lore: '📖', Outil: '🔧', Autre: '📁' }
@@ -20,6 +18,8 @@ export default function Documentation() {
   const [folderForm, setFolderForm] = useState({ titre: '', description: '', categorie: 'Autre' })
   const [message, setMessage] = useState(null)
   const [openFolders, setOpenFolders] = useState({})
+  const [search, setSearch] = useState('')
+  const [filterCat, setFilterCat] = useState('')
 
   const isOfficier = user?.isOfficier || user?.isAdmin
   const isSousOff = !isOfficier && ((user?.grade_rang && user.grade_rang >= 35) || user?.isRecenseur)
@@ -45,10 +45,10 @@ export default function Documentation() {
     try {
       if (editId) {
         await api.put(`/documentation/${editId}`, form)
-        flash('success', 'Document modifié')
+        flash('success', 'Document modifié ✓')
       } else {
         const res = await api.post('/documentation', form)
-        flash('success', res.data.data?.statut === 'en_attente' ? '📩 Document soumis — en attente de validation' : 'Document ajouté')
+        flash('success', res.data.data?.statut === 'en_attente' ? '📩 Soumis — en attente de validation' : 'Document ajouté ✓')
       }
       setShowForm(false); setEditId(null)
       setForm({ titre: '', description: '', url: '', categorie: 'Autre', ordre: 0, repertoire_id: '' })
@@ -60,7 +60,7 @@ export default function Documentation() {
     e.preventDefault()
     try {
       await api.post('/documentation/repertoire', folderForm)
-      flash('success', 'Répertoire créé')
+      flash('success', 'Répertoire créé ✓')
       setShowFolderForm(false)
       setFolderForm({ titre: '', description: '', categorie: 'Autre' })
       load()
@@ -69,9 +69,7 @@ export default function Documentation() {
 
   const startEdit = (doc) => {
     setForm({ titre: doc.titre, description: doc.description || '', url: doc.url || '', categorie: doc.categorie, ordre: doc.ordre, repertoire_id: doc.repertoire_id || '' })
-    setEditId(doc.id)
-    setShowForm(true)
-    setShowFolderForm(false)
+    setEditId(doc.id); setShowForm(true); setShowFolderForm(false)
   }
 
   const remove = async (id) => {
@@ -89,69 +87,59 @@ export default function Documentation() {
 
   const toggleFolder = (id) => setOpenFolders(prev => ({ ...prev, [id]: !prev[id] }))
 
-  // Separate folders and docs
   const folders = docs.filter(d => d.is_repertoire)
-  const looseDocs = docs.filter(d => !d.is_repertoire && !d.repertoire_id)
-  const docsInFolder = (folderId) => docs.filter(d => !d.is_repertoire && d.repertoire_id === folderId)
+  const allDocs = docs.filter(d => !d.is_repertoire)
+  const looseDocs = allDocs.filter(d => !d.repertoire_id)
+  const docsInFolder = (fid) => allDocs.filter(d => d.repertoire_id === fid)
+
+  // Filter
+  const matchSearch = (d) => {
+    if (search && !`${d.titre} ${d.description || ''}`.toLowerCase().includes(search.toLowerCase())) return false
+    if (filterCat && d.categorie !== filterCat) return false
+    return true
+  }
 
   return (
-    <div className="docs-page">
-      <BackButton label="← Tableau de bord" />
-      <div className="docs-header">
-        <h1>📚 Documentation & Règlements</h1>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {isOfficier && (
-            <button className="btn btn-sm" onClick={() => { setShowFolderForm(!showFolderForm); setShowForm(false) }}>
-              {showFolderForm ? '✕' : '📂 Créer un répertoire'}
-            </button>
-          )}
-          {canAdd && (
-            <button className="btn btn-primary btn-sm" onClick={() => { setShowForm(!showForm); setShowFolderForm(false); setEditId(null); setForm({ titre: '', description: '', url: '', categorie: 'Autre', ordre: 0, repertoire_id: '' }) }}>
-              {showForm ? '✕ Annuler' : '+ Ajouter un document'}
-            </button>
-          )}
+    <div className="container" style={{ paddingBottom: 'var(--space-xxl)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
+        <BackButton label="← Tableau de bord" />
+        <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+          {isOfficier && <button className="btn btn-secondary btn-small" onClick={() => { setShowFolderForm(!showFolderForm); setShowForm(false) }}>{showFolderForm ? '✕' : '📂 Répertoire'}</button>}
+          {canAdd && <button className="btn btn-primary btn-small" onClick={() => { setShowForm(!showForm); setShowFolderForm(false); setEditId(null); setForm({ titre: '', description: '', url: '', categorie: 'Autre', ordre: 0, repertoire_id: '' }) }}>{showForm ? '✕ Annuler' : '+ Document'}</button>}
         </div>
       </div>
 
-      {message && (
-        <div className={`alert alert-${message.type}`}>
-          {message.text}
-          <button onClick={() => setMessage(null)} className="alert-close">✕</button>
-        </div>
-      )}
+      <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>📚 Documentation & Règlements</h1>
 
-      {/* Pending approval */}
+      {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}
+
+      {/* Pending */}
       {pending.length > 0 && (
-        <div className="docs-pending">
-          <h2 className="docs-cat-title">⏳ En attente de validation ({pending.length})</h2>
-          <div className="docs-grid">
-            {pending.map(doc => (
-              <div key={doc.id} className="card docs-card docs-card-pending">
-                <div className="docs-card-header">
-                  <h3 className="docs-card-title">{doc.titre}</h3>
-                  <span className="badge badge-warning">En attente</span>
-                </div>
-                {doc.description && <p className="docs-card-desc">{doc.description}</p>}
-                {doc.url && <a href={doc.url} target="_blank" rel="noopener noreferrer" className="docs-url">🔗 {doc.url}</a>}
-                <p className="docs-card-meta">Par {doc.created_by_nom}</p>
-                <div className="docs-card-actions">
-                  <button className="btn btn-sm btn-primary" onClick={() => approve(doc.id, 'approuve')}>✅ Approuver</button>
-                  <button className="btn btn-sm btn-ghost" onClick={() => approve(doc.id, 'refuse')}>❌ Refuser</button>
-                </div>
+        <div className="paper-card" style={{ marginBottom: 'var(--space-lg)', borderLeft: '3px solid var(--warning)', padding: 'var(--space-md)' }}>
+          <h3 style={{ margin: '0 0 var(--space-sm)' }}>⏳ En attente de validation ({pending.length})</h3>
+          {pending.map(doc => (
+            <div key={doc.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-xs) 0', borderBottom: '1px solid var(--border-color)' }}>
+              <div>
+                <strong>{doc.titre}</strong> <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>par {doc.created_by_nom}</span>
+                {doc.url && <> · <a href={doc.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem' }}>🔗 lien</a></>}
               </div>
-            ))}
-          </div>
+              <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
+                <button className="btn btn-sm btn-primary" style={{ padding: '2px 10px', fontSize: '0.75rem' }} onClick={() => approve(doc.id, 'approuve')}>✅</button>
+                <button className="btn btn-sm btn-secondary" style={{ padding: '2px 10px', fontSize: '0.75rem' }} onClick={() => approve(doc.id, 'refuse')}>❌</button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Folder creation form */}
+      {/* Forms */}
       {showFolderForm && (
-        <div className="card docs-form">
-          <h3>📂 Nouveau répertoire</h3>
+        <div className="paper-card" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-lg)' }}>
+          <h3 style={{ marginTop: 0 }}>📂 Nouveau répertoire</h3>
           <form onSubmit={submitFolder}>
-            <div className="form-row">
-              <div className="form-group" style={{ flex: 2 }}>
-                <label className="form-label">Nom du répertoire *</label>
+            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ flex: 2, minWidth: 200 }}>
+                <label className="form-label">Nom *</label>
                 <input type="text" className="form-input" value={folderForm.titre} onChange={e => setFolderForm(p => ({...p, titre: e.target.value}))} required placeholder="Ex: Règlements 916e" />
               </div>
               <div className="form-group">
@@ -161,23 +149,18 @@ export default function Documentation() {
                 </select>
               </div>
             </div>
-            <div className="form-group">
-              <label className="form-label">Description</label>
-              <input type="text" className="form-input" value={folderForm.description} onChange={e => setFolderForm(p => ({...p, description: e.target.value}))} placeholder="Brève description..." />
-            </div>
-            <button type="submit" className="btn btn-primary">📂 Créer</button>
+            <button type="submit" className="btn btn-primary" style={{ marginTop: 'var(--space-sm)' }}>📂 Créer</button>
           </form>
         </div>
       )}
 
-      {/* Doc creation/edit form */}
       {showForm && (
-        <div className="card docs-form">
-          <h3>{editId ? '✏️ Modifier le document' : '📄 Ajouter un document'}</h3>
-          {isSousOff && !editId && <p className="docs-submit-note">📩 Votre document sera soumis à validation par un officier.</p>}
+        <div className="paper-card" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-lg)' }}>
+          <h3 style={{ marginTop: 0 }}>{editId ? '✏️ Modifier' : '📄 Ajouter un document'}</h3>
+          {isSousOff && !editId && <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>📩 Soumis à validation par un officier.</p>}
           <form onSubmit={submitDoc}>
-            <div className="form-row">
-              <div className="form-group" style={{ flex: 2 }}>
+            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ flex: 2, minWidth: 200 }}>
                 <label className="form-label">Titre *</label>
                 <input type="text" className="form-input" value={form.titre} onChange={e => setForm(p => ({...p, titre: e.target.value}))} required placeholder="Nom du document" />
               </div>
@@ -188,80 +171,80 @@ export default function Documentation() {
                 </select>
               </div>
             </div>
-            <div className="form-row">
-              <div className="form-group" style={{ flex: 2 }}>
-                <label className="form-label">URL / Lien</label>
-                <input type="url" className="form-input" value={form.url} onChange={e => setForm(p => ({...p, url: e.target.value}))} placeholder="https://docs.google.com/..." />
+            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ flex: 2, minWidth: 200 }}>
+                <label className="form-label">URL / Lien *</label>
+                <input type="url" className="form-input" value={form.url} onChange={e => setForm(p => ({...p, url: e.target.value}))} placeholder="https://docs.google.com/..." required />
               </div>
               <div className="form-group">
                 <label className="form-label">Répertoire</label>
                 <select className="form-input" value={form.repertoire_id} onChange={e => setForm(p => ({...p, repertoire_id: e.target.value}))}>
-                  <option value="">— Aucun (racine) —</option>
+                  <option value="">— Racine —</option>
                   {folders.map(f => <option key={f.id} value={f.id}>📂 {f.titre}</option>)}
                 </select>
               </div>
             </div>
             <div className="form-group">
               <label className="form-label">Description</label>
-              <textarea className="form-input form-textarea" value={form.description} onChange={e => setForm(p => ({...p, description: e.target.value}))} rows={2} placeholder="Brève description..." />
+              <input type="text" className="form-input" value={form.description} onChange={e => setForm(p => ({...p, description: e.target.value}))} placeholder="Brève description..." />
             </div>
             <button type="submit" className="btn btn-primary">{editId ? '💾 Modifier' : '📄 Ajouter'}</button>
           </form>
         </div>
       )}
 
-      {/* Content */}
+      {/* Search/Filter */}
+      <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', marginBottom: 'var(--space-lg)', flexWrap: 'wrap' }}>
+        <input className="form-input" style={{ maxWidth: 300 }} placeholder="Rechercher un document..." value={search} onChange={e => setSearch(e.target.value)} />
+        <select className="form-input" style={{ maxWidth: 200 }} value={filterCat} onChange={e => setFilterCat(e.target.value)}>
+          <option value="">Toutes catégories</option>
+          {CATEGORIES.map(c => <option key={c} value={c}>{CAT_ICONS[c]} {CAT_LABELS[c]}</option>)}
+        </select>
+      </div>
+
       {docs.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-          <p style={{ fontSize: '2rem' }}>📚</p>
-          <p>Aucun document référencé</p>
-          {canAdd && <p className="text-muted">Ajoutez des liens vers vos Google Docs, règlements, procédures...</p>}
+        <div className="paper-card" style={{ textAlign: 'center', padding: '3rem' }}>
+          <p>📚 Aucun document</p>
+          {canAdd && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Ajoutez des liens vers vos Google Docs, règlements, procédures...</p>}
         </div>
       ) : (
         <>
-          {/* Folders */}
-          {folders.map(folder => {
-            const children = docsInFolder(folder.id)
+          {/* Folders as expandable sections */}
+          {folders.filter(matchSearch).map(folder => {
+            const children = docsInFolder(folder.id).filter(matchSearch)
             const isOpen = openFolders[folder.id]
             return (
-              <div key={folder.id} className="docs-folder">
-                <div className="docs-folder-header" onClick={() => toggleFolder(folder.id)}>
-                  <span className="docs-folder-icon">{isOpen ? '📂' : '📁'}</span>
-                  <h2 className="docs-folder-title">{folder.titre}</h2>
-                  <span className="docs-folder-count">{children.length} doc{children.length !== 1 ? 's' : ''}</span>
-                  {folder.description && <span className="docs-folder-desc">— {folder.description}</span>}
-                  <span className="docs-folder-arrow">{isOpen ? '▾' : '▸'}</span>
-                  {user?.isAdmin && (
-                    <button className="btn btn-sm btn-ghost" onClick={(e) => { e.stopPropagation(); remove(folder.id) }} title="Supprimer le répertoire">🗑️</button>
-                  )}
+              <div key={folder.id} className="paper-card" style={{ marginBottom: 'var(--space-md)', overflow: 'hidden' }}>
+                <div onClick={() => toggleFolder(folder.id)} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', padding: 'var(--space-md)', cursor: 'pointer', background: isOpen ? 'rgba(79,98,68,0.05)' : '' }}>
+                  <span style={{ fontSize: '1.3rem' }}>{isOpen ? '📂' : '📁'}</span>
+                  <strong style={{ flex: 1 }}>{folder.titre}</strong>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{children.length} doc{children.length !== 1 ? 's' : ''}</span>
+                  <span>{isOpen ? '▾' : '▸'}</span>
                 </div>
                 {isOpen && (
-                  <div className="docs-folder-content">
+                  <div style={{ borderTop: '1px solid var(--border-color)' }}>
                     {children.length === 0 ? (
-                      <p className="text-muted" style={{ padding: '1rem', margin: 0 }}>Répertoire vide</p>
-                    ) : (
-                      <div className="docs-grid">
-                        {children.map(doc => <DocCard key={doc.id} doc={doc} user={user} isOfficier={isOfficier} onEdit={startEdit} onRemove={remove} />)}
-                      </div>
-                    )}
+                      <p style={{ padding: 'var(--space-md)', margin: 0, color: 'var(--text-muted)', fontSize: '0.85rem' }}>Répertoire vide</p>
+                    ) : children.map(doc => (
+                      <DocRow key={doc.id} doc={doc} isOfficier={isOfficier} isAdmin={user?.isAdmin} onEdit={startEdit} onRemove={remove} />
+                    ))}
                   </div>
                 )}
               </div>
             )
           })}
 
-          {/* Loose docs (no folder) grouped by category */}
-          {looseDocs.length > 0 && (() => {
+          {/* Loose docs by category */}
+          {(() => {
+            const filtered = looseDocs.filter(matchSearch)
+            if (filtered.length === 0) return null
             const grouped = {}
-            looseDocs.forEach(d => {
-              if (!grouped[d.categorie]) grouped[d.categorie] = []
-              grouped[d.categorie].push(d)
-            })
+            filtered.forEach(d => { (grouped[d.categorie] = grouped[d.categorie] || []).push(d) })
             return Object.entries(grouped).map(([cat, items]) => (
-              <div key={cat} className="docs-category">
-                <h2 className="docs-cat-title">{CAT_ICONS[cat]} {CAT_LABELS[cat]}</h2>
-                <div className="docs-grid">
-                  {items.map(doc => <DocCard key={doc.id} doc={doc} user={user} isOfficier={isOfficier} onEdit={startEdit} onRemove={remove} />)}
+              <div key={cat} style={{ marginBottom: 'var(--space-lg)' }}>
+                <h2 style={{ fontSize: '1rem', marginBottom: 'var(--space-sm)', color: 'var(--military-dark)' }}>{CAT_ICONS[cat]} {CAT_LABELS[cat]}</h2>
+                <div className="paper-card">
+                  {items.map(doc => <DocRow key={doc.id} doc={doc} isOfficier={isOfficier} isAdmin={user?.isAdmin} onEdit={startEdit} onRemove={remove} />)}
                 </div>
               </div>
             ))
@@ -272,26 +255,18 @@ export default function Documentation() {
   )
 }
 
-function DocCard({ doc, user, isOfficier, onEdit, onRemove }) {
+function DocRow({ doc, isOfficier, isAdmin, onEdit, onRemove }) {
   return (
-    <div className={`card docs-card ${!doc.visible ? 'docs-hidden' : ''}`}>
-      <div className="docs-card-header">
-        <h3 className="docs-card-title">{doc.titre}</h3>
-        {!doc.visible && <span className="badge badge-muted">Masqué</span>}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', padding: 'var(--space-sm) var(--space-md)', borderBottom: '1px solid var(--border-color)' }}>
+      <span style={{ fontSize: '1.1rem' }}>{CAT_ICONS[doc.categorie] || '📄'}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <strong style={{ fontSize: '0.9rem' }}>{doc.titre}</strong>
+        {doc.description && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{doc.description}</div>}
       </div>
-      {doc.description && <p className="docs-card-desc">{doc.description}</p>}
-      <div className="docs-card-actions">
-        {doc.url && (
-          <a href={doc.url} target="_blank" rel="noopener noreferrer" className="btn btn-sm docs-link">
-            🔗 Ouvrir le lien
-          </a>
-        )}
-        {isOfficier && (
-          <>
-            <button className="btn btn-sm" onClick={() => onEdit(doc)}>✏️</button>
-            {user?.isAdmin && <button className="btn btn-sm btn-ghost" onClick={() => onRemove(doc.id)}>🗑️</button>}
-          </>
-        )}
+      <div style={{ display: 'flex', gap: 'var(--space-xs)', alignItems: 'center', flexShrink: 0 }}>
+        {doc.url && <a href={doc.url} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary" style={{ padding: '4px 12px', fontSize: '0.75rem', textDecoration: 'none' }}>🔗 Ouvrir</a>}
+        {isOfficier && <button className="btn btn-sm btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => onEdit(doc)}>✏️</button>}
+        {isAdmin && <button className="btn btn-sm btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem', color: 'var(--danger)' }} onClick={() => onRemove(doc.id)}>🗑️</button>}
       </div>
     </div>
   )
