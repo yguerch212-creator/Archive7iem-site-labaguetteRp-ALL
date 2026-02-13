@@ -39,12 +39,12 @@ html {
 body {
   font-family: 'IBM Plex Mono', monospace;
   line-height: 1.5;
-  background: url('/assets/img/paper.jpg') repeat;
+  background: #ddd8cb url('/assets/img/paper.jpg') repeat;
   background-size: 400px 400px;
+  background-blend-mode: multiply;
   color: var(--text-primary);
   overflow-x: hidden;
   min-height: 100vh;
-  /* Smooth scroll for mobile */
   -webkit-overflow-scrolling: touch;
 }
 
@@ -101,16 +101,23 @@ a:hover { text-decoration: underline; }
 .gap-md { gap: var(--space-md); }
 .gap-lg { gap: var(--space-lg); }
 
-/* ============= PAPER CARD ============= */
-.paper-card {
-  background: var(--paper-bg);
-  background-image: url('/paper.jpg');
-  background-size: cover;
-  background-blend-mode: lighten;
-  border: 2px solid var(--border-color);
+/* ============= CARDS ============= */
+.card {
+  background: #f5f2e8;
+  border: 2px solid rgba(44, 35, 23, 0.18);
   border-radius: var(--border-radius);
   padding: var(--space-md);
-  box-shadow: var(--shadow-medium);
+  box-shadow: 0 1px 4px rgba(44, 35, 23, 0.08);
+  margin-bottom: var(--space-md);
+}
+
+/* ============= PAPER CARD ============= */
+.paper-card {
+  background: #f5f2e8;
+  border: 2px solid rgba(44, 35, 23, 0.2);
+  border-radius: var(--border-radius);
+  padding: var(--space-md);
+  box-shadow: 0 2px 8px rgba(44, 35, 23, 0.12), 0 1px 3px rgba(44, 35, 23, 0.08);
   position: relative;
   margin-bottom: var(--space-md);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -185,20 +192,21 @@ a:hover { text-decoration: underline; }
 .form-select {
   width: 100%;
   padding: var(--space-sm) var(--space-md);
-  border: 2px solid var(--border-color);
+  border: 2px solid rgba(44, 35, 23, 0.25);
   border-radius: var(--border-radius);
-  background: var(--paper-bg);
+  background: #faf8f2;
   color: var(--text-primary);
   font-family: inherit;
-  font-size: 16px; /* Prevents zoom on iOS */
-  transition: border-color 0.2s ease;
+  font-size: 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   -webkit-appearance: none;
   min-height: 44px;
 }
 .form-input:focus, .form-textarea:focus, .form-select:focus {
   outline: none;
   border-color: var(--military-green);
-  box-shadow: 0 0 0 3px rgba(45, 74, 52, 0.1);
+  box-shadow: 0 0 0 3px rgba(45, 74, 52, 0.15);
+  background: #fff;
 }
 .form-textarea { resize: vertical; min-height: 100px; }
 
