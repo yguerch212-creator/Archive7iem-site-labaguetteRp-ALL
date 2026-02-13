@@ -40,6 +40,28 @@ router.get('/effectif/:effectif_id', auth, async (req, res) => {
   }
 })
 
+// GET /api/medical/:id — Single visite
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const row = await queryOne(`
+      SELECT v.*,
+             e.nom AS effectif_nom, e.prenom AS effectif_prenom, e.date_naissance, e.lieu_naissance, e.taille_cm, e.specialite,
+             g.nom_complet AS effectif_grade, u.code AS effectif_unite_code, u.nom AS effectif_unite_nom,
+             c.username AS created_by_nom
+      FROM visites_medicales v
+      JOIN effectifs e ON e.id = v.effectif_id
+      LEFT JOIN grades g ON g.id = e.grade_id
+      LEFT JOIN unites u ON u.id = e.unite_id
+      JOIN users c ON c.id = v.created_by
+      WHERE v.id = ?
+    `, [req.params.id])
+    if (!row) return res.status(404).json({ success: false, message: 'Visite introuvable' })
+    res.json({ success: true, data: row })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
 // POST /api/medical — Créer une visite (recenseur/admin + Sanitäts)
 router.post('/', auth, async (req, res) => {
   try {
@@ -49,15 +71,25 @@ router.post('/', auth, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Accès réservé — Sanitäts, recenseurs ou administrateurs' })
     }
 
-    const { effectif_id, date_visite, medecin, diagnostic, aptitude, restrictions, notes_confidentielles } = req.body
+    const { effectif_id, date_visite, medecin, diagnostic, aptitude, restrictions, notes_confidentielles,
+      poids, imc, groupe_sanguin, allergenes, antecedents_medicaux, antecedents_psy,
+      conso_drogue, conso_alcool, conso_tabac,
+      test_vue, test_ouie, test_cardio, test_reflex, test_tir, score_aptitude, commentaire, facture
+    } = req.body
     if (!effectif_id || !date_visite) {
       return res.status(400).json({ success: false, message: 'effectif_id et date_visite requis' })
     }
 
     const [result] = await pool.execute(
-      `INSERT INTO visites_medicales (effectif_id, date_visite, medecin, diagnostic, aptitude, restrictions, notes_confidentielles, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [effectif_id, date_visite, medecin || null, diagnostic || null, aptitude || 'Apte', restrictions || null, notes_confidentielles || null, req.user.id]
+      `INSERT INTO visites_medicales (effectif_id, date_visite, medecin, diagnostic, aptitude, restrictions, notes_confidentielles,
+        poids, imc, groupe_sanguin, allergenes, antecedents_medicaux, antecedents_psy,
+        conso_drogue, conso_alcool, conso_tabac,
+        test_vue, test_ouie, test_cardio, test_reflex, test_tir, score_aptitude, commentaire, facture, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [effectif_id, date_visite, medecin || null, diagnostic || null, aptitude || 'Apte', restrictions || null, notes_confidentielles || null,
+        poids || null, imc || null, groupe_sanguin || null, allergenes || null, antecedents_medicaux || null, antecedents_psy || null,
+        conso_drogue || null, conso_alcool || null, conso_tabac || null,
+        test_vue || null, test_ouie || null, test_cardio || null, test_reflex || null, test_tir || null, score_aptitude || null, commentaire || null, facture || '100 RM', req.user.id]
     )
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {

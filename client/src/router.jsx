@@ -20,6 +20,7 @@ import AdminLogs from './pages/admin/AdminLogs'
 import PDS from './pages/pds/PDS'
 import InterditsFront from './pages/interdits/InterditsFront'
 import VisitesMedicales from './pages/medical/VisitesMedicales'
+import VisiteMedicaleView from './pages/medical/VisiteMedicaleView'
 import Documentation from './pages/documentation/Documentation'
 import DossiersList from './pages/dossiers/DossiersList'
 import DossierPersonnel from './pages/dossiers/DossierPersonnel'
@@ -59,6 +60,7 @@ function AppRouter() {
       
       {/* Médical */}
       <Route path="/medical" element={<ProtectedRoute><VisitesMedicales /></ProtectedRoute>} />
+      <Route path="/medical/:id" element={<ProtectedRoute><VisiteMedicaleView /></ProtectedRoute>} />
       
       {/* Documentation */}
       <Route path="/documentation" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
