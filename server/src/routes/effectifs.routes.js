@@ -1,10 +1,12 @@
 const router = require('express').Router()
-const { query, queryOne } = require('../config/db')
+const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
 const { optionalAuth } = require('../middleware/auth')
 const recenseur = require('../middleware/recenseur')
 const admin = require('../middleware/admin')
 const { upload, handleUploadError } = require('../middleware/upload')
+const bcrypt = require('bcryptjs')
+const crypto = require('crypto')
 
 // GET /api/effectifs?unite_id=X (guest accessible)
 router.get('/', optionalAuth, async (req, res) => {
@@ -61,24 +63,56 @@ router.get('/:id', optionalAuth, async (req, res) => {
 })
 
 // POST /api/effectifs (admin ou recenseur)
+// Auto-creates a user account + links effectif_id
 router.post('/', auth, recenseur, async (req, res) => {
   try {
     const f = req.body
-    const [result] = await require('../config/db').pool.execute(
+    const [result] = await pool.execute(
       `INSERT INTO effectifs (nom, prenom, surnom, unite_id, grade_id, fonction, categorie, specialite, 
         date_naissance, lieu_naissance, nationalite, taille_cm,
         arme_principale, arme_secondaire, equipement_special, tenue,
-        historique, date_entree_ig, date_entree_irl)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        historique, date_entree_ig, date_entree_irl, discord_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [f.nom, f.prenom, f.surnom || null, f.unite_id || null, f.grade_id || null,
        f.fonction || null, f.categorie || null, f.specialite || null,
        f.date_naissance || null, f.lieu_naissance || null,
        f.nationalite || 'Allemande', f.taille_cm || null,
        f.arme_principale || null, f.arme_secondaire || null,
        f.equipement_special || null, f.tenue || null,
-       f.historique || null, f.date_entree_ig || null, f.date_entree_irl || null]
+       f.historique || null, f.date_entree_ig || null, f.date_entree_irl || null,
+       f.discord_id || null]
     )
-    res.json({ success: true, data: { id: result.insertId } })
+    const effectifId = result.insertId
+
+    // Auto-create user account
+    const username = `${(f.prenom || '').toLowerCase()}.${(f.nom || '').toLowerCase()}`.replace(/[^a-z0-9.]/g, '')
+    const tempPassword = crypto.randomBytes(4).toString('hex') // 8-char random
+    const hash = await bcrypt.hash(tempPassword, 10)
+
+    // Check if username already exists, append number if so
+    let finalUsername = username
+    let attempt = 0
+    while (true) {
+      const existing = await queryOne('SELECT id FROM users WHERE username = ?', [finalUsername])
+      if (!existing) break
+      attempt++
+      finalUsername = `${username}${attempt}`
+    }
+
+    const [userResult] = await pool.execute(
+      `INSERT INTO users (username, password_hash, nom, prenom, unite_id, grade_id, effectif_id, must_change_password, active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1)`,
+      [finalUsername, hash, f.nom, f.prenom, f.unite_id || null, f.grade_id || null, effectifId]
+    )
+
+    res.json({ 
+      success: true, 
+      data: { 
+        id: effectifId, 
+        account: { username: finalUsername, tempPassword, userId: userResult.insertId },
+        discord_id: f.discord_id || null
+      } 
+    })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
   }
@@ -88,11 +122,11 @@ router.post('/', auth, recenseur, async (req, res) => {
 router.put('/:id', auth, recenseur, async (req, res) => {
   try {
     const f = req.body
-    await require('../config/db').pool.execute(
+    await pool.execute(
       `UPDATE effectifs SET nom=?, prenom=?, surnom=?, unite_id=?, grade_id=?, fonction=?, categorie=?, specialite=?,
         date_naissance=?, lieu_naissance=?, nationalite=?, taille_cm=?,
         arme_principale=?, arme_secondaire=?, equipement_special=?, tenue=?,
-        historique=?, date_entree_ig=?, date_entree_irl=?
+        historique=?, date_entree_ig=?, date_entree_irl=?, discord_id=?
        WHERE id=?`,
       [f.nom, f.prenom, f.surnom || null, f.unite_id || null, f.grade_id || null,
        f.fonction || null, f.categorie || null, f.specialite || null,
@@ -101,7 +135,7 @@ router.put('/:id', auth, recenseur, async (req, res) => {
        f.arme_principale || null, f.arme_secondaire || null,
        f.equipement_special || null, f.tenue || null,
        f.historique || null, f.date_entree_ig || null, f.date_entree_irl || null,
-       req.params.id]
+       f.discord_id || null, req.params.id]
     )
     res.json({ success: true })
   } catch (err) {
@@ -114,7 +148,7 @@ router.post('/:id/photo', auth, recenseur, upload.single('photo'), handleUploadE
   try {
     if (!req.file) return res.status(400).json({ success: false, message: 'Aucun fichier' })
     const photoUrl = `/uploads/${req.file.destination.split('/uploads/')[1]}/${req.file.filename}`
-    await require('../config/db').pool.execute('UPDATE effectifs SET photo = ? WHERE id = ?', [photoUrl, req.params.id])
+    await pool.execute('UPDATE effectifs SET photo = ? WHERE id = ?', [photoUrl, req.params.id])
     res.json({ success: true, data: { photo: photoUrl } })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
@@ -124,7 +158,7 @@ router.post('/:id/photo', auth, recenseur, upload.single('photo'), handleUploadE
 // DELETE /api/effectifs/:id (admin only)
 router.delete('/:id', auth, admin, async (req, res) => {
   try {
-    await require('../config/db').pool.execute('DELETE FROM effectifs WHERE id = ?', [req.params.id])
+    await pool.execute('DELETE FROM effectifs WHERE id = ?', [req.params.id])
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })

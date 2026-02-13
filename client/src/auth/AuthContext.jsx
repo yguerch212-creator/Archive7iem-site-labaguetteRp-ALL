@@ -29,12 +29,12 @@ export function AuthProvider({ children }) {
   const login = async (credentials) => {
     try {
       const response = await apiClient.post('/auth/login', credentials)
-      const { token, user: userData } = response.data
+      const { token, user: userData, mustChangePassword } = response.data
       
       localStorage.setItem('authToken', token)
       setUser(userData)
       
-      return { success: true }
+      return { success: true, mustChangePassword: !!mustChangePassword }
     } catch (error) {
       return {
         success: false,

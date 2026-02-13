@@ -17,7 +17,7 @@ export default function Login() {
     const result = await login({ username, password })
     setLoading(false)
     if (result.success) {
-      navigate('/dashboard')
+      navigate(result.mustChangePassword ? '/change-password' : '/dashboard')
     } else {
       setError(result.error)
     }
