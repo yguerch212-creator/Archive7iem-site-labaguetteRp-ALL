@@ -1,7 +1,7 @@
 import BackButton from '../../components/BackButton'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../auth/useAuth'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../../api/client'
 import EffectifAutocomplete from '../../components/EffectifAutocomplete'
 
@@ -19,6 +19,8 @@ const defaultForm = {
 export default function VisitesMedicales() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const effectifFilter = searchParams.get('effectif')
   const [visites, setVisites] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [message, setMessage] = useState(null)
@@ -54,6 +56,7 @@ export default function VisitesMedicales() {
   const fmtDate = d => d ? new Date(d + 'T00:00').toLocaleDateString('fr-FR') : '—'
 
   const filtered = visites.filter(v => {
+    if (effectifFilter && v.effectif_id !== parseInt(effectifFilter)) return false
     if (filterAptitude && v.aptitude !== filterAptitude) return false
     if (search && !`${v.effectif_prenom} ${v.effectif_nom} ${v.medecin || ''}`.toLowerCase().includes(search.toLowerCase())) return false
     return true

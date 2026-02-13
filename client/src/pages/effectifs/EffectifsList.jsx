@@ -94,7 +94,7 @@ export default function EffectifsList() {
               <h2 style={{ margin: '0 0 4px' }}>{selected.prenom} {selected.nom}</h2>
               <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.85rem' }}>{selected.grade_nom || '—'} — {selected.fonction || '—'}</p>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-md)' }}>
               <button className="paper-card unit-card" style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-lg)', border: '1px solid var(--border-color)' }} onClick={() => navigate(`/effectifs/${selected.id}/soldbuch`)}>
                 <div style={{ fontSize: '2rem', marginBottom: 6 }}>📘</div>
                 <strong>Soldbuch</strong>
@@ -102,6 +102,10 @@ export default function EffectifsList() {
               <button className="paper-card unit-card" style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-lg)', border: '1px solid var(--border-color)' }} onClick={() => navigate(`/dossiers/effectif/${selected.id}`)}>
                 <div style={{ fontSize: '2rem', marginBottom: 6 }}>📁</div>
                 <strong>Dossier</strong>
+              </button>
+              <button className="paper-card unit-card" style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-lg)', border: '1px solid var(--border-color)' }} onClick={() => navigate(`/medical?effectif=${selected.id}`)}>
+                <div style={{ fontSize: '2rem', marginBottom: 6 }}>🏥</div>
+                <strong>Médical</strong>
               </button>
               <button className="paper-card unit-card" style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-lg)', border: '1px solid var(--border-color)' }} onClick={() => navigate(`/effectifs/${selected.id}/edit`)}>
                 <div style={{ fontSize: '2rem', marginBottom: 6 }}>✏️</div>

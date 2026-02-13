@@ -150,6 +150,7 @@ export default function Search() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               <button className="btn btn-primary" onClick={() => navigate(`/effectifs/${selectedEffectif.id}/soldbuch`)}>📘 Soldbuch</button>
               <button className="btn btn-secondary" onClick={() => navigate(`/dossiers/effectif/${selectedEffectif.id}`)}>📁 Dossier</button>
+              <button className="btn btn-secondary" onClick={() => navigate(`/medical?effectif=${selectedEffectif.id}`)}>🏥 Dossier médical</button>
               <button className="btn btn-secondary" onClick={() => navigate(`/effectifs/${selectedEffectif.id}/edit`)}>✏️ Modifier</button>
               <button className="btn" onClick={() => { setQuery(`${selectedEffectif.prenom} ${selectedEffectif.nom}`); setSelectedEffectif(null) }}>🔎 Rechercher dans les archives</button>
             </div>
