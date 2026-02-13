@@ -15,12 +15,11 @@ const BLOCK_TYPES = [
 ]
 
 const DOC_CATEGORIES = [
-  { key: 'rapport', label: '📋 Rapports', endpoint: '/rapports', mapFn: (r) => ({ id: r.id, label: `${r.numero || 'Sans numéro'} — ${r.titre || r.type}`, sub: r.date_rp || '', url: `/rapports/${r.id}` }) },
-  { key: 'pds', label: '📊 PDS (Semaines)', endpoint: '/pds', mapFn: (r) => ({ id: r.id, label: `Semaine du ${r.semaine_du || '?'}`, sub: `${r.prenom || ''} ${r.nom || ''} — ${r.total_heures || 0}h`, url: `/pds` }) },
-  { key: 'visite', label: '🏥 Visites médicales', endpoint: '/medical', mapFn: (r) => ({ id: r.id, label: `Visite — ${r.effectif_prenom || ''} ${r.effectif_nom || ''}`, sub: r.date_visite_rp || r.date_visite || '', url: `/medical/${r.id}` }) },
-  { key: 'telegramme', label: '📨 Télégrammes', endpoint: '/telegrammes', mapFn: (r) => ({ id: r.id, label: `${r.numero || 'TEL'} — ${(r.objet || '').substring(0, 40)}`, sub: `${r.expediteur_texte || r.expediteur_prenom || '?'} → ${r.destinataire_texte || r.destinataire_prenom || '?'}`, url: `/telegrammes` }) },
-  { key: 'interdit', label: '⛔ Interdits de front', endpoint: '/interdits', mapFn: (r) => ({ id: r.id, label: `Interdit — ${r.effectif_prenom || ''} ${r.effectif_nom || ''}`, sub: `${r.motif || ''}`.substring(0, 50), url: `/interdits` }) },
-  { key: 'piece', label: '⚖️ Pièces d\'affaire', endpoint: null, mapFn: null }, // loaded from affaire context
+  { key: 'rapport', label: '📋 Rapports', icon: '📋', endpoint: '/rapports', mapFn: (r) => ({ id: r.id, label: `${r.titre || r.type}`, sub: `${r.auteur_nom || '?'} — ${r.date_rp || ''}`, badge: r.type, url: `/rapports/${r.id}` }) },
+  { key: 'visite', label: '🏥 Visites médicales', icon: '🏥', endpoint: '/medical', mapFn: (r) => ({ id: r.id, label: `${r.effectif_prenom || ''} ${r.effectif_nom || ''}`, sub: `${r.date_visite_rp || ''} — ${r.statut || ''}`, badge: 'visite', url: `/medical/${r.id}` }) },
+  { key: 'telegramme', label: '📨 Télégrammes', icon: '📨', endpoint: '/telegrammes', mapFn: (r) => ({ id: r.id, label: `${r.numero || 'TEL'} — ${(r.objet || '').substring(0, 40)}`, sub: `${r.expediteur_texte || '?'} → ${r.destinataire_texte || '?'}`, badge: r.priorite || 'normal', url: `/telegrammes` }) },
+  { key: 'interdit', label: '⛔ Interdits de front', icon: '⛔', endpoint: '/interdits', mapFn: (r) => ({ id: r.id, label: `${r.effectif_prenom || ''} ${r.effectif_nom || ''}`, sub: `${(r.motif || '').substring(0, 50)}`, badge: r.statut || 'actif', url: `/interdits` }) },
+  { key: 'piece', label: '⚖️ Pièces d\'affaire', icon: '⚖️', endpoint: null, mapFn: null },
 ]
 
 const GRID = 5
@@ -374,11 +373,10 @@ export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPub
             <DocumentPicker
               affaireId={affaireId}
               onSelect={(docRef) => {
-                setBlocks(prev => {
-                  const updated = prev.map(b => b.id === showDocPicker ? { ...b, docRef, content: docRef.label } : b)
-                  pushHistory(updated)
-                  return updated
-                })
+                const targetId = showDocPicker
+                const updated = blocks.map(b => b.id === targetId ? { ...b, docRef, content: docRef.label } : b)
+                setBlocks(updated)
+                pushHistory(updated)
                 setShowDocPicker(null)
               }}
               onClose={() => setShowDocPicker(null)}
@@ -406,12 +404,14 @@ function DocumentPicker({ affaireId, onSelect, onClose }) {
       if (cat.key === 'piece' && affaireId) {
         const res = await apiClient.get(`/affaires/${affaireId}`)
         setItems((res.data.pieces || []).map(p => ({
-          id: p.id, label: `${p.titre}`, sub: `${p.type} — ${p.date_rp || ''}`, url: `/sanctions/${affaireId}`
+          id: p.id, label: `${p.titre}`, sub: `${p.type} — ${p.date_rp || ''}`, badge: p.type, url: `/sanctions/${affaireId}`
         })))
       } else if (cat.endpoint) {
         const res = await apiClient.get(cat.endpoint)
-        const data = Array.isArray(res.data) ? res.data : (res.data.rapports || res.data.items || res.data.semaines || [])
-        setItems(data.map(cat.mapFn).slice(0, 50))
+        // API returns { success, data: [...] }
+        const raw = res.data?.data || res.data || []
+        const data = Array.isArray(raw) ? raw : []
+        setItems(data.map(cat.mapFn).slice(0, 100))
       }
     } catch (err) {
       console.error('Doc picker load error:', err)
@@ -435,21 +435,24 @@ function DocumentPicker({ affaireId, onSelect, onClose }) {
 
       {!category ? (
         <div className="doc-picker-categories">
+          <p className="doc-picker-hint">Choisissez le type de document à épingler :</p>
           {categories.map(cat => (
             <button key={cat.key} className="doc-picker-cat-btn" onClick={() => loadCategory(cat)}>
-              {cat.label}
+              <span className="doc-cat-icon">{cat.icon}</span>
+              <span className="doc-cat-label">{cat.label.replace(/^[^\s]+\s/, '')}</span>
             </button>
           ))}
         </div>
       ) : (
         <>
           <div className="doc-picker-nav">
-            <button className="btn btn-sm btn-secondary" onClick={() => setCategory(null)}>← Retour</button>
+            <button className="btn btn-sm btn-secondary" onClick={() => { setCategory(null); setItems([]) }}>← Retour</button>
             <span className="doc-picker-cat-title">{category.label}</span>
+            <span className="doc-picker-count">{filtered.length} résultat{filtered.length !== 1 ? 's' : ''}</span>
           </div>
           <input
             className="form-input doc-picker-search"
-            placeholder="Rechercher..."
+            placeholder="🔍 Filtrer par nom, titre, auteur..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             autoFocus
@@ -466,7 +469,10 @@ function DocumentPicker({ affaireId, onSelect, onClose }) {
                   className="doc-picker-item"
                   onClick={() => onSelect({ ...item, category: category.label })}
                 >
-                  <div className="doc-picker-item-label">{item.label}</div>
+                  <div className="doc-picker-item-top">
+                    <span className="doc-picker-item-label">{item.label}</span>
+                    {item.badge && <span className="doc-picker-item-badge">{item.badge}</span>}
+                  </div>
                   {item.sub && <div className="doc-picker-item-sub">{item.sub}</div>}
                 </button>
               ))}
