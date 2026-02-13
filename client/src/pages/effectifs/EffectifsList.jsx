@@ -84,7 +84,8 @@ export default function EffectifsList() {
                   <td style={tdStyle}>{e.date_entree_ig || '—'}</td>
                   <td style={tdStyle}>{e.date_entree_irl || '—'}</td>
                   <td style={{ ...tdStyle, textAlign: 'center' }}>
-                    <Link to={`/effectifs/${e.id}/soldbuch`}>📘</Link>
+                    <Link to={`/effectifs/${e.id}/soldbuch`} title="Soldbuch">📘</Link>
+                    <Link to={`/dossiers/effectif/${e.id}`} title="Dossier">📁</Link>
                   </td>
                   <td style={{ ...tdStyle, textAlign: 'center' }}>
                     <Link to={`/rapports?auteur=${encodeURIComponent(e.prenom + ' ' + e.nom)}`}>✏️</Link>

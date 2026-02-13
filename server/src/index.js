@@ -19,6 +19,7 @@ const interditsRoutes = require('./routes/interdits.routes')
 const medicalRoutes = require('./routes/medical.routes')
 const documentationRoutes = require('./routes/documentation.routes')
 const discordRoutes = require('./routes/discord.routes')
+const dossiersRoutes = require('./routes/dossiers.routes')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -50,6 +51,7 @@ app.use('/api/interdits', interditsRoutes)
 app.use('/api/medical', medicalRoutes)
 app.use('/api/documentation', documentationRoutes)
 app.use('/api/discord', discordRoutes)
+app.use('/api/dossiers', dossiersRoutes)
 
 // Stats endpoint
 app.get('/api/stats', async (req, res) => {
