@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import apiClient from '../../api/client'
-import Topbar from '../../components/layout/Topbar'
 
 export default function Soldbuch() {
   const { id } = useParams()
@@ -15,16 +14,16 @@ export default function Soldbuch() {
     }).catch(() => setLoading(false))
   }, [id])
 
-  if (loading) return <><Topbar /><div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div></>
-  if (!data) return <><Topbar /><div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Effectif introuvable</div></>
+  if (loading) return <><div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div></>
+  if (!data) return <><div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Effectif introuvable</div></>
 
   const e = data.effectif
   const unitTitle = `${e.unite_code || ''} ${e.unite_nom || ''}`.trim()
 
   return (
     <>
-      <Topbar />
-      <div className="container" style={{ maxWidth: 900, marginTop: 'var(--space-xl)' }}>
+      
+      <div className="container" style={{ maxWidth: 900 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
           <Link to={`/effectifs/unite/${e.unite_id}`} className="btn btn-secondary btn-small">← Retour liste</Link>
           <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
@@ -107,7 +106,7 @@ export default function Soldbuch() {
           </div>
 
           {/* Signatures */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'var(--space-xl)', paddingTop: 'var(--space-lg)', borderTop: '2px solid var(--border-color)', flexWrap: 'wrap', gap: 'var(--space-lg)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 'var(--space-lg)', borderTop: '2px solid var(--border-color)', flexWrap: 'wrap', gap: 'var(--space-lg)' }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ borderBottom: '1px solid var(--text-primary)', width: 200, height: 60, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 4 }}>
                 {e.signature_soldat && <img src={e.signature_soldat} alt="" style={{ maxHeight: 50, maxWidth: 180 }} />}

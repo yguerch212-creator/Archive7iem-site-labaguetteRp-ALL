@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import apiClient from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
-import Topbar from '../../components/layout/Topbar'
 
 const TYPE_LABELS = { rapport: 'Rapport', recommandation: 'Recommandation', incident: 'Incident' }
 const TYPE_CLASSES = { rapport: 'type-rapport', recommandation: 'type-recommandation', incident: 'type-incident' }
@@ -36,8 +35,8 @@ export default function RapportsList() {
 
   return (
     <>
-      <Topbar />
-      <div className="container" style={{ marginTop: 'var(--space-xl)' }}>
+      
+      <div className="container" style={{ }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
           <Link to="/dashboard" className="btn btn-secondary btn-small">← Retour</Link>
           <Link to="/rapports/new" className="btn btn-primary btn-small">+ Nouveau rapport</Link>

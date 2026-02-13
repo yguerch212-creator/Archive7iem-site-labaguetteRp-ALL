@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import apiClient from '../../api/client'
-import Topbar from '../../components/layout/Topbar'
 
 export default function EffectifsList() {
   const { uniteId } = useParams()
@@ -27,8 +26,8 @@ export default function EffectifsList() {
 
   return (
     <>
-      <Topbar />
-      <div className="container" style={{ marginTop: 'var(--space-xl)' }}>
+      
+      <div className="container" style={{ }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
           <Link to="/effectifs" className="btn btn-secondary btn-small">← Retour aux unités</Link>
           <Link to={`/effectifs/new?unite_id=${uniteId}`} className="btn btn-primary btn-small">+ Ajouter</Link>

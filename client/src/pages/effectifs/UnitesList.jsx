@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import apiClient from '../../api/client'
-import Topbar from '../../components/layout/Topbar'
 
 const UNIT_COLORS = {
   '916': '#dcdcdc', '254': '#ff9500', '916S': '#3da9fc',
@@ -17,7 +16,7 @@ export default function UnitesList() {
 
   return (
     <>
-      <Topbar />
+      
       <div className="container" style={{ marginTop: 'var(--space-xxl)', maxWidth: 800 }}>
         <Link to="/dashboard" className="btn btn-secondary btn-small" style={{ marginBottom: 'var(--space-lg)' }}>← Retour</Link>
         <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-xs)' }}>Effectifs</h1>

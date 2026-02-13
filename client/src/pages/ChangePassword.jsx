@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import apiClient from '../api/client'
-import Topbar from '../components/layout/Topbar'
 
 export default function ChangePassword() {
   const [current, setCurrent] = useState('')
@@ -27,7 +26,7 @@ export default function ChangePassword() {
 
   return (
     <>
-      <Topbar />
+      
       <div className="container" style={{ maxWidth: 500, marginTop: 'var(--space-xxl)' }}>
         <div className="paper-card">
           <h2>Changer le mot de passe</h2>

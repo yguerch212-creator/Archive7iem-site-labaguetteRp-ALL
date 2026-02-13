@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import apiClient from '../../api/client'
-import Topbar from '../../components/layout/Topbar'
 
 const TYPE_LABELS = { rapport: 'Rapport Journalier', recommandation: 'Recommandation', incident: 'Rapport d\'Incident' }
 
@@ -14,16 +13,16 @@ export default function RapportView() {
     apiClient.get(`/rapports/${id}`).then(r => { setRapport(r.data.data); setLoading(false) }).catch(() => setLoading(false))
   }, [id])
 
-  if (loading) return <><Topbar /><div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div></>
-  if (!rapport) return <><Topbar /><div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Rapport introuvable</div></>
+  if (loading) return <><div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div></>
+  if (!rapport) return <><div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Rapport introuvable</div></>
 
   const R = rapport
   const media = R.fichier_media ? (typeof R.fichier_media === 'string' ? JSON.parse(R.fichier_media) : R.fichier_media) : []
 
   return (
     <>
-      <Topbar />
-      <div className="container" style={{ maxWidth: 980, marginTop: 'var(--space-xl)' }}>
+      
+      <div className="container" style={{ maxWidth: 980 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
           <Link to="/rapports" className="btn btn-secondary btn-small">← Retour liste</Link>
           {!R.published && <Link to={`/rapports/${id}/layout`} className="btn btn-primary btn-small">🖋️ Mise en page</Link>}

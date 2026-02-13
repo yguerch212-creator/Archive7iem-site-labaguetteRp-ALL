@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import apiClient from '../../api/client'
 
@@ -74,6 +75,7 @@ export default function AdminUsers() {
 
   return (
     <div className="page-container">
+      <Link to="/dashboard" className="btn-back">← Tableau de bord</Link>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
         <h1 className="page-title" style={{ margin: 0 }}>⚙️ Gestion des utilisateurs</h1>
         <button className="btn btn-primary" onClick={() => setShowCreate(!showCreate)}>

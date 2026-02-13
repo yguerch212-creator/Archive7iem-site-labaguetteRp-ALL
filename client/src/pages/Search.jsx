@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import apiClient from '../api/client'
 
 export default function Search() {
@@ -27,6 +27,7 @@ export default function Search() {
 
   return (
     <div className="page-container">
+      <Link to="/dashboard" className="btn-back">← Tableau de bord</Link>
       <h1 className="page-title">🔍 Recherche dans les Archives</h1>
 
       <form onSubmit={search} className="card" style={{ marginBottom: '2rem' }}>

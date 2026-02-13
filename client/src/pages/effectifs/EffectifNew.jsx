@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, useParams, Link } from 'react-router-dom'
 import apiClient from '../../api/client'
-import Topbar from '../../components/layout/Topbar'
 
 export default function EffectifNew() {
   const navigate = useNavigate()
@@ -65,12 +64,12 @@ export default function EffectifNew() {
     }
   }
 
-  if (loading) return <><Topbar /><div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div></>
+  if (loading) return <><div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div></>
 
   return (
     <>
-      <Topbar />
-      <div className="container" style={{ maxWidth: 800, marginTop: 'var(--space-xl)' }}>
+      
+      <div className="container" style={{ maxWidth: 800 }}>
         <Link to={form.unite_id ? `/effectifs/unite/${form.unite_id}` : '/effectifs'} className="btn btn-secondary btn-small">← Retour</Link>
         <h1 style={{ textAlign: 'center' }}>{isEdit ? 'Modifier l\'effectif' : 'Nouvel Effectif'}</h1>
 

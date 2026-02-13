@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import apiClient from '../api/client'
-import Topbar from '../components/layout/Topbar'
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -29,8 +28,8 @@ export default function Dashboard() {
 
   return (
     <>
-      <Topbar />
-      <div className="container" style={{ marginTop: 'var(--space-xxl)' }}>
+      
+      <div className="container" >
         {/* En-tête */}
         <div className="paper-card" style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
           <h1 style={{ marginBottom: 'var(--space-xs)' }}>Archives 7e Armeekorps</h1>
@@ -105,7 +104,7 @@ export default function Dashboard() {
           ))}
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: 'var(--space-xxl)', marginBottom: 'var(--space-xl)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+        <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
           Archives du 7e Armeekorps — Commandement de la 916. Grenadier-Regiment<br />
           Accès réservé aux personnels autorisés
         </div>

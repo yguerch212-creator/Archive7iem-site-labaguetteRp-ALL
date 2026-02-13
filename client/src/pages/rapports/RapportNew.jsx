@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import apiClient from '../../api/client'
-import Topbar from '../../components/layout/Topbar'
 
 export default function RapportNew() {
   const navigate = useNavigate()
@@ -49,8 +48,8 @@ export default function RapportNew() {
 
   return (
     <>
-      <Topbar />
-      <div className="container" style={{ maxWidth: 900, marginTop: 'var(--space-xl)' }}>
+      
+      <div className="container" style={{ maxWidth: 900 }}>
         <Link to="/rapports" className="btn btn-secondary btn-small">← Retour</Link>
         <h1 style={{ textAlign: 'center' }}>Nouveau Rapport</h1>
 
