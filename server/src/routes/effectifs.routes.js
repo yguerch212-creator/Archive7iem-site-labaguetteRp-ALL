@@ -4,6 +4,7 @@ const auth = require('../middleware/auth')
 const { optionalAuth } = require('../middleware/auth')
 const recenseur = require('../middleware/recenseur')
 const admin = require('../middleware/admin')
+const { upload, handleUploadError } = require('../middleware/upload')
 
 // GET /api/effectifs?unite_id=X (guest accessible)
 router.get('/', optionalAuth, async (req, res) => {
@@ -96,6 +97,18 @@ router.put('/:id', auth, recenseur, async (req, res) => {
        req.params.id]
     )
     res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// POST /api/effectifs/:id/photo — Upload photo d'identité
+router.post('/:id/photo', auth, recenseur, upload.single('photo'), handleUploadError, async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: 'Aucun fichier' })
+    const photoUrl = `/uploads/${req.file.destination.split('/uploads/')[1]}/${req.file.filename}`
+    await require('../config/db').pool.execute('UPDATE effectifs SET photo = ? WHERE id = ?', [photoUrl, req.params.id])
+    res.json({ success: true, data: { photo: photoUrl } })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
   }

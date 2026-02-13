@@ -11,6 +11,9 @@ export default function EffectifNew() {
   const [grades, setGrades] = useState([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(isEdit)
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoPreview, setPhotoPreview] = useState(null)
+  const [currentPhoto, setCurrentPhoto] = useState(null)
   const [form, setForm] = useState({
     nom: '', prenom: '', surnom: '', unite_id: params.get('unite_id') || '',
     grade_id: '', fonction: '', categorie: '', specialite: '', date_naissance: '', lieu_naissance: '',
@@ -23,6 +26,7 @@ export default function EffectifNew() {
     if (isEdit) {
       apiClient.get(`/effectifs/${id}`).then(r => {
         const e = r.data.data
+        if (e.photo) setCurrentPhoto(e.photo)
         setForm({
           nom: e.nom || '', prenom: e.prenom || '', surnom: e.surnom || '',
           unite_id: e.unite_id || '', grade_id: e.grade_id || '',
@@ -49,15 +53,33 @@ export default function EffectifNew() {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setPhotoFile(file)
+      setPhotoPreview(URL.createObjectURL(file))
+    }
+  }
+
+  const uploadPhoto = async (effectifId) => {
+    if (!photoFile) return
+    const fd = new FormData()
+    fd.append('photo', photoFile)
+    await apiClient.post(`/effectifs/${effectifId}/photo`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     try {
+      let effectifId = id
       if (isEdit) {
         await apiClient.put(`/effectifs/${id}`, form)
       } else {
-        await apiClient.post('/effectifs', form)
+        const res = await apiClient.post('/effectifs', form)
+        effectifId = res.data.data?.id
       }
+      if (photoFile && effectifId) await uploadPhoto(effectifId)
       navigate(`/effectifs/unite/${form.unite_id}`)
     } catch (err) {
       setError(err.response?.data?.message || 'Erreur')
@@ -81,6 +103,17 @@ export default function EffectifNew() {
             <div className="form-group"><label className="form-label">Prénom *</label><input className="form-input" value={form.prenom} onChange={e => set('prenom', e.target.value)} required /></div>
             <div className="form-group"><label className="form-label">Surnom</label><input className="form-input" value={form.surnom} onChange={e => set('surnom', e.target.value)} /></div>
             <div className="form-group"><label className="form-label">Nationalité</label><input className="form-input" value={form.nationalite} onChange={e => set('nationalite', e.target.value)} /></div>
+          </div>
+
+          {/* Photo */}
+          <div className="form-group" style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+            <div>
+              <label className="form-label">Photo d'identité</label>
+              <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }} />
+            </div>
+            {(photoPreview || currentPhoto) && (
+              <img src={photoPreview || currentPhoto} alt="Photo" style={{ width: 100, height: 130, objectFit: 'cover', border: '2px solid var(--border-color)', borderRadius: 'var(--border-radius)' }} />
+            )}
           </div>
 
           <div className="grid grid-cols-2" style={{ gap: 'var(--space-md)' }}>
