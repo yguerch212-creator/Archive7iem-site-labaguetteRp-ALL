@@ -20,6 +20,7 @@ const medicalRoutes = require('./routes/medical.routes')
 const documentationRoutes = require('./routes/documentation.routes')
 const discordRoutes = require('./routes/discord.routes')
 const dossiersRoutes = require('./routes/dossiers.routes')
+const decorationsRoutes = require('./routes/decorations.routes')
 
 const app = express()
 app.set('trust proxy', 1) // Behind Nginx
@@ -53,6 +54,7 @@ app.use('/api/medical', medicalRoutes)
 app.use('/api/documentation', documentationRoutes)
 app.use('/api/discord', discordRoutes)
 app.use('/api/dossiers', dossiersRoutes)
+app.use('/api/decorations', decorationsRoutes)
 
 // Stats endpoint
 app.get('/api/stats', async (req, res) => {

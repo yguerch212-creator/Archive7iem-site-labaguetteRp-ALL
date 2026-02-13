@@ -7,11 +7,16 @@ import { exportToPdf } from '../../utils/exportPdf'
 export default function Soldbuch() {
   const { id } = useParams()
   const [data, setData] = useState(null)
+  const [decorations, setDecorations] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    apiClient.get(`/soldbuch/${id}`).then(r => {
-      setData(r.data.data)
+    Promise.all([
+      apiClient.get(`/soldbuch/${id}`),
+      apiClient.get(`/decorations/effectif/${id}`)
+    ]).then(([soldbuchRes, decoRes]) => {
+      setData(soldbuchRes.data.data)
+      setDecorations(decoRes.data.data || [])
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [id])
@@ -30,6 +35,7 @@ export default function Soldbuch() {
           <BackButton className="btn btn-secondary btn-small" label="← Retour" />
           <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
             <Link to={`/effectifs/${id}/edit`} className="btn btn-secondary btn-small">✏️ Modifier</Link>
+            <Link to={`/dossiers/effectif/${id}`} className="btn btn-secondary btn-small">📁 Dossier</Link>
             <Link to={`/effectifs/${id}/soldbuch/edit`} className="btn btn-primary btn-small">🖋️ Mise en page</Link>
           </div>
         </div>
@@ -99,7 +105,18 @@ export default function Soldbuch() {
           <div className="grid grid-cols-2" style={{ gap: 'var(--space-lg)' }}>
             <div>
               <SectionTitle>5. DÉCORATIONS</SectionTitle>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{e.decorations || 'Aucune décoration.'}</p>
+              {decorations.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {decorations.map(d => (
+                    <div key={d.id} style={{ fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                      <span>🎖️ {d.decoration_nom || d.nom_custom}</span>
+                      {d.date_attribution && <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{d.date_attribution}</span>}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{e.decorations || 'Aucune décoration.'}</p>
+              )}
             </div>
             <div>
               <SectionTitle>6. SANCTIONS</SectionTitle>
