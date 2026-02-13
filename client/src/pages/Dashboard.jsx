@@ -15,7 +15,9 @@ export default function Dashboard() {
   const navCards = [
     { icon: '📋', title: 'Effectifs', desc: `${stats.effectifs} soldats enregistrés`, to: '/effectifs' },
     { icon: '📝', title: 'Rapports', desc: `${stats.rapports} rapports officiels`, to: '/rapports' },
-    { icon: '📁', title: 'Dossiers', desc: 'Documents classifiés', to: '/search' },
+    { icon: '⏱️', title: 'PDS', desc: 'Prise De Service', to: '/pds' },
+    { icon: '🚫', title: 'Interdits de front', desc: 'Sanctions & restrictions', to: '/interdits' },
+    { icon: '🏥', title: 'Médical', desc: 'Visites médicales', to: '/medical' },
     { icon: '🔎', title: 'Recherche', desc: 'Recherche globale', to: '/search' },
   ]
 
