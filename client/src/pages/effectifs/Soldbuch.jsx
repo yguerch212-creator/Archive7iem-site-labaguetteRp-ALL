@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import apiClient from '../../api/client'
+import { exportToPdf } from '../../utils/exportPdf'
 
 export default function Soldbuch() {
   const { id } = useParams()
@@ -127,8 +128,9 @@ export default function Soldbuch() {
           </div>
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-xl)' }}>
-          <button className="btn btn-secondary" onClick={() => window.print()}>📄 Imprimer / PDF</button>
+        <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-xl)', display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
+          <button className="btn btn-primary" onClick={() => exportToPdf('soldbuch-paper', `Soldbuch_${e.prenom}_${e.nom}`)}>📄 Exporter en PDF</button>
+          <button className="btn btn-secondary" onClick={() => window.print()}>🖨️ Imprimer</button>
         </div>
       </div>
     </>

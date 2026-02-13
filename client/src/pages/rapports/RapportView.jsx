@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import apiClient from '../../api/client'
+import { exportToPdf } from '../../utils/exportPdf'
 
 const TYPE_LABELS = { rapport: 'Rapport Journalier', recommandation: 'Recommandation', incident: 'Rapport d\'Incident' }
 
@@ -99,8 +100,9 @@ export default function RapportView() {
           )}
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)' }}>
-          <button className="btn btn-secondary" onClick={() => window.print()}>📄 Imprimer / PDF</button>
+        <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
+          <button className="btn btn-primary" onClick={() => exportToPdf('rapport-paper', `Rapport_${R.titre?.replace(/\s/g, '_') || R.id}`)}>📄 Exporter en PDF</button>
+          <button className="btn btn-secondary" onClick={() => window.print()}>🖨️ Imprimer</button>
         </div>
       </div>
     </>
