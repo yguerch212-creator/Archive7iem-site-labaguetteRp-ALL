@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
+import { exportToPdf } from '../../utils/exportPdf'
 import './pds.css'
 
 const JOURS = ['vendredi', 'samedi', 'dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi_fin']
@@ -284,7 +285,7 @@ export default function PDS() {
         <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
           {hasEffectif && <button className="btn btn-primary btn-small" onClick={() => setView('edit')}>✏️ Mon PDS</button>}
           <button className="btn btn-secondary btn-small" onClick={() => setView('permissions')}>🏖️ Permissions</button>
-          {isPrivileged && <Link to={`/pds/recap?semaine=${semaine}`} className="btn btn-secondary btn-small">📊 Récap</Link>}
+          {isPrivileged && <button className="btn btn-secondary btn-small" onClick={() => exportToPdf('pds-table', `PDS_${semaine}`)}>📄 PDF</button>}
         </div>
       </div>
 
@@ -326,7 +327,7 @@ export default function PDS() {
           <p style={{ color: 'var(--text-muted)' }}>Aucun PDS rempli pour cette semaine</p>
         </div>
       ) : (
-        <div className="paper-card" style={{ overflow: 'auto' }}>
+        <div id="pds-table" className="paper-card" style={{ overflow: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
             <thead>
               <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
