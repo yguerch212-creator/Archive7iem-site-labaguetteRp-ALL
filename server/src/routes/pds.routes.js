@@ -1,9 +1,8 @@
 const router = require('express').Router()
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
-const admin = require('../middleware/admin')
 
-// Helper: get current ISO week string (2026-W07)
+// Helper: current ISO week
 function getCurrentWeek() {
   const now = new Date()
   const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()))
@@ -14,40 +13,114 @@ function getCurrentWeek() {
   return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`
 }
 
-// GET /api/pds?semaine=2026-W07  — Get PDS for a week (all effectifs)
+// Helper: parse time slots and compute hours
+// Input: "17h30-17h50, 19h40-22h" → returns decimal hours
+function parseCreneaux(text) {
+  if (!text || text.trim().toUpperCase() === 'X' || text.trim() === '') return 0
+  let total = 0
+  const slots = text.split(',').map(s => s.trim()).filter(Boolean)
+  for (const slot of slots) {
+    const match = slot.match(/(\d{1,2})h?(\d{0,2})\s*-\s*(\d{1,2})h?(\d{0,2})/)
+    if (match) {
+      const start = parseInt(match[1]) + (parseInt(match[2] || 0) / 60)
+      const end = parseInt(match[3]) + (parseInt(match[4] || 0) / 60)
+      if (end > start) total += (end - start)
+    }
+  }
+  return Math.round(total * 100) / 100
+}
+
+// GET /api/pds?semaine=2026-W07 — All PDS for a week (everyone can see)
 router.get('/', auth, async (req, res) => {
   try {
     const semaine = req.query.semaine || getCurrentWeek()
-    
-    // Get all active effectifs with their presence data for this week
+
     const rows = await query(`
-      SELECT e.id, e.nom, e.prenom, e.fonction, e.categorie, e.actif,
+      SELECT e.id AS effectif_id, e.nom, e.prenom, e.fonction, e.categorie,
              g.nom_complet AS grade_nom, g.rang AS grade_rang,
              u.nom AS unite_nom, u.code AS unite_code, u.id AS unite_id,
-             p.heures, p.valide, p.rapport_so_fait, p.notes, p.saisie_par,
-             sp.username AS saisie_par_nom
+             p.id AS pds_id, p.lundi, p.mardi, p.mercredi, p.jeudi, p.vendredi, p.samedi, p.dimanche,
+             p.total_heures, p.valide
       FROM effectifs e
       LEFT JOIN grades g ON g.id = e.grade_id
       LEFT JOIN unites u ON u.id = e.unite_id
-      LEFT JOIN presences p ON p.effectif_id = e.id AND p.semaine = ?
-      LEFT JOIN users sp ON sp.id = p.saisie_par
+      LEFT JOIN pds_semaines p ON p.effectif_id = e.id AND p.semaine = ?
       WHERE e.actif = 'Actif'
       ORDER BY u.code, COALESCE(g.rang, 0) DESC, e.nom
     `, [semaine])
 
-    // Stats
     const total = rows.length
-    const saisis = rows.filter(r => r.heures !== null).length
+    const saisis = rows.filter(r => r.pds_id !== null).length
     const valides = rows.filter(r => r.valide).length
-    const soNonRapport = rows.filter(r => r.categorie === 'Sous-officier' && !r.rapport_so_fait).length
 
-    res.json({ 
-      success: true, 
-      data: rows, 
-      semaine, 
+    res.json({
+      success: true,
+      data: rows,
+      semaine,
       semaineActuelle: getCurrentWeek(),
-      stats: { total, saisis, valides, soNonRapport }
+      stats: { total, saisis, valides }
     })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// GET /api/pds/mine?semaine=2026-W07 — My own PDS
+router.get('/mine', auth, async (req, res) => {
+  try {
+    if (!req.user.effectif_id) {
+      return res.json({ success: true, data: null, message: 'Aucun effectif lié à ce compte' })
+    }
+    const semaine = req.query.semaine || getCurrentWeek()
+    const row = await queryOne(`
+      SELECT p.*, e.nom, e.prenom, g.nom_complet AS grade_nom, u.nom AS unite_nom, u.code AS unite_code
+      FROM effectifs e
+      LEFT JOIN grades g ON g.id = e.grade_id
+      LEFT JOIN unites u ON u.id = e.unite_id
+      LEFT JOIN pds_semaines p ON p.effectif_id = e.id AND p.semaine = ?
+      WHERE e.id = ?
+    `, [semaine, req.user.effectif_id])
+    res.json({ success: true, data: row, semaine, semaineActuelle: getCurrentWeek() })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// PUT /api/pds/saisie — Update own PDS (self-service)
+router.put('/saisie', auth, async (req, res) => {
+  try {
+    const { effectif_id, semaine, lundi, mardi, mercredi, jeudi, vendredi, samedi, dimanche } = req.body
+    
+    if (!effectif_id || !semaine) {
+      return res.status(400).json({ success: false, message: 'effectif_id et semaine requis' })
+    }
+
+    // Only self can edit, unless admin/recenseur
+    const isPrivileged = req.user.isAdmin || req.user.isRecenseur
+    if (!isPrivileged && req.user.effectif_id !== effectif_id) {
+      return res.status(403).json({ success: false, message: 'Vous ne pouvez modifier que votre propre PDS' })
+    }
+
+    // Compute total hours from creneaux
+    const totalHeures = 
+      parseCreneaux(lundi) + parseCreneaux(mardi) + parseCreneaux(mercredi) +
+      parseCreneaux(jeudi) + parseCreneaux(vendredi) + parseCreneaux(samedi) + parseCreneaux(dimanche)
+
+    await pool.execute(`
+      INSERT INTO pds_semaines (effectif_id, semaine, lundi, mardi, mercredi, jeudi, vendredi, samedi, dimanche, total_heures)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        lundi = VALUES(lundi), mardi = VALUES(mardi), mercredi = VALUES(mercredi),
+        jeudi = VALUES(jeudi), vendredi = VALUES(vendredi), samedi = VALUES(samedi),
+        dimanche = VALUES(dimanche), total_heures = VALUES(total_heures)
+    `, [
+      effectif_id, semaine,
+      lundi || null, mardi || null, mercredi || null,
+      jeudi || null, vendredi || null, samedi || null, dimanche || null,
+      Math.round(totalHeures * 10) / 10
+    ])
+
+    res.json({ success: true, total_heures: Math.round(totalHeures * 10) / 10 })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
   }
@@ -57,12 +130,7 @@ router.get('/', auth, async (req, res) => {
 router.get('/historique/:effectif_id', auth, async (req, res) => {
   try {
     const rows = await query(`
-      SELECT p.*, sp.username AS saisie_par_nom
-      FROM presences p
-      LEFT JOIN users sp ON sp.id = p.saisie_par
-      WHERE p.effectif_id = ?
-      ORDER BY p.semaine DESC
-      LIMIT 26
+      SELECT * FROM pds_semaines WHERE effectif_id = ? ORDER BY semaine DESC LIMIT 26
     `, [req.params.effectif_id])
     res.json({ success: true, data: rows })
   } catch (err) {
@@ -70,117 +138,74 @@ router.get('/historique/:effectif_id', auth, async (req, res) => {
   }
 })
 
-// PUT /api/pds/saisie — Saisie heures (admin/recenseur = tous, sinon = son propre effectif)
-router.put('/saisie', auth, async (req, res) => {
+// ==========================================
+// PERMISSIONS D'ABSENCE
+// ==========================================
+
+// GET /api/pds/permissions — Toutes les demandes (admin/recenseur: toutes, sinon: les siennes)
+router.get('/permissions', auth, async (req, res) => {
   try {
-    const { effectif_id, semaine, heures, rapport_so_fait, notes } = req.body
-    if (!effectif_id || !semaine) {
-      return res.status(400).json({ success: false, message: 'effectif_id et semaine requis' })
+    const isPrivileged = req.user.isAdmin || req.user.isRecenseur || req.user.isOfficier
+    let sql = `
+      SELECT pa.*, e.nom, e.prenom, g.nom_complet AS grade_nom, u.code AS unite_code, u.nom AS unite_nom,
+             t.username AS traite_par_nom
+      FROM permissions_absence pa
+      JOIN effectifs e ON e.id = pa.effectif_id
+      LEFT JOIN grades g ON g.id = e.grade_id
+      LEFT JOIN unites u ON u.id = e.unite_id
+      LEFT JOIN users t ON t.id = pa.traite_par
+    `
+    const params = []
+    if (!isPrivileged) {
+      sql += ' WHERE pa.effectif_id = ?'
+      params.push(req.user.effectif_id || 0)
+    }
+    sql += ' ORDER BY pa.created_at DESC'
+    
+    const rows = await query(sql, params)
+    res.json({ success: true, data: rows })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// POST /api/pds/permissions — Créer une demande (self only)
+router.post('/permissions', auth, async (req, res) => {
+  try {
+    const effectif_id = req.user.effectif_id
+    if (!effectif_id) {
+      return res.status(400).json({ success: false, message: 'Aucun effectif lié à ce compte' })
+    }
+    const { date_debut, date_fin, raison } = req.body
+    if (!date_debut || !date_fin || !raison) {
+      return res.status(400).json({ success: false, message: 'date_debut, date_fin et raison requis' })
     }
 
-    // Check: admin/recenseur can edit anyone, user can only edit own
-    const isPrivileged = req.user.isAdmin || req.user.isRecenseur
-    if (!isPrivileged && req.user.effectif_id !== effectif_id) {
-      return res.status(403).json({ success: false, message: 'Vous ne pouvez modifier que vos propres heures' })
+    const [result] = await pool.execute(
+      'INSERT INTO permissions_absence (effectif_id, date_debut, date_fin, raison) VALUES (?, ?, ?, ?)',
+      [effectif_id, date_debut, date_fin, raison]
+    )
+    res.json({ success: true, data: { id: result.insertId } })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// PUT /api/pds/permissions/:id/traiter — Approuver/refuser (officier/admin/recenseur)
+router.put('/permissions/:id/traiter', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin && !req.user.isRecenseur && !req.user.isOfficier) {
+      return res.status(403).json({ success: false, message: 'Non autorisé' })
     }
-
-    await pool.execute(`
-      INSERT INTO presences (effectif_id, semaine, heures, rapport_so_fait, notes, saisie_par)
-      VALUES (?, ?, ?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE 
-        heures = VALUES(heures), 
-        rapport_so_fait = VALUES(rapport_so_fait),
-        notes = VALUES(notes),
-        saisie_par = VALUES(saisie_par)
-    `, [effectif_id, semaine, heures || 0, rapport_so_fait ? 1 : 0, notes || null, req.user.id])
-
+    const { statut, notes } = req.body // statut: 'Approuvee' | 'Refusee'
+    if (!['Approuvee', 'Refusee'].includes(statut)) {
+      return res.status(400).json({ success: false, message: 'Statut invalide' })
+    }
+    await pool.execute(
+      'UPDATE permissions_absence SET statut = ?, traite_par = ?, notes_traitement = ? WHERE id = ?',
+      [statut, req.user.id, notes || null, req.params.id]
+    )
     res.json({ success: true })
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
-  }
-})
-
-// PUT /api/pds/saisie-batch — Saisie en lot
-router.put('/saisie-batch', auth, async (req, res) => {
-  try {
-    if (!req.user.isAdmin && !req.user.isRecenseur) {
-      return res.status(403).json({ success: false, message: 'Accès non autorisé' })
-    }
-
-    const { entries, semaine } = req.body // entries: [{effectif_id, heures, rapport_so_fait, notes}]
-    if (!entries || !semaine) {
-      return res.status(400).json({ success: false, message: 'entries et semaine requis' })
-    }
-
-    const conn = await pool.getConnection()
-    try {
-      await conn.beginTransaction()
-      for (const e of entries) {
-        await conn.execute(`
-          INSERT INTO presences (effectif_id, semaine, heures, rapport_so_fait, notes, saisie_par)
-          VALUES (?, ?, ?, ?, ?, ?)
-          ON DUPLICATE KEY UPDATE 
-            heures = VALUES(heures),
-            rapport_so_fait = VALUES(rapport_so_fait),
-            notes = VALUES(notes),
-            saisie_par = VALUES(saisie_par)
-        `, [e.effectif_id, semaine, e.heures || 0, e.rapport_so_fait ? 1 : 0, e.notes || null, req.user.id])
-      }
-      await conn.commit()
-      res.json({ success: true, count: entries.length })
-    } catch (err) {
-      await conn.rollback()
-      throw err
-    } finally {
-      conn.release()
-    }
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
-  }
-})
-
-// GET /api/pds/rapport/:semaine — Rapport hebdo (résumé pour envoi)
-router.get('/rapport/:semaine', auth, async (req, res) => {
-  try {
-    const semaine = req.params.semaine
-
-    const parUnite = await query(`
-      SELECT u.code, u.nom AS unite_nom,
-        COUNT(e.id) AS total,
-        SUM(CASE WHEN p.valide = 1 THEN 1 ELSE 0 END) AS valides,
-        SUM(CASE WHEN p.heures IS NOT NULL THEN 1 ELSE 0 END) AS saisis,
-        SUM(CASE WHEN e.categorie = 'Sous-officier' AND (p.rapport_so_fait IS NULL OR p.rapport_so_fait = 0) THEN 1 ELSE 0 END) AS so_sans_rapport
-      FROM effectifs e
-      LEFT JOIN unites u ON u.id = e.unite_id
-      LEFT JOIN presences p ON p.effectif_id = e.id AND p.semaine = ?
-      WHERE e.actif = 'Actif'
-      GROUP BY u.id
-      ORDER BY u.code
-    `, [semaine])
-
-    const nonValides = await query(`
-      SELECT e.nom, e.prenom, g.nom_complet AS grade_nom, u.code AS unite_code,
-             COALESCE(p.heures, 0) AS heures
-      FROM effectifs e
-      LEFT JOIN grades g ON g.id = e.grade_id
-      LEFT JOIN unites u ON u.id = e.unite_id
-      LEFT JOIN presences p ON p.effectif_id = e.id AND p.semaine = ?
-      WHERE e.actif = 'Actif' AND (p.valide IS NULL OR p.valide = 0)
-      ORDER BY u.code, e.nom
-    `, [semaine])
-
-    const soSansRapport = await query(`
-      SELECT e.nom, e.prenom, g.nom_complet AS grade_nom, u.code AS unite_code
-      FROM effectifs e
-      LEFT JOIN grades g ON g.id = e.grade_id
-      LEFT JOIN unites u ON u.id = e.unite_id
-      LEFT JOIN presences p ON p.effectif_id = e.id AND p.semaine = ?
-      WHERE e.actif = 'Actif' AND e.categorie = 'Sous-officier'
-        AND (p.rapport_so_fait IS NULL OR p.rapport_so_fait = 0)
-      ORDER BY u.code, e.nom
-    `, [semaine])
-
-    res.json({ success: true, semaine, parUnite, nonValides, soSansRapport })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
   }
