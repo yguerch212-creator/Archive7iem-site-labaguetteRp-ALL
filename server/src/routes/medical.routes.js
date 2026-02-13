@@ -84,12 +84,17 @@ router.post('/', auth, async (req, res) => {
       `INSERT INTO visites_medicales (effectif_id, date_visite, medecin, diagnostic, aptitude, restrictions, notes_confidentielles,
         poids, imc, groupe_sanguin, allergenes, antecedents_medicaux, antecedents_psy,
         conso_drogue, conso_alcool, conso_tabac,
-        test_vue, test_ouie, test_cardio, test_reflex, test_tir, score_aptitude, commentaire, facture, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        test_vue, test_ouie, test_cardio, test_reflex, test_tir, score_aptitude, commentaire, facture, created_by,
+        valide, valide_par, valide_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [effectif_id, date_visite, medecin || null, diagnostic || null, aptitude || 'Apte', restrictions || null, notes_confidentielles || null,
         poids || null, imc || null, groupe_sanguin || null, allergenes || null, antecedents_medicaux || null, antecedents_psy || null,
         conso_drogue || null, conso_alcool || null, conso_tabac || null,
-        test_vue || null, test_ouie || null, test_cardio || null, test_reflex || null, test_tir || null, score_aptitude || null, commentaire || null, facture || '100 RM', req.user.id]
+        test_vue || null, test_ouie || null, test_cardio || null, test_reflex || null, test_tir || null, score_aptitude || null, commentaire || null, facture || '100 RM', req.user.id,
+        // Officier/admin → auto-validé, sinon en attente
+        (req.user.isAdmin || req.user.isOfficier) ? 1 : 0,
+        (req.user.isAdmin || req.user.isOfficier) ? req.user.id : null,
+        (req.user.isAdmin || req.user.isOfficier) ? new Date() : null]
     )
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {
