@@ -1,4 +1,5 @@
 import BackButton from '../../components/BackButton'
+import ShareButton from '../../components/ShareButton'
 import LayoutRenderer from '../../components/LayoutRenderer'
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
@@ -249,6 +250,7 @@ export default function RapportView() {
       <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
         <button className="btn btn-primary" onClick={() => exportToPdf('rapport-paper', `Rapport_${R.titre?.replace(/\s/g, '_') || R.id}`)}>📄 PDF</button>
         <button className="btn btn-secondary" onClick={() => window.print()}>🖨️ Imprimer</button>
+        <ShareButton />
       </div>
     </div>
   )

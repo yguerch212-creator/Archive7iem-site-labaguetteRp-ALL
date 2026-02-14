@@ -1,4 +1,5 @@
 import BackButton from '../../components/BackButton'
+import ShareButton from '../../components/ShareButton'
 import LayoutRenderer from '../../components/LayoutRenderer'
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
@@ -265,6 +266,7 @@ export default function Soldbuch() {
       <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-xl)', display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
         <button className="btn btn-primary" onClick={() => exportToPdf('soldbuch-paper', `Soldbuch_${e.prenom}_${e.nom}`)}>📄 Exporter en PDF</button>
         <button className="btn btn-secondary" onClick={() => window.print()}>🖨️ Imprimer</button>
+        <ShareButton />
       </div>
     </div>
   )

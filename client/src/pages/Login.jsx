@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useAuth } from '../auth/useAuth'
 import { useNavigate, useLocation } from 'react-router-dom'
 
@@ -11,14 +11,6 @@ export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
   const redirectTo = location.state?.from || '/dashboard'
-
-  // Auto-guest if arriving from a shared link (has a from path that's not dashboard)
-  useEffect(() => {
-    if (location.state?.from && location.state.from !== '/dashboard' && location.state.from !== '/') {
-      loginAsGuest()
-      navigate(location.state.from, { replace: true })
-    }
-  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()

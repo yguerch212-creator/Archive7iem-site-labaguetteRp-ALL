@@ -95,6 +95,7 @@ export default function AffaireView() {
     <div className="container affaire-view">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-sm)' }}>
         <BackButton />
+        <ShareButton />
         <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
           {canWrite && <Link to={`/sanctions/${id}/layout`} className="btn btn-secondary btn-small">🖋️ Mise en page</Link>}
           {user?.isAdmin && <button className="btn btn-danger btn-small" onClick={async () => {

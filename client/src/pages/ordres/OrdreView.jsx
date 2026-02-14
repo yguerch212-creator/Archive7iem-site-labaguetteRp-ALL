@@ -31,6 +31,7 @@ export default function OrdreView() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
         <BackButton />
         <button className="btn btn-secondary btn-small" onClick={() => exportToPdf('ordre-doc', `Ordre_${ordre.numero}`)}>📥 PDF</button>
+        <ShareButton />
       </div>
       {msg && <div className="alert alert-success">{msg}</div>}
 

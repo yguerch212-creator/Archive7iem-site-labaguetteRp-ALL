@@ -17,8 +17,8 @@ export function AuthProvider({ children }) {
       if (token) {
         const response = await apiClient.get('/auth/me')
         setUser(response.data.user)
-      } else if (localStorage.getItem('guestMode')) {
-        // Restore guest
+      } else if (localStorage.getItem('guestMode') || new URLSearchParams(window.location.search).has('share')) {
+        // Auto-guest for shared links or restored guest
         setUser({
           id: 0, nom: 'Invité', prenom: '', username: 'guest',
           isGuest: true, isAdmin: false, isRecenseur: false, isOfficier: false,

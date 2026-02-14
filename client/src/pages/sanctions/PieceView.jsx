@@ -90,6 +90,7 @@ export default function PieceView() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
         <BackButton />
         <button className="btn btn-secondary btn-small" onClick={() => exportToPdf('piece-doc', `${p.type}_${p.titre?.replace(/\s/g, '_')}`)}>📥 PDF</button>
+        <ShareButton />
       </div>
 
       {msg && <div className="alert alert-success">{msg}</div>}

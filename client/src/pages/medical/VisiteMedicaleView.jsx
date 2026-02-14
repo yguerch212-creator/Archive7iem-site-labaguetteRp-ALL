@@ -1,3 +1,4 @@
+import ShareButton from '../../components/ShareButton'
 import BackButton from '../../components/BackButton'
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -140,6 +141,7 @@ export default function VisiteMedicaleView() {
 
       <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
         <button className="btn btn-secondary" onClick={() => window.print()}>🖨️ Imprimer</button>
+        <ShareButton />
         {user?.isAdmin && (
           <button className="btn btn-danger" onClick={async () => {
             if (!confirm('Supprimer cette visite médicale ?')) return
