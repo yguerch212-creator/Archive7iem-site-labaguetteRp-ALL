@@ -70,21 +70,28 @@ export default function JournalView() {
         </div>
       </div>
 
-      <div id="journal-article" style={{ background: '#f5f2e8', border: '1px solid #c4b99a', borderRadius: 4, padding: '50px 60px', maxWidth: 820, margin: '0 auto', fontFamily: "'IBM Plex Mono', monospace" }}>
-        {/* Newspaper masthead */}
-        <div style={{ textAlign: 'center', borderTop: '4px solid #3d5a3e', borderBottom: '4px solid #3d5a3e', padding: '12px 0', marginBottom: 30 }}>
-          <div style={{ fontSize: '0.6rem', letterSpacing: 8, color: '#666', textTransform: 'uppercase' }}>Nachrichtenblatt des 7. Armeekorps</div>
-          <h1 style={{ margin: '6px 0', fontSize: '2rem', color: '#3d5a3e', fontFamily: "'IBM Plex Mono', monospace", fontWeight: 900 }}>NACHRICHTENBLATT</h1>
-          <div style={{ fontSize: '0.75rem', color: '#555' }}>{new Date(article.date_publication || article.created_at).toLocaleDateString('fr-FR')}</div>
+      <div id="journal-article" style={{ background: '#e8e4d4', border: '1px solid #999', borderRadius: 0, padding: '40px 50px', maxWidth: 820, margin: '0 auto', fontFamily: "'IBM Plex Mono', monospace", boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
+        {/* Feldzeitung masthead */}
+        <div style={{ borderTop: '4px solid #222', borderBottom: '2px solid #222', padding: '10px 0', marginBottom: 8, textAlign: 'center' }}>
+          <div style={{ fontSize: '2.2rem', fontWeight: 900, color: '#1a1a1a', letterSpacing: 2, lineHeight: 1.1 }}>Wacht am Korps</div>
+          <div style={{ fontSize: '0.65rem', letterSpacing: 4, color: '#555', fontStyle: 'italic' }}>Feldzeitung des 7. Armeekorps</div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: '#666', marginBottom: 12, borderBottom: '1px solid #999', paddingBottom: 6 }}>
+          <span>Herausgeber: Propagandakompanie</span>
+          <span>{new Date(article.date_publication || article.created_at).toLocaleDateString('fr-FR')}</span>
         </div>
 
-        <h2 style={{ fontSize: '1.4rem', marginBottom: 8, color: '#2d2d2d' }}>{article.titre}</h2>
-        {article.sous_titre && <p style={{ fontSize: '0.95rem', fontStyle: 'italic', color: '#555', marginBottom: 20 }}>{article.sous_titre}</p>}
-        <p style={{ fontSize: '0.78rem', color: '#777', marginBottom: 20 }}>
+        {/* Headline */}
+        <h2 style={{ fontSize: '1.5rem', marginBottom: 4, color: '#111', fontWeight: 900, lineHeight: 1.2 }}>{article.titre}</h2>
+        {article.sous_titre && <p style={{ fontSize: '0.88rem', fontStyle: 'italic', color: '#444', marginBottom: 12 }}>{article.sous_titre}</p>}
+        <div style={{ fontSize: '0.7rem', color: '#666', marginBottom: 6 }}>
           Par {article.auteur_grade || ''} {article.auteur_prenom} {article.auteur_nom} — {article.auteur_unite || ''}
-        </p>
-        <hr style={{ border: 'none', borderTop: '1px solid #c4b99a', margin: '0 0 20px' }} />
-        <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.85rem', lineHeight: 1.7, fontFamily: 'inherit' }}>{article.contenu}</pre>
+        </div>
+        <hr style={{ border: 'none', borderTop: '2px solid #333', margin: '0 0 16px' }} />
+        <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.82rem', lineHeight: 1.6, fontFamily: 'inherit', columns: '2', columnGap: '24px', columnRule: '1px solid #ccc' }}>{article.contenu}</pre>
+        <div style={{ borderTop: '3px solid #222', marginTop: 24, paddingTop: 6, textAlign: 'center', fontSize: '0.6rem', fontStyle: 'italic', color: '#777' }}>
+          Feldzeitung des 7. Armeekorps — Nur für den Dienstgebrauch — Nachdruck verboten
+        </div>
       </div>
 
       <div style={{ textAlign: 'center', marginTop: 'var(--space-md)' }}>
