@@ -35,12 +35,12 @@ export default function Search() {
       <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>🔍 Recherche dans les Archives</h1>
 
       <form onSubmit={search} className="paper-card" style={{ marginBottom: 'var(--space-xl)', padding: 'var(--space-lg)' }}>
-        <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'end' }}>
-          <div style={{ flex: 1, minWidth: 200 }}>
+        <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'end', width: '100%' }}>
+          <div style={{ flex: '1 1 100%', minWidth: 0 }}>
             <label className="form-label">Rechercher</label>
             <input type="text" className="form-input" placeholder="Nom, titre, document..." value={query} onChange={e => setQuery(e.target.value)} autoFocus />
           </div>
-          <div>
+          <div style={{ flex: '1 1 auto', minWidth: 0 }}>
             <label className="form-label">Filtrer</label>
             <select className="form-input" value={filter} onChange={e => setFilter(e.target.value)}>
               <option value="all">Tout</option>

@@ -41,7 +41,7 @@ export default function EffectifsList() {
 
   return (
     <div className="container" style={{ paddingBottom: 'var(--space-xxl)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
         <BackButton className="btn btn-secondary btn-small" label="← Retour" />
         <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
           {user?.isAdmin && <button className="btn btn-secondary btn-small" onClick={() => exportCsv(filtered, [
@@ -60,14 +60,14 @@ export default function EffectifsList() {
       <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', marginBottom: 'var(--space-lg)', flexWrap: 'wrap' }}>
         <input
           className="form-input"
-          style={{ maxWidth: 250 }}
+          style={{ maxWidth: 250, minWidth: 0, flex: '1 1 200px' }}
           placeholder="Nom / Prénom..."
           value={filters.nom}
           onChange={e => setFilters(f => ({ ...f, nom: e.target.value }))}
         />
         <select
           className="form-select"
-          style={{ maxWidth: 200 }}
+          style={{ maxWidth: 200, minWidth: 0, flex: '1 1 150px' }}
           value={filters.grade}
           onChange={e => setFilters(f => ({ ...f, grade: e.target.value }))}
         >
@@ -76,7 +76,7 @@ export default function EffectifsList() {
         </select>
         <select
           className="form-select"
-          style={{ maxWidth: 180 }}
+          style={{ maxWidth: 180, minWidth: 0, flex: '1 1 150px' }}
           value={filters.categorie}
           onChange={e => setFilters(f => ({ ...f, categorie: e.target.value }))}
         >
@@ -88,7 +88,8 @@ export default function EffectifsList() {
       </div>
 
       {/* Tableau */}
-      <div className="paper-card" style={{ overflow: 'auto' }}>
+      <div className="paper-card">
+        <div className="table-wrap">
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
@@ -115,6 +116,7 @@ export default function EffectifsList() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Quick actions popup */}
@@ -125,7 +127,7 @@ export default function EffectifsList() {
               <h2 style={{ margin: '0 0 4px' }}>{selected.prenom} {selected.nom}</h2>
               <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.85rem' }}>{selected.grade_nom || '—'} — {selected.fonction || '—'}</p>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-md)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 'var(--space-sm)' }}>
               <button className="paper-card unit-card" style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-lg)', border: '1px solid var(--border-color)' }} onClick={() => navigate(`/effectifs/${selected.id}/soldbuch`)}>
                 <div style={{ fontSize: '2rem', marginBottom: 6 }}>📘</div>
                 <strong>Soldbuch</strong>

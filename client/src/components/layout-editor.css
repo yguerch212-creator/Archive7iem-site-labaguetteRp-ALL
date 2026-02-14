@@ -326,11 +326,16 @@
 
 /* Mobile */
 @media (max-width: 900px) {
-  .layout-canvas-wrapper { padding: 1rem; }
+  .layout-canvas-wrapper { padding: 0.5rem; min-height: 400px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .layout-canvas { transform-origin: top left; }
   .toolbar-btn-label { display: none; }
-  .toolbar-btn { padding: 4px 8px; font-size: 1rem; }
-  .layout-modal { padding: 1rem; }
+  .toolbar-btn { padding: 4px 8px; font-size: 1rem; min-height: 40px; }
+  .layout-toolbar { padding: 0.4rem 0.6rem; gap: 0.5rem; }
+  .layout-toolbar-actions { gap: 0.3rem; }
+  .layout-toolbar-actions .btn { font-size: 0.75rem; padding: 4px 8px; min-height: 36px; }
+  .layout-modal { padding: 1rem; max-height: 90vh; overflow-y: auto; }
+  .signature-canvas { max-width: 100%; height: auto; }
+  .doc-picker-categories { grid-template-columns: 1fr; }
 }
 
 /* ===== DOCUMENT BLOCK (pinned document) ===== */

@@ -175,7 +175,7 @@ export default function RapportNew() {
                 key={t} type="button"
                 onClick={() => set('type', t)}
                 style={{
-                  flex: 1, minWidth: 150, padding: '0.75rem',
+                  flex: '1 1 auto', minWidth: 120, padding: '0.75rem',
                   background: form.type === t ? 'var(--military-green)' : 'transparent',
                   color: form.type === t ? '#fff' : 'var(--text)',
                   border: `2px solid ${form.type === t ? 'var(--military-green)' : 'var(--border)'}`,

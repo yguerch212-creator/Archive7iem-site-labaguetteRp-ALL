@@ -440,12 +440,66 @@ tr:hover { background: rgba(0,0,0,0.02); }
 }
 .btn-close:hover { color: var(--text-primary); }
 
-/* Mobile spacing */
+/* ============= MOBILE RESPONSIVE ============= */
+@media (max-width: 768px) {
+  .container { padding: 0 var(--space-sm); }
+  .paper-card { padding: var(--space-sm); }
+  .document-paper { padding: var(--space-md); }
+  
+  /* All flex rows → column on mobile */
+  .flex:not(.flex-col):not(.flex-wrap) { flex-direction: column; }
+  
+  /* Tables: horizontal scroll */
+  .paper-card > table,
+  .card > table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  
+  /* Inputs: prevent iOS zoom */
+  .form-input, .form-select, .form-textarea, .input-field, select, input[type="text"], input[type="number"], input[type="date"], textarea {
+    font-size: 16px !important;
+    min-height: 44px;
+  }
+  
+  /* Buttons: touch targets */
+  .btn { min-height: 44px; padding: var(--space-sm) var(--space-md); font-size: 0.85rem; }
+  .btn-small { min-height: 40px; padding: var(--space-xs) var(--space-sm); }
+  
+  /* Topbar mobile improvements */
+  .topbar-content { gap: var(--space-xs); }
+  .topbar-user { gap: var(--space-xs); }
+  .topbar-user .btn { padding: var(--space-xs) var(--space-sm); font-size: 0.75rem; }
+  .topbar-nav a { padding: var(--space-xs) 6px; font-size: 0.75rem; min-height: 32px; }
+  
+  /* Stat cards */
+  .stat-card { padding: var(--space-md); }
+  .stat-number { font-size: 1.5rem; }
+  
+  /* Autocomplete dropdown: ensure visible */
+  .autocomplete-list { max-height: 180px; z-index: 200; }
+  .autocomplete-item { padding: 0.6rem 0.75rem; min-height: 44px; }
+  
+  /* Popup/modal mobile */
+  .popup-content { max-width: 100%; margin: 0.5rem; padding: var(--space-md); max-height: 90vh; }
+}
+
 @media (max-width: 640px) {
   h1 { font-size: 1.25rem; }
   h2 { font-size: 1.1rem; }
-  .container { padding: 0 var(--space-sm); }
+  .container { padding: 0 var(--space-xs); }
   .grid-cols-2, .grid-cols-3 { grid-template-columns: 1fr; }
+  
+  /* Table cells tighter */
+  th, td { padding: var(--space-xs) var(--space-sm); font-size: 0.75rem; }
+  
+  /* Alert compact */
+  .alert { font-size: 0.8rem; padding: var(--space-xs) var(--space-sm); }
+}
+
+@media (max-width: 480px) {
+  html { font-size: 13px; }
+  .topbar-logo { font-size: 0.75rem; }
+  .topbar-nav a { font-size: 0.7rem; padding: 2px 4px; }
+  .paper-card { padding: var(--space-xs); }
+  .btn-large { padding: var(--space-sm) var(--space-md); font-size: 0.9rem; }
 }
 
 /* ============= LOADING ============= */

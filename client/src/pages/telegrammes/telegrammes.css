@@ -87,5 +87,14 @@
 
 @media (max-width: 600px) {
   .telegram-fields { grid-template-columns: 80px 1fr; font-size: 0.8rem; }
-  .telegram-paper { padding: var(--space-md); }
+  .telegram-paper { padding: var(--space-sm); }
+  .telegrammes-page { padding: var(--space-sm) 0; }
+  .telegrammes-header { flex-direction: column; align-items: flex-start; }
+  .tel-form .form-row { flex-direction: column; gap: var(--space-sm); }
+  .tel-form .form-row > .form-group { min-width: 0; }
+  .tel-tabs { gap: 0; }
+  .tel-tab { padding: 6px 10px; font-size: 0.78rem; }
+  .telegram-stamp { top: 8px; right: 8px; font-size: 0.6rem; padding: 2px 6px; }
+  .telegram-prive-badge { font-size: 0.65rem; padding: 1px 5px; }
+  .telegram-footer { flex-direction: column; gap: 4px; font-size: 0.75rem; }
 }
