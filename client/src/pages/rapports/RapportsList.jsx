@@ -87,7 +87,10 @@ export default function RapportsList() {
                   <td style={td}>{r.auteur_nom || 'Inconnu'}</td>
                   <td style={td}>{r.personne_mentionnee || '—'}</td>
                   <td style={td}><span className={`tag ${TYPE_CLASSES[r.type]}`}>{TYPE_LABELS[r.type]}</span></td>
-                  <td style={td}>{r.published ? '✅ Publié' : '📝 Brouillon'}</td>
+                  <td style={td}>
+                    {r.valide ? <span style={{ color: 'var(--success)' }}>✅ Validé</span> : <span style={{ color: 'var(--warning)' }}>⏳</span>}
+                    {' '}{r.published ? '📜' : '📝'}
+                  </td>
                   {user?.isAdmin && (
                     <td style={td} onClick={e => e.stopPropagation()}>
                       <button className="btn btn-danger btn-small" onClick={() => handleDelete(r.id)}>✖</button>

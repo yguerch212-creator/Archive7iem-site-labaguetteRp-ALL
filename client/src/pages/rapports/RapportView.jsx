@@ -6,6 +6,7 @@ import { useAuth } from '../../auth/useAuth'
 import apiClient from '../../api/client'
 import { exportToPdf } from '../../utils/exportPdf'
 import EffectifAutocomplete from '../../components/EffectifAutocomplete'
+import SignatureCanvas from '../../components/SignatureCanvas'
 
 const TYPE_LABELS = { rapport: 'Rapport Journalier', recommandation: 'Recommandation', incident: 'Rapport d\'Incident' }
 const STAMPS = [
@@ -25,6 +26,8 @@ export default function RapportView() {
   const [hasSig, setHasSig] = useState(false)
   const [message, setMessage] = useState(null)
   const [layoutBlocks, setLayoutBlocks] = useState(null)
+  const [mySignature, setMySignature] = useState(null)
+  const [showValidateSign, setShowValidateSign] = useState(false)
 
   const canPublish = user?.isAdmin || user?.isOfficier || user?.isRecenseur
 
@@ -32,8 +35,13 @@ export default function RapportView() {
     load()
     // Load saved signature
     apiClient.get('/affaires/my-signature').then(r => {
-      if (r.data.data) { setSavedSig(r.data.data); setPubForm(p => ({...p, signature_canvas: r.data.data})) }
+      if (r.data.data) { setSavedSig(r.data.data); setMySignature(r.data.data); setPubForm(p => ({...p, signature_canvas: r.data.data})) }
     }).catch(() => {})
+    if (user?.effectif_id) {
+      apiClient.get(`/effectifs/${user.effectif_id}/signature`).then(r => {
+        if (r.data?.signature_data) setMySignature(r.data.signature_data)
+      }).catch(() => {})
+    }
     // Load saved layout
     apiClient.get(`/rapports/${id}/layout`).then(r => {
       if (r.data.blocks && r.data.blocks.length > 0) setLayoutBlocks(r.data.blocks)
@@ -60,6 +68,35 @@ export default function RapportView() {
       load()
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur' })
+    }
+  }
+
+  const canValidate = rapport && !rapport.valide && (
+    (rapport.auteur_rang < 35 && (user?.grade_rang >= 35 || user?.isAdmin)) ||
+    (rapport.auteur_rang >= 35 && rapport.auteur_rang < 60 && (user?.grade_rang >= 60 || user?.isOfficier || user?.isAdmin))
+  )
+
+  const validateRapport = async (signatureData) => {
+    try {
+      await apiClient.put(`/rapports/${id}/validate`, { signature_data: signatureData || mySignature || null })
+      // Save signature if new
+      if (signatureData && user?.effectif_id) {
+        await apiClient.put(`/effectifs/${user.effectif_id}/signature`, { signature_data: signatureData }).catch(() => {})
+        setMySignature(signatureData)
+      }
+      setShowValidateSign(false)
+      setMessage({ type: 'success', text: '✅ Rapport validé' })
+      load()
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur' })
+    }
+  }
+
+  const handleValidateClick = () => {
+    if (mySignature) {
+      validateRapport(mySignature)
+    } else {
+      setShowValidateSign(true)
     }
   }
 
@@ -238,6 +275,53 @@ export default function RapportView() {
           </div>
         )}
       </div>
+      )}
+
+      {/* Validation status */}
+      <div className="paper-card" style={{ marginTop: 'var(--space-lg)', borderLeft: `3px solid ${R.valide ? 'var(--success)' : 'var(--warning)'}` }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <div>
+            {R.valide ? (
+              <>
+                <span style={{ color: 'var(--success)', fontWeight: 700 }}>✅ Validé</span>
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginLeft: 12 }}>
+                  Lu et approuvé par <strong>{R.valide_par_nom}</strong> — {R.valide_at ? new Date(R.valide_at).toLocaleString('fr-FR') : ''}
+                </span>
+                {R.valide_signature && R.valide_signature !== 'Auto-validé (Officier)' && (
+                  <div style={{ marginTop: 6 }}>
+                    <img src={R.valide_signature} alt="Signature validation" style={{ maxHeight: 50, opacity: 0.8 }} />
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <span style={{ color: 'var(--warning)', fontWeight: 700 }}>⏳ En attente de validation</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: 8 }}>
+                  {R.auteur_rang < 35 ? '(Nécessite validation SO ou Officier)' : '(Nécessite validation Officier)'}
+                </span>
+              </>
+            )}
+          </div>
+          {canValidate && (
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button className="btn btn-primary btn-small" onClick={handleValidateClick}>
+                {mySignature ? '✅ Valider & Signer' : '✍️ Dessiner signature & Valider'}
+              </button>
+              {mySignature && <button className="btn btn-secondary btn-small" onClick={() => setShowValidateSign(true)}>🔄 Redessiner</button>}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Signature canvas for validation */}
+      {showValidateSign && (
+        <div className="popup-overlay" onClick={() => setShowValidateSign(false)}>
+          <div className="popup-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 550 }}>
+            <button className="popup-close" onClick={() => setShowValidateSign(false)}>✕</button>
+            <h3 style={{ margin: '0 0 16px' }}>✍️ Signer pour valider</h3>
+            <SignatureCanvas onSave={(dataUrl) => validateRapport(dataUrl)} width={480} height={200} />
+          </div>
+        </div>
       )}
 
       <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>

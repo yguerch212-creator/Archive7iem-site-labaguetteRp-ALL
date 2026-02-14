@@ -33,6 +33,7 @@ router.get('/', optionalAuth, async (req, res) => {
     const rows = await query(`
       SELECT id, titre, auteur_nom, personne_renseignee_nom, recommande_nom, mise_en_cause_nom, 
         type, date_rp, date_irl, published, moderation_statut, a_images, created_at,
+        valide, valide_par_nom, valide_at, auteur_rang,
         COALESCE(personne_renseignee_nom, recommande_nom, mise_en_cause_nom) AS personne_mentionnee
       FROM rapports ${where} ORDER BY created_at DESC
     `)
@@ -74,6 +75,19 @@ router.post('/', auth, async (req, res) => {
        f.date_rp || null, f.date_irl || null]
     )
     const rapportId = result.insertId
+
+    // Set auteur_rang + auto-validate for officiers
+    const auteurRang = req.user.grade_rang || 0
+    const isOfficier = req.user.isOfficier || req.user.isAdmin
+    if (isOfficier) {
+      await pool.execute(
+        'UPDATE rapports SET auteur_rang = ?, valide = 1, valide_par = ?, valide_par_nom = ?, valide_at = NOW(), valide_signature = ? WHERE id = ?',
+        [auteurRang, req.user.id, `${req.user.prenom || ''} ${req.user.nom || req.user.username}`.trim(), 'Auto-validé (Officier)', rapportId]
+      )
+    } else {
+      await pool.execute('UPDATE rapports SET auteur_rang = ? WHERE id = ?', [auteurRang, rapportId])
+    }
+
     logActivity(req, 'create_rapport', 'rapport', rapportId, `${f.type}: ${f.titre}`)
 
     // Discord notification
@@ -207,6 +221,56 @@ router.put('/:id/layout', auth, async (req, res) => {
     )
     res.json({ success: true })
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
+// PUT /api/rapports/:id/validate — Validate rapport (hierarchical chain)
+router.put('/:id/validate', auth, async (req, res) => {
+  try {
+    const rapport = await queryOne('SELECT * FROM rapports WHERE id = ?', [req.params.id])
+    if (!rapport) return res.status(404).json({ success: false, message: 'Rapport introuvable' })
+    if (rapport.valide) return res.status(400).json({ success: false, message: 'Rapport déjà validé' })
+
+    const validatorRang = req.user.grade_rang || 0
+    const auteurRang = rapport.auteur_rang || 0
+
+    // HDR (rang < 35) → SO (35+) ou OFF (60+) peut valider
+    // SO (35-59) → OFF (60+) peut valider
+    // OFF (60+) → auto-validé (shouldn't reach here)
+    if (auteurRang < 35 && validatorRang < 35) {
+      return res.status(403).json({ success: false, message: 'Seul un sous-officier ou officier peut valider ce rapport' })
+    }
+    if (auteurRang >= 35 && auteurRang < 60 && validatorRang < 60) {
+      return res.status(403).json({ success: false, message: 'Seul un officier peut valider le rapport d\'un sous-officier' })
+    }
+
+    // Get validator's saved signature or use the provided one
+    const { signature_data } = req.body
+    let sigData = signature_data
+    if (!sigData && req.user.effectif_id) {
+      const saved = await queryOne('SELECT signature_data FROM signatures_effectifs WHERE effectif_id = ?', [req.user.effectif_id])
+      if (saved) sigData = saved.signature_data
+    }
+
+    const validatorName = `${req.user.prenom || ''} ${req.user.nom || req.user.username}`.trim()
+    await pool.execute(
+      'UPDATE rapports SET valide = 1, valide_par = ?, valide_par_nom = ?, valide_signature = ?, valide_at = NOW() WHERE id = ?',
+      [req.user.id, validatorName, sigData || null, req.params.id]
+    )
+
+    // Save signature if new
+    if (sigData && req.user.effectif_id) {
+      await query(
+        `INSERT INTO signatures_effectifs (effectif_id, signature_data) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE signature_data = VALUES(signature_data)`,
+        [req.user.effectif_id, sigData]
+      ).catch(() => {})
+    }
+
+    logActivity(req, 'validate_rapport', 'rapport', req.params.id, `Validé par ${validatorName}`)
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
 })
 
 module.exports = router

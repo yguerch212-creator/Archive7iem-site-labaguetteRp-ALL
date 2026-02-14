@@ -13,7 +13,7 @@ export default function EffectifsList() {
   const [effectifs, setEffectifs] = useState([])
   const [unite, setUnite] = useState(null)
   const [grades, setGrades] = useState([])
-  const [filters, setFilters] = useState({ nom: '', grade: '' })
+  const [filters, setFilters] = useState({ nom: '', grade: '', categorie: '' })
   const [selected, setSelected] = useState(null)
 
   useEffect(() => {
@@ -28,6 +28,12 @@ export default function EffectifsList() {
   const filtered = effectifs.filter(e => {
     if (filters.nom && !`${e.prenom} ${e.nom}`.toLowerCase().includes(filters.nom.toLowerCase())) return false
     if (filters.grade && e.grade_nom !== filters.grade) return false
+    if (filters.categorie) {
+      const rang = e.grade_rang || 0
+      if (filters.categorie === 'Officier' && rang < 60) return false
+      if (filters.categorie === 'Sous-officier' && (rang < 35 || rang >= 60)) return false
+      if (filters.categorie === 'Militaire du rang' && rang >= 35) return false
+    }
     return true
   })
 
@@ -65,6 +71,17 @@ export default function EffectifsList() {
         >
           <option value="">— Grade —</option>
           {grades.map(g => <option key={g.id} value={g.nom_complet}>{g.nom_complet}</option>)}
+        </select>
+        <select
+          className="form-select"
+          style={{ maxWidth: 180 }}
+          value={filters.categorie}
+          onChange={e => setFilters(f => ({ ...f, categorie: e.target.value }))}
+        >
+          <option value="">— Catégorie —</option>
+          <option value="Officier">Officier</option>
+          <option value="Sous-officier">Sous-officier</option>
+          <option value="Militaire du rang">Militaire du rang</option>
         </select>
       </div>
 
