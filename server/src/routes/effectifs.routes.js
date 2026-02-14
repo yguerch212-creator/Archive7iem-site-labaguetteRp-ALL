@@ -120,12 +120,54 @@ router.post('/', auth, recenseur, async (req, res) => {
       [finalUsername, hash, f.nom, f.prenom, f.unite_id || null, f.grade_id || null, effectifId]
     )
 
+    // === Auto-assign groups based on grade & unite ===
+    const userId = userResult.insertId
+    const autoGroups = []
+
+    // Check grade category for officer/sous-officier
+    if (f.grade_id) {
+      const gradeInfo = await queryOne('SELECT categorie, rang FROM grades WHERE id = ?', [f.grade_id])
+      if (gradeInfo) {
+        if (gradeInfo.categorie === 'officier' || gradeInfo.rang >= 60) {
+          autoGroups.push(3) // Officier
+          autoGroups.push(4) // Sous-officier (officers also get SO perms)
+        } else if (gradeInfo.categorie === 'sous-officier' || (gradeInfo.rang >= 35 && gradeInfo.rang < 60)) {
+          autoGroups.push(4) // Sous-officier
+        }
+      }
+    }
+
+    // Check unite for Feldgendarmerie / Sanitäts / Etat-Major
+    if (f.unite_id) {
+      const uniteInfo = await queryOne('SELECT code, nom FROM unites WHERE id = ?', [f.unite_id])
+      if (uniteInfo) {
+        if (uniteInfo.code === '254' || uniteInfo.nom.toLowerCase().includes('feldgendarmerie')) {
+          autoGroups.push(5) // Feldgendarmerie
+        }
+        if (uniteInfo.code === '916S' || uniteInfo.nom.toLowerCase().includes('sanit')) {
+          autoGroups.push(6) // Sanitaets
+        }
+        if (uniteInfo.code === '084' || uniteInfo.nom.toLowerCase().includes('etat-major') || uniteInfo.nom.toLowerCase().includes('armeekorps')) {
+          autoGroups.push(7) // Etat-Major
+        }
+      }
+    }
+
+    // Insert auto groups (ignore duplicates)
+    for (const groupId of autoGroups) {
+      await pool.execute(
+        'INSERT IGNORE INTO user_groups (user_id, group_id) VALUES (?, ?)',
+        [userId, groupId]
+      ).catch(() => {})
+    }
+
     res.json({ 
       success: true, 
       data: { 
         id: effectifId, 
-        account: { username: finalUsername, tempPassword, userId: userResult.insertId },
-        discord_id: f.discord_id || null
+        account: { username: finalUsername, tempPassword, userId },
+        discord_id: f.discord_id || null,
+        auto_groups: autoGroups
       } 
     })
   } catch (err) {

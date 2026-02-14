@@ -193,18 +193,18 @@ router.put('/:id/prendre-en-charge', auth, async (req, res) => {
 
     // Create affaire
     const [affResult] = await pool.execute(
-      `INSERT INTO affaires (numero, titre, description, statut, created_by) VALUES (?, ?, ?, 'ouverte', ?)`,
+      `INSERT INTO affaires (numero, titre, resume, statut, created_by) VALUES (?, ?, ?, 'Ouverte', ?)`,
       [numero, `Incident — ${rapport.titre}`, `Affaire ouverte suite au rapport d'incident: ${rapport.titre}`, req.user.id]
     )
     const affaireId = affResult.insertId
 
     // Add the incident rapport as a pièce
     await pool.execute(
-      `INSERT INTO affaires_pieces (affaire_id, type, titre, contenu, date_rp, date_irl, redige_par_id, redige_par_nom, confidentiel)
-       VALUES (?, 'rapport_incident', ?, ?, ?, ?, ?, ?, 0)`,
+      `INSERT INTO affaires_pieces (affaire_id, type, titre, contenu, date_rp, date_irl, redige_par, redige_par_nom, confidentiel, created_by)
+       VALUES (?, 'Autre', ?, ?, ?, ?, ?, ?, 0, ?)`,
       [affaireId, `Rapport d'incident — ${rapport.titre}`,
        `Lieu: ${rapport.lieu_incident || '—'}\nCompte-rendu: ${rapport.compte_rendu || '—'}\nAuteur: ${rapport.auteur_nom || '—'}\nMis en cause: ${rapport.mise_en_cause_nom || '—'}`,
-       rapport.date_rp, rapport.date_irl, rapport.auteur_id, rapport.auteur_nom]
+       rapport.date_rp, rapport.date_irl, rapport.auteur_id, rapport.auteur_nom, req.user.id]
     )
 
     // Add mis en cause as accusé if present
@@ -223,14 +223,19 @@ router.put('/:id/prendre-en-charge', auth, async (req, res) => {
 
     // Send telegram to rapport author
     if (rapport.auteur_id) {
+      const auteurEff = await queryOne('SELECT nom, prenom FROM effectifs WHERE id = ?', [rapport.auteur_id])
+      const auteurFullName = auteurEff ? `${auteurEff.prenom || ''} ${auteurEff.nom || ''}`.trim() : (rapport.auteur_nom || 'Inconnu')
       const [telResult] = await pool.execute(
-        `INSERT INTO telegrammes (numero, objet, contenu, priorite, expediteur_id, expediteur_texte, confidentiel)
-         VALUES (?, ?, ?, 'urgent', ?, ?, 0)`,
+        `INSERT INTO telegrammes (numero, expediteur_id, expediteur_nom, destinataire_id, destinataire_nom, objet, contenu, priorite, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'Urgent', ?)`,
         [`TEL-AUTO-${Date.now()}`,
+         req.user.effectif_id || null,
+         feldName,
+         rapport.auteur_id,
+         auteurFullName,
          `Rapport d'incident pris en charge`,
          `Votre rapport d'incident "${rapport.titre}" a été pris en charge par ${feldName} de la Feldgendarmerie.\n\nAffaire ${numero} ouverte.\n\nVous serez informé de l'avancement de la procédure.`,
-         req.user.effectif_id || null,
-         feldName]
+         req.user.id]
       )
       // Add author as destinataire
       if (telResult.insertId) {
