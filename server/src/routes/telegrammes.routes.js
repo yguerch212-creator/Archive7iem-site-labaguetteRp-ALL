@@ -161,6 +161,14 @@ router.post('/', auth, async (req, res) => {
 // PUT /api/telegrammes/:id/archiver
 router.put('/:id/archiver', auth, async (req, res) => {
   try {
+    // Only sender, recipient, or admin can archive
+    const tel = await queryOne('SELECT expediteur_id FROM telegrammes WHERE id = ?', [req.params.id])
+    if (!tel) return res.status(404).json({ success: false, message: 'Introuvable' })
+    const effectifId = req.user.effectif_id
+    const isRecipient = effectifId ? await queryOne('SELECT id FROM telegramme_destinataires WHERE telegramme_id = ? AND effectif_id = ?', [req.params.id, effectifId]) : null
+    if (!req.user.isAdmin && tel.expediteur_id !== effectifId && !isRecipient) {
+      return res.status(403).json({ success: false, message: 'Non autorisé' })
+    }
     await pool.execute('UPDATE telegrammes SET statut = "Archivé" WHERE id = ?', [req.params.id])
     res.json({ success: true })
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }

@@ -1,3 +1,4 @@
+import DOMPurify from 'dompurify'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import interact from 'interactjs'
 import apiClient from '../api/client'
@@ -371,7 +372,7 @@ export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPub
                     updateContent(block.id, newContent)
                     pushHistory(blocks.map(b => b.id === block.id ? { ...b, content: newContent } : b))
                   }}
-                  dangerouslySetInnerHTML={{ __html: block.content }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(block.content) }}
                 />
               )}
 

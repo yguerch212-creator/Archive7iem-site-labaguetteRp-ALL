@@ -146,7 +146,7 @@ router.get('/groups', auth, admin, async (req, res) => {
 })
 
 // GET /api/admin/logs — Activity logs (admin only)
-router.get('/logs', async (req, res) => {
+router.get('/logs', auth, admin, async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 50, 200)
     const rows = await query(

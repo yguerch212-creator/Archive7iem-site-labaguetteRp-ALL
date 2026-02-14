@@ -1,3 +1,7 @@
+import DOMPurify from 'dompurify'
+
+const sanitize = (html) => DOMPurify.sanitize(html, { ALLOWED_TAGS: ['b','i','u','em','strong','br','p','div','span','h1','h2','h3','h4','ul','ol','li','a','table','tr','td','th','thead','tbody','hr','img','blockquote','pre','code','sup','sub','s','mark'], ALLOWED_ATTR: ['href','src','alt','style','class','colspan','rowspan','width','height','target'] })
+
 /**
  * LayoutRenderer — renders saved layout HTML or blocks.
  * If `html` is provided, renders it directly. Otherwise renders blocks as positioned elements.
@@ -13,7 +17,7 @@ export default function LayoutRenderer({ html, blocks = [], width = 800, minHeig
           background: '#f5f2e8', border: '1px solid #c4b99a', borderRadius: 4,
           fontFamily: "'IBM Plex Mono', monospace",
         }}
-        dangerouslySetInnerHTML={{ __html: html }}
+        dangerouslySetInnerHTML={{ __html: sanitize(html) }}
       />
     )
   }
@@ -57,7 +61,7 @@ function BlockContent({ block }) {
       return (
         <div
           style={{ fontSize: block.type === 'title' ? '1.1rem' : '0.85rem', lineHeight: 1.5, fontFamily: 'inherit' }}
-          dangerouslySetInnerHTML={{ __html: block.content || '' }}
+          dangerouslySetInnerHTML={{ __html: sanitize(block.content || '') }}
         />
       )
 
@@ -102,6 +106,6 @@ function BlockContent({ block }) {
       )
 
     default:
-      return <div dangerouslySetInnerHTML={{ __html: block.content || '' }} />
+      return <div dangerouslySetInnerHTML={{ __html: sanitize(block.content || '') }} />
   }
 }

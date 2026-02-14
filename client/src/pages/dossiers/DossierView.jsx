@@ -1,3 +1,4 @@
+import DOMPurify from 'dompurify'
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
@@ -392,7 +393,7 @@ function BookBlock({ block }) {
     case 'separator':
       return <hr style={{ border: 'none', borderTop: '2px solid #333', margin: 0, width: '100%' }} />
     default:
-      return <div style={{ width: '100%', height: '100%', overflow: 'hidden', ...textStyles }} dangerouslySetInnerHTML={{ __html: block.content }} />
+      return <div style={{ width: '100%', height: '100%', overflow: 'hidden', ...textStyles }} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(block.content) }} />
   }
 }
 

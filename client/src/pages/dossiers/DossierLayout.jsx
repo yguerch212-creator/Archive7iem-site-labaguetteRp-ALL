@@ -1,3 +1,4 @@
+import DOMPurify from 'dompurify'
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
@@ -341,7 +342,7 @@ export default function DossierLayout() {
                   suppressContentEditableWarning
                   style={{ width: '100%', height: '100%', outline: 'none', overflow: 'hidden', margin: 0, padding: 0, position: 'static', border: 'none', transform: 'none' }}
                   onBlur={(e) => updateBlock(block.id, b => ({ ...b, content: e.currentTarget.innerHTML }))}
-                  dangerouslySetInnerHTML={{ __html: block.content }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(block.content) }}
                 />
               )}
 
