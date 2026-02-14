@@ -3,8 +3,6 @@ import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import BackButton from '../../components/BackButton'
 import EffectifAutocomplete from '../../components/EffectifAutocomplete'
-import LayoutEditor from '../../components/LayoutEditor'
-import LayoutRenderer from '../../components/LayoutRenderer'
 
 const NODE_W = 220
 const NODE_H = 70
@@ -22,21 +20,11 @@ export default function Organigramme() {
   const [dragging, setDragging] = useState(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const canvasRef = useRef()
-  const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 })
-  const [panning, setPanning] = useState(false)
-  const [panStart, setPanStart] = useState({ x: 0, y: 0 })
-  
-  // Layout editor state
-  const [mode, setMode] = useState('view') // 'view' | 'tree' | 'layout'
-  const [savedLayout, setSavedLayout] = useState(null)
-  const [layoutBlocks, setLayoutBlocks] = useState([])
-  const [layoutLoading, setLayoutLoading] = useState(true)
 
   const canEdit = user?.isAdmin || user?.isEtatMajor
 
   useEffect(() => {
     load()
-    loadLayout()
     api.get('/unites').then(r => setUnites(r.data.data || r.data)).catch(() => {})
   }, [])
 
@@ -47,23 +35,6 @@ export default function Organigramme() {
     }
     setNodes(data)
   }).catch(() => {})
-
-  const loadLayout = () => {
-    api.get('/organigramme/layout').then(r => {
-      const data = r.data.data
-      if (data?.layout) {
-        const layout = typeof data.layout === 'string' ? JSON.parse(data.layout) : data.layout
-        setSavedLayout(layout)
-        if (layout.blocks) setLayoutBlocks(layout.blocks)
-        // If there's a published layout, default to view mode
-        if (layout.html_published) setMode('view')
-        else setMode('tree')
-      } else {
-        setMode('tree')
-      }
-      setLayoutLoading(false)
-    }).catch(() => { setLayoutLoading(false); setMode('tree') })
-  }
 
   const autoLayout = (data) => {
     const roots = data.filter(n => !n.parent_id)
@@ -113,55 +84,7 @@ export default function Organigramme() {
     try { await api.delete(`/organigramme/${id}`); load() } catch { setMsg('Erreur') }
   }
 
-  // Generate default layout blocks from nodes
-  const generateDefaultBlocks = () => {
-    const b = []
-    let y = 30
-    b.push({ id: 'header', type: 'title', content: '<b>ORGANIGRAMME</b>', x: 200, y, w: 400, h: 50 })
-    y += 60
-    b.push({ id: 'subtitle', type: 'text', content: '7. Armeekorps — Organisation et Commandement', x: 150, y, w: 500, h: 30 })
-    y += 50
-    b.push({ id: 'sep1', type: 'separator', content: '', x: 40, y, w: 720, h: 4 })
-    y += 30
-
-    // Add each node as a block
-    const roots = nodes.filter(n => !n.parent_id)
-    const children = (pid) => nodes.filter(n => n.parent_id === pid)
-    
-    const addNode = (node, depth) => {
-      const indent = depth * 30
-      const label = `${node.titre_poste ? `<b>${node.titre_poste}</b><br/>` : ''}${node.grade_nom || ''} ${node.prenom || ''} ${node.nom || ''}${node.unite_code ? ` — ${node.unite_code}. ${node.unite_nom}` : ''}${!node.effectif_id ? '<i>Poste vacant</i>' : ''}`
-      b.push({ id: `node-${node.id}`, type: 'text', content: label, x: 40 + indent, y, w: 500 - indent, h: 40 })
-      y += 50
-      children(node.id).forEach(c => addNode(c, depth + 1))
-    }
-    roots.forEach(r => addNode(r, 0))
-
-    b.push({ id: 'sep2', type: 'separator', content: '', x: 40, y, w: 720, h: 4 })
-    y += 20
-    b.push({ id: 'footer', type: 'text', content: `<i>Mis à jour le ${new Date().toLocaleDateString('fr-FR')}</i>`, x: 40, y, w: 400, h: 25 })
-
-    return b
-  }
-
-  const handleLayoutSave = async (newBlocks) => {
-    try {
-      await api.put('/organigramme/layout', { layout: { blocks: newBlocks } })
-      setLayoutBlocks(newBlocks)
-      setMsg('💾 Mise en page sauvegardée'); setTimeout(() => setMsg(''), 3000)
-    } catch (err) { setMsg('❌ Erreur: ' + (err.response?.data?.message || err.message)) }
-  }
-
-  const handleLayoutPublish = async (html, publishedBlocks) => {
-    try {
-      await api.put('/organigramme/layout', { layout: { blocks: publishedBlocks || layoutBlocks, html_published: html } })
-      setSavedLayout({ blocks: publishedBlocks || layoutBlocks, html_published: html })
-      setMode('view')
-      setMsg('📜 Organigramme publié !'); setTimeout(() => setMsg(''), 3000)
-    } catch (err) { setMsg('❌ Erreur') }
-  }
-
-  // Drag handlers for tree mode
+  // Drag
   const onNodeMouseDown = (e, node) => {
     if (!canEdit) return
     if (linking) {
@@ -173,31 +96,25 @@ export default function Organigramme() {
       return
     }
     e.stopPropagation()
+    const rect = canvasRef.current.getBoundingClientRect()
+    const scrollLeft = canvasRef.current.scrollLeft
+    const scrollTop = canvasRef.current.scrollTop
     setDragging(node.id)
-    setDragOffset({ x: e.clientX - (node.pos_x + canvasOffset.x), y: e.clientY - (node.pos_y + canvasOffset.y) })
+    setDragOffset({ x: e.clientX - rect.left + scrollLeft - (node.pos_x || 0), y: e.clientY - rect.top + scrollTop - (node.pos_y || 0) })
   }
 
   const onCanvasMouseMove = (e) => {
-    if (dragging) {
-      const x = e.clientX - dragOffset.x - canvasOffset.x
-      const y = e.clientY - dragOffset.y - canvasOffset.y
-      setNodes(prev => prev.map(n => n.id === dragging ? { ...n, pos_x: Math.max(0, x), pos_y: Math.max(0, y) } : n))
-    } else if (panning) {
-      setCanvasOffset(o => ({ x: o.x + e.clientX - panStart.x, y: o.y + e.clientY - panStart.y }))
-      setPanStart({ x: e.clientX, y: e.clientY })
-    }
+    if (!dragging) return
+    const rect = canvasRef.current.getBoundingClientRect()
+    const scrollLeft = canvasRef.current.scrollLeft
+    const scrollTop = canvasRef.current.scrollTop
+    const x = e.clientX - rect.left + scrollLeft - dragOffset.x
+    const y = e.clientY - rect.top + scrollTop - dragOffset.y
+    setNodes(prev => prev.map(n => n.id === dragging ? { ...n, pos_x: Math.max(0, x), pos_y: Math.max(0, y) } : n))
   }
 
   const onCanvasMouseUp = () => {
     if (dragging) { savePositions(); setDragging(null) }
-    if (panning) setPanning(false)
-  }
-
-  const onCanvasBgDown = (e) => {
-    if (e.target === canvasRef.current || e.target.tagName === 'svg') {
-      setPanning(true)
-      setPanStart({ x: e.clientX, y: e.clientY })
-    }
   }
 
   const getLines = () => {
@@ -219,61 +136,23 @@ export default function Organigramme() {
   const canvasW = Math.max(1200, nodes.reduce((m, n) => Math.max(m, (n.pos_x || 0) + NODE_W + 100), 0))
   const canvasH = Math.max(600, nodes.reduce((m, n) => Math.max(m, (n.pos_y || 0) + NODE_H + 100), 0))
 
-  if (layoutLoading) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div>
-
-  // VIEW MODE — show published layout
-  if (mode === 'view' && savedLayout?.html_published) {
-    return (
-      <div className="container" style={{ paddingBottom: 'var(--space-xxl)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap', gap: 8 }}>
-          <BackButton label="← Tableau de bord" />
-          <div style={{ display: 'flex', gap: 6 }}>
-            {canEdit && <button className="btn btn-secondary btn-small" onClick={() => setMode('tree')}>🗺️ Gérer les postes</button>}
-            {canEdit && <button className="btn btn-primary btn-small" onClick={() => { if (layoutBlocks.length === 0) setLayoutBlocks(generateDefaultBlocks()); setMode('layout') }}className="layout-desktop-only">✏️ Modifier la mise en page</button>}
-          </div>
-        </div>
-        <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>🗺️ Organigramme — 7. Armeekorps</h1>
-        {msg && <div className="alert alert-success">{msg}</div>}
-        <LayoutRenderer blocks={savedLayout.blocks || []} width={800} />
-      </div>
-    )
-  }
-
-  // LAYOUT EDITOR MODE
-  if (mode === 'layout' && canEdit) {
-    return (
-      <div style={{ padding: '1rem', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: 8 }}>
-          <button className="btn btn-secondary btn-small" onClick={() => setMode(savedLayout?.html_published ? 'view' : 'tree')}>← Retour</button>
-          {msg && <div className={`alert ${msg.includes('❌') ? 'alert-danger' : 'alert-success'}`} style={{ margin: 0 }}>{msg}</div>}
-        </div>
-        <LayoutEditor
-          blocks={layoutBlocks.length > 0 ? layoutBlocks : generateDefaultBlocks()}
-          onSave={handleLayoutSave}
-          onPublish={handleLayoutPublish}
-          title="Organigramme — 7. Armeekorps"
-        />
-      </div>
-    )
-  }
-
-  // TREE MANAGEMENT MODE (admin/etat-major only for editing, everyone can see)
   return (
     <div className="container" style={{ paddingBottom: 'var(--space-xxl)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap', gap: 8 }}>
         <BackButton label="← Tableau de bord" />
-        <div style={{ display: 'flex', gap: 6 }}>
-          {linking && <span style={{ fontSize: '0.8rem', color: 'var(--warning)', fontWeight: 700 }}>🔗 Cliquez sur un bloc enfant pour le relier</span>}
-          {linking && <button className="btn btn-secondary btn-sm" onClick={() => setLinking(null)}>✕ Annuler</button>}
-          {savedLayout?.html_published && <button className="btn btn-secondary btn-small" onClick={() => setMode('view')}>👁️ Voir la mise en page</button>}
-          {canEdit && <button className="btn btn-secondary btn-small layout-desktop-only" onClick={() => { if (layoutBlocks.length === 0) setLayoutBlocks(generateDefaultBlocks()); setMode('layout') }}>✏️ Mise en page</button>}
-          {canEdit && <button className="btn btn-primary btn-small" onClick={() => { setShowAdd(!showAdd); setEditNode(null) }}>{showAdd ? '✕' : '+ Nouveau poste'}</button>}
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {linking && <span style={{ fontSize: '0.8rem', color: 'var(--warning)', fontWeight: 700 }}>🔗 Cliquez sur le bloc enfant</span>}
+          {linking && <button className="btn btn-secondary btn-sm" onClick={() => setLinking(null)}>✕</button>}
+          {canEdit && <button className="btn btn-primary btn-small" onClick={() => { setShowAdd(!showAdd); setEditNode(null) }}>{showAdd ? '✕ Fermer' : '+ Nouveau poste'}</button>}
         </div>
       </div>
-      <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-md)' }}>🗺️ Organigramme — 7. Armeekorps</h1>
+
+      <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-sm)', fontFamily: 'var(--font-title, Georgia, serif)' }}>🗺️ Organigramme</h1>
+      <p style={{ textAlign: 'center', marginBottom: 'var(--space-md)', fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>7. Armeekorps — Organisation et Commandement</p>
+
       {msg && <div className="alert alert-success">{msg}</div>}
 
-      {(showAdd || editNode) && (
+      {(showAdd || editNode) && canEdit && (
         <div className="paper-card" style={{ marginBottom: 'var(--space-md)' }}>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'end' }}>
             <div style={{ flex: 1, minWidth: 160 }}>
@@ -297,64 +176,83 @@ export default function Organigramme() {
         </div>
       )}
 
+      {/* Canvas organigramme sur fond papier */}
       <div className="paper-card" style={{ padding: 0, overflow: 'hidden', borderRadius: 8 }}>
         <div ref={canvasRef}
           onMouseMove={onCanvasMouseMove} onMouseUp={onCanvasMouseUp} onMouseLeave={onCanvasMouseUp}
-          onMouseDown={onCanvasBgDown}
           style={{
             position: 'relative', width: '100%', height: 'calc(100vh - 280px)', minHeight: 500,
-            overflow: 'auto', cursor: panning ? 'grabbing' : linking ? 'crosshair' : 'default',
-            background: 'repeating-conic-gradient(rgba(0,0,0,0.03) 0% 25%, transparent 0% 50%) 0 0 / 40px 40px'
+            overflow: 'auto',
+            cursor: dragging ? 'grabbing' : linking ? 'crosshair' : 'default',
           }}>
+          
+          {/* Lignes de liaison */}
           <svg style={{ position: 'absolute', top: 0, left: 0, width: canvasW, height: canvasH, pointerEvents: 'none' }}>
             {getLines().map((l, i) => {
               const midY = (l.y1 + l.y2) / 2
-              return <path key={i} d={`M ${l.x1} ${l.y1} C ${l.x1} ${midY}, ${l.x2} ${midY}, ${l.x2} ${l.y2}`} fill="none" stroke="#8b7d6b" strokeWidth={2} strokeDasharray="6 3" opacity={0.6} />
+              return <path key={i} d={`M ${l.x1} ${l.y1} C ${l.x1} ${midY}, ${l.x2} ${midY}, ${l.x2} ${l.y2}`}
+                fill="none" stroke="var(--border, #8b7d6b)" strokeWidth={2} opacity={0.7} />
             })}
           </svg>
 
-          {nodes.map(node => (
-            <div key={node.id}
-              onMouseDown={(e) => onNodeMouseDown(e, node)}
-              onDoubleClick={() => { if (canEdit) { setEditNode(node); setForm({ effectif_id: node.effectif_id || '', titre_poste: node.titre_poste || '', unite_id: node.unite_id || '' }); setSearchText(node.prenom ? `${node.prenom} ${node.nom}` : ''); setShowAdd(false) } }}
-              style={{
-                position: 'absolute', left: node.pos_x || 0, top: node.pos_y || 0,
-                width: NODE_W, minHeight: NODE_H,
-                background: node.parent_id ? '#faf8f2' : '#3d5a3e',
-                color: node.parent_id ? 'inherit' : '#fff',
-                border: `2px solid ${node.unite_couleur || '#c4b99a'}`,
-                borderRadius: 8, padding: '8px 12px',
-                cursor: dragging === node.id ? 'grabbing' : canEdit ? 'grab' : 'default',
-                boxShadow: dragging === node.id ? '0 8px 24px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.08)',
-                zIndex: dragging === node.id ? 100 : 1,
-                transition: dragging === node.id ? 'none' : 'box-shadow 0.2s',
-                userSelect: 'none',
-              }}>
-              {node.titre_poste && <div style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: 1, opacity: 0.65, textTransform: 'uppercase', marginBottom: 2 }}>{node.titre_poste}</div>}
-              {node.effectif_id ? (
-                <div style={{ fontWeight: 600, fontSize: '0.82rem', lineHeight: 1.2 }}>{node.grade_nom ? `${node.grade_nom} ` : ''}{node.prenom} {node.nom}</div>
-              ) : (
-                <div style={{ fontStyle: 'italic', fontSize: '0.78rem', opacity: 0.5 }}>Poste vacant</div>
-              )}
-              {node.unite_code && <div style={{ fontSize: '0.62rem', opacity: 0.6, marginTop: 2 }}>{node.unite_code}. {node.unite_nom}</div>}
+          {/* Nodes */}
+          {nodes.map(node => {
+            const isRoot = !node.parent_id
+            return (
+              <div key={node.id}
+                onMouseDown={(e) => onNodeMouseDown(e, node)}
+                onDoubleClick={() => { if (canEdit) { setEditNode(node); setForm({ effectif_id: node.effectif_id || '', titre_poste: node.titre_poste || '', unite_id: node.unite_id || '' }); setSearchText(node.prenom ? `${node.prenom} ${node.nom}` : ''); setShowAdd(false) } }}
+                style={{
+                  position: 'absolute', left: node.pos_x || 0, top: node.pos_y || 0,
+                  width: NODE_W, minHeight: NODE_H,
+                  background: isRoot ? 'rgba(61,90,62,0.9)' : 'rgba(250,248,242,0.85)',
+                  backdropFilter: 'blur(2px)',
+                  color: isRoot ? '#fff' : 'var(--text, #2c2416)',
+                  border: `2px solid ${node.unite_couleur || 'var(--border, #c4b99a)'}`,
+                  borderRadius: 6, padding: '8px 12px',
+                  cursor: dragging === node.id ? 'grabbing' : canEdit ? 'grab' : 'default',
+                  boxShadow: dragging === node.id ? '0 8px 24px rgba(0,0,0,0.25)' : '0 1px 4px rgba(0,0,0,0.1)',
+                  zIndex: dragging === node.id ? 100 : 1,
+                  transition: dragging === node.id ? 'none' : 'box-shadow 0.2s',
+                  userSelect: 'none',
+                }}>
+                {node.titre_poste && (
+                  <div style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.7, marginBottom: 2 }}>
+                    {node.titre_poste}
+                  </div>
+                )}
+                {node.effectif_id ? (
+                  <div style={{ fontWeight: 600, fontSize: '0.82rem', lineHeight: 1.3, fontFamily: 'var(--font-body, Georgia, serif)' }}>
+                    {node.grade_nom ? `${node.grade_nom} ` : ''}{node.prenom} {node.nom}
+                  </div>
+                ) : (
+                  <div style={{ fontStyle: 'italic', fontSize: '0.78rem', opacity: 0.5 }}>Poste vacant</div>
+                )}
+                {node.unite_code && (
+                  <div style={{ fontSize: '0.6rem', opacity: 0.6, marginTop: 2 }}>
+                    {node.unite_code}. {node.unite_nom}
+                  </div>
+                )}
 
-              {canEdit && (
-                <div style={{ position: 'absolute', top: -8, right: -8, display: 'flex', gap: 2 }}>
-                  <button onClick={(e) => { e.stopPropagation(); setLinking(node.id) }}
-                    style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid #c4b99a', background: '#faf8f2', cursor: 'pointer', fontSize: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    title="Relier à un enfant">🔗</button>
-                  <button onClick={(e) => { e.stopPropagation(); remove(node.id) }}
-                    style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid #c4b99a', background: '#faf8f2', cursor: 'pointer', fontSize: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    title="Supprimer">🗑️</button>
-                  {node.parent_id && (
-                    <button onClick={(e) => { e.stopPropagation(); setNodes(prev => prev.map(n => n.id === node.id ? { ...n, parent_id: null } : n)); api.put(`/organigramme/${node.id}`, { ...node, parent_id: null }).catch(() => {}) }}
-                      style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid #c4b99a', background: '#faf8f2', cursor: 'pointer', fontSize: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      title="Détacher du parent">✂️</button>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
+                {/* Boutons admin */}
+                {canEdit && (
+                  <div style={{ position: 'absolute', top: -8, right: -8, display: 'flex', gap: 2 }}>
+                    <button onClick={(e) => { e.stopPropagation(); setLinking(node.id) }}
+                      style={{ width: 20, height: 20, borderRadius: '50%', border: '1px solid var(--border, #c4b99a)', background: 'var(--bg-card, #faf8f2)', cursor: 'pointer', fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      title="Relier à un enfant">🔗</button>
+                    <button onClick={(e) => { e.stopPropagation(); remove(node.id) }}
+                      style={{ width: 20, height: 20, borderRadius: '50%', border: '1px solid var(--border, #c4b99a)', background: 'var(--bg-card, #faf8f2)', cursor: 'pointer', fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      title="Supprimer">🗑️</button>
+                    {node.parent_id && (
+                      <button onClick={(e) => { e.stopPropagation(); setNodes(prev => prev.map(n => n.id === node.id ? { ...n, parent_id: null } : n)); api.put(`/organigramme/${node.id}`, { ...node, parent_id: null }).catch(() => {}) }}
+                        style={{ width: 20, height: 20, borderRadius: '50%', border: '1px solid var(--border, #c4b99a)', background: 'var(--bg-card, #faf8f2)', cursor: 'pointer', fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        title="Détacher du parent">✂️</button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
 
           {nodes.length === 0 && (
             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -366,8 +264,8 @@ export default function Organigramme() {
       </div>
 
       {canEdit && nodes.length > 0 && (
-        <div style={{ textAlign: 'center', marginTop: 'var(--space-sm)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          Glissez les blocs pour les déplacer · 🔗 pour relier · ✂️ pour détacher · Double-clic pour modifier
+        <div style={{ textAlign: 'center', marginTop: 'var(--space-sm)', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+          Glissez les blocs pour les déplacer · 🔗 Relier · ✂️ Détacher · Double-clic pour modifier
         </div>
       )}
     </div>
