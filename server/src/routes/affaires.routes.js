@@ -279,7 +279,11 @@ router.post('/signatures/:sid/telegram', auth, async (req, res) => {
     if (lastTel) telSeq = parseInt(lastTel.numero.split('-')[2]) + 1
     const telNumero = `TEL-${year}-${String(telSeq).padStart(3, '0')}`
 
-    const contenu = `DEMANDE DE SIGNATURE\n\nAffaire: ${sig.affaire_numero} — ${sig.affaire_titre}\nDocument: ${sig.piece_titre}\nRôle: ${sig.role_signataire || 'Signataire'}\n\nVeuillez vous rendre sur la page de l'affaire pour apposer votre signature.\n\n/sanctions → Affaire ${sig.affaire_numero}`
+    // Find affaire_id from piece
+    const pieceRow = await queryOne('SELECT affaire_id FROM affaires_pieces WHERE id=?', [sig.piece_id])
+    const affaireId = pieceRow?.affaire_id || ''
+
+    const contenu = `DEMANDE DE SIGNATURE\n\nAffaire: ${sig.affaire_numero} — ${sig.affaire_titre}\nDocument: ${sig.piece_titre}\nRôle: ${sig.role_signataire || 'Signataire'}\n\nVeuillez apposer votre signature sur ce document.\n\n<!--SIG:${req.params.sid}:${affaireId}:${sig.piece_id}-->`
 
     // Get sender name
     const sender = req.user.effectif_id

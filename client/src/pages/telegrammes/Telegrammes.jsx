@@ -1,6 +1,7 @@
 import BackButton from '../../components/BackButton'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../auth/useAuth'
+import { useNavigate } from 'react-router-dom'
 import api from '../../api/client'
 import EffectifAutocomplete from '../../components/EffectifAutocomplete'
 import { exportCsv } from '../../utils/exportCsv'
@@ -128,7 +129,7 @@ export default function Telegrammes() {
             <span className="telegram-field-value"><span className={`tel-priorite tel-priorite-${t.priorite}`}>{PRIORITY_ICONS[t.priorite]} {t.priorite}</span></span>
           </div>
 
-          <div className="telegram-body">{t.contenu}</div>
+          <TelegramBody contenu={t.contenu} user={user} onRefresh={load} />
 
           <div className="telegram-footer">
             <span>Statut : {t.statut}</span>
@@ -293,6 +294,79 @@ export default function Telegrammes() {
           <p className="text-muted">Aucun télégramme</p>
         </div>
       )}
+    </div>
+  )
+}
+
+// ===== Telegram body with signature support =====
+function TelegramBody({ contenu, user, onRefresh }) {
+  const navigate = useNavigate()
+  const canvasRef = useRef(null)
+  const [drawing, setDrawing] = useState(false)
+  const [hasContent, setHasContent] = useState(false)
+  const [showSign, setShowSign] = useState(false)
+  const [signMsg, setSignMsg] = useState('')
+  const [signed, setSigned] = useState(false)
+
+  // Detect signature request: <!--SIG:sigId:affaireId:pieceId-->
+  const sigMatch = contenu?.match(/<!--SIG:(\d+):(\d*):(\d*)-->/)
+  const sigId = sigMatch?.[1]
+  const affaireId = sigMatch?.[2]
+  const displayContent = contenu?.replace(/<!--SIG:\d+:\d*:\d*-->/, '').trim()
+
+  const getPos = (e) => {
+    const rect = canvasRef.current.getBoundingClientRect()
+    const touch = e.touches ? e.touches[0] : e
+    return { x: touch.clientX - rect.left, y: touch.clientY - rect.top }
+  }
+
+  const startDraw = (e) => { e.preventDefault(); const ctx = canvasRef.current.getContext('2d'); const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); setDrawing(true) }
+  const draw = (e) => { if (!drawing) return; e.preventDefault(); const ctx = canvasRef.current.getContext('2d'); const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.strokeStyle = '#1a1a2e'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.stroke(); setHasContent(true) }
+  const stopDraw = () => setDrawing(false)
+  const clearCanvas = () => { canvasRef.current.getContext('2d').clearRect(0, 0, 400, 120); setHasContent(false) }
+
+  const submitSignature = async () => {
+    if (!hasContent || !sigId) return
+    const data = canvasRef.current.toDataURL('image/png')
+    try {
+      await api.put(`/affaires/signatures/${sigId}/sign`, { signature_data: data })
+      setSignMsg('✅ Document signé avec succès !')
+      setSigned(true)
+      setShowSign(false)
+      if (onRefresh) onRefresh()
+    } catch (err) {
+      setSignMsg('❌ ' + (err.response?.data?.error || 'Erreur'))
+    }
+  }
+
+  return (
+    <div>
+      <div className="telegram-body">{displayContent}</div>
+      {sigId && !signed && (
+        <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(107,143,60,0.08)', border: '1px solid rgba(107,143,60,0.3)', borderRadius: 6 }}>
+          {!showSign ? (
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <button className="btn btn-primary btn-small" onClick={() => setShowSign(true)}>✍️ Signer directement</button>
+              {affaireId && <button className="btn btn-secondary btn-small" onClick={() => navigate(`/sanctions/${affaireId}`)}>📁 Voir l'affaire</button>}
+            </div>
+          ) : (
+            <div>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 0.5rem' }}>Dessinez votre signature ci-dessous :</p>
+              <canvas ref={canvasRef} width={400} height={120}
+                style={{ background: '#fff', border: '1px solid var(--border-color)', borderRadius: 4, cursor: 'crosshair', display: 'block', touchAction: 'none', maxWidth: '100%' }}
+                onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw}
+                onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw} />
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <button className="btn btn-primary btn-small" onClick={submitSignature} disabled={!hasContent}>✅ Valider la signature</button>
+                <button className="btn btn-small" onClick={clearCanvas}>🗑️ Effacer</button>
+                <button className="btn btn-small" onClick={() => setShowSign(false)}>Annuler</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      {signed && <div className="alert alert-success" style={{ marginTop: '0.5rem' }}>✅ Document signé avec succès !</div>}
+      {signMsg && !signed && <div className="alert alert-danger" style={{ marginTop: '0.5rem' }}>{signMsg}</div>}
     </div>
   )
 }
