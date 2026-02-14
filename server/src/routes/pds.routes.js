@@ -41,9 +41,10 @@ function getCurrentWeek() {
 function parseCreneaux(text) {
   if (!text || text.trim().toUpperCase() === 'X' || text.trim() === '') return 0
   let total = 0
-  const slots = text.split(',').map(s => s.trim()).filter(Boolean)
+  const normalized = text.replace(/[Hh]/g, 'h').replace(/\s*-\s*/g, '-')
+  const slots = normalized.split(',').map(s => s.trim()).filter(Boolean)
   for (const slot of slots) {
-    const match = slot.match(/(\d{1,2})h?(\d{0,2})\s*-\s*(\d{1,2})h?(\d{0,2})/)
+    const match = slot.match(/(\d{1,2})(?:h(\d{0,2}))?\s*-\s*(\d{1,2})(?:h(\d{0,2}))?/)
     if (match) {
       const start = parseInt(match[1]) + (parseInt(match[2] || 0) / 60)
       const end = parseInt(match[3]) + (parseInt(match[4] || 0) / 60)

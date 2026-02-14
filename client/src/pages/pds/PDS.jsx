@@ -40,9 +40,16 @@ function weekLabel(w) {
 function parseCreneaux(text) {
   if (!text || text.trim().toUpperCase() === 'X' || text.trim() === '') return 0
   let total = 0
-  for (const slot of text.split(',').map(s => s.trim()).filter(Boolean)) {
-    const m = slot.match(/(\d{1,2})h?(\d{0,2})\s*-\s*(\d{1,2})h?(\d{0,2})/)
-    if (m) { const s = parseInt(m[1])+(parseInt(m[2]||0)/60), e = parseInt(m[3])+(parseInt(m[4]||0)/60); if (e>s) total+=(e-s) }
+  // Normalize: replace H/h with h, remove spaces around -
+  const normalized = text.replace(/[Hh]/g, 'h').replace(/\s*-\s*/g, '-')
+  for (const slot of normalized.split(',').map(s => s.trim()).filter(Boolean)) {
+    // Match: 20h30-22h, 20h-22h, 20-22, 20h30-22h30, etc.
+    const m = slot.match(/(\d{1,2})(?:h(\d{0,2}))?\s*-\s*(\d{1,2})(?:h(\d{0,2}))?/)
+    if (m) {
+      const s = parseInt(m[1]) + (parseInt(m[2] || 0) / 60)
+      const e = parseInt(m[3]) + (parseInt(m[4] || 0) / 60)
+      if (e > s) total += (e - s)
+    }
   }
   return Math.round(total * 100) / 100
 }
