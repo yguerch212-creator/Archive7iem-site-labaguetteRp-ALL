@@ -178,17 +178,11 @@ app.get('/api/stats/archives', async (req, res) => {
     const rows = await query(`
       (SELECT 'rapport' as type, CAST(id AS CHAR) as doc_id, CONCAT(UPPER(LEFT(type,1)), SUBSTRING(type,2), ' — ', titre) as label, auteur_nom as auteur, CAST(date_irl AS CHAR) as date_doc, created_at FROM rapports)
       UNION ALL
-      (SELECT 'telegramme', CAST(id AS CHAR), CONCAT(numero, ' — De: ', expediteur_nom, ' → ', destinataire_nom), expediteur_nom, NULL, created_at FROM telegrammes)
-      UNION ALL
       (SELECT 'visite_medicale', CAST(vm.id AS CHAR), CONCAT('Visite — ', IFNULL(CONCAT(e.prenom,' ',e.nom), 'Inconnu')), vm.medecin, CAST(vm.date_visite AS CHAR), vm.created_at FROM visites_medicales vm LEFT JOIN effectifs e ON e.id = vm.effectif_id)
-      UNION ALL
-      (SELECT 'interdit_front', CAST(i.id AS CHAR), CONCAT('Interdit — ', IFNULL(CONCAT(e.prenom,' ',e.nom), 'Inconnu')), NULL, CAST(i.date_debut AS CHAR), i.created_at FROM interdits_front i LEFT JOIN effectifs e ON e.id = i.effectif_id)
       UNION ALL
       (SELECT 'affaire', CAST(id AS CHAR), CONCAT(numero, ' — ', titre), NULL, NULL, created_at FROM affaires)
       UNION ALL
       (SELECT 'documentation', CAST(d.id AS CHAR), d.titre, CONCAT(u.prenom,' ',u.nom), NULL, d.created_at FROM documentation d LEFT JOIN users u ON u.id = d.created_by WHERE d.statut = 'approuve' AND d.is_repertoire = 0)
-      UNION ALL
-      (SELECT 'pds_recap', s.semaine, CONCAT('PDS Semaine ', s.semaine, ' — ', COUNT(*), ' effectifs'), NULL, NULL, MAX(s.updated_at) FROM pds_semaines s GROUP BY s.semaine)
       ORDER BY created_at DESC
       LIMIT ${limit}
     `)

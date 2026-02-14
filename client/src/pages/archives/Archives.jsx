@@ -6,12 +6,9 @@ import { formatDate } from '../../utils/dates'
 
 const TYPE_CONFIG = {
   rapport: { icon: '📝', label: 'Rapport', color: '#3d5a3e' },
-  telegramme: { icon: '⚡', label: 'Télégramme', color: '#8b6914' },
   visite_medicale: { icon: '🏥', label: 'Visite médicale', color: '#2c5f7c' },
-  interdit_front: { icon: '🚫', label: 'Interdit de front', color: '#8b4a47' },
   affaire: { icon: '⚖️', label: 'Affaire judiciaire', color: '#5a3d5a' },
   documentation: { icon: '📚', label: 'Documentation', color: '#4a6741' },
-  pds_recap: { icon: '⏱️', label: 'Récap PDS', color: '#6b5b3e' },
 }
 
 const ALL_TYPES = Object.keys(TYPE_CONFIG)
