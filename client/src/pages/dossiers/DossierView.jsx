@@ -97,13 +97,39 @@ export default function DossierView() {
 
         <div className="book-page" style={savedPages ? { position: 'relative' } : {}}>
           {savedPages && savedPages[String(currentPage)] ? (
-            /* Render saved layout blocks */
-            savedPages[String(currentPage)].map((block, i) => (
-              <div key={block.id} className={block.css || ''} style={{
-                position: 'absolute', left: block.x, top: block.y, width: block.w, height: block.h,
-                zIndex: i + 1, overflow: 'hidden', margin: 0, border: 'none', transform: 'none', padding: 0,
-              }} dangerouslySetInnerHTML={{ __html: block.content }} />
-            ))
+            /* Render saved layout blocks at exact positions */
+            savedPages[String(currentPage)].map((block, i) => {
+              // Get font/visual styles from CSS class but override all positioning
+              const cssClass = block.css || ''
+              const isStamp = cssClass === 'book-cover-stamp'
+              const isEmblem = cssClass === 'book-cover-emblem'
+              const isTitle = cssClass.includes('title')
+              const isFooter = cssClass.includes('footer')
+              const isMeta = cssClass.includes('meta')
+              const isDesc = cssClass.includes('desc')
+              const isNum = cssClass.includes('num')
+              const isDate = cssClass.includes('date')
+
+              // Only apply font/text styles from CSS classes, not positioning
+              const textStyles = {}
+              if (isTitle) { textStyles.fontFamily = "'IBM Plex Mono', monospace"; textStyles.fontSize = cssClass.includes('cover') ? '1.5rem' : '1.15rem'; textStyles.letterSpacing = '1px'; textStyles.textTransform = cssClass.includes('cover') ? 'uppercase' : 'none'; textStyles.fontWeight = 700 }
+              if (isStamp) { textStyles.fontFamily = "'IBM Plex Mono', monospace"; textStyles.fontSize = '0.9rem'; textStyles.letterSpacing = '2px'; textStyles.textTransform = 'uppercase'; textStyles.color = '#8b0000'; textStyles.fontWeight = 700; textStyles.border = '2px solid #8b0000'; textStyles.padding = '2px 10px'; textStyles.textAlign = 'center' }
+              if (isEmblem) { textStyles.fontSize = '4rem'; textStyles.opacity = 0.4; textStyles.color = '#8a7a5a'; textStyles.textAlign = 'center'; textStyles.lineHeight = 1 }
+              if (isFooter) { textStyles.fontSize = '0.8rem'; textStyles.color = '#888'; textStyles.textAlign = 'center'; textStyles.fontStyle = 'italic' }
+              if (isMeta) { textStyles.fontSize = '0.8rem'; textStyles.color = '#777'; textStyles.textAlign = 'center' }
+              if (isDesc) { textStyles.fontSize = '0.9rem'; textStyles.color = '#666'; textStyles.fontStyle = 'italic'; textStyles.textAlign = 'center' }
+              if (isNum) { textStyles.fontSize = '0.75rem'; textStyles.color = '#999'; textStyles.fontFamily = "'IBM Plex Mono', monospace" }
+              if (isDate) { textStyles.fontSize = '0.75rem'; textStyles.color = '#999'; textStyles.textAlign = 'right'; textStyles.fontFamily = "'IBM Plex Mono', monospace" }
+              if (cssClass === 'book-entry-content') { textStyles.fontSize = '0.95rem'; textStyles.lineHeight = 1.75; textStyles.whiteSpace = 'pre-wrap' }
+
+              return (
+                <div key={block.id} style={{
+                  position: 'absolute', left: block.x, top: block.y, width: block.w, height: block.h,
+                  zIndex: i + 1, overflow: 'hidden',
+                  ...textStyles,
+                }} dangerouslySetInnerHTML={{ __html: block.content }} />
+              )
+            })
           ) : (
             /* Default rendering */
             <>
