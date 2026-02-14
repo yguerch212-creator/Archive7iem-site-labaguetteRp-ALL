@@ -48,7 +48,7 @@ export default function Archives() {
       visite_medicale: `/medical/${item.doc_id}`,
       interdit_front: '/interdits',
       affaire: `/sanctions/${item.doc_id}`,
-      piece: `/sanctions/${item.doc_id}`,
+      piece: `/pieces/${item.doc_id}`,
       documentation: '/documentation',
       pds_recap: '/pds',
     }

@@ -163,9 +163,11 @@ router.post('/:id/pieces', auth, async (req, res) => {
 router.get('/pieces/:pid', auth, async (req, res) => {
   try {
     const piece = await queryOne(`
-      SELECT p.*, i.nom AS infraction_nom, i.description AS infraction_desc, i.groupe AS infraction_groupe
+      SELECT p.*, i.nom AS infraction_nom, i.description AS infraction_desc, i.groupe AS infraction_groupe,
+             a.numero AS affaire_numero, a.titre AS affaire_titre
       FROM affaires_pieces p
       LEFT JOIN infractions i ON p.infraction_id = i.id
+      LEFT JOIN affaires a ON a.id = p.affaire_id
       WHERE p.id = ?
     `, [req.params.pid])
     if (!piece) return res.status(404).json({ error: 'Pièce introuvable' })
@@ -199,6 +201,33 @@ router.delete('/pieces/:pid', auth, async (req, res) => {
     await query('DELETE FROM affaires_pieces WHERE id = ?', [req.params.pid])
     res.json({ success: true })
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }) }
+})
+
+// ==================== PIECE LAYOUT ====================
+
+// GET /api/affaires/pieces/:pid/layout
+router.get('/pieces/:pid/layout', auth, async (req, res) => {
+  try {
+    const layout = await queryOne('SELECT * FROM piece_layouts WHERE piece_id = ?', [req.params.pid])
+    res.json({ success: true, data: layout || null })
+  } catch (err) { res.status(500).json({ error: err.message }) }
+})
+
+// PUT /api/affaires/pieces/:pid/layout
+router.put('/pieces/:pid/layout', auth, async (req, res) => {
+  if (!canWrite(req)) return res.status(403).json({ error: 'Non autorisé' })
+  const { layout, html_published } = req.body
+  try {
+    const existing = await queryOne('SELECT id FROM piece_layouts WHERE piece_id = ?', [req.params.pid])
+    if (existing) {
+      await query('UPDATE piece_layouts SET layout_json = ?, html_published = ?, updated_by = ? WHERE piece_id = ?',
+        [JSON.stringify(layout), html_published || null, req.user.id, req.params.pid])
+    } else {
+      await query('INSERT INTO piece_layouts (piece_id, layout_json, html_published, updated_by) VALUES (?, ?, ?, ?)',
+        [req.params.pid, JSON.stringify(layout), html_published || null, req.user.id])
+    }
+    res.json({ success: true })
+  } catch (err) { res.status(500).json({ error: err.message }) }
 })
 
 // ==================== SIGNATURES ====================

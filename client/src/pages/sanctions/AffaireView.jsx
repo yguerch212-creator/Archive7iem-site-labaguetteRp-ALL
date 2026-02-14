@@ -176,7 +176,8 @@ export default function AffaireView() {
                   <td>{p.type.replace(/-/g, ' ')}</td>
                   <td>{p.nb_signees}/{p.nb_signatures} ✍️</td>
                   <td>{p.date_irl ? formatDate(p.date_irl) : p.date_rp || '—'}</td>
-                  <td onClick={e => e.stopPropagation()}>
+                  <td onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: 4 }}>
+                    <button className="btn btn-sm btn-secondary" style={{ fontSize: '0.7rem', padding: '2px 8px' }} onClick={() => navigate(`/pieces/${p.id}`)}>📄 Voir</button>
                     {canWrite && <button className="btn btn-sm" style={{color:'var(--danger)'}} onClick={() => removePiece(p.id)}>🗑️</button>}
                   </td>
                 </tr>
