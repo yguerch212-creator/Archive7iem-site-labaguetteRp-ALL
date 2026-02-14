@@ -45,94 +45,75 @@ export default function JournalEdit() {
     const col2W = Math.floor((CW - 10) / 2)  // ~370 each
     let y = 15
 
-    // ═══════════════════════════════════════
-    //  MASTHEAD — Feldzeitung style
-    // ═══════════════════════════════════════
+    // ═══ MASTHEAD ═══
     b.push({ id: 'top-rule-thick', type: 'separator', content: '', x: M, y, w: CW, h: 6 })
-    y += 10
-
-    // Eagle + Title row
-    b.push({ id: 'eagle', type: 'text', content: '🦅', x: M + 5, y: y + 8, w: 45, h: 55 })
-    b.push({ id: 'masthead', type: 'title', content: '<b>Wacht am Korps</b>', x: 90, y, w: 620, h: 65 })
-    b.push({ id: 'nummer', type: 'text', content: `<b>Nr. ___</b>`, x: CW - 40, y: y + 8, w: 90, h: 20 })
-    y += 70
-
-    // Subtitle line
-    b.push({ id: 'sub-feld', type: 'text', content: '<i>Feldzeitung des 7. Armeekorps</i>', x: 200, y, w: 400, h: 18 })
-    b.push({ id: 'herausgeber', type: 'text', content: `<i>Herausgeber: Propagandakompanie</i>`, x: M, y, w: 200, h: 16 })
-    b.push({ id: 'datum', type: 'text', content: `<i>${new Date().toLocaleDateString('fr-FR')}</i>`, x: CW - 100, y, w: 150, h: 16 })
+    y += 14
+    b.push({ id: 'masthead', type: 'title', content: '<b>Wacht am Korps</b>', x: M, y, w: CW, h: 60 })
+    y += 64
+    b.push({ id: 'sub-feld', type: 'text', content: '<i>Feldzeitung des 7. Armeekorps</i>', x: M, y, w: CW, h: 18 })
     y += 22
-
-    b.push({ id: 'top-rule2', type: 'separator', content: '', x: M, y, w: CW, h: 4 })
-    y += 12
-
-    // ═══════════════════════════════════════
-    //  HEADLINE — gros titre pleine largeur
-    // ═══════════════════════════════════════
-    b.push({ id: 'headline', type: 'title', content: `<b>${(a?.titre || 'TITRE PRINCIPAL DE L\'ARTICLE').toUpperCase()}</b>`, x: M, y, w: CW, h: 45 })
-    y += 48
-    b.push({ id: 'headline-sub', type: 'text', content: `<i>${a?.sous_titre || 'Sous-titre descriptif de l\'article principal'}</i>`, x: M + 50, y, w: CW - 100, h: 22 })
-    y += 28
-
-    b.push({ id: 'head-rule', type: 'separator', content: '', x: M, y, w: CW, h: 2 })
-    y += 10
-
-    // ═══════════════════════════════════════
-    //  3 COLONNES — corps du journal
-    // ═══════════════════════════════════════
-    const colY = y
-    const c1x = M
-    const c2x = M + col3W + 10
-    const c3x = M + (col3W + 10) * 2
-
-    // — Colonne 1 : article principal + photo
-    b.push({ id: 'col1-text', type: 'text', content: a?.contenu || '<b>FRONT OUEST.</b> — Rédigez ici le corps de l\'article principal. Le style doit imiter un journal de campagne : phrases courtes, ton factuel, vocabulaire militaire.\n\nLes colonnes étroites reproduisent la mise en page d\'un vrai Feldzeitung.', x: c1x, y: colY, w: col3W, h: 220 })
-    b.push({ id: 'photo1', type: 'image', content: '', x: c1x, y: colY + 230, w: col3W, h: 130 })
-    b.push({ id: 'photo1-cap', type: 'text', content: '<i>Légende photo 1</i>', x: c1x, y: colY + 365, w: col3W, h: 16 })
-
-    // — Colonne 2 : article secondaire + photo
-    b.push({ id: 'col2-title', type: 'title', content: '<b>Article secondaire</b>', x: c2x, y: colY, w: col3W, h: 26 })
-    b.push({ id: 'col2-sub', type: 'text', content: '<i>Sous-titre de l\'article</i>', x: c2x, y: colY + 30, w: col3W, h: 18 })
-    b.push({ id: 'col2-rule', type: 'separator', content: '', x: c2x, y: colY + 52, w: col3W, h: 2 })
-    b.push({ id: 'col2-text', type: 'text', content: 'Texte du deuxième article. Peut traiter d\'un sujet connexe, d\'une opération secondaire, ou d\'informations logistiques.', x: c2x, y: colY + 60, w: col3W, h: 120 })
-    b.push({ id: 'photo2', type: 'image', content: '', x: c2x, y: colY + 190, w: col3W, h: 130 })
-    b.push({ id: 'photo2-cap', type: 'text', content: '<i>Légende photo 2</i>', x: c2x, y: colY + 325, w: col3W, h: 16 })
-    b.push({ id: 'col2-text2', type: 'text', content: 'Suite du texte après la photo, détails complémentaires...', x: c2x, y: colY + 348, w: col3W, h: 35 })
-
-    // — Colonne 3 : brèves + encadré
-    b.push({ id: 'col3-title', type: 'title', content: '<b>Kurzmeldungen</b>', x: c3x, y: colY, w: col3W, h: 26 })
-    b.push({ id: 'col3-rule', type: 'separator', content: '', x: c3x, y: colY + 30, w: col3W, h: 2 })
-    b.push({ id: 'col3-text1', type: 'text', content: '<b>Nouvelles recrues</b>\nListe des dernières incorporations.\n\n<b>Décorations</b>\nSoldats distingués cette semaine.\n\n<b>Avis de service</b>\nInformations administratives.', x: c3x, y: colY + 38, w: col3W, h: 170 })
-    b.push({ id: 'col3-box', type: 'text', content: '┌──────────────────────┐\n│   <b>AVIS IMPORTANT</b>      │\n│                                        │\n│   Encadré pour info clé   │\n│                                        │\n└──────────────────────┘', x: c3x, y: colY + 216, w: col3W, h: 100 })
-
-    y = colY + 395
-
-    // ═══════════════════════════════════════
-    //  SECTION BAS — article + photo large
-    // ═══════════════════════════════════════
-    b.push({ id: 'mid-rule', type: 'separator', content: '', x: M, y, w: CW, h: 3 })
-    y += 10
-
-    // 2 colonnes en bas
-    b.push({ id: 'bot-title', type: 'title', content: '<b>Troisième article — titre pleine largeur</b>', x: M, y, w: CW, h: 28 })
-    y += 32
-    b.push({ id: 'bot-sub', type: 'text', content: '<i>Description ou accroche de cet article</i>', x: M, y, w: CW, h: 18 })
+    b.push({ id: 'masthead-info', type: 'text', content: `Nr. ___ — ${new Date().toLocaleDateString('fr-FR')} — <i>Herausgeber: Propagandakompanie</i>`, x: M, y, w: CW, h: 18 })
     y += 24
+    b.push({ id: 'top-rule2', type: 'separator', content: '', x: M, y, w: CW, h: 4 })
+    y += 14
+
+    // ═══ HEADLINE ═══
+    b.push({ id: 'headline', type: 'title', content: `<b>${(a?.titre || 'TITRE PRINCIPAL').toUpperCase()}</b>`, x: M, y, w: CW, h: 40 })
+    y += 46
+    b.push({ id: 'headline-sub', type: 'text', content: `<i>${a?.sous_titre || 'Sous-titre de l\'article'}</i>`, x: M, y, w: CW, h: 20 })
+    y += 26
+    b.push({ id: 'head-rule', type: 'separator', content: '', x: M, y, w: CW, h: 2 })
+    y += 14
+
+    // ═══ 3 COLONNES ═══
+    const colY = y
+    const gap = 15
+    const c1x = M
+    const c2x = M + col3W + gap
+    const c3x = M + (col3W + gap) * 2
+
+    // Col 1 : article principal + photo
+    b.push({ id: 'col1-text', type: 'text', content: a?.contenu || '<b>FRONT OUEST.</b> — Rédigez ici le corps de votre article principal.\n\nPhrases courtes, ton factuel, vocabulaire militaire.\n\nUtilisez <b>le gras</b> pour les noms de lieux et unités.', x: c1x, y: colY, w: col3W, h: 200 })
+    b.push({ id: 'photo1', type: 'image', content: '', x: c1x, y: colY + 210, w: col3W, h: 130 })
+    b.push({ id: 'photo1-cap', type: 'text', content: '<i>Légende photo 1</i>', x: c1x, y: colY + 345, w: col3W, h: 16 })
+
+    // Col 2 : article secondaire + photo
+    b.push({ id: 'col2-title', type: 'title', content: '<b>Article secondaire</b>', x: c2x, y: colY, w: col3W, h: 24 })
+    b.push({ id: 'col2-rule', type: 'separator', content: '', x: c2x, y: colY + 28, w: col3W, h: 2 })
+    b.push({ id: 'col2-text', type: 'text', content: 'Texte du deuxième article. Sujet connexe, opération secondaire, informations logistiques...', x: c2x, y: colY + 36, w: col3W, h: 100 })
+    b.push({ id: 'photo2', type: 'image', content: '', x: c2x, y: colY + 145, w: col3W, h: 130 })
+    b.push({ id: 'photo2-cap', type: 'text', content: '<i>Légende photo 2</i>', x: c2x, y: colY + 280, w: col3W, h: 16 })
+    b.push({ id: 'col2-text2', type: 'text', content: 'Suite du texte après la photo...', x: c2x, y: colY + 302, w: col3W, h: 60 })
+
+    // Col 3 : brèves
+    b.push({ id: 'col3-title', type: 'title', content: '<b>Kurzmeldungen</b>', x: c3x, y: colY, w: col3W, h: 24 })
+    b.push({ id: 'col3-rule', type: 'separator', content: '', x: c3x, y: colY + 28, w: col3W, h: 2 })
+    b.push({ id: 'col3-breve1', type: 'text', content: '<b>Nouvelles recrues</b>\nListe des dernières incorporations au sein du Korps.', x: c3x, y: colY + 36, w: col3W, h: 60 })
+    b.push({ id: 'col3-breve2', type: 'text', content: '<b>Décorations</b>\nSoldats distingués cette semaine.', x: c3x, y: colY + 104, w: col3W, h: 50 })
+    b.push({ id: 'col3-breve3', type: 'text', content: '<b>Avis de service</b>\nInformations administratives et rappels importants.', x: c3x, y: colY + 162, w: col3W, h: 50 })
+    b.push({ id: 'col3-sep', type: 'separator', content: '', x: c3x, y: colY + 220, w: col3W, h: 2 })
+    b.push({ id: 'col3-encadre', type: 'text', content: '<b>⚠ AVIS IMPORTANT</b>\n\nContenu de l\'avis officiel ou information prioritaire à transmettre aux troupes.', x: c3x, y: colY + 230, w: col3W, h: 80 })
+
+    y = colY + 375
+
+    // ═══ SECTION BAS — 2 colonnes ═══
+    b.push({ id: 'mid-rule', type: 'separator', content: '', x: M, y, w: CW, h: 3 })
+    y += 12
+    b.push({ id: 'bot-title', type: 'title', content: '<b>Troisième article</b>', x: M, y, w: CW, h: 28 })
+    y += 34
     b.push({ id: 'bot-rule', type: 'separator', content: '', x: M, y, w: CW, h: 2 })
-    y += 8
+    y += 10
 
     const botY = y
-    b.push({ id: 'bot-col1', type: 'text', content: 'Corps de texte du troisième article sur deux colonnes. Cela permet d\'avoir un article plus large et aéré en bas de page, comme dans les vrais journaux de campagne.', x: M, y: botY, w: col2W, h: 140 })
-    b.push({ id: 'photo3', type: 'image', content: '', x: M + col2W + 10, y: botY, w: col2W, h: 140 })
-    b.push({ id: 'photo3-cap', type: 'text', content: '<i>Légende photo 3</i>', x: M + col2W + 10, y: botY + 145, w: col2W, h: 16 })
-    y = botY + 170
+    b.push({ id: 'bot-col1', type: 'text', content: 'Corps de texte du troisième article. Mise en page plus large sur deux colonnes, comme dans les vrais journaux de campagne.', x: M, y: botY, w: col2W, h: 130 })
+    b.push({ id: 'photo3', type: 'image', content: '', x: M + col2W + gap, y: botY, w: col2W, h: 130 })
+    b.push({ id: 'photo3-cap', type: 'text', content: '<i>Légende photo 3</i>', x: M + col2W + gap, y: botY + 135, w: col2W, h: 16 })
+    y = botY + 160
 
-    // ═══════════════════════════════════════
-    //  FOOTER
-    // ═══════════════════════════════════════
+    // ═══ FOOTER ═══
     b.push({ id: 'footer-rule', type: 'separator', content: '', x: M, y, w: CW, h: 4 })
-    y += 8
-    b.push({ id: 'footer', type: 'text', content: '<i>Feldzeitung des 7. Armeekorps — Nur für den Dienstgebrauch — Nachdruck verboten</i>', x: 120, y, w: 560, h: 18 })
+    y += 10
+    b.push({ id: 'footer', type: 'text', content: '<i>Feldzeitung des 7. Armeekorps — Nur für den Dienstgebrauch — Nachdruck verboten</i>', x: M, y, w: CW, h: 18 })
 
     return b
   }
