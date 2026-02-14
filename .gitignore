@@ -71,4 +71,5 @@ temp/
 *.rar
 
 # Local configuration
-config/local.json
+config/local.jsonarchives7e-migration.zip
+*.zip
