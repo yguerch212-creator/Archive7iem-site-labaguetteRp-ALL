@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import MobileLayoutWarning from '../../components/MobileLayoutWarning'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
@@ -122,6 +123,7 @@ export default function SoldbuchLayout() {
             </div>
           )}
       </div>
+      <MobileLayoutWarning />
       <LayoutEditor
         blocks={blocks}
         onSave={handleSave}

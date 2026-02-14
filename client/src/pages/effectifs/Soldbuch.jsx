@@ -73,7 +73,7 @@ export default function Soldbuch() {
         <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
           <Link to={`/effectifs/${id}/edit`} className="btn btn-secondary btn-small">✏️ Modifier</Link>
           <Link to={`/dossiers/effectif/${id}`} className="btn btn-secondary btn-small">📁 Dossier</Link>
-          <Link to={`/effectifs/${id}/soldbuch/edit`} className="btn btn-primary btn-small">🖋️ Mise en page</Link>
+          <Link to={`/effectifs/${id}/soldbuch/edit`} className="btn btn-primary btn-small layout-desktop-only">🖋️ Mise en page</Link>
         </div>
       </div>
 

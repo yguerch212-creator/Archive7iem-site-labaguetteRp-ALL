@@ -91,7 +91,7 @@ export default function RapportView() {
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
         <BackButton label="← Retour" />
         <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-          <Link to={`/rapports/${id}/layout`} className="btn btn-secondary btn-small">🖋️ Mise en page</Link>
+          <Link to={`/rapports/${id}/layout`} className="btn btn-secondary btn-small layout-desktop-only">🖋️ Mise en page</Link>
           {!R.published && (
             <button className="btn btn-primary btn-small" onClick={publierRapport}>
               📜 Soumettre pour validation

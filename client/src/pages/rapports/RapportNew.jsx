@@ -117,7 +117,10 @@ export default function RapportNew() {
       const res = await apiClient.post('/rapports', { ...form, numero })
       localStorage.removeItem(DRAFT_KEY)
       const id = res.data.data?.id
-      if (id) navigate(`/rapports/${id}/layout`)
+      if (id) {
+        const isMobile = window.innerWidth <= 768
+        navigate(isMobile ? `/rapports/${id}` : `/rapports/${id}/layout`)
+      }
       else navigate('/rapports')
     } catch (err) {
       setError(err.response?.data?.message || 'Erreur')

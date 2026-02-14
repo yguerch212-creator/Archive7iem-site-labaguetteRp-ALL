@@ -75,7 +75,7 @@ export default function DossierView() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap', gap: '0.5rem' }}>
         <button onClick={() => navigate(-1)} className="btn btn-secondary btn-small">← Retour</button>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          {canWrite && <Link to={`/dossiers/${id}/layout`} className="btn btn-secondary btn-small">🖋️ Mise en page</Link>}
+          {canWrite && <Link to={`/dossiers/${id}/layout`} className="btn btn-secondary btn-small layout-desktop-only">🖋️ Mise en page</Link>}
           {canWrite && (
             <button className="btn btn-primary btn-small" onClick={() => setShowForm(true)}>
               + Ajouter une entrée

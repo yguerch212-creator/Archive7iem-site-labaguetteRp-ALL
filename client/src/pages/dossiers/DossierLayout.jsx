@@ -1,4 +1,5 @@
 import DOMPurify from 'dompurify'
+import MobileLayoutWarning from '../../components/MobileLayoutWarning'
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'

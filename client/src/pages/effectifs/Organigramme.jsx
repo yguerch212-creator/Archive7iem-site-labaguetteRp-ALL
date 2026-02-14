@@ -229,7 +229,7 @@ export default function Organigramme() {
           <BackButton label="← Tableau de bord" />
           <div style={{ display: 'flex', gap: 6 }}>
             {canEdit && <button className="btn btn-secondary btn-small" onClick={() => setMode('tree')}>🗺️ Gérer les postes</button>}
-            {canEdit && <button className="btn btn-primary btn-small" onClick={() => { if (layoutBlocks.length === 0) setLayoutBlocks(generateDefaultBlocks()); setMode('layout') }}>✏️ Modifier la mise en page</button>}
+            {canEdit && <button className="btn btn-primary btn-small" onClick={() => { if (layoutBlocks.length === 0) setLayoutBlocks(generateDefaultBlocks()); setMode('layout') }}className="layout-desktop-only">✏️ Modifier la mise en page</button>}
           </div>
         </div>
         <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>🗺️ Organigramme — 7. Armeekorps</h1>
@@ -266,7 +266,7 @@ export default function Organigramme() {
           {linking && <span style={{ fontSize: '0.8rem', color: 'var(--warning)', fontWeight: 700 }}>🔗 Cliquez sur un bloc enfant pour le relier</span>}
           {linking && <button className="btn btn-secondary btn-sm" onClick={() => setLinking(null)}>✕ Annuler</button>}
           {savedLayout?.html_published && <button className="btn btn-secondary btn-small" onClick={() => setMode('view')}>👁️ Voir la mise en page</button>}
-          {canEdit && <button className="btn btn-secondary btn-small" onClick={() => { if (layoutBlocks.length === 0) setLayoutBlocks(generateDefaultBlocks()); setMode('layout') }}>✏️ Mise en page</button>}
+          {canEdit && <button className="btn btn-secondary btn-small layout-desktop-only" onClick={() => { if (layoutBlocks.length === 0) setLayoutBlocks(generateDefaultBlocks()); setMode('layout') }}>✏️ Mise en page</button>}
           {canEdit && <button className="btn btn-primary btn-small" onClick={() => { setShowAdd(!showAdd); setEditNode(null) }}>{showAdd ? '✕' : '+ Nouveau poste'}</button>}
         </div>
       </div>
