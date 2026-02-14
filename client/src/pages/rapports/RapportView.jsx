@@ -1,4 +1,5 @@
 import BackButton from '../../components/BackButton'
+import LayoutRenderer from '../../components/LayoutRenderer'
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
@@ -23,7 +24,7 @@ export default function RapportView() {
   const [drawing, setDrawing] = useState(false)
   const [hasSig, setHasSig] = useState(false)
   const [message, setMessage] = useState(null)
-  const [layoutHtml, setLayoutHtml] = useState(null)
+  const [layoutBlocks, setLayoutBlocks] = useState(null)
 
   const canPublish = user?.isAdmin || user?.isOfficier || user?.isRecenseur
 
@@ -35,7 +36,7 @@ export default function RapportView() {
     }).catch(() => {})
     // Load saved layout
     apiClient.get(`/rapports/${id}/layout`).then(r => {
-      if (r.data.html_published) setLayoutHtml(r.data.html_published)
+      if (r.data.blocks && r.data.blocks.length > 0) setLayoutBlocks(r.data.blocks)
     }).catch(() => {})
   }, [id])
 
@@ -155,8 +156,10 @@ export default function RapportView() {
       )}
 
       {/* Document */}
-      {layoutHtml ? (
-        <div className="document-paper" id="rapport-paper" style={{ minHeight: 500 }} dangerouslySetInnerHTML={{ __html: layoutHtml }} />
+      {layoutBlocks ? (
+        <div className="document-paper" id="rapport-paper" style={{ minHeight: 500 }}>
+          <LayoutRenderer blocks={layoutBlocks} />
+        </div>
       ) : (
       <div className="document-paper" id="rapport-paper" style={{ minHeight: 500 }}>
         {/* Header */}

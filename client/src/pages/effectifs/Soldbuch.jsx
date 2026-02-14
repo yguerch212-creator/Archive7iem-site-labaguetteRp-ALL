@@ -1,4 +1,5 @@
 import BackButton from '../../components/BackButton'
+import LayoutRenderer from '../../components/LayoutRenderer'
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
@@ -61,7 +62,7 @@ export default function Soldbuch() {
   if (!data) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Effectif introuvable</div>
 
   const e = data.effectif
-  const layoutHtml = data.layout?.html_published
+  const layoutBlocks = data.layout?.blocks
   const unitTitle = `${e.unite_code || ''} ${e.unite_nom || ''}`.trim()
 
   return (
@@ -75,8 +76,10 @@ export default function Soldbuch() {
         </div>
       </div>
 
-      {layoutHtml ? (
-        <div className="document-paper" id="soldbuch-paper" dangerouslySetInnerHTML={{ __html: layoutHtml }} />
+      {layoutBlocks && layoutBlocks.length > 0 ? (
+        <div className="document-paper" id="soldbuch-paper">
+          <LayoutRenderer blocks={layoutBlocks} />
+        </div>
       ) : (
       <div className="document-paper" id="soldbuch-paper">
         {/* En-tête */}

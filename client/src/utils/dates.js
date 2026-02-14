@@ -1,6 +1,11 @@
 // Format date as dd/mm/yyyy (European)
 export function formatDate(d) {
   if (!d) return '—'
+  // If already dd/mm/yyyy, return as-is
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) return d
+  // If dd/mm/yyyy with other separators, normalize
+  const dmy = d.match(/^(\d{2})[\/\-.](\d{2})[\/\-.](\d{4})$/)
+  if (dmy) return `${dmy[1]}/${dmy[2]}/${dmy[3]}`
   const date = new Date(d)
   if (isNaN(date)) return d // return as-is if not parseable
   return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })

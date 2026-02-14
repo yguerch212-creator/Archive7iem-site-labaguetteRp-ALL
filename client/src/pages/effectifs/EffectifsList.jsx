@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import apiClient from '../../api/client'
+import { formatDate } from '../../utils/dates'
 import { exportCsv } from '../../utils/exportCsv'
 
 export default function EffectifsList() {
@@ -39,7 +40,7 @@ export default function EffectifsList() {
             { key: 'prenom', label: 'Prénom' }, { key: 'nom', label: 'Nom' },
             { key: 'grade_nom', label: 'Grade' }, { key: 'categorie', label: 'Catégorie' },
             { key: 'fonction', label: 'Fonction' }, { key: 'specialite', label: 'Spécialité' },
-            { key: r => r.date_entree_irl ? new Date(r.date_entree_irl+'T00:00').toLocaleDateString('fr-FR') : '', label: 'Entrée IRL' }
+            { key: r => formatDate(r.date_entree_irl), label: 'Entrée IRL' }
           ], `Effectifs_${unite?.code || 'all'}`)}>📥 CSV</button>}
           <Link to={`/effectifs/new?unite_id=${uniteId}`} className="btn btn-primary btn-small">+ Ajouter</Link>
         </div>
@@ -90,7 +91,7 @@ export default function EffectifsList() {
                 <td style={tdStyle}><span className={`badge ${e.categorie === 'Officier' ? 'badge-warning' : e.categorie === 'Sous-officier' ? 'badge-success' : 'badge-muted'}`}>{e.categorie || e.grade_categorie || '—'}</span></td>
                 <td style={tdStyle}>{e.fonction || '—'}</td>
                 <td style={tdStyle}>{e.specialite || '—'}</td>
-                <td style={tdStyle}>{e.date_entree_irl ? new Date(e.date_entree_irl+'T00:00').toLocaleDateString('fr-FR') : '—'}</td>
+                <td style={tdStyle}>{formatDate(e.date_entree_irl)}</td>
               </tr>
             ))}
           </tbody>
