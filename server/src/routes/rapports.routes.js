@@ -36,14 +36,19 @@ router.get('/', optionalAuth, async (req, res) => {
   try {
     let where = ''
     if (req.user.isGuest) {
-      where = "WHERE published = 1 AND (moderation_statut = 'approuve' OR moderation_statut IS NULL OR moderation_statut = 'brouillon')"
+      where = "WHERE r.published = 1 AND (r.moderation_statut = 'approuve' OR r.moderation_statut IS NULL OR r.moderation_statut = 'brouillon')"
     }
     const rows = await query(`
-      SELECT id, titre, auteur_nom, auteur_grade, personne_renseignee_nom, recommande_nom, mise_en_cause_nom, 
-        type, date_rp, date_irl, published, moderation_statut, a_images, created_at,
-        valide, valide_par_nom, valide_at, auteur_rang,
-        COALESCE(personne_renseignee_nom, recommande_nom, mise_en_cause_nom) AS personne_mentionnee
-      FROM rapports ${where} ORDER BY created_at DESC
+      SELECT r.id, r.titre, r.auteur_nom, r.auteur_grade, r.personne_renseignee_nom, r.recommande_nom, r.mise_en_cause_nom, 
+        r.type, r.date_rp, r.date_irl, r.published, r.moderation_statut, r.a_images, r.created_at,
+        r.valide, r.valide_par_nom, r.valide_at, r.auteur_rang,
+        COALESCE(r.personne_renseignee_nom, r.recommande_nom, r.mise_en_cause_nom) AS personne_mentionnee,
+        u.code AS auteur_unite_code, u.nom AS auteur_unite_nom
+      FROM rapports r
+      LEFT JOIN effectifs e ON e.id = r.auteur_id
+      LEFT JOIN unites u ON u.id = e.unite_id
+      ${where}
+      ORDER BY r.created_at DESC
     `)
     res.json({ success: true, data: rows })
   } catch (err) {

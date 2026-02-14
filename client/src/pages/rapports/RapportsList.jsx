@@ -13,17 +13,20 @@ export default function RapportsList() {
   const [searchParams] = useSearchParams()
   const { user } = useAuth()
   const [filters, setFilters] = useState({
-    titre: '', auteur: searchParams.get('auteur') || '', type: ''
+    titre: '', auteur: searchParams.get('auteur') || '', type: '', unite: ''
   })
+  const [unites, setUnites] = useState([])
 
   useEffect(() => {
     apiClient.get('/rapports').then(r => setRapports(r.data.data || [])).catch(() => {})
+    apiClient.get('/unites').then(r => setUnites(r.data.data || r.data || [])).catch(() => {})
   }, [])
 
   const filtered = rapports.filter(r => {
     if (filters.titre && !r.titre.toLowerCase().includes(filters.titre.toLowerCase())) return false
     if (filters.auteur && !(r.auteur_nom || '').toLowerCase().includes(filters.auteur.toLowerCase())) return false
     if (filters.type && r.type !== filters.type) return false
+    if (filters.unite && r.auteur_unite_code !== filters.unite) return false
     return true
   })
 
@@ -60,6 +63,10 @@ export default function RapportsList() {
             <option value="recommandation">Recommandation</option>
             <option value="incident">Incident</option>
           </select>
+          <select className="form-select" style={{ maxWidth: 180 }} value={filters.unite} onChange={e => setFilters(f => ({ ...f, unite: e.target.value }))}>
+            <option value="">— Unité —</option>
+            {unites.map(u => <option key={u.id} value={u.code}>{u.code}. {u.nom}</option>)}
+          </select>
         </div>
 
         <div className="paper-card" style={{ overflow: 'auto' }}>
@@ -70,6 +77,7 @@ export default function RapportsList() {
                 <th style={th}>Date RP</th>
                 <th style={th}>Date IRL</th>
                 <th style={th}>Auteur</th>
+                <th style={th}>Unité</th>
                 <th style={th}>Personne mentionnée</th>
                 <th style={th}>Type</th>
                 <th style={th}>État</th>
@@ -85,6 +93,7 @@ export default function RapportsList() {
                   <td style={td}>{r.date_rp || '—'}</td>
                   <td style={td}>{r.date_irl ? new Date(r.date_irl).toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit',year:'numeric'}) : '—'}</td>
                   <td style={td}>{r.auteur_grade ? `${r.auteur_grade} ` : ''}{r.auteur_nom || 'Inconnu'}</td>
+                  <td style={td}><span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{r.auteur_unite_code || '—'}</span></td>
                   <td style={td}>{r.personne_mentionnee || '—'}</td>
                   <td style={td}><span className={`tag ${TYPE_CLASSES[r.type]}`}>{TYPE_LABELS[r.type]}</span></td>
                   <td style={td}>
