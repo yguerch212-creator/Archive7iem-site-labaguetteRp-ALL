@@ -98,38 +98,14 @@ export default function DossierView() {
         <div className="book-page" style={savedPages ? { position: 'relative' } : {}}>
           {savedPages && savedPages[String(currentPage)] ? (
             /* Render saved layout blocks at exact positions */
-            savedPages[String(currentPage)].map((block, i) => {
-              // Get font/visual styles from CSS class but override all positioning
-              const cssClass = block.css || ''
-              const isStamp = cssClass === 'book-cover-stamp'
-              const isEmblem = cssClass === 'book-cover-emblem'
-              const isTitle = cssClass.includes('title')
-              const isFooter = cssClass.includes('footer')
-              const isMeta = cssClass.includes('meta')
-              const isDesc = cssClass.includes('desc')
-              const isNum = cssClass.includes('num')
-              const isDate = cssClass.includes('date')
-
-              // Only apply font/text styles from CSS classes, not positioning
-              const textStyles = {}
-              if (isTitle) { textStyles.fontFamily = "'IBM Plex Mono', monospace"; textStyles.fontSize = cssClass.includes('cover') ? '1.5rem' : '1.15rem'; textStyles.letterSpacing = '1px'; textStyles.textTransform = cssClass.includes('cover') ? 'uppercase' : 'none'; textStyles.fontWeight = 700 }
-              if (isStamp) { textStyles.fontFamily = "'IBM Plex Mono', monospace"; textStyles.fontSize = '0.9rem'; textStyles.letterSpacing = '2px'; textStyles.textTransform = 'uppercase'; textStyles.color = '#8b0000'; textStyles.fontWeight = 700; textStyles.border = '2px solid #8b0000'; textStyles.padding = '2px 10px'; textStyles.textAlign = 'center' }
-              if (isEmblem) { textStyles.fontSize = '4rem'; textStyles.opacity = 0.4; textStyles.color = '#8a7a5a'; textStyles.textAlign = 'center'; textStyles.lineHeight = 1 }
-              if (isFooter) { textStyles.fontSize = '0.8rem'; textStyles.color = '#888'; textStyles.textAlign = 'center'; textStyles.fontStyle = 'italic' }
-              if (isMeta) { textStyles.fontSize = '0.8rem'; textStyles.color = '#777'; textStyles.textAlign = 'center' }
-              if (isDesc) { textStyles.fontSize = '0.9rem'; textStyles.color = '#666'; textStyles.fontStyle = 'italic'; textStyles.textAlign = 'center' }
-              if (isNum) { textStyles.fontSize = '0.75rem'; textStyles.color = '#999'; textStyles.fontFamily = "'IBM Plex Mono', monospace" }
-              if (isDate) { textStyles.fontSize = '0.75rem'; textStyles.color = '#999'; textStyles.textAlign = 'right'; textStyles.fontFamily = "'IBM Plex Mono', monospace" }
-              if (cssClass === 'book-entry-content') { textStyles.fontSize = '0.95rem'; textStyles.lineHeight = 1.75; textStyles.whiteSpace = 'pre-wrap' }
-
-              return (
-                <div key={block.id} style={{
-                  position: 'absolute', left: block.x, top: block.y, width: block.w, height: block.h,
-                  zIndex: i + 1, overflow: 'hidden',
-                  ...textStyles,
-                }} dangerouslySetInnerHTML={{ __html: block.content }} />
-              )
-            })
+            savedPages[String(currentPage)].map((block, i) => (
+              <div key={block.id} style={{
+                position: 'absolute', left: block.x, top: block.y, width: block.w, height: block.h,
+                zIndex: i + 1, overflow: 'hidden',
+              }}>
+                <BookBlock block={block} />
+              </div>
+            ))
           ) : (
             /* Default rendering */
             <>
@@ -384,6 +360,40 @@ function AddEntryPopup({ onAdd, onClose }) {
       </div>
     </div>
   )
+}
+
+// CSS class → inline style map (avoid CSS class positioning conflicts)
+const CSS_MAP = {
+  'book-cover-title': { fontFamily: "'IBM Plex Mono', monospace", fontSize: '1.5rem', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 700 },
+  'book-cover-stamp': { fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.9rem', letterSpacing: '2px', textTransform: 'uppercase', color: '#8b0000', fontWeight: 700, border: '2px solid #8b0000', padding: '2px 10px', textAlign: 'center' },
+  'book-cover-emblem': { fontSize: '4rem', opacity: 0.4, color: '#8a7a5a', textAlign: 'center', lineHeight: 1 },
+  'book-cover-desc': { fontSize: '0.9rem', color: '#666', fontStyle: 'italic', textAlign: 'center' },
+  'book-cover-meta': { fontSize: '0.8rem', color: '#777', textAlign: 'center' },
+  'book-cover-footer': { fontSize: '0.8rem', color: '#888', textAlign: 'center', fontStyle: 'italic' },
+  'book-entry-title': { fontFamily: "'IBM Plex Mono', monospace", fontSize: '1.15rem', fontWeight: 700 },
+  'book-entry-content': { fontSize: '0.95rem', lineHeight: 1.75, whiteSpace: 'pre-wrap' },
+  'book-entry-num': { fontSize: '0.75rem', color: '#999', fontFamily: "'IBM Plex Mono', monospace" },
+  'book-entry-date': { fontSize: '0.75rem', color: '#999', textAlign: 'right', fontFamily: "'IBM Plex Mono', monospace" },
+  'book-entry-footer': { fontSize: '0.8rem', color: '#888', fontStyle: 'italic' },
+}
+
+function BookBlock({ block }) {
+  const textStyles = CSS_MAP[block.css] || {}
+
+  switch (block.type) {
+    case 'image':
+      return block.content ? <img src={block.content} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }} /> : null
+    case 'stamp':
+      return block.content ? <img src={block.content} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', opacity: 0.7 }} /> : null
+    case 'signature':
+      return block.content?.startsWith('data:image')
+        ? <img src={block.content} alt="Signature" style={{ maxWidth: '100%', maxHeight: '100%' }} />
+        : <div style={{ borderBottom: '1px solid #333', height: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', paddingBottom: 4, fontSize: '0.85rem' }}>{block.content}</div>
+    case 'separator':
+      return <hr style={{ border: 'none', borderTop: '2px solid #333', margin: 0, width: '100%' }} />
+    default:
+      return <div style={{ width: '100%', height: '100%', overflow: 'hidden', ...textStyles }} dangerouslySetInnerHTML={{ __html: block.content }} />
+  }
 }
 
 const th = { textAlign: 'left', padding: 'var(--space-xs) var(--space-sm)', fontWeight: 700, color: 'var(--military-dark)', whiteSpace: 'nowrap' }

@@ -640,3 +640,56 @@ tr:hover { background: rgba(0,0,0,0.02); }
   display: flex;
   gap: 0.5rem;
 }
+
+/* ===== POPUP / MODAL ===== */
+.popup-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.15s ease;
+}
+.popup-content {
+  background: var(--card-bg, #f5f2e8);
+  border-radius: var(--border-radius, 10px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  padding: var(--space-xl, 1.5rem);
+  max-width: 600px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+  animation: slideUp 0.2s ease;
+}
+.popup-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  line-height: 1;
+  padding: 0.25rem;
+  border-radius: 50%;
+  transition: background 0.15s;
+}
+.popup-close:hover {
+  background: rgba(0,0,0,0.08);
+}
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
+
+@media (max-width: 600px) {
+  .popup-content {
+    max-width: 100%;
+    margin: 0.5rem;
+    padding: var(--space-md, 1rem);
+  }
+}
