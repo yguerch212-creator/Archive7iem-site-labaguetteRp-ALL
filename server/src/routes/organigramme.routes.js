@@ -23,10 +23,10 @@ router.get('/', optionalAuth, async (req, res) => {
 router.post('/', auth, async (req, res) => {
   try {
     if (!req.user.isAdmin && !req.user.isOfficier) return res.status(403).json({ success: false, message: 'Réservé aux officiers' })
-    const { effectif_id, titre_poste, parent_id, unite_id, ordre } = req.body
+    const { effectif_id, titre_poste, parent_id, unite_id, ordre, pos_x, pos_y } = req.body
     const [result] = await pool.execute(
-      'INSERT INTO organigramme (effectif_id, titre_poste, parent_id, unite_id, ordre) VALUES (?,?,?,?,?)',
-      [effectif_id || null, titre_poste || null, parent_id || null, unite_id || null, ordre || 0]
+      'INSERT INTO organigramme (effectif_id, titre_poste, parent_id, unite_id, ordre, pos_x, pos_y) VALUES (?,?,?,?,?,?,?)',
+      [effectif_id || null, titre_poste || null, parent_id || null, unite_id || null, ordre || 0, pos_x ?? 0, pos_y ?? 0]
     )
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
@@ -36,10 +36,10 @@ router.post('/', auth, async (req, res) => {
 router.put('/:id', auth, async (req, res) => {
   try {
     if (!req.user.isAdmin && !req.user.isOfficier) return res.status(403).json({ success: false, message: 'Réservé aux officiers' })
-    const { effectif_id, titre_poste, parent_id, unite_id, ordre } = req.body
+    const { effectif_id, titre_poste, parent_id, unite_id, ordre, pos_x, pos_y } = req.body
     await pool.execute(
-      'UPDATE organigramme SET effectif_id=?, titre_poste=?, parent_id=?, unite_id=?, ordre=? WHERE id=?',
-      [effectif_id || null, titre_poste || null, parent_id || null, unite_id || null, ordre || 0, req.params.id]
+      'UPDATE organigramme SET effectif_id=?, titre_poste=?, parent_id=?, unite_id=?, ordre=?, pos_x=?, pos_y=? WHERE id=?',
+      [effectif_id || null, titre_poste || null, parent_id || null, unite_id || null, ordre || 0, pos_x ?? 0, pos_y ?? 0, req.params.id]
     )
     res.json({ success: true })
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
@@ -52,7 +52,8 @@ router.put('/bulk/save', auth, async (req, res) => {
     const { nodes } = req.body // [{id, parent_id, ordre}]
     if (!Array.isArray(nodes)) return res.status(400).json({ success: false, message: 'nodes requis' })
     for (const n of nodes) {
-      await pool.execute('UPDATE organigramme SET parent_id=?, ordre=? WHERE id=?', [n.parent_id || null, n.ordre || 0, n.id])
+      await pool.execute('UPDATE organigramme SET parent_id=?, ordre=?, pos_x=?, pos_y=? WHERE id=?',
+        [n.parent_id || null, n.ordre || 0, n.pos_x ?? 0, n.pos_y ?? 0, n.id])
     }
     res.json({ success: true })
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
