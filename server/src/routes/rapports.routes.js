@@ -191,6 +191,13 @@ router.put('/:id/prendre-en-charge', auth, async (req, res) => {
 
     const feldName = `${req.user.prenom || ''} ${req.user.nom || req.user.username}`.trim()
 
+    // Convert dd/mm/yyyy date to yyyy-mm-dd for MySQL
+    function convertDate(d) {
+      if (!d) return null
+      const m = String(d).match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+      return m ? `${m[3]}-${m[2]}-${m[1]}` : d
+    }
+
     // Create affaire
     const [affResult] = await pool.execute(
       `INSERT INTO affaires (numero, titre, resume, statut, created_by) VALUES (?, ?, ?, 'Ouverte', ?)`,
@@ -204,7 +211,7 @@ router.put('/:id/prendre-en-charge', auth, async (req, res) => {
        VALUES (?, 'Autre', ?, ?, ?, ?, ?, ?, 0, ?)`,
       [affaireId, `Rapport d'incident — ${rapport.titre}`,
        `Lieu: ${rapport.lieu_incident || '—'}\nCompte-rendu: ${rapport.compte_rendu || '—'}\nAuteur: ${rapport.auteur_nom || '—'}\nMis en cause: ${rapport.mise_en_cause_nom || '—'}`,
-       rapport.date_rp, rapport.date_irl, rapport.auteur_id, rapport.auteur_nom, req.user.id]
+       rapport.date_rp, convertDate(rapport.date_irl), rapport.auteur_id, rapport.auteur_nom, req.user.id]
     )
 
     // Add mis en cause as accusé if present
