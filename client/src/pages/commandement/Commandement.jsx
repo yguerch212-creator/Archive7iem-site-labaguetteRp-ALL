@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import BackButton from '../../components/BackButton'
 
 export default function Commandement() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [data, setData] = useState(null)
   const [notes, setNotes] = useState([])
   const [newNote, setNewNote] = useState('')
@@ -70,7 +71,10 @@ export default function Commandement() {
           {data.activiteRecente?.length === 0 ? <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Aucune activité</p> : (
             <div style={{ maxHeight: 300, overflowY: 'auto' }}>
               {data.activiteRecente.map((a, i) => (
-                <div key={i} style={{ padding: '6px 0', borderBottom: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
+                <div key={i} style={{ padding: '6px 0', borderBottom: '1px solid var(--border-color)', fontSize: '0.8rem', cursor: 'pointer' }}
+                  onClick={() => navigate(a.type === 'rapport' ? `/rapports/${a.item_id}` : '/telegrammes')}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(107,143,60,0.06)'}
+                  onMouseLeave={e => e.currentTarget.style.background = ''}>
                   <span style={{ marginRight: 8 }}>{a.type === 'rapport' ? '📝' : '⚡'}</span>
                   <strong>{a.label}</strong>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{a.auteur} — {new Date(a.created_at).toLocaleString('fr-FR')}</div>
@@ -181,7 +185,9 @@ export default function Commandement() {
                     <thead><tr><th>Unité</th><th>Grade</th><th>Nom</th><th style={{ textAlign: 'center' }}>PDS</th><th style={{ textAlign: 'center' }}>Heures</th><th style={{ textAlign: 'center' }}>Rapport</th></tr></thead>
                     <tbody>
                       {rows.map(r => (
-                        <tr key={r.id}>
+                        <tr key={r.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/dossiers/effectif/${r.id}`)}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(107,143,60,0.08)'}
+                          onMouseLeave={e => e.currentTarget.style.background = ''}>
                           <td>{r.unite_code || '—'}</td>
                           <td style={{ fontSize: '0.75rem' }}>{r.grade_nom || '—'}</td>
                           <td><strong>{r.prenom} {r.nom}</strong></td>

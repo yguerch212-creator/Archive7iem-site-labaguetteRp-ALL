@@ -28,9 +28,9 @@ router.get('/dashboard', auth, officier, async (req, res) => {
 
     // Recent activity
     const activiteRecente = await query(`
-      (SELECT 'rapport' as type, titre as label, auteur_nom as auteur, created_at FROM rapports ORDER BY created_at DESC LIMIT 5)
+      (SELECT 'rapport' as type, CAST(id AS CHAR) as item_id, titre as label, auteur_nom as auteur, created_at FROM rapports ORDER BY created_at DESC LIMIT 5)
       UNION ALL
-      (SELECT 'telegramme', CONCAT(numero,' — ',objet), expediteur_nom, created_at FROM telegrammes ORDER BY created_at DESC LIMIT 5)
+      (SELECT 'telegramme', CAST(id AS CHAR), CONCAT(numero,' — ',objet), expediteur_nom, created_at FROM telegrammes ORDER BY created_at DESC LIMIT 5)
       ORDER BY created_at DESC LIMIT 10
     `)
 
