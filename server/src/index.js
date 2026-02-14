@@ -267,6 +267,15 @@ app.use((err, req, res, next) => {
   })
 })
 
+// Graceful error handling — prevent crashes
+process.on('uncaughtException', (err) => {
+  console.error('⚠️ Uncaught Exception:', err.message)
+  console.error(err.stack)
+})
+process.on('unhandledRejection', (reason) => {
+  console.error('⚠️ Unhandled Rejection:', reason)
+})
+
 app.listen(PORT, () => {
   console.log(`🚀 Archives Wehrmacht RP API — http://localhost:${PORT}`)
   console.log(`📋 Health: http://localhost:${PORT}/api/health`)

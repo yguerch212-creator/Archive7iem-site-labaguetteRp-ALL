@@ -36,7 +36,7 @@ CREATE TABLE `activity_logs` (
   KEY `idx_log_user` (`user_id`),
   KEY `idx_log_action` (`action`),
   KEY `idx_log_date` (`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -45,7 +45,7 @@ CREATE TABLE `activity_logs` (
 
 LOCK TABLES `activity_logs` WRITE;
 /*!40000 ALTER TABLE `activity_logs` DISABLE KEYS */;
-INSERT INTO `activity_logs` VALUES (1,NULL,'anonymous','login','user',1,'admin connecté','37.67.81.220','2026-02-14 18:48:23'),(2,NULL,'anonymous','post_auth','auth',NULL,NULL,'37.67.81.220','2026-02-14 18:48:23'),(3,1,'admin','post_auth','auth',NULL,NULL,'37.67.81.220','2026-02-14 18:49:42'),(4,NULL,'anonymous','login','user',2,'siegfried.zussman connecté','37.67.81.220','2026-02-14 18:49:57'),(5,NULL,'anonymous','post_auth','auth',NULL,NULL,'37.67.81.220','2026-02-14 18:49:57'),(6,2,'siegfried.zussman','put_pds','pds',NULL,NULL,'37.67.81.220','2026-02-14 18:50:18'),(7,2,'siegfried.zussman','put_pds','pds',NULL,NULL,'37.67.81.220','2026-02-14 18:50:41'),(8,2,'siegfried.zussman','put_pds','pds',NULL,NULL,'37.67.81.220','2026-02-14 18:53:20'),(9,2,'siegfried.zussman','put_pds','pds',NULL,NULL,'37.67.81.220','2026-02-14 18:55:04'),(10,2,'siegfried.zussman','post_calendrier','calendrier',1,NULL,'37.67.81.220','2026-02-14 19:00:37');
+INSERT INTO `activity_logs` VALUES (1,NULL,'anonymous','login','user',1,'admin connecté','37.67.81.220','2026-02-14 18:48:23'),(2,NULL,'anonymous','post_auth','auth',NULL,NULL,'37.67.81.220','2026-02-14 18:48:23'),(3,1,'admin','post_auth','auth',NULL,NULL,'37.67.81.220','2026-02-14 18:49:42'),(4,NULL,'anonymous','login','user',2,'siegfried.zussman connecté','37.67.81.220','2026-02-14 18:49:57'),(5,NULL,'anonymous','post_auth','auth',NULL,NULL,'37.67.81.220','2026-02-14 18:49:57'),(6,2,'siegfried.zussman','put_pds','pds',NULL,NULL,'37.67.81.220','2026-02-14 18:50:18'),(7,2,'siegfried.zussman','put_pds','pds',NULL,NULL,'37.67.81.220','2026-02-14 18:50:41'),(8,2,'siegfried.zussman','put_pds','pds',NULL,NULL,'37.67.81.220','2026-02-14 18:53:20'),(9,2,'siegfried.zussman','put_pds','pds',NULL,NULL,'37.67.81.220','2026-02-14 18:55:04'),(10,2,'siegfried.zussman','post_calendrier','calendrier',1,NULL,'37.67.81.220','2026-02-14 19:00:37'),(11,NULL,'anonymous','login_failed','user',2,'Mauvais mdp: siegfried.zussman','37.67.81.220','2026-02-14 19:03:05'),(12,NULL,'anonymous','login','user',2,'siegfried.zussman connecté','37.67.81.220','2026-02-14 19:03:14'),(13,NULL,'anonymous','post_auth','auth',NULL,NULL,'37.67.81.220','2026-02-14 19:03:14');
 /*!40000 ALTER TABLE `activity_logs` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1567,7 +1567,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'Admin','System','admin','$2b$10$Nsyr6D7soHbKhuuWtXpPo.ac0rAEvYMq4g00XcxqyWViwFPLGGpiu',NULL,NULL,NULL,5,0,1,'2026-02-14 18:48:23','2026-02-12 18:36:36','2026-02-14 18:48:23'),(2,'Zussman','Siegfried','siegfried.zussman','$2b$10$KDN.Deo8jkiN.iwiS2sqfeTUrUUNbZawlNhIH3cN4YSs4xcGmE7e.',1,9,53,1,0,1,'2026-02-14 18:49:57','2026-02-13 09:36:31','2026-02-14 18:49:57');
+INSERT INTO `users` VALUES (1,'Admin','System','admin','$2b$10$Nsyr6D7soHbKhuuWtXpPo.ac0rAEvYMq4g00XcxqyWViwFPLGGpiu',NULL,NULL,NULL,5,0,1,'2026-02-14 18:48:23','2026-02-12 18:36:36','2026-02-14 18:48:23'),(2,'Zussman','Siegfried','siegfried.zussman','$2b$10$KDN.Deo8jkiN.iwiS2sqfeTUrUUNbZawlNhIH3cN4YSs4xcGmE7e.',1,9,53,1,0,1,'2026-02-14 19:03:14','2026-02-13 09:36:31','2026-02-14 19:03:14');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1638,4 +1638,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-14 19:02:15
+-- Dump completed on 2026-02-14 19:04:50
