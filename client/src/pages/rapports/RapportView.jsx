@@ -192,6 +192,31 @@ export default function RapportView() {
           )}
         </div>
 
+        {/* Validation signature — inside the document */}
+        {R.valide && R.valide_par_nom && (
+          <div style={{ marginTop: 'var(--space-xl)', paddingTop: 'var(--space-md)', borderTop: '1px dashed #999' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <div style={{ textAlign: 'center', minWidth: 250 }}>
+                <div style={{ fontSize: '0.75rem', color: '#666', fontStyle: 'italic', marginBottom: 4 }}>
+                  Lu et approuvé le {R.valide_at ? new Date(R.valide_at).toLocaleString('fr-FR') : ''}
+                </div>
+                <div style={{ borderBottom: '1px solid #333', height: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 4 }}>
+                  {R.valide_signature && R.valide_signature !== 'Auto-validé (Officier)' && (
+                    <img src={R.valide_signature} alt="Signature" style={{ maxHeight: 45, maxWidth: 220 }} />
+                  )}
+                </div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 600, marginTop: 4 }}>{R.valide_par_nom}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!R.valide && R.published && (
+          <div style={{ marginTop: 'var(--space-xl)', paddingTop: 'var(--space-md)', borderTop: '1px dashed #999', textAlign: 'center' }}>
+            <span style={{ fontSize: '0.8rem', color: '#999', fontStyle: 'italic' }}>⏳ En attente de validation par la chaîne hiérarchique</span>
+          </div>
+        )}
+
         {R.published && (
           <div style={{ textAlign: 'center', marginTop: 'var(--space-md)', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
             📜 Document publié — Archives 7e Armeekorps
@@ -200,41 +225,15 @@ export default function RapportView() {
       </div>
       )}
 
-      {/* Validation status */}
-      <div className="paper-card" style={{ marginTop: 'var(--space-lg)', borderLeft: `3px solid ${R.valide ? 'var(--success)' : 'var(--warning)'}` }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-          <div>
-            {R.valide ? (
-              <>
-                <span style={{ color: 'var(--success)', fontWeight: 700 }}>✅ Validé</span>
-                <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginLeft: 12 }}>
-                  Lu et approuvé par <strong>{R.valide_par_nom}</strong> — {R.valide_at ? new Date(R.valide_at).toLocaleString('fr-FR') : ''}
-                </span>
-                {R.valide_signature && R.valide_signature !== 'Auto-validé (Officier)' && (
-                  <div style={{ marginTop: 6 }}>
-                    <img src={R.valide_signature} alt="Signature validation" style={{ maxHeight: 50, opacity: 0.8 }} />
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <span style={{ color: 'var(--warning)', fontWeight: 700 }}>⏳ En attente de validation</span>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: 8 }}>
-                  {R.auteur_rang < 35 ? '(Nécessite validation SO ou Officier)' : '(Nécessite validation Officier)'}
-                </span>
-              </>
-            )}
-          </div>
-          {canValidate && (
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button className="btn btn-primary btn-small" onClick={handleValidateClick}>
-                {mySignature ? '✅ Valider & Signer' : '✍️ Dessiner signature & Valider'}
-              </button>
-              {mySignature && <button className="btn btn-secondary btn-small" onClick={() => setShowValidateSign(true)}>🔄 Redessiner</button>}
-            </div>
-          )}
+      {/* Validate button (outside document) */}
+      {canValidate && (
+        <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', display: 'flex', gap: 8, justifyContent: 'center' }}>
+          <button className="btn btn-primary" onClick={handleValidateClick}>
+            {mySignature ? '✅ Valider & Signer' : '✍️ Dessiner signature & Valider'}
+          </button>
+          {mySignature && <button className="btn btn-secondary" onClick={() => setShowValidateSign(true)}>🔄 Redessiner</button>}
         </div>
-      </div>
+      )}
 
       {/* Signature canvas for validation */}
       {showValidateSign && (
