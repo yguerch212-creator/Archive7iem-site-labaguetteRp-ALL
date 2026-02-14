@@ -52,10 +52,10 @@ export default function JournalEdit() {
     y += 10
 
     // Eagle + Title row
-    b.push({ id: 'eagle', type: 'text', content: '🦅', x: M, y, w: 50, h: 65 })
-    b.push({ id: 'masthead', type: 'title', content: '<b>Wacht am Korps</b>', x: 80, y, w: 640, h: 65 })
-    b.push({ id: 'nummer', type: 'text', content: `<b>Nr. ___</b>`, x: CW - 30, y: y + 5, w: 80, h: 20 })
-    y += 68
+    b.push({ id: 'eagle', type: 'text', content: '🦅', x: M + 5, y: y + 8, w: 45, h: 55 })
+    b.push({ id: 'masthead', type: 'title', content: '<b>Wacht am Korps</b>', x: 90, y, w: 620, h: 65 })
+    b.push({ id: 'nummer', type: 'text', content: `<b>Nr. ___</b>`, x: CW - 40, y: y + 8, w: 90, h: 20 })
+    y += 70
 
     // Subtitle line
     b.push({ id: 'sub-feld', type: 'text', content: '<i>Feldzeitung des 7. Armeekorps</i>', x: 200, y, w: 400, h: 18 })
@@ -85,23 +85,27 @@ export default function JournalEdit() {
     const c2x = M + col3W + 10
     const c3x = M + (col3W + 10) * 2
 
-    // — Colonne 1 : article principal
-    b.push({ id: 'col1-text', type: 'text', content: a?.contenu || '<b>FRONT OUEST.</b> — Rédigez ici le corps de l\'article principal. Le style doit imiter un journal de campagne : phrases courtes, ton factuel, vocabulaire militaire.\n\nLes colonnes étroites reproduisent la mise en page d\'un vrai Feldzeitung. Chaque colonne peut contenir un article différent ou la suite du même texte.\n\nN\'hésitez pas à utiliser le <b>gras</b> pour les noms de lieux et d\'unités.', x: c1x, y: colY, w: col3W, h: 350 })
+    // — Colonne 1 : article principal + photo
+    b.push({ id: 'col1-text', type: 'text', content: a?.contenu || '<b>FRONT OUEST.</b> — Rédigez ici le corps de l\'article principal. Le style doit imiter un journal de campagne : phrases courtes, ton factuel, vocabulaire militaire.\n\nLes colonnes étroites reproduisent la mise en page d\'un vrai Feldzeitung.', x: c1x, y: colY, w: col3W, h: 220 })
+    b.push({ id: 'photo1', type: 'image', content: '', x: c1x, y: colY + 230, w: col3W, h: 130 })
+    b.push({ id: 'photo1-cap', type: 'text', content: '<i>Légende photo 1</i>', x: c1x, y: colY + 365, w: col3W, h: 16 })
 
-    // — Colonne 2 : suite + photo
+    // — Colonne 2 : article secondaire + photo
     b.push({ id: 'col2-title', type: 'title', content: '<b>Article secondaire</b>', x: c2x, y: colY, w: col3W, h: 26 })
-    b.push({ id: 'col2-sub', type: 'text', content: '<i>Sous-titre de l\'article</i>', x: c2x, y: colY + 28, w: col3W, h: 18 })
-    b.push({ id: 'col2-rule', type: 'separator', content: '', x: c2x, y: colY + 48, w: col3W, h: 2 })
-    b.push({ id: 'col2-text', type: 'text', content: 'Texte du deuxième article. Peut traiter d\'un sujet connexe, d\'une opération secondaire, ou d\'informations logistiques.\n\nLes unités du Korps sont encouragées à contribuer au journal.', x: c2x, y: colY + 54, w: col3W, h: 160 })
-    b.push({ id: 'photo1', type: 'image', content: '', x: c2x, y: colY + 220, w: col3W, h: 130 })
+    b.push({ id: 'col2-sub', type: 'text', content: '<i>Sous-titre de l\'article</i>', x: c2x, y: colY + 30, w: col3W, h: 18 })
+    b.push({ id: 'col2-rule', type: 'separator', content: '', x: c2x, y: colY + 52, w: col3W, h: 2 })
+    b.push({ id: 'col2-text', type: 'text', content: 'Texte du deuxième article. Peut traiter d\'un sujet connexe, d\'une opération secondaire, ou d\'informations logistiques.', x: c2x, y: colY + 60, w: col3W, h: 120 })
+    b.push({ id: 'photo2', type: 'image', content: '', x: c2x, y: colY + 190, w: col3W, h: 130 })
+    b.push({ id: 'photo2-cap', type: 'text', content: '<i>Légende photo 2</i>', x: c2x, y: colY + 325, w: col3W, h: 16 })
+    b.push({ id: 'col2-text2', type: 'text', content: 'Suite du texte après la photo, détails complémentaires...', x: c2x, y: colY + 348, w: col3W, h: 35 })
 
-    // — Colonne 3 : brèves + infos
+    // — Colonne 3 : brèves + encadré
     b.push({ id: 'col3-title', type: 'title', content: '<b>Kurzmeldungen</b>', x: c3x, y: colY, w: col3W, h: 26 })
-    b.push({ id: 'col3-rule', type: 'separator', content: '', x: c3x, y: colY + 28, w: col3W, h: 2 })
-    b.push({ id: 'col3-text1', type: 'text', content: '<b>Nouvelles recrues</b>\nListe des dernières incorporations au sein du Korps.\n\n<b>Décorations</b>\nSoldats distingués cette semaine.\n\n<b>Avis de service</b>\nInformations administratives et rappels.', x: c3x, y: colY + 34, w: col3W, h: 180 })
-    b.push({ id: 'col3-box', type: 'text', content: '┌─────────────────┐\n│  <b>AVIS IMPORTANT</b>  │\n│                               │\n│  Encadré pour une  │\n│  information clé      │\n└─────────────────┘', x: c3x, y: colY + 220, w: col3W, h: 100 })
+    b.push({ id: 'col3-rule', type: 'separator', content: '', x: c3x, y: colY + 30, w: col3W, h: 2 })
+    b.push({ id: 'col3-text1', type: 'text', content: '<b>Nouvelles recrues</b>\nListe des dernières incorporations.\n\n<b>Décorations</b>\nSoldats distingués cette semaine.\n\n<b>Avis de service</b>\nInformations administratives.', x: c3x, y: colY + 38, w: col3W, h: 170 })
+    b.push({ id: 'col3-box', type: 'text', content: '┌──────────────────────┐\n│   <b>AVIS IMPORTANT</b>      │\n│                                        │\n│   Encadré pour info clé   │\n│                                        │\n└──────────────────────┘', x: c3x, y: colY + 216, w: col3W, h: 100 })
 
-    y = colY + 360
+    y = colY + 395
 
     // ═══════════════════════════════════════
     //  SECTION BAS — article + photo large
@@ -119,9 +123,9 @@ export default function JournalEdit() {
 
     const botY = y
     b.push({ id: 'bot-col1', type: 'text', content: 'Corps de texte du troisième article sur deux colonnes. Cela permet d\'avoir un article plus large et aéré en bas de page, comme dans les vrais journaux de campagne.', x: M, y: botY, w: col2W, h: 140 })
-    b.push({ id: 'photo2', type: 'image', content: '', x: M + col2W + 10, y: botY, w: col2W, h: 140 })
-    b.push({ id: 'photo2-cap', type: 'text', content: '<i>Légende de la photographie</i>', x: M + col2W + 10, y: botY + 142, w: col2W, h: 16 })
-    y = botY + 165
+    b.push({ id: 'photo3', type: 'image', content: '', x: M + col2W + 10, y: botY, w: col2W, h: 140 })
+    b.push({ id: 'photo3-cap', type: 'text', content: '<i>Légende photo 3</i>', x: M + col2W + 10, y: botY + 145, w: col2W, h: 16 })
+    y = botY + 170
 
     // ═══════════════════════════════════════
     //  FOOTER

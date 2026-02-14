@@ -209,6 +209,7 @@ export default function DossiersList() {
               <th style={th}>Accès</th>
               <th style={th}>Entrées</th>
               <th style={th}>Créé par</th>
+              {user?.isAdmin && <th style={th}></th>}
             </tr>
           </thead>
           <tbody>
@@ -229,6 +230,13 @@ export default function DossiersList() {
                 <td style={td}><span style={{ fontSize: '0.8rem' }}>{ACCESS_LABELS[d.access_group] || '🌐'}</span></td>
                 <td style={td}><strong>{d.nb_entrees || 0}</strong></td>
                 <td style={td}><span style={{ fontSize: '0.8rem' }}>{d.created_by_nom || '—'}</span></td>
+                {user?.isAdmin && <td style={td} onClick={e => e.stopPropagation()}>
+                  <button className="btn btn-danger btn-sm" style={{ padding: '2px 8px', fontSize: '0.75rem' }} onClick={async () => {
+                    if (!confirm(`Supprimer le dossier "${d.titre}" ?`)) return
+                    try { await api.delete(`/dossiers/${d.id}`); load(); setMessage({ type: 'success', text: 'Dossier supprimé ✓' }); setTimeout(() => setMessage(null), 2000) }
+                    catch { setMessage({ type: 'error', text: 'Erreur suppression' }) }
+                  }}>🗑️</button>
+                </td>}
               </tr>
             ))}
           </tbody>
