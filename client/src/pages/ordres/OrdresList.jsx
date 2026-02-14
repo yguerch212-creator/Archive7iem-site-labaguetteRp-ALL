@@ -14,7 +14,7 @@ export default function OrdresList() {
   const [ordres, setOrdres] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [unites, setUnites] = useState([])
-  const [form, setForm] = useState({ type: 'ordre_du_jour', titre: '', contenu: '', unite_id: '', date_rp: '' })
+  const [form, setForm] = useState({ type: 'ordre_du_jour', titre: '', contenu: '', unite_id: '', date_rp: '', date_calendrier: '' })
   const [msg, setMsg] = useState('')
 
   const canCreate = user?.isAdmin || user?.isOfficier
@@ -54,7 +54,10 @@ export default function OrdresList() {
                 <option value="">Toutes les unités</option>{unites.map(u => <option key={u.id} value={u.id}>{u.code}. {u.nom}</option>)}
               </select></div>
             </div>
-            <div className="form-group"><label className="form-label">Date RP</label><input className="form-input" value={form.date_rp} onChange={e => setForm(f=>({...f,date_rp:e.target.value}))} placeholder="Ex: Vendredi 14 Février 1944" /></div>
+            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ flex: 1 }}><label className="form-label">Date RP (texte libre)</label><input className="form-input" value={form.date_rp} onChange={e => setForm(f=>({...f,date_rp:e.target.value}))} placeholder="Ex: Vendredi 14 Février 1944" /></div>
+              <div className="form-group" style={{ flex: 1 }}><label className="form-label">📅 Ajouter au calendrier (date IRL)</label><input type="datetime-local" className="form-input" value={form.date_calendrier} onChange={e => setForm(f=>({...f,date_calendrier:e.target.value}))} /></div>
+            </div>
             <div className="form-group"><label className="form-label">Contenu *</label><textarea className="form-input" value={form.contenu} onChange={e => setForm(f=>({...f,contenu:e.target.value}))} required rows={6} style={{ resize: 'vertical' }} /></div>
             <button type="submit" className="btn btn-primary">📜 Émettre l'ordre</button>
           </form>

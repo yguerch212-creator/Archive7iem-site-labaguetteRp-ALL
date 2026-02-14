@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import BackButton from '../../components/BackButton'
+import ShareButton from '../../components/ShareButton'
 import { exportToPdf } from '../../utils/exportPdf'
 
 const TYPE_LABELS = { ordre_du_jour: 'ORDRE DU JOUR', ordre_de_mission: 'ORDRE DE MISSION', directive: 'DIRECTIVE', communique: 'COMMUNIQUÉ' }

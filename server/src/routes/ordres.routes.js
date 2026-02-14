@@ -51,13 +51,23 @@ router.get('/:id', auth, async (req, res) => {
 router.post('/', auth, async (req, res) => {
   try {
     if (!req.user.isAdmin && !req.user.isOfficier) return res.status(403).json({ success: false, message: 'Réservé aux officiers' })
-    const { type, titre, contenu, unite_id, date_rp, date_irl } = req.body
+    const { type, titre, contenu, unite_id, date_rp, date_irl, date_calendrier } = req.body
     const numero = await nextNumero(type || 'ordre_du_jour')
     const nom = `${req.user.prenom || ''} ${req.user.nom || req.user.username}`.trim()
     const [result] = await pool.execute(
       'INSERT INTO ordres (numero, type, titre, contenu, unite_id, emis_par, emis_par_nom, emis_par_grade, date_rp, date_irl) VALUES (?,?,?,?,?,?,?,?,?,?)',
       [numero, type || 'ordre_du_jour', titre, contenu || null, unite_id || null, req.user.id, nom, req.user.grade || null, date_rp || null, date_irl || null]
     )
+
+    // Auto-create calendrier event if date provided
+    if (date_calendrier) {
+      const typeMap = { ordre_de_mission: 'operation', directive: 'reunion', communique: 'autre', ordre_du_jour: 'reunion' }
+      await pool.execute(
+        'INSERT INTO calendrier (titre, description, date_debut, type, unite_id, created_by) VALUES (?,?,?,?,?,?)',
+        [`📜 ${numero} — ${titre}`, `Ordre: ${titre}`, date_calendrier, typeMap[type] || 'autre', unite_id || null, req.user.id]
+      )
+    }
+
     res.json({ success: true, data: { id: result.insertId, numero } })
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
