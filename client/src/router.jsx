@@ -49,7 +49,7 @@ function AppRouter() {
 
   return (
     <Routes>
-      <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
+      <Route path="/login" element={user && !user.isGuest ? <Navigate to="/dashboard" replace /> : <Login />} />
       
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
@@ -113,8 +113,8 @@ function AppRouter() {
       <Route path="/admin/stats" element={<ProtectedRoute><AdminStats /></ProtectedRoute>} />
       <Route path="/admin/moderation" element={<ProtectedRoute><Moderation /></ProtectedRoute>} />
       
-      <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/" element={<Navigate to={user && !user.isGuest ? "/dashboard" : "/login"} replace />} />
+      <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
     </Routes>
   )
 }
