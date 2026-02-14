@@ -17,6 +17,23 @@ export function AuthProvider({ children }) {
       if (token) {
         const response = await apiClient.get('/auth/me')
         setUser(response.data.user)
+      } else if (localStorage.getItem('guestMode')) {
+        // Restore guest
+        setUser({
+          id: 0, nom: 'Invité', prenom: '', username: 'guest',
+          isGuest: true, isAdmin: false, isRecenseur: false, isOfficier: false,
+          isFeldgendarmerie: false, isSanitaets: false
+        })
+      } else {
+        // Auto-guest for direct link access — only if not on /login
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
+          localStorage.setItem('guestMode', 'true')
+          setUser({
+            id: 0, nom: 'Invité', prenom: '', username: 'guest',
+            isGuest: true, isAdmin: false, isRecenseur: false, isOfficier: false,
+            isFeldgendarmerie: false, isSanitaets: false
+          })
+        }
       }
     } catch (error) {
       localStorage.removeItem('authToken')
