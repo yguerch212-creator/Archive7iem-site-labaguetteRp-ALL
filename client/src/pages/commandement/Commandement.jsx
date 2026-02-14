@@ -138,6 +138,12 @@ export default function Commandement() {
               <button className={`btn btn-sm ${etatFilter === 'pds_manquant' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setEtatFilter('pds_manquant')}>❌ PDS manquant</button>
               <button className={`btn btn-sm ${etatFilter === 'rapport_manquant' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setEtatFilter('rapport_manquant')}>❌ Rapport manquant</button>
               <button className={`btn btn-sm ${etatFilter === 'ok' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setEtatFilter('ok')}>✅ Tout OK</button>
+              <select className="form-input" style={{ maxWidth: 180, fontSize: '0.8rem' }} value={etatFilter.startsWith('u:') ? etatFilter : ''} onChange={e => setEtatFilter(e.target.value || '')}>
+                <option value="">— Toutes unités —</option>
+                {[...new Set((etat.data||[]).map(r => r.unite_code).filter(Boolean))].sort().map(c => (
+                  <option key={c} value={`u:${c}`}>{c}</option>
+                ))}
+              </select>
             </div>
 
             {(() => {
@@ -145,6 +151,7 @@ export default function Commandement() {
               if (etatFilter === 'pds_manquant') rows = rows.filter(r => !r.pds_fait)
               else if (etatFilter === 'rapport_manquant') rows = rows.filter(r => !r.rapports_semaine)
               else if (etatFilter === 'ok') rows = rows.filter(r => r.pds_fait && r.rapports_semaine)
+              else if (etatFilter.startsWith('u:')) rows = rows.filter(r => r.unite_code === etatFilter.slice(2))
 
               const totalPds = rows.filter(r => r.pds_fait).length
               const totalRapports = rows.filter(r => r.rapports_semaine).length
