@@ -127,7 +127,7 @@ export default function DossierLayout() {
       }
     })
     return () => { interact('.edit-block').unset() }
-  }, [currentPage, pages])
+  }, [currentPage])
 
   const pageKey = String(currentPage)
   const currentBlocks = pages[pageKey] || []
@@ -202,8 +202,12 @@ export default function DossierLayout() {
 
   const addPage = () => {
     const newKey = String(totalPages)
-    setPages(prev => ({ ...prev, [newKey]: [] }))
-    setCurrentPage(totalPages)
+    setPages(prev => {
+      const next = { ...prev, [newKey]: [] }
+      return next
+    })
+    // Use callback to ensure we navigate after state updates
+    setTimeout(() => setCurrentPage(parseInt(newKey)), 50)
     setSelectedBlock(null)
   }
 

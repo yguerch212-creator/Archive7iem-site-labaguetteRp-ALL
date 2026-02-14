@@ -3,7 +3,6 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import BackButton from '../../components/BackButton'
-import LayoutRenderer from '../../components/LayoutRenderer'
 import EffectifAutocomplete from '../../components/EffectifAutocomplete'
 import { formatDate, formatDateTime } from '../../utils/dates'
 import './sanctions.css'
@@ -30,7 +29,6 @@ export default function AffaireView() {
   const [selectedPiece, setSelectedPiece] = useState(null)
   const [infractions, setInfractions] = useState([])
 
-  const [layoutBlocks, setLayoutBlocks] = useState(null)
   const canWrite = user?.isAdmin || user?.isOfficier || user?.isFeldgendarmerie
 
   const load = useCallback(async () => {
@@ -46,13 +44,7 @@ export default function AffaireView() {
     setLoading(false)
   }, [id])
 
-  useEffect(() => {
-    load()
-    api.get(`/affaires/${id}/layout`).then(r => {
-      const data = r.data?.data || r.data
-      if (data?.blocks && data.blocks.length > 0) setLayoutBlocks(data.blocks)
-    }).catch(() => {})
-  }, [load])
+  useEffect(() => { load() }, [load])
 
   const flash = (text) => { setMessage(text); setTimeout(() => setMessage(''), 3000) }
 
@@ -138,13 +130,6 @@ export default function AffaireView() {
         {a.verdict && <div className="affaire-verdict"><strong>⚖️ Verdict:</strong> {a.verdict}</div>}
         {a.sanction_prononcee && <div className="affaire-sanction"><strong>🔨 Sanction:</strong> {a.sanction_prononcee}</div>}
       </div>
-
-      {/* Layout document (if saved) */}
-      {layoutBlocks && (
-        <div className="document-paper" style={{ marginBottom: 'var(--space-lg)', minHeight: 500 }}>
-          <LayoutRenderer blocks={layoutBlocks} width={800} minHeight={1100} />
-        </div>
-      )}
 
       {/* Personnes impliquées */}
       <div className="paper-card">
