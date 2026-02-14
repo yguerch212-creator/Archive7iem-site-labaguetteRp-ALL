@@ -115,11 +115,11 @@ export default function RapportView() {
       )}
 
       {/* Prendre en charge (Feldgendarmerie) */}
-      {R.type === 'incident' && !R.affaire_id && R.published && (user?.isFeldgendarmerie || user?.isAdmin) && (
+      {R.type === 'incident' && !R.affaire_id && R.published && (user?.isFeldgendarmerie || user?.isOfficier) && (
         <div className="paper-card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-md)', background: '#fff8e1', borderLeft: '3px solid #ff9800', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
           <div>
             <strong>⚠️ Rapport d'incident non traité</strong>
-            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>En tant que Feldgendarmerie, vous pouvez ouvrir une affaire judiciaire.</div>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>En tant que Feldgendarmerie ou officier, vous pouvez ouvrir une affaire judiciaire.</div>
           </div>
           <button className="btn btn-primary" onClick={async () => {
             if (!confirm('Ouvrir une affaire judiciaire liée à cet incident ?')) return

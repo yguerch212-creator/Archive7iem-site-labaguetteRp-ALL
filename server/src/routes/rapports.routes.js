@@ -174,8 +174,8 @@ router.put('/:id/redact', auth, async (req, res) => {
 // PUT /api/rapports/:id/prendre-en-charge — Feldgendarmerie takes incident, creates affaire
 router.put('/:id/prendre-en-charge', auth, async (req, res) => {
   try {
-    if (!req.user.isFeldgendarmerie && !req.user.isAdmin) {
-      return res.status(403).json({ success: false, message: 'Réservé à la Feldgendarmerie' })
+    if (!req.user.isFeldgendarmerie && !req.user.isOfficier) {
+      return res.status(403).json({ success: false, message: 'Réservé à la Feldgendarmerie et aux officiers' })
     }
     const rapport = await queryOne('SELECT * FROM rapports WHERE id = ?', [req.params.id])
     if (!rapport) return res.status(404).json({ success: false, message: 'Rapport introuvable' })

@@ -6,6 +6,7 @@ import BackButton from '../../components/BackButton'
 import EffectifAutocomplete from '../../components/EffectifAutocomplete'
 import { formatDate, formatDateTime } from '../../utils/dates'
 import { exportToPdf } from '../../utils/exportPdf'
+import ShareButton from '../../components/ShareButton'
 import './sanctions.css'
 
 const ROLES = ['Accuse', 'Temoin', 'Victime', 'Enqueteur', 'Juge', 'Defenseur']
