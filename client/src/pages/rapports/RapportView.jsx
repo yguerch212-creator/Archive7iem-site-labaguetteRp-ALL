@@ -102,6 +102,36 @@ export default function RapportView() {
 
       {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}
 
+      {/* Incident pris en charge */}
+      {R.type === 'incident' && R.affaire_id && (
+        <div className="paper-card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-md)', background: '#e8f5e9', borderLeft: '3px solid var(--success)' }}>
+          <strong>⚖️ Incident pris en charge</strong> par <strong>{R.pris_par_nom}</strong>
+          {R.pris_at && <> le {new Date(R.pris_at).toLocaleDateString('fr-FR')}</>}
+          {' — '}
+          <Link to={`/sanctions/${R.affaire_id}`} style={{ fontWeight: 600, color: 'var(--military-green)' }}>
+            Voir l'affaire →
+          </Link>
+        </div>
+      )}
+
+      {/* Prendre en charge (Feldgendarmerie) */}
+      {R.type === 'incident' && !R.affaire_id && R.published && (user?.isFeldgendarmerie || user?.isAdmin) && (
+        <div className="paper-card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-md)', background: '#fff8e1', borderLeft: '3px solid #ff9800', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <div>
+            <strong>⚠️ Rapport d'incident non traité</strong>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>En tant que Feldgendarmerie, vous pouvez ouvrir une affaire judiciaire.</div>
+          </div>
+          <button className="btn btn-primary" onClick={async () => {
+            if (!confirm('Ouvrir une affaire judiciaire liée à cet incident ?')) return
+            try {
+              const res = await apiClient.put(`/rapports/${id}/prendre-en-charge`)
+              setMessage({ type: 'success', text: `✅ Affaire ${res.data.data.numero} ouverte ! Un télégramme a été envoyé à l'auteur.` })
+              load()
+            } catch (err) { setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur' }) }
+          }}>⚖️ Prendre en charge</button>
+        </div>
+      )}
+
       {/* Status info */}
       {!R.published && !R.valide && (
         <div className="paper-card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-md)', background: '#fdf8e8', borderLeft: '3px solid var(--warning)' }}>

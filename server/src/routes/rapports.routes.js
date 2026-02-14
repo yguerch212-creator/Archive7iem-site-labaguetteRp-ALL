@@ -43,7 +43,8 @@ router.get('/', optionalAuth, async (req, res) => {
         r.type, r.date_rp, r.date_irl, r.published, r.moderation_statut, r.a_images, r.created_at,
         r.valide, r.valide_par_nom, r.valide_at, r.auteur_rang,
         COALESCE(r.personne_renseignee_nom, r.recommande_nom, r.mise_en_cause_nom) AS personne_mentionnee,
-        u.code AS auteur_unite_code, u.nom AS auteur_unite_nom
+        u.code AS auteur_unite_code, u.nom AS auteur_unite_nom,
+        r.affaire_id, r.pris_par_nom, r.pris_at
       FROM rapports r
       LEFT JOIN effectifs e ON e.id = r.auteur_id
       LEFT JOIN unites u ON u.id = e.unite_id
@@ -166,6 +167,85 @@ router.put('/:id/redact', auth, async (req, res) => {
     await pool.execute('UPDATE rapports SET redactions = ? WHERE id = ?', [JSON.stringify(redactions), req.params.id])
     res.json({ success: true })
   } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// PUT /api/rapports/:id/prendre-en-charge — Feldgendarmerie takes incident, creates affaire
+router.put('/:id/prendre-en-charge', auth, async (req, res) => {
+  try {
+    if (!req.user.isFeldgendarmerie && !req.user.isAdmin) {
+      return res.status(403).json({ success: false, message: 'Réservé à la Feldgendarmerie' })
+    }
+    const rapport = await queryOne('SELECT * FROM rapports WHERE id = ?', [req.params.id])
+    if (!rapport) return res.status(404).json({ success: false, message: 'Rapport introuvable' })
+    if (rapport.type !== 'incident') return res.status(400).json({ success: false, message: 'Seuls les rapports d\'incident peuvent être pris en charge' })
+    if (rapport.affaire_id) return res.status(400).json({ success: false, message: 'Ce rapport est déjà lié à une affaire' })
+
+    // Generate affaire number
+    const year = new Date().getFullYear()
+    const lastAff = await queryOne("SELECT numero FROM affaires WHERE numero LIKE ? ORDER BY id DESC LIMIT 1", [`AFF-${year}-%`])
+    let seq = 1
+    if (lastAff) seq = parseInt(lastAff.numero.split('-')[2]) + 1
+    const numero = `AFF-${year}-${String(seq).padStart(3, '0')}`
+
+    const feldName = `${req.user.prenom || ''} ${req.user.nom || req.user.username}`.trim()
+
+    // Create affaire
+    const [affResult] = await pool.execute(
+      `INSERT INTO affaires (numero, titre, description, statut, created_by) VALUES (?, ?, ?, 'ouverte', ?)`,
+      [numero, `Incident — ${rapport.titre}`, `Affaire ouverte suite au rapport d'incident: ${rapport.titre}`, req.user.id]
+    )
+    const affaireId = affResult.insertId
+
+    // Add the incident rapport as a pièce
+    await pool.execute(
+      `INSERT INTO affaires_pieces (affaire_id, type, titre, contenu, date_rp, date_irl, redige_par_id, redige_par_nom, confidentiel)
+       VALUES (?, 'rapport_incident', ?, ?, ?, ?, ?, ?, 0)`,
+      [affaireId, `Rapport d'incident — ${rapport.titre}`,
+       `Lieu: ${rapport.lieu_incident || '—'}\nCompte-rendu: ${rapport.compte_rendu || '—'}\nAuteur: ${rapport.auteur_nom || '—'}\nMis en cause: ${rapport.mise_en_cause_nom || '—'}`,
+       rapport.date_rp, rapport.date_irl, rapport.auteur_id, rapport.auteur_nom]
+    )
+
+    // Add mis en cause as accusé if present
+    if (rapport.mise_en_cause_nom) {
+      await pool.execute(
+        `INSERT INTO affaires_personnes (affaire_id, role, nom_libre) VALUES (?, 'Accuse', ?)`,
+        [affaireId, rapport.mise_en_cause_nom]
+      )
+    }
+
+    // Update rapport with affaire link
+    await pool.execute(
+      'UPDATE rapports SET affaire_id = ?, pris_par_id = ?, pris_par_nom = ?, pris_at = NOW() WHERE id = ?',
+      [affaireId, req.user.effectif_id || req.user.id, feldName, req.params.id]
+    )
+
+    // Send telegram to rapport author
+    if (rapport.auteur_id) {
+      const [telResult] = await pool.execute(
+        `INSERT INTO telegrammes (numero, objet, contenu, priorite, expediteur_id, expediteur_texte, confidentiel)
+         VALUES (?, ?, ?, 'urgent', ?, ?, 0)`,
+        [`TEL-AUTO-${Date.now()}`,
+         `Rapport d'incident pris en charge`,
+         `Votre rapport d'incident "${rapport.titre}" a été pris en charge par ${feldName} de la Feldgendarmerie.\n\nAffaire ${numero} ouverte.\n\nVous serez informé de l'avancement de la procédure.`,
+         req.user.effectif_id || null,
+         feldName]
+      )
+      // Add author as destinataire
+      if (telResult.insertId) {
+        await pool.execute(
+          'INSERT INTO telegramme_destinataires (telegramme_id, effectif_id) VALUES (?, ?)',
+          [telResult.insertId, rapport.auteur_id]
+        )
+      }
+    }
+
+    logActivity(req, 'incident_pris_en_charge', 'rapport', rapport.id, `Incident pris en charge par ${feldName} → Affaire ${numero}`)
+
+    res.json({ success: true, data: { affaire_id: affaireId, numero } })
+  } catch (err) {
+    console.error('Prendre en charge error:', err)
     res.status(500).json({ success: false, message: err.message })
   }
 })

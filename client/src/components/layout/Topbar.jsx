@@ -9,6 +9,7 @@ export default function Topbar() {
   const navigate = useNavigate()
   const [unreadTel, setUnreadTel] = useState(0)
   const [pendingCount, setPendingCount] = useState(0)
+  const [incidentsCount, setIncidentsCount] = useState(0)
   const [showNotif, setShowNotif] = useState(false)
 
   // Polling notifications every 30s
@@ -18,9 +19,9 @@ export default function Topbar() {
       api.get('/telegrammes', { params: { tab: 'recu' } })
         .then(r => setUnreadTel(r.data.unread || 0)).catch(() => {})
     }
-    if (user.isAdmin || user.isOfficier || user.isRecenseur) {
+    if (user.isAdmin || user.isOfficier || user.isRecenseur || user.isFeldgendarmerie) {
       api.get('/stats/pending')
-        .then(r => { if (r.data.success) setPendingCount(Object.values(r.data.data || {}).reduce((a,b) => a+b, 0)) }).catch(() => {})
+        .then(r => { setPendingCount(r.data?.total || 0); setIncidentsCount(r.data?.incidents || 0) }).catch(() => {})
     }
   }, [user])
 
@@ -75,7 +76,8 @@ export default function Topbar() {
                   {showNotif && (
                     <div style={{ position: 'absolute', top: '100%', right: 0, background: '#faf8f2', border: '1px solid var(--border-color)', borderRadius: 6, padding: 'var(--space-sm)', minWidth: 200, zIndex: 1000, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }} onClick={e => e.stopPropagation()}>
                       {unreadTel > 0 && <div style={{ padding: '6px 8px', fontSize: '0.8rem', cursor: 'pointer' }} onClick={() => { navigate('/telegrammes'); setShowNotif(false) }}>⚡ {unreadTel} télégramme(s) non lu(s)</div>}
-                      {pendingCount > 0 && <div style={{ padding: '6px 8px', fontSize: '0.8rem', cursor: 'pointer' }} onClick={() => { navigate('/rapports'); setShowNotif(false) }}>📝 {pendingCount} élément(s) en attente</div>}
+                      {incidentsCount > 0 && <div style={{ padding: '6px 8px', fontSize: '0.8rem', cursor: 'pointer', color: '#e65100' }} onClick={() => { navigate('/rapports'); setShowNotif(false) }}>⚠️ {incidentsCount} incident(s) à traiter</div>}
+                      {pendingCount - incidentsCount > 0 && <div style={{ padding: '6px 8px', fontSize: '0.8rem', cursor: 'pointer' }} onClick={() => { navigate('/rapports'); setShowNotif(false) }}>📝 {pendingCount - incidentsCount} élément(s) en attente</div>}
                     </div>
                   )}
                 </div>

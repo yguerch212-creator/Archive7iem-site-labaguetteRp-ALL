@@ -99,6 +99,8 @@ export default function RapportsList() {
                   <td style={td}>
                     {r.valide ? <span style={{ color: 'var(--success)' }}>✅ Validé</span> : <span style={{ color: 'var(--warning)' }}>⏳</span>}
                     {' '}{r.published ? '📜' : '📝'}
+                    {r.type === 'incident' && r.affaire_id && <span style={{ color: 'var(--success)', fontSize: '0.75rem' }}> ⚖️</span>}
+                    {r.type === 'incident' && !r.affaire_id && r.published && <span style={{ color: '#e65100', fontSize: '0.75rem' }}> ⚠️</span>}
                   </td>
                   {user?.isAdmin && (
                     <td style={td} onClick={e => e.stopPropagation()}>
