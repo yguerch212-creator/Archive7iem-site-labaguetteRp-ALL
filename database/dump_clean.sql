@@ -36,7 +36,7 @@ CREATE TABLE `activity_logs` (
   KEY `idx_log_user` (`user_id`),
   KEY `idx_log_action` (`action`),
   KEY `idx_log_date` (`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -45,7 +45,6 @@ CREATE TABLE `activity_logs` (
 
 LOCK TABLES `activity_logs` WRITE;
 /*!40000 ALTER TABLE `activity_logs` DISABLE KEYS */;
-INSERT INTO `activity_logs` VALUES (1,NULL,'anonymous','login','user',1,'admin connecté','37.67.81.220','2026-02-14 18:48:23'),(2,NULL,'anonymous','post_auth','auth',NULL,NULL,'37.67.81.220','2026-02-14 18:48:23'),(3,1,'admin','post_auth','auth',NULL,NULL,'37.67.81.220','2026-02-14 18:49:42'),(4,NULL,'anonymous','login','user',2,'siegfried.zussman connecté','37.67.81.220','2026-02-14 18:49:57'),(5,NULL,'anonymous','post_auth','auth',NULL,NULL,'37.67.81.220','2026-02-14 18:49:57'),(6,2,'siegfried.zussman','put_pds','pds',NULL,NULL,'37.67.81.220','2026-02-14 18:50:18'),(7,2,'siegfried.zussman','put_pds','pds',NULL,NULL,'37.67.81.220','2026-02-14 18:50:41'),(8,2,'siegfried.zussman','put_pds','pds',NULL,NULL,'37.67.81.220','2026-02-14 18:53:20'),(9,2,'siegfried.zussman','put_pds','pds',NULL,NULL,'37.67.81.220','2026-02-14 18:55:04'),(10,2,'siegfried.zussman','post_calendrier','calendrier',1,NULL,'37.67.81.220','2026-02-14 19:00:37'),(11,NULL,'anonymous','login_failed','user',2,'Mauvais mdp: siegfried.zussman','37.67.81.220','2026-02-14 19:03:05'),(12,NULL,'anonymous','login','user',2,'siegfried.zussman connecté','37.67.81.220','2026-02-14 19:03:14'),(13,NULL,'anonymous','post_auth','auth',NULL,NULL,'37.67.81.220','2026-02-14 19:03:14');
 /*!40000 ALTER TABLE `activity_logs` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -105,7 +104,7 @@ CREATE TABLE `affaires` (
   PRIMARY KEY (`id`),
   KEY `idx_statut` (`statut`),
   KEY `idx_type` (`type`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -137,7 +136,7 @@ CREATE TABLE `affaires_personnes` (
   KEY `idx_affaire` (`affaire_id`),
   CONSTRAINT `affaires_personnes_ibfk_1` FOREIGN KEY (`affaire_id`) REFERENCES `affaires` (`id`) ON DELETE CASCADE,
   CONSTRAINT `affaires_personnes_ibfk_2` FOREIGN KEY (`effectif_id`) REFERENCES `effectifs` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -177,7 +176,7 @@ CREATE TABLE `affaires_pieces` (
   KEY `idx_affaire` (`affaire_id`),
   CONSTRAINT `affaires_pieces_ibfk_1` FOREIGN KEY (`affaire_id`) REFERENCES `affaires` (`id`) ON DELETE CASCADE,
   CONSTRAINT `affaires_pieces_ibfk_2` FOREIGN KEY (`infraction_id`) REFERENCES `infractions` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -290,7 +289,6 @@ CREATE TABLE `calendrier` (
 
 LOCK TABLES `calendrier` WRITE;
 /*!40000 ALTER TABLE `calendrier` DISABLE KEYS */;
-INSERT INTO `calendrier` VALUES (1,'Teste',NULL,'2026-02-17 20:00:00','2026-02-18 20:00:00','autre',1,2,'2026-02-14 19:00:37');
 /*!40000 ALTER TABLE `calendrier` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -357,7 +355,6 @@ CREATE TABLE `documentation` (
 
 LOCK TABLES `documentation` WRITE;
 /*!40000 ALTER TABLE `documentation` DISABLE KEYS */;
-INSERT INTO `documentation` VALUES (1,NULL,'Règlement intérieur du serveur','Règles de conduite RP et HRP','https://reglements.labaguetterp.fr/','Reglement',0,1,'approuve',0,1,'2026-02-13 07:45:47'),(2,NULL,'Procédure de recensement','Comment intégrer un nouveau soldat',NULL,'Procedure',0,1,'approuve',0,1,'2026-02-13 07:45:47'),(3,NULL,'Guide du sous-officier','Responsabilités et devoirs des SO',NULL,'Formation',0,1,'approuve',0,1,'2026-02-13 07:45:47'),(4,NULL,'Règlement intérieur du 916e Grenadier','Document test pour validation','https://docs.google.com/document/d/test-reglement','Autre',0,1,'approuve',0,1,'2026-02-14 14:50:00'),(5,NULL,'Manuel Panzerfaust Mod 60','Formation utilisation Panzerfaust','https://docs.google.com/document/d/test-panzerfaust','Formation',0,1,'approuve',0,2,'2026-02-14 14:52:52');
 /*!40000 ALTER TABLE `documentation` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -455,7 +452,6 @@ CREATE TABLE `dossiers` (
 
 LOCK TABLES `dossiers` WRITE;
 /*!40000 ALTER TABLE `dossiers` DISABLE KEYS */;
-INSERT INTO `dossiers` VALUES (1,53,'Dossier personnel — Siegfried Zussman','personnel',NULL,'public','tous',2,'2026-02-14 18:55:22','2026-02-14 18:55:22');
 /*!40000 ALTER TABLE `dossiers` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -507,7 +503,7 @@ CREATE TABLE `effectif_historique` (
   PRIMARY KEY (`id`),
   KEY `effectif_id` (`effectif_id`),
   CONSTRAINT `effectif_historique_ibfk_1` FOREIGN KEY (`effectif_id`) REFERENCES `effectifs` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -593,7 +589,7 @@ CREATE TABLE `effectifs` (
   KEY `grade_id` (`grade_id`),
   CONSTRAINT `effectifs_ibfk_1` FOREIGN KEY (`unite_id`) REFERENCES `unites` (`id`) ON DELETE SET NULL,
   CONSTRAINT `effectifs_ibfk_2` FOREIGN KEY (`grade_id`) REFERENCES `grades` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=55 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -738,7 +734,7 @@ CREATE TABLE `infractions` (
   `groupe_recidive` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'ex: 2 a 3 si recidive',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -747,6 +743,7 @@ CREATE TABLE `infractions` (
 
 LOCK TABLES `infractions` WRITE;
 /*!40000 ALTER TABLE `infractions` DISABLE KEYS */;
+INSERT INTO `infractions` VALUES (1,'Retard à l\'appel','Présentation en retard à un appel ou rassemblement sans justification valable.',1,'2','2026-02-14 20:33:59'),(2,'Tenue non réglementaire','Port d\'un uniforme non conforme aux standards ou manquement à la présentation.',1,'2','2026-02-14 20:33:59'),(3,'Manquement aux salutations','Défaut de salut réglementaire envers un supérieur hiérarchique.',1,'2','2026-02-14 20:33:59'),(4,'Négligence dans l\'entretien','Défaut d\'entretien de l\'équipement personnel ou du matériel attribué.',1,'2','2026-02-14 20:33:59'),(5,'Bavardage en formation','Communication non autorisée pendant un rassemblement ou une formation.',1,'2','2026-02-14 20:33:59'),(6,'Non-respect des consignes mineures','Manquement à une consigne d\'ordre mineur sans conséquence opérationnelle.',1,'2','2026-02-14 20:33:59'),(7,'Absence non justifiée','Absence à un poste, une garde ou une mission sans autorisation préalable.',2,'3','2026-02-14 20:33:59'),(8,'Insubordination mineure','Refus partiel ou contestation d\'un ordre direct sans intention hostile.',2,'3','2026-02-14 20:33:59'),(9,'Consommation d\'alcool en service','Consommation de boissons alcoolisées pendant les heures de service ou en mission.',2,'3','2026-02-14 20:33:59'),(10,'Négligence en garde','Manquement aux obligations de surveillance pendant un tour de garde.',2,'3','2026-02-14 20:33:59'),(11,'Perte de matériel','Perte ou détérioration de matériel militaire par négligence.',2,'3','2026-02-14 20:33:59'),(12,'Bagarre entre soldats','Altercation physique entre membres de la troupe sans arme.',2,'3','2026-02-14 20:33:59'),(13,'Diffusion de rumeurs','Propagation de fausses informations portant atteinte au moral de la troupe.',2,'3','2026-02-14 20:33:59'),(14,'Insubordination grave','Refus catégorique d\'obéir à un ordre direct d\'un supérieur.',3,'4','2026-02-14 20:33:59'),(15,'Désertion temporaire','Abandon de poste ou de mission sans autorisation, avec retour volontaire.',3,'4','2026-02-14 20:33:59'),(16,'Vol de matériel militaire','Appropriation non autorisée de biens appartenant à l\'armée ou à un camarade.',3,'4','2026-02-14 20:33:59'),(17,'Violence envers un camarade','Agression physique avec blessure envers un membre de l\'unité.',3,'4','2026-02-14 20:33:59'),(18,'Ivresse grave en service','État d\'ébriété avancé compromettant la sécurité ou la mission.',3,'4','2026-02-14 20:33:59'),(19,'Désobéissance en opération','Non-exécution d\'un ordre en situation opérationnelle.',3,'4','2026-02-14 20:33:59'),(20,'Falsification de documents','Création ou modification frauduleuse de documents militaires officiels.',3,'4','2026-02-14 20:33:59'),(21,'Menace envers un supérieur','Menace verbale ou physique envers un officier ou sous-officier.',3,'4','2026-02-14 20:33:59'),(22,'Désertion','Abandon définitif de l\'unité ou du front sans intention de retour.',4,'5','2026-02-14 20:33:59'),(23,'Mutilation volontaire','Automutilation dans le but d\'échapper au service ou au combat.',4,'5','2026-02-14 20:33:59'),(24,'Agression sur officier','Violence physique dirigée contre un officier supérieur.',4,'5','2026-02-14 20:33:59'),(25,'Pillage','Appropriation par la force de biens en zone d\'opération.',4,'5','2026-02-14 20:33:59'),(26,'Insoumission collective','Participation à un refus collectif d\'obéissance ou incitation à la révolte.',4,'5','2026-02-14 20:33:59'),(27,'Espionnage interne','Transmission d\'informations confidentielles à des personnes non autorisées.',4,'5','2026-02-14 20:33:59'),(28,'Haute trahison','Collaboration avec l\'ennemi ou transmission d\'informations stratégiques à l\'ennemi.',5,NULL,'2026-02-14 20:33:59'),(29,'Mutinerie','Organisation ou participation active à un soulèvement armé contre la hiérarchie.',5,NULL,'2026-02-14 20:33:59'),(30,'Meurtre d\'un camarade','Homicide volontaire d\'un membre de l\'armée.',5,NULL,'2026-02-14 20:33:59'),(31,'Sabotage','Destruction volontaire d\'équipement, d\'installations ou d\'opérations militaires.',5,NULL,'2026-02-14 20:33:59'),(32,'Désertion face à l\'ennemi','Abandon de poste en situation de combat direct.',5,NULL,'2026-02-14 20:33:59');
 /*!40000 ALTER TABLE `infractions` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -886,7 +883,7 @@ CREATE TABLE `mentions` (
   KEY `idx_mentions_nom` (`nom_saisi`),
   KEY `idx_mentions_effectif` (`effectif_id`),
   KEY `idx_mentions_source` (`source_type`,`source_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1125,7 +1122,6 @@ CREATE TABLE `pds_semaines` (
 
 LOCK TABLES `pds_semaines` WRITE;
 /*!40000 ALTER TABLE `pds_semaines` DISABLE KEYS */;
-INSERT INTO `pds_semaines` (`id`, `effectif_id`, `semaine`, `lundi`, `mardi`, `mercredi`, `jeudi`, `vendredi`, `vendredi_fin`, `samedi`, `dimanche`, `total_heures`, `updated_at`, `created_at`) VALUES (1,53,'2026-W07',NULL,NULL,NULL,NULL,'20H-22H',NULL,NULL,NULL,2.0,'2026-02-14 18:53:20','2026-02-14 18:50:18');
 /*!40000 ALTER TABLE `pds_semaines` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1210,7 +1206,7 @@ CREATE TABLE `rapport_layouts` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `rapport_id` (`rapport_id`),
   CONSTRAINT `rapport_layouts_ibfk_1` FOREIGN KEY (`rapport_id`) REFERENCES `rapports` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1314,8 +1310,12 @@ CREATE TABLE `rapports` (
   `valide_signature` longtext COLLATE utf8mb4_unicode_ci,
   `valide_at` timestamp NULL DEFAULT NULL,
   `auteur_rang` int DEFAULT '0',
+  `affaire_id` int DEFAULT NULL,
+  `pris_par_id` int DEFAULT NULL,
+  `pris_par_nom` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `pris_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1462,7 +1462,7 @@ CREATE TABLE `telegrammes` (
   CONSTRAINT `telegrammes_ibfk_1` FOREIGN KEY (`expediteur_id`) REFERENCES `effectifs` (`id`) ON DELETE SET NULL,
   CONSTRAINT `telegrammes_ibfk_2` FOREIGN KEY (`destinataire_id`) REFERENCES `effectifs` (`id`) ON DELETE SET NULL,
   CONSTRAINT `telegrammes_ibfk_3` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1558,7 +1558,7 @@ CREATE TABLE `users` (
   CONSTRAINT `users_ibfk_1` FOREIGN KEY (`unite_id`) REFERENCES `unites` (`id`) ON DELETE SET NULL,
   CONSTRAINT `users_ibfk_2` FOREIGN KEY (`grade_id`) REFERENCES `grades` (`id`) ON DELETE SET NULL,
   CONSTRAINT `users_ibfk_3` FOREIGN KEY (`effectif_id`) REFERENCES `effectifs` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1567,7 +1567,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'Admin','System','admin','$2b$10$Nsyr6D7soHbKhuuWtXpPo.ac0rAEvYMq4g00XcxqyWViwFPLGGpiu',NULL,NULL,NULL,5,0,1,'2026-02-14 18:48:23','2026-02-12 18:36:36','2026-02-14 18:48:23'),(2,'Zussman','Siegfried','siegfried.zussman','$2b$10$KDN.Deo8jkiN.iwiS2sqfeTUrUUNbZawlNhIH3cN4YSs4xcGmE7e.',1,9,53,1,0,1,'2026-02-14 19:03:14','2026-02-13 09:36:31','2026-02-14 19:03:14');
+INSERT INTO `users` VALUES (1,'Admin','System','admin','$2b$10$Nsyr6D7soHbKhuuWtXpPo.ac0rAEvYMq4g00XcxqyWViwFPLGGpiu',NULL,NULL,NULL,5,0,1,'2026-02-14 18:48:23','2026-02-12 18:36:36','2026-02-14 18:48:23'),(2,'Zussman','Siegfried','siegfried.zussman','$2b$10$KDN.Deo8jkiN.iwiS2sqfeTUrUUNbZawlNhIH3cN4YSs4xcGmE7e.',1,9,53,1,0,1,'2026-02-14 20:31:22','2026-02-13 09:36:31','2026-02-14 20:31:22');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1638,59 +1638,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-14 19:04:50
--- MySQL dump 10.13  Distrib 8.0.45, for Linux (x86_64)
---
--- Host: 172.17.0.1    Database: archives7e
--- ------------------------------------------------------
--- Server version	8.0.45
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-
---
--- Table structure for table `infractions`
---
-
-DROP TABLE IF EXISTS `infractions`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `infractions` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `nom` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
-  `groupe` int NOT NULL COMMENT '1=mineur, 5=capital',
-  `groupe_recidive` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'ex: 2 a 3 si recidive',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `infractions`
---
-
-LOCK TABLES `infractions` WRITE;
-/*!40000 ALTER TABLE `infractions` DISABLE KEYS */;
-INSERT INTO `infractions` VALUES (1,'Retard à l\'appel','Présentation en retard à un appel ou rassemblement sans justification valable.',1,'2','2026-02-14 20:33:59'),(2,'Tenue non réglementaire','Port d\'un uniforme non conforme aux standards ou manquement à la présentation.',1,'2','2026-02-14 20:33:59'),(3,'Manquement aux salutations','Défaut de salut réglementaire envers un supérieur hiérarchique.',1,'2','2026-02-14 20:33:59'),(4,'Négligence dans l\'entretien','Défaut d\'entretien de l\'équipement personnel ou du matériel attribué.',1,'2','2026-02-14 20:33:59'),(5,'Bavardage en formation','Communication non autorisée pendant un rassemblement ou une formation.',1,'2','2026-02-14 20:33:59'),(6,'Non-respect des consignes mineures','Manquement à une consigne d\'ordre mineur sans conséquence opérationnelle.',1,'2','2026-02-14 20:33:59'),(7,'Absence non justifiée','Absence à un poste, une garde ou une mission sans autorisation préalable.',2,'3','2026-02-14 20:33:59'),(8,'Insubordination mineure','Refus partiel ou contestation d\'un ordre direct sans intention hostile.',2,'3','2026-02-14 20:33:59'),(9,'Consommation d\'alcool en service','Consommation de boissons alcoolisées pendant les heures de service ou en mission.',2,'3','2026-02-14 20:33:59'),(10,'Négligence en garde','Manquement aux obligations de surveillance pendant un tour de garde.',2,'3','2026-02-14 20:33:59'),(11,'Perte de matériel','Perte ou détérioration de matériel militaire par négligence.',2,'3','2026-02-14 20:33:59'),(12,'Bagarre entre soldats','Altercation physique entre membres de la troupe sans arme.',2,'3','2026-02-14 20:33:59'),(13,'Diffusion de rumeurs','Propagation de fausses informations portant atteinte au moral de la troupe.',2,'3','2026-02-14 20:33:59'),(14,'Insubordination grave','Refus catégorique d\'obéir à un ordre direct d\'un supérieur.',3,'4','2026-02-14 20:33:59'),(15,'Désertion temporaire','Abandon de poste ou de mission sans autorisation, avec retour volontaire.',3,'4','2026-02-14 20:33:59'),(16,'Vol de matériel militaire','Appropriation non autorisée de biens appartenant à l\'armée ou à un camarade.',3,'4','2026-02-14 20:33:59'),(17,'Violence envers un camarade','Agression physique avec blessure envers un membre de l\'unité.',3,'4','2026-02-14 20:33:59'),(18,'Ivresse grave en service','État d\'ébriété avancé compromettant la sécurité ou la mission.',3,'4','2026-02-14 20:33:59'),(19,'Désobéissance en opération','Non-exécution d\'un ordre en situation opérationnelle.',3,'4','2026-02-14 20:33:59'),(20,'Falsification de documents','Création ou modification frauduleuse de documents militaires officiels.',3,'4','2026-02-14 20:33:59'),(21,'Menace envers un supérieur','Menace verbale ou physique envers un officier ou sous-officier.',3,'4','2026-02-14 20:33:59'),(22,'Désertion','Abandon définitif de l\'unité ou du front sans intention de retour.',4,'5','2026-02-14 20:33:59'),(23,'Mutilation volontaire','Automutilation dans le but d\'échapper au service ou au combat.',4,'5','2026-02-14 20:33:59'),(24,'Agression sur officier','Violence physique dirigée contre un officier supérieur.',4,'5','2026-02-14 20:33:59'),(25,'Pillage','Appropriation par la force de biens en zone d\'opération.',4,'5','2026-02-14 20:33:59'),(26,'Insoumission collective','Participation à un refus collectif d\'obéissance ou incitation à la révolte.',4,'5','2026-02-14 20:33:59'),(27,'Espionnage interne','Transmission d\'informations confidentielles à des personnes non autorisées.',4,'5','2026-02-14 20:33:59'),(28,'Haute trahison','Collaboration avec l\'ennemi ou transmission d\'informations stratégiques à l\'ennemi.',5,NULL,'2026-02-14 20:33:59'),(29,'Mutinerie','Organisation ou participation active à un soulèvement armé contre la hiérarchie.',5,NULL,'2026-02-14 20:33:59'),(30,'Meurtre d\'un camarade','Homicide volontaire d\'un membre de l\'armée.',5,NULL,'2026-02-14 20:33:59'),(31,'Sabotage','Destruction volontaire d\'équipement, d\'installations ou d\'opérations militaires.',5,NULL,'2026-02-14 20:33:59'),(32,'Désertion face à l\'ennemi','Abandon de poste en situation de combat direct.',5,NULL,'2026-02-14 20:33:59');
-/*!40000 ALTER TABLE `infractions` ENABLE KEYS */;
-UNLOCK TABLES;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
--- Dump completed on 2026-02-14 20:34:03
+-- Dump completed on 2026-02-14 20:35:15
