@@ -39,7 +39,9 @@ html {
 body {
   font-family: 'IBM Plex Mono', monospace;
   line-height: 1.5;
-  background: #ddd8cb;
+  background: #ddd8cb url('/assets/img/paper.jpg') repeat;
+  background-size: 400px 400px;
+  background-blend-mode: multiply;
   color: var(--text-primary);
   overflow-x: hidden;
   min-height: 100vh;
