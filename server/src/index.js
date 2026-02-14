@@ -200,8 +200,8 @@ app.get('/api/stats/archives', async (req, res) => {
       UNION ALL
       (SELECT 'documentation', CAST(d.id AS CHAR), d.titre, CONCAT(u.prenom,' ',u.nom), NULL, d.created_at FROM documentation d LEFT JOIN users u ON u.id = d.created_by WHERE d.statut = 'approuve' AND d.is_repertoire = 0)
       ORDER BY created_at DESC
-      LIMIT ?
-    `, [limit])
+      LIMIT ${parseInt(limit)}
+    `)
 
     res.json({ success: true, data: rows })
   } catch (err) {
