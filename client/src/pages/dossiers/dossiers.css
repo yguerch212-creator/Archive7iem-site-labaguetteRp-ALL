@@ -650,4 +650,49 @@
   padding: 2rem;
 }
 
-/* (Dossier layout now uses shared LayoutEditor component) */
+/* ===== DOSSIER LAYOUT EDIT BLOCKS ===== */
+.edit-block {
+  cursor: move;
+  border: 1px dashed transparent;
+  border-radius: 2px;
+  transition: border-color 0.12s;
+  box-sizing: border-box;
+}
+.edit-block:hover {
+  border-color: rgba(92,107,60,0.3);
+}
+.edit-block-selected {
+  border-color: #5c6b3c !important;
+  border-style: solid !important;
+  box-shadow: 0 0 0 1px rgba(92,107,60,0.25);
+}
+.edit-block-tools {
+  position: absolute;
+  top: -24px;
+  right: 0;
+  display: flex;
+  gap: 2px;
+  background: #4a4a38;
+  padding: 1px 4px;
+  border-radius: 3px;
+  z-index: 200;
+}
+.edit-block-tools button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.7rem;
+  padding: 1px 4px;
+  color: #d4c9a8;
+}
+.edit-block-tools button:hover { color: #fff; }
+.edit-block-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 8px;
+  height: 8px;
+  cursor: se-resize;
+  background: linear-gradient(135deg, transparent 50%, #5c6b3c 50%);
+  border-radius: 0 0 2px 0;
+}
