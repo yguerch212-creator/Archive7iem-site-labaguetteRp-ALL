@@ -23,6 +23,7 @@ export default function RapportView() {
   const [drawing, setDrawing] = useState(false)
   const [hasSig, setHasSig] = useState(false)
   const [message, setMessage] = useState(null)
+  const [layoutHtml, setLayoutHtml] = useState(null)
 
   const canPublish = user?.isAdmin || user?.isOfficier || user?.isRecenseur
 
@@ -31,6 +32,10 @@ export default function RapportView() {
     // Load saved signature
     apiClient.get('/affaires/my-signature').then(r => {
       if (r.data.data) { setSavedSig(r.data.data); setPubForm(p => ({...p, signature_canvas: r.data.data})) }
+    }).catch(() => {})
+    // Load saved layout
+    apiClient.get(`/rapports/${id}/layout`).then(r => {
+      if (r.data.html_published) setLayoutHtml(r.data.html_published)
     }).catch(() => {})
   }, [id])
 
@@ -150,6 +155,9 @@ export default function RapportView() {
       )}
 
       {/* Document */}
+      {layoutHtml ? (
+        <div className="document-paper" id="rapport-paper" style={{ minHeight: 500 }} dangerouslySetInnerHTML={{ __html: layoutHtml }} />
+      ) : (
       <div className="document-paper" id="rapport-paper" style={{ minHeight: 500 }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)', borderBottom: '2px solid var(--border-color)', paddingBottom: 'var(--space-lg)' }}>
@@ -227,6 +235,7 @@ export default function RapportView() {
           </div>
         )}
       </div>
+      )}
 
       <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
         <button className="btn btn-primary" onClick={() => exportToPdf('rapport-paper', `Rapport_${R.titre?.replace(/\s/g, '_') || R.id}`)}>📄 PDF</button>

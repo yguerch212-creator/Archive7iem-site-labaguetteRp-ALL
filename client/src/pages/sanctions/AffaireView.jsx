@@ -29,6 +29,7 @@ export default function AffaireView() {
   const [selectedPiece, setSelectedPiece] = useState(null)
   const [infractions, setInfractions] = useState([])
 
+  const [layoutHtml, setLayoutHtml] = useState(null)
   const canWrite = user?.isAdmin || user?.isOfficier || user?.isFeldgendarmerie
 
   const load = useCallback(async () => {
@@ -44,7 +45,13 @@ export default function AffaireView() {
     setLoading(false)
   }, [id])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load()
+    api.get(`/affaires/${id}/layout`).then(r => {
+      const data = r.data?.data || r.data
+      if (data?.html_published) setLayoutHtml(data.html_published)
+    }).catch(() => {})
+  }, [load])
 
   const flash = (text) => { setMessage(text); setTimeout(() => setMessage(''), 3000) }
 

@@ -61,6 +61,7 @@ export default function Soldbuch() {
   if (!data) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Effectif introuvable</div>
 
   const e = data.effectif
+  const layoutHtml = data.layout?.html_published
   const unitTitle = `${e.unite_code || ''} ${e.unite_nom || ''}`.trim()
 
   return (
@@ -74,6 +75,9 @@ export default function Soldbuch() {
         </div>
       </div>
 
+      {layoutHtml ? (
+        <div className="document-paper" id="soldbuch-paper" dangerouslySetInnerHTML={{ __html: layoutHtml }} />
+      ) : (
       <div className="document-paper" id="soldbuch-paper">
         {/* En-tête */}
         <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)', borderBottom: '2px solid var(--border-color)', paddingBottom: 'var(--space-lg)' }}>
@@ -185,6 +189,7 @@ export default function Soldbuch() {
           )}
         </div>
       </div>
+      )}
 
       {/* Decoration management (outside paper — not in PDF) */}
       {canManageDecos && (
