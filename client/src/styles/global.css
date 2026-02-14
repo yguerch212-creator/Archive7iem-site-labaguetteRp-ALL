@@ -39,9 +39,7 @@ html {
 body {
   font-family: 'IBM Plex Mono', monospace;
   line-height: 1.5;
-  background: #ddd8cb url('/assets/img/paper.jpg') repeat;
-  background-size: 400px 400px;
-  background-blend-mode: multiply;
+  background: #ddd8cb;
   color: var(--text-primary);
   overflow-x: hidden;
   min-height: 100vh;
@@ -342,6 +340,8 @@ tr:hover { background: rgba(0,0,0,0.02); }
 .badge-danger { background: rgba(139, 74, 71, 0.15); color: var(--error); border-color: var(--error); }
 .badge-warning { background: rgba(161, 124, 71, 0.15); color: var(--warning); border-color: var(--warning); }
 .badge-muted { background: rgba(0,0,0,0.05); color: var(--text-muted); border-color: var(--border-color); }
+.badge-red { background: rgba(139, 74, 71, 0.15); color: var(--error); border-color: var(--error); }
+.badge-green { background: rgba(74, 103, 65, 0.15); color: var(--success); border-color: var(--success); }
 
 /* ============= ALERTS ============= */
 .alert {
@@ -418,6 +418,25 @@ tr:hover { background: rgba(0,0,0,0.02); }
 .text-center { text-align: center; }
 .text-muted { color: var(--text-muted); }
 .hidden { display: none; }
+.page-title { font-size: 1.5rem; font-weight: 700; color: var(--military-dark); margin-bottom: var(--space-md); }
+.input-field {
+  padding: var(--space-sm) var(--space-md);
+  border: 2px solid rgba(44, 35, 23, 0.25);
+  border-radius: var(--border-radius);
+  background: #faf8f2;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: var(--space-xs);
+}
+.btn-close:hover { color: var(--text-primary); }
 
 /* Mobile spacing */
 @media (max-width: 640px) {
