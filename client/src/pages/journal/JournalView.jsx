@@ -28,6 +28,7 @@ export default function JournalView() {
   const canEdit = article && (isAuthor || user?.isAdmin || user?.isEtatMajor) && article.statut !== 'publie'
   const canDelete = article && (article.auteur_id === user?.effectif_id || user?.isAdmin || user?.isEtatMajor)
   const layout = article?.layout ? (typeof article.layout === 'string' ? JSON.parse(article.layout) : article.layout) : null
+  const hasBlocks = layout?.blocks && layout.blocks.length > 0
 
   const deleteArticle = async () => {
     if (!confirm('Supprimer cet article ?')) return
@@ -40,8 +41,8 @@ export default function JournalView() {
   if (loading) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div>
   if (!article) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>{msg || 'Article introuvable'}</div>
 
-  // If layout has html_published, show it
-  if (layout?.html_published) {
+  // If layout has blocks, render from blocks (best quality — auto-sizes)
+  if (hasBlocks) {
     return (
       <div className="container" style={{ paddingBottom: 'var(--space-xxl)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap', gap: 8 }}>
@@ -52,8 +53,8 @@ export default function JournalView() {
             <button className="btn btn-secondary btn-small" onClick={() => exportToPdf('journal-article', `Journal_${article.titre}`)}>📥 PDF</button>
           </div>
         </div>
-        <div id="journal-article">
-          <LayoutRenderer html={layout.html_published} />
+        <div id="journal-article" style={{ background: '#f5f2e8', border: '1px solid #c4b99a', padding: 0, maxWidth: 850, margin: '0 auto', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
+          <LayoutRenderer blocks={layout.blocks} width={800} />
         </div>
       </div>
     )

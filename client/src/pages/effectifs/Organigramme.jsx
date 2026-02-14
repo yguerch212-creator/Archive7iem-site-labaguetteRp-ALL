@@ -234,7 +234,7 @@ export default function Organigramme() {
         </div>
         <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>🗺️ Organigramme — 7. Armeekorps</h1>
         {msg && <div className="alert alert-success">{msg}</div>}
-        <LayoutRenderer html={savedLayout.html_published} />
+        <LayoutRenderer blocks={savedLayout.blocks || []} width={800} />
       </div>
     )
   }

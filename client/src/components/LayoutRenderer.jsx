@@ -24,7 +24,12 @@ export default function LayoutRenderer({ html, blocks = [], width = 800, minHeig
   const autoHeight = Math.max(minHeight, ...blocks.map(b => (b.y || 0) + (b.h || 0) + 40))
 
   return (
-    <div style={{ position: 'relative', width, minHeight: autoHeight, margin: '0 auto' }}>
+    <div style={{
+      position: 'relative', width, minHeight: autoHeight, margin: '0 auto',
+      background: 'var(--paper-bg, #faf6ef)',
+      fontFamily: "'IBM Plex Mono', monospace",
+      backgroundImage: 'repeating-linear-gradient(transparent, transparent 28px, rgba(180,170,140,0.1) 28px, rgba(180,170,140,0.1) 29px)',
+    }}>
       {blocks.map(block => (
         <div
           key={block.id}
@@ -33,8 +38,8 @@ export default function LayoutRenderer({ html, blocks = [], width = 800, minHeig
             left: block.x,
             top: block.y,
             width: block.w,
-            height: block.h,
-            overflow: 'hidden',
+            minHeight: block.h,
+            overflow: 'visible',
             ...(block.style || {}),
           }}
         >
