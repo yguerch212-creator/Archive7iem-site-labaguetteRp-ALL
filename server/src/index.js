@@ -46,6 +46,10 @@ app.use(express.urlencoded({ extended: true }))
 // Static uploads
 app.use('/uploads', express.static('uploads'))
 
+// Auto-log all write operations
+const { autoLog } = require('./middleware/autoLog')
+app.use('/api', autoLog)
+
 // Routes
 app.use('/api/auth', loginLimiter, authRoutes)
 app.use('/api/effectifs', effectifsRoutes)

@@ -1,3 +1,4 @@
+const { logActivity } = require('../utils/logger')
 const router = require('express').Router();
 const { query, queryOne } = require('../config/db');
 const auth = require('../middleware/auth');

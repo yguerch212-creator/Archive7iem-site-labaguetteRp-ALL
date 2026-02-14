@@ -55,7 +55,7 @@ function formatHeures(h) {
 
 export default function PDS() {
   const { user } = useAuth()
-  const [view, setView] = useState('list') // 'list', 'edit', 'detail', 'permissions'
+  const [view, setView] = useState('list') // 'list', 'edit', 'detail', 'permissions', 'rapport'
   const [semaine, setSemaine] = useState(getWeekString())
   const [allData, setAllData] = useState([])
   const [stats, setStats] = useState({})
@@ -278,6 +278,11 @@ export default function PDS() {
     )
   }
 
+  // ===== RAPPORT VIEW =====
+  if (view === 'rapport') {
+    return <RapportSemaine semaine={semaine} setSemaine={setSemaine} semaineActuelle={semaineActuelle} setView={setView} user={user} filterUnite={filterUnite} setFilterUnite={setFilterUnite} />
+  }
+
   // ===== LIST VIEW (default) =====
   return (
     <div className="pds-page">
@@ -285,6 +290,7 @@ export default function PDS() {
         <BackButton label="← Tableau de bord" />
         <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
           {hasEffectif && <button className="btn btn-primary btn-small" onClick={() => setView('edit')}>✏️ Mon PDS</button>}
+          {isPrivileged && <button className="btn btn-secondary btn-small" onClick={() => setView('rapport')}>📊 Rapport</button>}
           <button className="btn btn-secondary btn-small" onClick={() => setView('permissions')}>🏖️ Permissions</button>
           {isPrivileged && <button className="btn btn-secondary btn-small" onClick={() => exportToPdf('pds-table', `PDS_${semaine}`)}>📄 PDF</button>}
           {isPrivileged && <button className="btn btn-secondary btn-small" onClick={() => exportCsv(filteredAll, [
@@ -370,6 +376,153 @@ export default function PDS() {
       )}
 
       <DetailPopup />
+    </div>
+  )
+}
+
+// ===== RAPPORT SEMAINE COMPONENT =====
+function RapportSemaine({ semaine, setSemaine, semaineActuelle, setView, user, filterUnite, setFilterUnite }) {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [filterStatut, setFilterStatut] = useState('tous') // 'tous', 'valide', 'insuffisant', 'absent'
+
+  useEffect(() => {
+    setLoading(true)
+    api.get('/pds/recap', { params: { semaine } })
+      .then(r => { setData(r.data.data); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [semaine])
+
+  if (loading) return <div className="pds-page"><p style={{ textAlign: 'center' }}>Chargement...</p></div>
+  if (!data) return <div className="pds-page"><p style={{ textAlign: 'center' }}>Erreur de chargement</p></div>
+
+  const { rows, stats, perms } = data
+  const unites = [...new Set(rows.map(r => r.unite_code).filter(Boolean))].sort()
+
+  // Apply filters
+  let filtered = rows
+  if (filterUnite) filtered = filtered.filter(r => r.unite_code === filterUnite)
+  if (filterStatut === 'valide') filtered = filtered.filter(r => r.pds_id && r.valide)
+  else if (filterStatut === 'insuffisant') filtered = filtered.filter(r => r.pds_id && !r.valide)
+  else if (filterStatut === 'absent') filtered = filtered.filter(r => !r.pds_id)
+
+  const validCount = filtered.filter(r => r.pds_id && r.valide).length
+  const insuffCount = filtered.filter(r => r.pds_id && !r.valide).length
+  const absentCount = filtered.filter(r => !r.pds_id).length
+
+  return (
+    <div className="pds-page">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <button className="btn btn-secondary btn-small" onClick={() => setView('list')}>← Retour</button>
+        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+          <button className="btn btn-secondary btn-small" onClick={() => exportToPdf('rapport-pds', `Rapport_PDS_${semaine}`)}>📄 PDF</button>
+          <button className="btn btn-secondary btn-small" onClick={() => exportCsv(filtered, [
+            { key: r => `${r.grade_nom || ''} ${r.prenom} ${r.nom}`, label: 'Effectif' },
+            { key: 'unite_code', label: 'Unité' },
+            ...JOURS.map(j => ({ key: r => r[j] || '', label: JOURS_SHORT[j] })),
+            { key: r => r.pds_id ? formatHeures(r.total_heures) : 'Absent', label: 'Total' },
+            { key: r => r.pds_id ? (r.valide ? 'Validé' : 'Insuffisant') : 'Non rempli', label: 'Statut' },
+          ], `Rapport_PDS_${semaine}`)}>📥 CSV</button>
+        </div>
+      </div>
+
+      <h2 style={{ textAlign: 'center', marginBottom: 'var(--space-sm)' }}>📊 Rapport de semaine — PDS</h2>
+
+      {/* Week nav */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
+        <button className="btn btn-secondary btn-small" onClick={() => setSemaine(prevWeek(semaine))}>◀</button>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem' }}>
+          {weekLabel(semaine)}
+          {semaine === semaineActuelle && <span className="badge badge-green" style={{ marginLeft: 8 }}>En cours</span>}
+        </span>
+        <button className="btn btn-secondary btn-small" onClick={() => setSemaine(nextWeek(semaine))}>▶</button>
+      </div>
+
+      {/* Stats */}
+      <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
+        <span className="pds-stat-chip">{stats.total} effectifs</span>
+        <span className="pds-stat-chip chip-green">{stats.valides} validés ✅</span>
+        <span className="pds-stat-chip chip-red">{stats.remplis - stats.valides} insuffisants</span>
+        <span className="pds-stat-chip" style={{ background: '#666', color: '#fff' }}>{stats.nonRemplis} absents</span>
+      </div>
+
+      {/* Filters */}
+      <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
+        <select value={filterUnite} onChange={e => setFilterUnite(e.target.value)} className="form-input" style={{ maxWidth: 200 }}>
+          <option value="">Toutes les unités</option>
+          {unites.map(u => <option key={u} value={u}>{u}</option>)}
+        </select>
+        <select value={filterStatut} onChange={e => setFilterStatut(e.target.value)} className="form-input" style={{ maxWidth: 200 }}>
+          <option value="tous">Tous ({filtered.length})</option>
+          <option value="valide">✅ Validés ({validCount})</option>
+          <option value="insuffisant">❌ Insuffisants ({insuffCount})</option>
+          <option value="absent">⬜ Non rempli ({absentCount})</option>
+        </select>
+      </div>
+
+      {/* Rapport table */}
+      <div id="rapport-pds" className="paper-card" style={{ overflow: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+              <th style={thS}>Effectif</th>
+              <th style={thS}>Unité</th>
+              {JOURS.map(j => <th key={j} style={{ ...thS, textAlign: 'center', fontSize: '0.75rem' }}>{JOURS_SHORT[j]}</th>)}
+              <th style={{ ...thS, textAlign: 'center' }}>Total</th>
+              <th style={{ ...thS, textAlign: 'center' }}>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(eff => {
+              const hasPds = !!eff.pds_id
+              const rowBg = !hasPds ? 'rgba(100,100,100,0.06)' : eff.valide ? 'rgba(107,143,60,0.06)' : 'rgba(200,60,60,0.06)'
+              return (
+                <tr key={eff.effectif_id} style={{ borderBottom: '1px solid var(--border-color)', background: rowBg }}>
+                  <td style={tdS}>
+                    <strong style={{ fontSize: '0.8rem' }}>{eff.grade_nom ? `${eff.grade_nom} ` : ''}{eff.prenom} {eff.nom}</strong>
+                    {eff.fonction && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{eff.fonction}</div>}
+                  </td>
+                  <td style={tdS}>{eff.unite_code}</td>
+                  {JOURS.map(j => {
+                    const val = eff[j]
+                    const h = val ? parseCreneaux(val) : 0
+                    return (
+                      <td key={j} style={{ ...tdS, textAlign: 'center', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>
+                        {!hasPds ? '—' : val && val.trim().toUpperCase() === 'X' ? <span style={{ color: '#999' }}>✕</span> : h > 0 ? formatHeures(h) : '—'}
+                      </td>
+                    )
+                  })}
+                  <td style={{ ...tdS, textAlign: 'center', fontWeight: 700 }}>
+                    {hasPds ? (
+                      <span style={{ color: eff.valide ? 'var(--success)' : 'var(--danger)' }}>{formatHeures(eff.total_heures)}</span>
+                    ) : (
+                      <span style={{ color: '#999' }}>—</span>
+                    )}
+                  </td>
+                  <td style={{ ...tdS, textAlign: 'center' }}>
+                    {!hasPds ? <span className="badge" style={{ background: '#888', color: '#fff', fontSize: '0.7rem' }}>Non rempli</span>
+                      : eff.valide ? <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>✅ Validé</span>
+                      : <span className="badge badge-red" style={{ fontSize: '0.7rem' }}>❌ &lt; 6h</span>}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+
+        {/* Active permissions */}
+        {perms && perms.length > 0 && (
+          <div style={{ marginTop: 'var(--space-lg)', padding: 'var(--space-md)', borderTop: '2px solid var(--border-color)' }}>
+            <h3 style={{ fontSize: '0.9rem', marginBottom: 'var(--space-sm)' }}>🏖️ Permissions d'absence actives</h3>
+            {perms.map(p => (
+              <div key={p.id} style={{ fontSize: '0.8rem', marginBottom: 4 }}>
+                <strong>{p.grade_nom} {p.prenom} {p.eff_nom}</strong> — {p.raison}
+                <span style={{ color: 'var(--text-muted)', marginLeft: 8 }}>({p.date_debut} → {p.date_fin})</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

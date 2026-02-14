@@ -206,7 +206,7 @@ export default function DossierLayout() {
                 contentEditable
                 suppressContentEditableWarning
                 style={{ width: '100%', height: '100%', outline: 'none', overflow: 'hidden', margin: 0, padding: 0, position: 'static', border: 'none', transform: 'none' }}
-                onBlur={(e) => updateBlock(block.id, b => ({ ...b, content: e.currentTarget.innerText }))}
+                onBlur={(e) => updateBlock(block.id, b => ({ ...b, content: e.currentTarget.innerHTML }))}
                 dangerouslySetInnerHTML={{ __html: block.content }}
               />
 
