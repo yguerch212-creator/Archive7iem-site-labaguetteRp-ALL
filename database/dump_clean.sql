@@ -1639,3 +1639,58 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2026-02-14 19:04:50
+-- MySQL dump 10.13  Distrib 8.0.45, for Linux (x86_64)
+--
+-- Host: 172.17.0.1    Database: archives7e
+-- ------------------------------------------------------
+-- Server version	8.0.45
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `infractions`
+--
+
+DROP TABLE IF EXISTS `infractions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `infractions` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `nom` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `groupe` int NOT NULL COMMENT '1=mineur, 5=capital',
+  `groupe_recidive` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'ex: 2 a 3 si recidive',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `infractions`
+--
+
+LOCK TABLES `infractions` WRITE;
+/*!40000 ALTER TABLE `infractions` DISABLE KEYS */;
+INSERT INTO `infractions` VALUES (1,'Retard à l\'appel','Présentation en retard à un appel ou rassemblement sans justification valable.',1,'2','2026-02-14 20:33:59'),(2,'Tenue non réglementaire','Port d\'un uniforme non conforme aux standards ou manquement à la présentation.',1,'2','2026-02-14 20:33:59'),(3,'Manquement aux salutations','Défaut de salut réglementaire envers un supérieur hiérarchique.',1,'2','2026-02-14 20:33:59'),(4,'Négligence dans l\'entretien','Défaut d\'entretien de l\'équipement personnel ou du matériel attribué.',1,'2','2026-02-14 20:33:59'),(5,'Bavardage en formation','Communication non autorisée pendant un rassemblement ou une formation.',1,'2','2026-02-14 20:33:59'),(6,'Non-respect des consignes mineures','Manquement à une consigne d\'ordre mineur sans conséquence opérationnelle.',1,'2','2026-02-14 20:33:59'),(7,'Absence non justifiée','Absence à un poste, une garde ou une mission sans autorisation préalable.',2,'3','2026-02-14 20:33:59'),(8,'Insubordination mineure','Refus partiel ou contestation d\'un ordre direct sans intention hostile.',2,'3','2026-02-14 20:33:59'),(9,'Consommation d\'alcool en service','Consommation de boissons alcoolisées pendant les heures de service ou en mission.',2,'3','2026-02-14 20:33:59'),(10,'Négligence en garde','Manquement aux obligations de surveillance pendant un tour de garde.',2,'3','2026-02-14 20:33:59'),(11,'Perte de matériel','Perte ou détérioration de matériel militaire par négligence.',2,'3','2026-02-14 20:33:59'),(12,'Bagarre entre soldats','Altercation physique entre membres de la troupe sans arme.',2,'3','2026-02-14 20:33:59'),(13,'Diffusion de rumeurs','Propagation de fausses informations portant atteinte au moral de la troupe.',2,'3','2026-02-14 20:33:59'),(14,'Insubordination grave','Refus catégorique d\'obéir à un ordre direct d\'un supérieur.',3,'4','2026-02-14 20:33:59'),(15,'Désertion temporaire','Abandon de poste ou de mission sans autorisation, avec retour volontaire.',3,'4','2026-02-14 20:33:59'),(16,'Vol de matériel militaire','Appropriation non autorisée de biens appartenant à l\'armée ou à un camarade.',3,'4','2026-02-14 20:33:59'),(17,'Violence envers un camarade','Agression physique avec blessure envers un membre de l\'unité.',3,'4','2026-02-14 20:33:59'),(18,'Ivresse grave en service','État d\'ébriété avancé compromettant la sécurité ou la mission.',3,'4','2026-02-14 20:33:59'),(19,'Désobéissance en opération','Non-exécution d\'un ordre en situation opérationnelle.',3,'4','2026-02-14 20:33:59'),(20,'Falsification de documents','Création ou modification frauduleuse de documents militaires officiels.',3,'4','2026-02-14 20:33:59'),(21,'Menace envers un supérieur','Menace verbale ou physique envers un officier ou sous-officier.',3,'4','2026-02-14 20:33:59'),(22,'Désertion','Abandon définitif de l\'unité ou du front sans intention de retour.',4,'5','2026-02-14 20:33:59'),(23,'Mutilation volontaire','Automutilation dans le but d\'échapper au service ou au combat.',4,'5','2026-02-14 20:33:59'),(24,'Agression sur officier','Violence physique dirigée contre un officier supérieur.',4,'5','2026-02-14 20:33:59'),(25,'Pillage','Appropriation par la force de biens en zone d\'opération.',4,'5','2026-02-14 20:33:59'),(26,'Insoumission collective','Participation à un refus collectif d\'obéissance ou incitation à la révolte.',4,'5','2026-02-14 20:33:59'),(27,'Espionnage interne','Transmission d\'informations confidentielles à des personnes non autorisées.',4,'5','2026-02-14 20:33:59'),(28,'Haute trahison','Collaboration avec l\'ennemi ou transmission d\'informations stratégiques à l\'ennemi.',5,NULL,'2026-02-14 20:33:59'),(29,'Mutinerie','Organisation ou participation active à un soulèvement armé contre la hiérarchie.',5,NULL,'2026-02-14 20:33:59'),(30,'Meurtre d\'un camarade','Homicide volontaire d\'un membre de l\'armée.',5,NULL,'2026-02-14 20:33:59'),(31,'Sabotage','Destruction volontaire d\'équipement, d\'installations ou d\'opérations militaires.',5,NULL,'2026-02-14 20:33:59'),(32,'Désertion face à l\'ennemi','Abandon de poste en situation de combat direct.',5,NULL,'2026-02-14 20:33:59');
+/*!40000 ALTER TABLE `infractions` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2026-02-14 20:34:03
