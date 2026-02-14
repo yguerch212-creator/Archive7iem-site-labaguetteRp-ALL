@@ -210,8 +210,22 @@ app.get('/api/stats/pending', auth, async (req, res) => {
     // Visites médicales en attente de validation sanitäts
     const medicalPending = await queryOne("SELECT COUNT(*) as c FROM visites_medicales WHERE valide = 0")
     const medicalCount = medicalPending?.c || 0
+    // Rapports en attente de validation
+    const userRang = req.user.grade_rang || 0
+    let rapportsSql = "SELECT COUNT(*) as c FROM rapports WHERE valide = 0"
+    if (userRang >= 60 || req.user.isOfficier || req.user.isAdmin) {
+      // Officier/admin can validate all non-validated
+      rapportsSql += ""
+    } else if (userRang >= 35) {
+      // SO can validate HDR only
+      rapportsSql += " AND auteur_rang < 35"
+    } else {
+      rapportsSql += " AND 0" // HDR can't validate
+    }
+    const rapportsPending = await queryOne(rapportsSql)
+    const rapportsCount = rapportsPending?.c || 0
     // interdits ne comptent PAS dans le total (accès rapide seulement)
-    res.json({ docs: docsCount, permissions: permsCount, interdits: interditsCount, media: mediaCount, medical: medicalCount, total: docsCount + permsCount + mediaCount + medicalCount })
+    res.json({ docs: docsCount, permissions: permsCount, interdits: interditsCount, media: mediaCount, medical: medicalCount, rapports: rapportsCount, total: docsCount + permsCount + mediaCount + medicalCount + rapportsCount })
   } catch (err) {
     res.json({ docs: 0, permissions: 0, total: 0 })
   }

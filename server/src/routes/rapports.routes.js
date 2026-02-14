@@ -31,7 +31,7 @@ router.get('/', optionalAuth, async (req, res) => {
       where = "WHERE published = 1 AND (moderation_statut = 'approuve' OR moderation_statut IS NULL OR moderation_statut = 'brouillon')"
     }
     const rows = await query(`
-      SELECT id, titre, auteur_nom, personne_renseignee_nom, recommande_nom, mise_en_cause_nom, 
+      SELECT id, titre, auteur_nom, auteur_grade, personne_renseignee_nom, recommande_nom, mise_en_cause_nom, 
         type, date_rp, date_irl, published, moderation_statut, a_images, created_at,
         valide, valide_par_nom, valide_at, auteur_rang,
         COALESCE(personne_renseignee_nom, recommande_nom, mise_en_cause_nom) AS personne_mentionnee
@@ -59,14 +59,14 @@ router.post('/', auth, async (req, res) => {
   try {
     const f = req.body
     const [result] = await pool.execute(
-      `INSERT INTO rapports (type, titre, auteur_nom, auteur_id, personne_renseignee_nom,
+      `INSERT INTO rapports (type, titre, auteur_nom, auteur_grade, auteur_id, personne_renseignee_nom,
         unite_id, grade_id, contexte, resume, bilan, remarques,
         recommande_nom, recommande_grade, raison_1, recompense,
         intro_nom, intro_grade, mise_en_cause_nom, mise_en_cause_grade,
         lieu_incident, compte_rendu, signature_nom, signature_grade,
         date_rp, date_irl)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [f.type || 'rapport', f.titre, f.auteur_nom || null, f.auteur_id || null,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [f.type || 'rapport', f.titre, f.auteur_nom || null, f.auteur_grade || null, f.auteur_id || null,
        f.personne_renseignee_nom || null, f.unite_id || null, f.grade_id || null,
        f.contexte || null, f.resume || null, f.bilan || null, f.remarques || null,
        f.recommande_nom || null, f.recommande_grade || null, f.raison_1 || null, f.recompense || null,
@@ -112,26 +112,30 @@ router.post('/', auth, async (req, res) => {
   }
 })
 
-// PUT /api/rapports/:id/publish
+// PUT /api/rapports/:id/publish — Soumettre pour validation
 router.put('/:id/publish', auth, async (req, res) => {
   try {
-    const { contenu_html, signature_nom, signature_grade, stamp, signature_canvas } = req.body
-    await pool.execute(
-      `UPDATE rapports SET contenu_html = ?, published = 1,
-        signature_nom = COALESCE(?, signature_nom),
-        signature_grade = COALESCE(?, signature_grade),
-        stamp = COALESCE(?, stamp),
-        signature_image = COALESCE(?, signature_image)
-       WHERE id = ?`,
-      [contenu_html, signature_nom || null, signature_grade || null, stamp || null, signature_canvas || null, req.params.id]
-    )
-    // Save personal signature if provided
-    if (signature_canvas && req.user.effectif_id) {
+    const rapport = await queryOne('SELECT * FROM rapports WHERE id = ?', [req.params.id])
+    if (!rapport) return res.status(404).json({ success: false, message: 'Rapport introuvable' })
+
+    // If officier/admin → auto-validate + publish
+    const isOfficier = req.user.isOfficier || req.user.isAdmin
+    if (isOfficier) {
+      const validatorName = `${req.user.prenom || ''} ${req.user.nom || req.user.username}`.trim()
+      // Get saved signature
+      let sigData = null
+      if (req.user.effectif_id) {
+        const saved = await queryOne('SELECT signature_data FROM signatures_effectifs WHERE effectif_id = ?', [req.user.effectif_id])
+        if (saved) sigData = saved.signature_data
+      }
       await pool.execute(
-        `INSERT INTO signatures_effectifs (effectif_id, signature_data) VALUES (?, ?)
-         ON DUPLICATE KEY UPDATE signature_data = VALUES(signature_data)`,
-        [req.user.effectif_id, signature_canvas]
+        `UPDATE rapports SET published = 1, valide = 1, valide_par = ?, valide_par_nom = ?, valide_signature = ?, valide_at = NOW(),
+         signature_image = COALESCE(?, signature_image) WHERE id = ?`,
+        [req.user.id, validatorName, sigData || 'Auto-validé (Officier)', sigData, req.params.id]
       )
+    } else {
+      // Just mark as submitted (published=1, awaiting validation)
+      await pool.execute('UPDATE rapports SET published = 1 WHERE id = ?', [req.params.id])
     }
     res.json({ success: true })
   } catch (err) {
@@ -252,9 +256,14 @@ router.put('/:id/validate', auth, async (req, res) => {
     }
 
     const validatorName = `${req.user.prenom || ''} ${req.user.nom || req.user.username}`.trim()
+    // Validate AND auto-publish — signature goes on document
     await pool.execute(
-      'UPDATE rapports SET valide = 1, valide_par = ?, valide_par_nom = ?, valide_signature = ?, valide_at = NOW() WHERE id = ?',
-      [req.user.id, validatorName, sigData || null, req.params.id]
+      `UPDATE rapports SET valide = 1, published = 1, valide_par = ?, valide_par_nom = ?, valide_signature = ?, valide_at = NOW(),
+       signature_image = COALESCE(?, signature_image),
+       signature_nom = COALESCE(signature_nom, ?),
+       signature_grade = COALESCE(signature_grade, ?)
+       WHERE id = ?`,
+      [req.user.id, validatorName, sigData || null, sigData, validatorName, req.user.grade || '', req.params.id]
     )
 
     // Save signature if new

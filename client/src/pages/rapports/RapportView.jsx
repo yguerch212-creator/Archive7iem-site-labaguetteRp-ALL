@@ -1,6 +1,6 @@
 import BackButton from '../../components/BackButton'
 import LayoutRenderer from '../../components/LayoutRenderer'
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import apiClient from '../../api/client'
@@ -18,31 +18,18 @@ export default function RapportView() {
   const { user } = useAuth()
   const [rapport, setRapport] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [showPublish, setShowPublish] = useState(false)
-  const [pubForm, setPubForm] = useState({ signature_nom: '', signature_grade: '', stamp: '', signature_canvas: '' })
-  const [savedSig, setSavedSig] = useState(null)
-  const sigCanvasRef = useRef(null)
-  const [drawing, setDrawing] = useState(false)
-  const [hasSig, setHasSig] = useState(false)
   const [message, setMessage] = useState(null)
   const [layoutBlocks, setLayoutBlocks] = useState(null)
   const [mySignature, setMySignature] = useState(null)
   const [showValidateSign, setShowValidateSign] = useState(false)
 
-  const canPublish = user?.isAdmin || user?.isOfficier || user?.isRecenseur
-
   useEffect(() => {
     load()
-    // Load saved signature
-    apiClient.get('/affaires/my-signature').then(r => {
-      if (r.data.data) { setSavedSig(r.data.data); setMySignature(r.data.data); setPubForm(p => ({...p, signature_canvas: r.data.data})) }
-    }).catch(() => {})
     if (user?.effectif_id) {
       apiClient.get(`/effectifs/${user.effectif_id}/signature`).then(r => {
         if (r.data?.signature_data) setMySignature(r.data.signature_data)
       }).catch(() => {})
     }
-    // Load saved layout
     apiClient.get(`/rapports/${id}/layout`).then(r => {
       if (r.data.blocks && r.data.blocks.length > 0) setLayoutBlocks(r.data.blocks)
     }).catch(() => {})
@@ -52,19 +39,11 @@ export default function RapportView() {
     apiClient.get(`/rapports/${id}`).then(r => { setRapport(r.data.data); setLoading(false) }).catch(() => setLoading(false))
   }
 
-  const autoPublish = async () => {
+  // Publier = soumettre pour validation (ou auto-publier si officier)
+  const publierRapport = async () => {
     try {
-      // Generate HTML from the paper content
-      const el = document.getElementById('rapport-paper')
-      const html = el ? el.innerHTML : ''
-      await apiClient.put(`/rapports/${id}/publish`, {
-        contenu_html: html,
-        signature_nom: pubForm.signature_nom,
-        signature_grade: pubForm.signature_grade,
-        stamp: pubForm.stamp
-      })
-      setMessage({ type: 'success', text: 'Rapport publié ✓' })
-      setShowPublish(false)
+      await apiClient.put(`/rapports/${id}/publish`, {})
+      setMessage({ type: 'success', text: '📜 Rapport soumis pour validation' })
       load()
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur' })
@@ -112,9 +91,9 @@ export default function RapportView() {
         <BackButton label="← Retour" />
         <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
           <Link to={`/rapports/${id}/layout`} className="btn btn-secondary btn-small">🖋️ Mise en page</Link>
-          {canPublish && !R.published && (
-            <button className="btn btn-primary btn-small" onClick={() => setShowPublish(!showPublish)}>
-              {showPublish ? '✕' : '📜 Publier'}
+          {!R.published && (
+            <button className="btn btn-primary btn-small" onClick={publierRapport}>
+              📜 Soumettre pour validation
             </button>
           )}
         </div>
@@ -122,73 +101,17 @@ export default function RapportView() {
 
       {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}
 
-      {/* Publish form */}
-      {showPublish && (
-        <div className="paper-card" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-lg)' }}>
-          <h3 style={{ marginTop: 0 }}>📜 Publier le rapport</h3>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Ajoute une signature et un tampon, puis publie le rapport en l'état.</p>
-          <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
-            <div className="form-group" style={{ flex: 1 }}>
-              <label className="form-label">Signataire</label>
-              <EffectifAutocomplete
-                value={pubForm.signature_nom}
-                onChange={val => setPubForm(p => ({...p, signature_nom: val}))}
-                onSelect={eff => setPubForm(p => ({...p, signature_nom: `${eff.prenom} ${eff.nom}`, signature_grade: eff.grade_nom || p.signature_grade}))}
-                placeholder={`${user?.prenom || ''} ${user?.nom || ''}`}
-              />
-            </div>
-            <div className="form-group" style={{ flex: 1 }}>
-              <label className="form-label">Grade du signataire</label>
-              <input type="text" className="form-input" value={pubForm.signature_grade} onChange={e => setPubForm(p => ({...p, signature_grade: e.target.value}))} placeholder={user?.grade_nom || 'Grade...'} />
-            </div>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Tampon</label>
-            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
-              <label style={{ cursor: 'pointer', border: pubForm.stamp === '' ? '2px solid var(--military-green)' : '2px solid var(--border-color)', borderRadius: 'var(--border-radius)', padding: 'var(--space-sm)', textAlign: 'center', minWidth: 80 }}>
-                <input type="radio" name="stamp" value="" checked={pubForm.stamp === ''} onChange={() => setPubForm(p => ({...p, stamp: ''}))} style={{ display: 'none' }} />
-                <div style={{ fontSize: '0.8rem' }}>Aucun</div>
-              </label>
-              {STAMPS.map(s => (
-                <label key={s.id} style={{ cursor: 'pointer', border: pubForm.stamp === s.id ? '2px solid var(--military-green)' : '2px solid var(--border-color)', borderRadius: 'var(--border-radius)', padding: 'var(--space-sm)', textAlign: 'center' }}>
-                  <input type="radio" name="stamp" value={s.id} checked={pubForm.stamp === s.id} onChange={() => setPubForm(p => ({...p, stamp: s.id}))} style={{ display: 'none' }} />
-                  <img src={s.url} alt={s.label} style={{ height: 50, opacity: 0.7 }} /><br/>
-                  <span style={{ fontSize: '0.7rem' }}>{s.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          {/* Signature manuscrite */}
-          <div className="form-group">
-            <label className="form-label">✍️ Signature manuscrite</label>
-            {savedSig ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ border: '1px solid var(--border)', borderRadius: 4, padding: '0.3rem', background: 'white' }}>
-                  <img src={savedSig} alt="Ma signature" style={{ height: 50 }} />
-                </div>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>✅ Signature sauvegardée</span>
-                <button className="btn btn-sm" onClick={() => { setSavedSig(null); setPubForm(p => ({...p, signature_canvas: ''})); setHasSig(false) }}>Redessiner</button>
-              </div>
-            ) : (
-              <div>
-                <canvas ref={sigCanvasRef} width={350} height={120}
-                  style={{ border: '2px solid var(--border)', borderRadius: 4, cursor: 'crosshair', background: 'white', touchAction: 'none', display: 'block' }}
-                  onMouseDown={e => { e.preventDefault(); const ctx = sigCanvasRef.current.getContext('2d'); const r = sigCanvasRef.current.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo(e.clientX-r.left, e.clientY-r.top); setDrawing(true) }}
-                  onMouseMove={e => { if (!drawing) return; const ctx = sigCanvasRef.current.getContext('2d'); const r = sigCanvasRef.current.getBoundingClientRect(); ctx.lineTo(e.clientX-r.left, e.clientY-r.top); ctx.strokeStyle='#1a1a2e'; ctx.lineWidth=2; ctx.lineCap='round'; ctx.stroke(); setHasSig(true) }}
-                  onMouseUp={() => { setDrawing(false); if (hasSig) setPubForm(p => ({...p, signature_canvas: sigCanvasRef.current.toDataURL('image/png')})) }}
-                  onMouseLeave={() => setDrawing(false)}
-                  onTouchStart={e => { e.preventDefault(); const ctx = sigCanvasRef.current.getContext('2d'); const r = sigCanvasRef.current.getBoundingClientRect(); const t=e.touches[0]; ctx.beginPath(); ctx.moveTo(t.clientX-r.left, t.clientY-r.top); setDrawing(true) }}
-                  onTouchMove={e => { if (!drawing) return; e.preventDefault(); const ctx = sigCanvasRef.current.getContext('2d'); const r = sigCanvasRef.current.getBoundingClientRect(); const t=e.touches[0]; ctx.lineTo(t.clientX-r.left, t.clientY-r.top); ctx.strokeStyle='#1a1a2e'; ctx.lineWidth=2; ctx.lineCap='round'; ctx.stroke(); setHasSig(true) }}
-                  onTouchEnd={() => { setDrawing(false); if (hasSig) setPubForm(p => ({...p, signature_canvas: sigCanvasRef.current.toDataURL('image/png')})) }}
-                />
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.3rem' }}>
-                  <button className="btn btn-sm" onClick={() => { sigCanvasRef.current.getContext('2d').clearRect(0,0,350,120); setHasSig(false); setPubForm(p => ({...p, signature_canvas: ''})) }}>🗑️ Effacer</button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <button className="btn btn-primary" onClick={autoPublish}>📜 Publier avec mise en page auto</button>
+      {/* Status info */}
+      {!R.published && !R.valide && (
+        <div className="paper-card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-md)', background: '#fdf8e8', borderLeft: '3px solid var(--warning)' }}>
+          <strong>📝 Brouillon</strong> — Ce rapport n'a pas encore été soumis pour validation. 
+          Cliquez sur « Soumettre pour validation » pour l'envoyer à votre supérieur hiérarchique.
+        </div>
+      )}
+      {R.published && !R.valide && (
+        <div className="paper-card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-md)', background: '#fdf8e8', borderLeft: '3px solid var(--warning)' }}>
+          <strong>⏳ En attente de validation</strong> — 
+          {(R.auteur_rang || 0) < 35 ? ' Un sous-officier ou officier doit valider ce rapport.' : ' Un officier doit valider ce rapport.'}
         </div>
       )}
 

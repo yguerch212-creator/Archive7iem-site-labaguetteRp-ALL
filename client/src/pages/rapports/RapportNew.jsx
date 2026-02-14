@@ -31,6 +31,7 @@ export default function RapportNew() {
   const defaultForm = {
     type: 'rapport', titre: '', date_rp: '', date_irl: today,
     auteur_nom: user ? `${user.prenom || ''} ${user.nom || ''}`.trim() : '',
+    auteur_grade: user?.grade || '',
     auteur_id: '', unite_id: user?.unite_id || '', grade_id: '',
     contexte: '', resume: '', bilan: '', remarques: '',
     personne_renseignee_nom: '',
@@ -83,6 +84,7 @@ export default function RapportNew() {
     set('auteur_nom', text)
     if (eff) {
       set('auteur_id', eff.id)
+      set('auteur_grade', eff.grade_nom || '')
       if (eff.unite_id) set('unite_id', eff.unite_id)
       if (eff.grade_id) set('grade_id', eff.grade_id)
     }

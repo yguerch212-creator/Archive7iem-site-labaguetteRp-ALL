@@ -105,6 +105,9 @@ export default function Dashboard() {
             {pending.medical > 0 && (
               <Link to="/medical" className="btn btn-sm btn-secondary">🏥 {pending.medical} visite{pending.medical > 1 ? 's' : ''} à valider</Link>
             )}
+            {pending.rapports > 0 && (
+              <Link to="/rapports" className="btn btn-sm btn-secondary">📝 {pending.rapports} rapport{pending.rapports > 1 ? 's' : ''} à valider</Link>
+            )}
           </div>
         </div>
       )}
