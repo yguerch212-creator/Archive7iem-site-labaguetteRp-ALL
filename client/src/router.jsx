@@ -26,7 +26,6 @@ import Documentation from './pages/documentation/Documentation'
 import Bibliotheque from './pages/bibliotheque/Bibliotheque'
 import Archives from './pages/archives/Archives'
 import PieceView from './pages/sanctions/PieceView'
-import PieceLayout from './pages/sanctions/PieceLayout'
 import DossiersList from './pages/dossiers/DossiersList'
 import DossierPersonnel from './pages/dossiers/DossierPersonnel'
 import DossierView from './pages/dossiers/DossierView'
@@ -78,7 +77,6 @@ function AppRouter() {
       <Route path="/bibliotheque" element={<ProtectedRoute><Bibliotheque /></ProtectedRoute>} />
       <Route path="/archives" element={<ProtectedRoute><Archives /></ProtectedRoute>} />
       <Route path="/pieces/:id" element={<ProtectedRoute><PieceView /></ProtectedRoute>} />
-      <Route path="/pieces/:id/layout" element={<ProtectedRoute><PieceLayout /></ProtectedRoute>} />
       
       {/* Dossiers */}
       <Route path="/dossiers" element={<ProtectedRoute><DossiersList /></ProtectedRoute>} />

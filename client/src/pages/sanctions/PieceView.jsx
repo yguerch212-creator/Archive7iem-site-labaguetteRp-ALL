@@ -1,138 +1,187 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import BackButton from '../../components/BackButton'
-import LayoutRenderer from '../../components/LayoutRenderer'
+import SignatureCanvas from '../../components/SignatureCanvas'
 import { formatDate } from '../../utils/dates'
+import { exportToPdf } from '../../utils/exportPdf'
 
 const TYPE_LABELS = {
-  'Proces-verbal': '📋 Procès-verbal',
-  'Temoignage': '🗣️ Témoignage',
-  'Decision': '⚖️ Décision',
-  'Rapport-infraction': '📝 Rapport d\'infraction',
-  'Piece-a-conviction': '🔍 Pièce à conviction',
-  'Requisitoire': '📜 Réquisitoire',
-  'Note-interne': '📌 Note interne',
-  'Autre': '📄 Autre',
+  'Proces-verbal': 'PROCÈS-VERBAL',
+  'Temoignage': 'TÉMOIGNAGE',
+  'Decision': 'DÉCISION',
+  'Rapport-infraction': "RAPPORT D'INFRACTION",
+  'Piece-a-conviction': 'PIÈCE À CONVICTION',
+  'Requisitoire': 'RÉQUISITOIRE',
+  'Note-interne': 'NOTE INTERNE',
+  'Autre': 'DOCUMENT',
 }
 
 export default function PieceView() {
   const { id } = useParams()
-  const navigate = useNavigate()
   const { user } = useAuth()
   const [piece, setPiece] = useState(null)
-  const [layout, setLayout] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showSign, setShowSign] = useState(null)
+  const [msg, setMsg] = useState('')
 
-  const canEdit = user?.isAdmin || user?.isOfficier || user?.isFeldgendarmerie
-
-  useEffect(() => {
-    Promise.all([
-      api.get(`/affaires/pieces/${id}`),
-      api.get(`/affaires/pieces/${id}/layout`),
-    ]).then(([pRes, lRes]) => {
-      setPiece(pRes.data)
-      const ld = lRes.data.data
-      if (ld?.layout_json) {
-        const parsed = typeof ld.layout_json === 'string' ? JSON.parse(ld.layout_json) : ld.layout_json
-        setLayout(parsed)
-      }
+  const load = () => {
+    api.get(`/affaires/pieces/${id}`).then(r => {
+      setPiece(r.data)
       setLoading(false)
     }).catch(() => setLoading(false))
-  }, [id])
+  }
+
+  useEffect(() => { load() }, [id])
+
+  const handleSign = async (dataUrl) => {
+    if (!showSign) return
+    try {
+      await api.put(`/affaires/signatures/${showSign}/sign`, { signature_data: dataUrl })
+      setShowSign(null)
+      setMsg('✅ Signature apposée')
+      setTimeout(() => setMsg(''), 3000)
+      load()
+    } catch { setMsg('❌ Erreur') }
+  }
+
+  const sendTelegram = async (sig) => {
+    try {
+      await api.post(`/affaires/signatures/${sig.id}/telegram`)
+      setMsg('⚡ Télégramme envoyé')
+      setTimeout(() => setMsg(''), 3000)
+    } catch { setMsg('❌ Erreur envoi télégramme') }
+  }
 
   if (loading) return <div className="container"><p style={{ textAlign: 'center', padding: 40 }}>Chargement...</p></div>
   if (!piece) return <div className="container"><p style={{ textAlign: 'center', padding: 40 }}>Pièce introuvable</p></div>
 
-  // Default template blocks if no layout saved
-  const defaultBlocks = [
-    { id: 'd1', type: 'title', x: 40, y: 20, w: 720, h: 50, content: TYPE_LABELS[piece.type] || piece.type },
-    { id: 'd2', type: 'text', x: 40, y: 80, w: 720, h: 30, content: `<strong>${piece.titre}</strong>`, style: 'handwritten' },
-    { id: 'd3', type: 'separator', x: 40, y: 120, w: 720, h: 4 },
-    { id: 'd4', type: 'text', x: 40, y: 140, w: 350, h: 24, content: `Affaire : ${piece.affaire_numero || '—'}` },
-    { id: 'd5', type: 'text', x: 420, y: 140, w: 340, h: 24, content: `Date RP : ${piece.date_rp || '—'}` },
-    { id: 'd6', type: 'text', x: 40, y: 170, w: 350, h: 24, content: `Rédigé par : ${piece.redige_par_nom || '—'}` },
-    { id: 'd7', type: 'text', x: 420, y: 170, w: 340, h: 24, content: `Date IRL : ${piece.date_irl ? formatDate(piece.date_irl) : '—'}` },
-    { id: 'd8', type: 'separator', x: 40, y: 204, w: 720, h: 4 },
-    { id: 'd9', type: 'text', x: 40, y: 220, w: 720, h: 600, content: piece.contenu || '<em>Aucun contenu</em>' },
-  ]
-
-  // Add signatures if present
-  if (piece.signatures?.length > 0) {
-    let yPos = 840
-    piece.signatures.forEach((sig, i) => {
-      defaultBlocks.push({
-        id: `ds${i}`,
-        type: sig.signe && sig.signature_data ? 'signature' : 'text',
-        x: 40 + (i % 2) * 380,
-        y: yPos + Math.floor(i / 2) * 100,
-        w: 340,
-        h: 80,
-        content: sig.signe && sig.signature_data
-          ? sig.signature_data
-          : `${sig.role_signataire || 'Signataire'} : ${sig.nom_signataire || '—'}\n${sig.signe ? '✅ Signé' : '⏳ En attente'}`,
-      })
-    })
-  }
-
-  const blocks = layout?.blocks || defaultBlocks
+  const p = piece
+  const canSign = (sig) => sig.effectif_id === user?.effectif_id && !sig.signe
 
   return (
     <div className="container" style={{ paddingBottom: 'var(--space-xxl)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
         <BackButton />
-        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-          {canEdit && (
-            <button className="btn btn-primary btn-small" onClick={() => navigate(`/pieces/${id}/layout`)}>
-              🖊️ Mise en page
-            </button>
-          )}
-          <button className="btn btn-secondary btn-small" onClick={() => {
-            const el = document.getElementById('piece-render')
-            if (el) { import('../../utils/exportPdf').then(m => m.exportToPdf(el, `piece-${id}`)) }
-          }}>📥 PDF</button>
-        </div>
+        <button className="btn btn-secondary btn-small" onClick={() => exportToPdf('piece-doc', `${p.type}_${p.titre?.replace(/\s/g, '_')}`)}>📥 PDF</button>
       </div>
 
-      {/* Header info */}
-      <div className="paper-card" style={{ marginBottom: 'var(--space-lg)', borderLeft: '3px solid #5a3d5a' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+      {msg && <div className="alert alert-success">{msg}</div>}
+
+      {/* ═══ Document ═══ */}
+      <div id="piece-doc" style={{
+        background: '#f5f2e8',
+        border: '1px solid #c4b99a',
+        borderRadius: 4,
+        padding: '60px 70px',
+        maxWidth: 820,
+        margin: '0 auto',
+        fontFamily: "'IBM Plex Mono', monospace",
+        position: 'relative',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+      }}>
+        {/* Watermark */}
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%) rotate(-30deg)', fontSize: '5rem', opacity: 0.03, fontWeight: 900, whiteSpace: 'nowrap', pointerEvents: 'none' }}>
+          7. ARMEEKORPS
+        </div>
+
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 40, borderBottom: '2px solid #3d5a3e', paddingBottom: 20 }}>
+          <div style={{ fontSize: '0.75rem', color: '#666', letterSpacing: 3, marginBottom: 8 }}>ARCHIVES DU 7. ARMEEKORPS</div>
+          <h1 style={{ margin: '0 0 8px', fontSize: '1.6rem', letterSpacing: 2, color: '#3d5a3e' }}>
+            {TYPE_LABELS[p.type] || p.type}
+          </h1>
+          <div style={{ fontSize: '0.85rem', color: '#555' }}>{p.confidentiel ? '🔒 CONFIDENTIEL — ' : ''}Affaire {p.affaire_numero || '—'}</div>
+        </div>
+
+        {/* Meta */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 30, fontSize: '0.82rem', color: '#555' }}>
           <div>
-            <h2 style={{ margin: '0 0 4px' }}>{TYPE_LABELS[piece.type] || piece.type}</h2>
-            <h3 style={{ margin: 0, fontWeight: 400 }}>{piece.titre}</h3>
+            <div><strong>Titre :</strong> {p.titre}</div>
+            <div><strong>Rédigé par :</strong> {p.redige_par_nom || '—'}</div>
+            {p.infraction_nom && <div><strong>Infraction :</strong> {p.infraction_nom} (Groupe {p.infraction_groupe})</div>}
           </div>
-          <div style={{ textAlign: 'right', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-            {piece.affaire_numero && <div>Affaire {piece.affaire_numero}</div>}
-            {piece.redige_par_nom && <div>Par {piece.redige_par_nom}</div>}
-            {piece.date_irl && <div>{formatDate(piece.date_irl)}</div>}
+          <div style={{ textAlign: 'right' }}>
+            <div><strong>Date RP :</strong> {p.date_rp || '—'}</div>
+            <div><strong>Date IRL :</strong> {p.date_irl ? formatDate(p.date_irl) : '—'}</div>
           </div>
+        </div>
+
+        {/* Separator */}
+        <div style={{ borderTop: '1px solid #999', margin: '0 0 30px' }} />
+
+        {/* Content */}
+        <div style={{ fontSize: '0.88rem', lineHeight: 1.8, whiteSpace: 'pre-wrap', minHeight: 200, color: '#333' }}>
+          {p.contenu || 'Aucun contenu.'}
+        </div>
+
+        {/* Separator */}
+        <div style={{ borderTop: '1px solid #999', margin: '40px 0 30px' }} />
+
+        {/* Signatures */}
+        {p.signatures?.length > 0 && (
+          <div>
+            <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: 16, letterSpacing: 2 }}>SIGNATURES</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
+              {p.signatures.map((sig, i) => (
+                <div key={i} style={{ flex: '1 1 250px', border: '1px solid #c4b99a', borderRadius: 4, padding: 16, textAlign: 'center', background: '#faf8f2' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: 4 }}>{sig.role_signataire || 'Signataire'}</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 8 }}>{sig.nom_signataire || '—'}</div>
+                  {sig.signe && sig.signature_data ? (
+                    <img src={sig.signature_data} alt="Signature" style={{ maxWidth: '100%', maxHeight: 80 }} />
+                  ) : (
+                    <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999', fontSize: '0.8rem', fontStyle: 'italic', border: '1px dashed #ccc', borderRadius: 4 }}>
+                      En attente de signature
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div style={{ marginTop: 40, textAlign: 'center', fontSize: '0.7rem', color: '#999', borderTop: '1px solid #ddd', paddingTop: 12 }}>
+          Document émis dans le cadre de la procédure judiciaire — {p.affaire_numero || ''} — Archives 7. Armeekorps
         </div>
       </div>
 
-      {/* Rendered document */}
-      <div id="piece-render" style={{ background: '#f5f2e8', border: '1px solid var(--border-color)', borderRadius: 8, padding: 0, overflow: 'hidden' }}>
-        <LayoutRenderer blocks={blocks} width={800} height={1100} />
-      </div>
-
-      {/* Signatures status */}
-      {piece.signatures?.length > 0 && (
+      {/* ═══ Actions hors document ═══ */}
+      {p.signatures?.length > 0 && (
         <div className="paper-card" style={{ marginTop: 'var(--space-lg)' }}>
           <h3 style={{ marginTop: 0 }}>✍️ Signatures</h3>
           <table className="table">
             <thead>
-              <tr><th>Signataire</th><th>Rôle</th><th>Statut</th></tr>
+              <tr><th>Signataire</th><th>Rôle</th><th>Statut</th><th>Actions</th></tr>
             </thead>
             <tbody>
-              {piece.signatures.map((s, i) => (
+              {p.signatures.map((sig, i) => (
                 <tr key={i}>
-                  <td>{s.nom_signataire || '—'}</td>
-                  <td>{s.role_signataire || '—'}</td>
-                  <td>{s.signe ? <span style={{ color: 'var(--success)' }}>✅ Signé</span> : <span style={{ color: 'var(--warning)' }}>⏳ En attente</span>}</td>
+                  <td>{sig.nom_signataire || '—'}</td>
+                  <td>{sig.role_signataire || '—'}</td>
+                  <td>{sig.signe ? <span style={{ color: 'var(--success)' }}>✅ Signé</span> : <span style={{ color: 'var(--warning)' }}>⏳ En attente</span>}</td>
+                  <td style={{ display: 'flex', gap: 6 }}>
+                    {canSign(sig) && <button className="btn btn-sm btn-primary" onClick={() => setShowSign(sig.id)}>✍️ Signer</button>}
+                    {!sig.signe && (user?.isAdmin || user?.isOfficier || user?.isFeldgendarmerie) && (
+                      <button className="btn btn-sm btn-secondary" onClick={() => sendTelegram(sig)}>⚡ Télégramme</button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Signature modal */}
+      {showSign && (
+        <div className="popup-overlay" onClick={() => setShowSign(null)}>
+          <div className="popup-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 550 }}>
+            <button className="popup-close" onClick={() => setShowSign(null)}>✕</button>
+            <h3 style={{ margin: '0 0 16px' }}>✍️ Apposer votre signature</h3>
+            <SignatureCanvas onSave={handleSign} width={480} height={200} />
+          </div>
         </div>
       )}
     </div>
