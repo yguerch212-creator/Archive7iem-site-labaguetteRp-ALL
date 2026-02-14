@@ -68,12 +68,12 @@ export default function DossierPersonnel() {
 
   // Build unified timeline (including historique, PDS, decorations, affaires)
   const timeline = [
-    ...rapports.map(r => ({ type: 'rapport', date: r.created_at, data: r })),
-    ...interdits.map(i => ({ type: 'interdit', date: i.created_at, data: i })),
-    ...medical.map(m => ({ type: 'medical', date: m.created_at || m.date_visite, data: m })),
+    ...rapports.map(r => ({ type: 'rapport', date: r.date_irl || r.created_at, data: r })),
+    ...interdits.map(i => ({ type: 'interdit', date: i.date_debut || i.created_at, data: i })),
+    ...medical.map(m => ({ type: 'medical', date: m.date_visite || m.created_at, data: m })),
     ...entrees.map(e => ({ type: 'note', date: e.created_at, data: e })),
     ...(hist?.historique || []).map(h => ({ type: 'historique', date: h.date_evenement, data: h })),
-    ...(hist?.pds || []).map(p => ({ type: 'pds', date: p.created_at, data: p })),
+    ...(hist?.pds || []).map(p => ({ type: 'pds', date: p.semaine || p.created_at, data: p })),
     ...(hist?.decorations || []).map(d => ({ type: 'decoration', date: d.date_attribution || d.created_at, data: d })),
     ...(hist?.affaires || []).map(a => ({ type: 'affaire', date: a.created_at, data: a })),
   ].sort((a, b) => new Date(b.date) - new Date(a.date))
