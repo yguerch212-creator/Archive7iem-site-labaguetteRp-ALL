@@ -10,7 +10,7 @@ export default function InterditsFront() {
   const [showAll, setShowAll] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [message, setMessage] = useState(null)
-  const [form, setForm] = useState({ effectif_id: '', effectif_nom: '', motif: '', type: 'Disciplinaire', date_debut: new Date().toISOString().slice(0, 10), date_fin: '', notes: '' })
+  const [form, setForm] = useState({ effectif_id: '', effectif_nom: '', motif: '', type: 'Disciplinaire', date_debut: new Date().toISOString().slice(0, 10), date_fin: '', condition_fin: '', notes: '' })
 
   // Officiers, Feldgendarmerie (254), Sanitäts sous-off+ can create
   const canCreate = user?.isAdmin || user?.isOfficier || user?.unite_code === '254' ||
@@ -30,7 +30,7 @@ export default function InterditsFront() {
     try {
       await api.post('/interdits', form)
       setShowForm(false)
-      setForm({ effectif_id: '', effectif_nom: '', motif: '', type: 'Disciplinaire', date_debut: new Date().toISOString().slice(0, 10), date_fin: '', notes: '' })
+      setForm({ effectif_id: '', effectif_nom: '', motif: '', type: 'Disciplinaire', date_debut: new Date().toISOString().slice(0, 10), date_fin: '', condition_fin: '', notes: '' })
       setMessage({ type: 'success', text: 'Interdit de front prononcé ✓' })
       setTimeout(() => setMessage(null), 3000)
       load()
@@ -109,6 +109,10 @@ export default function InterditsFront() {
               </div>
             </div>
             <div className="form-group">
+              <label className="form-label">Condition de fin / Raison (optionnel)</label>
+              <input type="text" className="form-input" value={form.condition_fin} onChange={e => setForm(p => ({...p, condition_fin: e.target.value}))} placeholder="Ex: Effectuer sa visite médicale, Compléter 3 PDS consécutifs..." />
+            </div>
+            <div className="form-group">
               <label className="form-label">Motif *</label>
               <textarea className="form-input" value={form.motif} onChange={e => setForm(p => ({...p, motif: e.target.value}))} required rows={3} placeholder="Raison de l'interdit de front..." style={{ resize: 'vertical' }} />
             </div>
@@ -149,8 +153,17 @@ export default function InterditsFront() {
                 <td style={td}><span className={`badge ${i.type === 'Disciplinaire' ? 'badge-red' : i.type === 'Medical' ? 'badge-warning' : 'badge-muted'}`}>{i.type}</span></td>
                 <td style={{ ...td, maxWidth: 250 }}>{i.motif}</td>
                 <td style={td}>{fmtDate(i.date_debut)}</td>
-                <td style={td}>{i.date_fin ? fmtDate(i.date_fin) : 'Indéterminé'}</td>
-                <td style={td}>{i.ordonne_par_nom}{!i.actif && i.leve_par_nom ? <><br/><span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Levé par {i.leve_par_nom}</span></> : ''}</td>
+                <td style={td}>
+                  {i.date_fin ? fmtDate(i.date_fin) : 'Indéterminé'}
+                  {i.condition_fin && <><br/><span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>📋 {i.condition_fin}</span></>}
+                </td>
+                <td style={td}>
+                  {i.ordonne_par_nom}
+                  {!i.actif && i.leve_par_nom && <>
+                    <br/><span style={{ fontSize: '0.75rem', color: 'var(--success)' }}>Levé par {i.leve_par_nom}</span>
+                    {i.motif_levee && <><br/><span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>Motif: {i.motif_levee}</span></>}
+                  </>}
+                </td>
                 {canCreate && (
                   <td style={td}>
                     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>

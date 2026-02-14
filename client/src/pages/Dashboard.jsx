@@ -44,6 +44,7 @@ export default function Dashboard() {
     { icon: '⚖️', title: 'Justice Militaire', desc: 'Affaires, enquêtes & tribunal', to: '/sanctions' },
     { icon: '⚡', title: 'Télégrammes', desc: 'Messages entre unités', to: '/telegrammes' },
     { icon: '📚', title: 'Documentation', desc: 'Liens & règlements', to: '/documentation' },
+    { icon: '📚', title: 'Bibliothèque', desc: 'Tampons & signatures', to: '/bibliotheque' },
     { icon: '🔎', title: 'Recherche', desc: 'Recherche globale', to: '/search' },
   ]
 

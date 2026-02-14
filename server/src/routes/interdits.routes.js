@@ -50,7 +50,7 @@ router.get('/effectif/:effectif_id', auth, async (req, res) => {
 // POST /api/interdits — Créer un interdit de front (feldgendarmerie/officier/admin)
 router.post('/', auth, feldgendarmerie, async (req, res) => {
   try {
-    const { effectif_id, effectif_nom, motif, type, date_debut, date_fin, notes } = req.body
+    const { effectif_id, effectif_nom, motif, type, date_debut, date_fin, condition_fin, notes } = req.body
     if (!effectif_id && !effectif_nom) {
       return res.status(400).json({ success: false, message: 'Effectif requis (sélection ou nom)' })
     }
@@ -75,9 +75,9 @@ router.post('/', auth, feldgendarmerie, async (req, res) => {
     }
 
     const [result] = await pool.execute(
-      `INSERT INTO interdits_front (effectif_id, motif, type, date_debut, date_fin, ordonne_par, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [resolvedId, motif, type || 'Disciplinaire', date_debut || new Date().toISOString().slice(0, 10), date_fin || null, req.user.id, notes || null]
+      `INSERT INTO interdits_front (effectif_id, motif, type, date_debut, date_fin, condition_fin, ordonne_par, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [resolvedId, motif, type || 'Disciplinaire', date_debut || new Date().toISOString().slice(0, 10), date_fin || null, condition_fin || null, req.user.id, notes || null]
     )
     logActivity(req, 'create_interdit', 'interdit', result.insertId, `${type}: ${motif?.slice(0, 100)}`)
     const { notifyInterdit } = require('../utils/discordNotify')
@@ -92,7 +92,7 @@ router.post('/', auth, feldgendarmerie, async (req, res) => {
 router.put('/:id/lever', auth, feldgendarmerie, async (req, res) => {
   try {
     await pool.execute(
-      `UPDATE interdits_front SET actif = 0, leve_par = ?, date_levee = NOW(), notes = CONCAT(COALESCE(notes,''), '\n--- Levé: ', ?)
+      `UPDATE interdits_front SET actif = 0, leve_par = ?, date_levee = NOW(), motif_levee = ?
        WHERE id = ? AND actif = 1`,
       [req.user.id, req.body.motif_levee || 'Levé', req.params.id]
     )

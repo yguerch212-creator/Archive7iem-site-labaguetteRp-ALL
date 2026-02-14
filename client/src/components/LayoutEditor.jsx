@@ -47,6 +47,8 @@ export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPub
   const [historyIdx, setHistoryIdx] = useState(0)
   const [showSignatureModal, setShowSignatureModal] = useState(null) // blockId
   const [showDocPicker, setShowDocPicker] = useState(null) // blockId
+  const [showLibrary, setShowLibrary] = useState(null) // blockId — for stamp/signature from bibliothèque
+  const [libraryItems, setLibraryItems] = useState([])
   const [msg, setMsg] = useState('')
   const canvasRef = useRef(null)
 
@@ -238,6 +240,23 @@ export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPub
     input.click()
   }
 
+  const openLibrary = async (blockId, type) => {
+    setShowLibrary(blockId)
+    try {
+      const res = await apiClient.get('/bibliotheque', { params: { type: type || 'tampon' } })
+      setLibraryItems(res.data.data || [])
+    } catch { setLibraryItems([]) }
+  }
+
+  const pickFromLibrary = (item) => {
+    if (showLibrary) {
+      updateContent(showLibrary, item.image_data)
+      pushHistory(blocks.map(b => b.id === showLibrary ? { ...b, content: item.image_data } : b))
+    }
+    setShowLibrary(null)
+    setLibraryItems([])
+  }
+
   const handleSignatureDone = (dataUrl) => {
     if (showSignatureModal && dataUrl) {
       updateContent(showSignatureModal, dataUrl)
@@ -303,7 +322,9 @@ export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPub
                   {block.type === 'document' && <button onClick={() => setShowDocPicker(block.id)} title="Changer document">📎</button>}
                   {block.type === 'image' && <button onClick={() => handleImageUpload(block.id)} title="Image">🖼️</button>}
                   {block.type === 'stamp' && <button onClick={() => handleImageUpload(block.id)} title="Tampon (image)">🔏</button>}
+                  {block.type === 'stamp' && <button onClick={() => openLibrary(block.id, 'tampon')} title="Bibliothèque tampons">📚</button>}
                   {block.type === 'signature' && <button onClick={() => setShowSignatureModal(block.id)} title="Dessiner">✍️</button>}
+                  {block.type === 'signature' && <button onClick={() => openLibrary(block.id, 'signature')} title="Bibliothèque signatures">📚</button>}
                   <button onClick={() => duplicateBlock(block.id)} title="Dupliquer">📋</button>
                   <button onClick={() => moveLayer(block.id, 1)} title="Avancer">⬆</button>
                   <button onClick={() => moveLayer(block.id, -1)} title="Reculer">⬇</button>
@@ -395,6 +416,29 @@ export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPub
               }}
               onClose={() => setShowDocPicker(null)}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Library picker modal */}
+      {showLibrary && (
+        <div className="layout-modal-overlay" onClick={() => { setShowLibrary(null); setLibraryItems([]) }}>
+          <div className="layout-modal layout-modal-wide" onClick={e => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 1rem' }}>📚 Bibliothèque</h3>
+            {libraryItems.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>Aucun élément. Ajoutez-en depuis la page Bibliothèque.</p>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12, maxHeight: 400, overflowY: 'auto' }}>
+                {libraryItems.map(item => (
+                  <div key={item.id} onClick={() => pickFromLibrary(item)} style={{ cursor: 'pointer', border: '1px solid var(--border-color)', borderRadius: 8, padding: 8, textAlign: 'center', background: '#fff' }} className="unit-card">
+                    <img src={item.image_data} alt={item.nom} style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain' }} />
+                    <div style={{ fontSize: '0.75rem', marginTop: 4, fontWeight: 600 }}>{item.nom}</div>
+                    {item.unite_code && <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{item.unite_code}</div>}
+                  </div>
+                ))}
+              </div>
+            )}
+            <button className="btn btn-sm btn-secondary" onClick={() => { setShowLibrary(null); setLibraryItems([]) }} style={{ marginTop: 12 }}>Fermer</button>
           </div>
         </div>
       )}
