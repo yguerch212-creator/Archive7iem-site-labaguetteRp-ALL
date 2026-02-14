@@ -2,21 +2,17 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import apiClient from '../api/client'
-import { formatDate } from '../utils/dates'
-
 export default function Dashboard() {
   const { user } = useAuth()
   const [stats, setStats] = useState({ effectifs: 0, rapports: 0, unites: 0, parUnite: [], derniers: [] })
   const [pending, setPending] = useState({ docs: 0, permissions: 0, total: 0 })
   const [notifs, setNotifs] = useState({ telegrammes: 0, total: 0 })
-  const [archives, setArchives] = useState([])
 
   const isPrivileged = user?.isAdmin || user?.isRecenseur || user?.isOfficier
 
   useEffect(() => {
     if (user?.isGuest) return
     apiClient.get('/stats').then(r => setStats(s => ({ ...s, ...r.data }))).catch(() => {})
-    apiClient.get('/stats/archives').then(r => setArchives(r.data.data || [])).catch(() => {})
     if (isPrivileged) {
       apiClient.get('/stats/pending').then(r => setPending(r.data)).catch(() => {})
     }
@@ -44,6 +40,7 @@ export default function Dashboard() {
     { icon: '⚖️', title: 'Justice Militaire', desc: 'Affaires, enquêtes & tribunal', to: '/sanctions' },
     { icon: '⚡', title: 'Télégrammes', desc: 'Messages entre unités', to: '/telegrammes' },
     { icon: '📚', title: 'Documentation', desc: 'Liens & règlements', to: '/documentation' },
+    { icon: '📜', title: 'Archives', desc: 'Historique & logs RP', to: '/archives' },
     { icon: '📚', title: 'Bibliothèque', desc: 'Tampons & signatures', to: '/bibliotheque' },
     { icon: '🔎', title: 'Recherche', desc: 'Recherche globale', to: '/search' },
   ]
@@ -141,40 +138,6 @@ export default function Dashboard() {
           </Link>
         ))}
       </div>
-
-      {/* Archives administratives */}
-      {archives.length > 0 && (
-        <div style={{ marginBottom: 'var(--space-xl)' }}>
-          <h2 style={{ textAlign: 'center', marginBottom: 'var(--space-md)' }}>📜 Archives administratives</h2>
-          <div className="paper-card" style={{ padding: 0, overflow: 'hidden' }}>
-            <table className="table" style={{ margin: 0 }}>
-              <thead>
-                <tr>
-                  <th style={{ width: 40 }}></th>
-                  <th>Document</th>
-                  <th>Auteur</th>
-                  <th style={{ width: 110 }}>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {archives.map((a, i) => {
-                  const icons = { rapport: '📝', telegramme: '⚡', visite_medicale: '🏥', interdit_front: '🚫', affaire: '⚖️', documentation: '📚', pds_recap: '⏱️' }
-                  const did = a.doc_id || a.id
-                  const links = { rapport: `/rapports/${did}`, telegramme: '/telegrammes', visite_medicale: `/medical/${did}`, interdit_front: '/interdits', affaire: `/sanctions/${did}`, documentation: '/documentation', pds_recap: '/pds' }
-                  return (
-                    <tr key={`${a.type}-${did}-${i}`} onClick={() => links[a.type] && (window.location.href = links[a.type])} style={{ cursor: 'pointer' }}>
-                      <td style={{ textAlign: 'center', fontSize: '1.1rem' }}>{icons[a.type] || '📄'}</td>
-                      <td style={{ fontSize: '0.82rem' }}>{a.label}</td>
-                      <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{a.auteur || '—'}</td>
-                      <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{formatDate(a.date_irl || a.created_at)}</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
 
       {/* Footer */}
       <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)', fontSize: '0.75rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', paddingTop: 'var(--space-md)' }}>

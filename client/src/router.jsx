@@ -24,6 +24,7 @@ import VisitesMedicales from './pages/medical/VisitesMedicales'
 import VisiteMedicaleView from './pages/medical/VisiteMedicaleView'
 import Documentation from './pages/documentation/Documentation'
 import Bibliotheque from './pages/bibliotheque/Bibliotheque'
+import Archives from './pages/archives/Archives'
 import DossiersList from './pages/dossiers/DossiersList'
 import DossierPersonnel from './pages/dossiers/DossierPersonnel'
 import DossierView from './pages/dossiers/DossierView'
@@ -73,6 +74,7 @@ function AppRouter() {
       {/* Documentation */}
       <Route path="/documentation" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
       <Route path="/bibliotheque" element={<ProtectedRoute><Bibliotheque /></ProtectedRoute>} />
+      <Route path="/archives" element={<ProtectedRoute><Archives /></ProtectedRoute>} />
       
       {/* Dossiers */}
       <Route path="/dossiers" element={<ProtectedRoute><DossiersList /></ProtectedRoute>} />
