@@ -324,7 +324,6 @@ export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPub
                   {block.type === 'stamp' && <button onClick={() => handleImageUpload(block.id)} title="Tampon (image)">🔏</button>}
                   {block.type === 'stamp' && <button onClick={() => openLibrary(block.id, 'tampon')} title="Bibliothèque tampons">📚</button>}
                   {block.type === 'signature' && <button onClick={() => setShowSignatureModal(block.id)} title="Dessiner">✍️</button>}
-                  {block.type === 'signature' && <button onClick={() => openLibrary(block.id, 'signature')} title="Bibliothèque signatures">📚</button>}
                   <button onClick={() => duplicateBlock(block.id)} title="Dupliquer">📋</button>
                   <button onClick={() => moveLayer(block.id, 1)} title="Avancer">⬆</button>
                   <button onClick={() => moveLayer(block.id, -1)} title="Reculer">⬇</button>

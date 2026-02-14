@@ -6,7 +6,6 @@ import SignatureCanvas from '../../components/SignatureCanvas'
 
 const TYPES = [
   { value: 'tampon', label: '🔴 Tampons', icon: '🔴' },
-  { value: 'signature', label: '✒️ Signatures', icon: '✒️' },
   { value: 'template', label: '📄 Templates', icon: '📄' },
 ]
 
@@ -91,18 +90,13 @@ export default function Bibliotheque() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
         <BackButton label="← Tableau de bord" />
         {canCreate && (
-          <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-            <button className="btn btn-primary btn-small" onClick={() => { setShowForm(!showForm); setShowSignCanvas(false) }}>
-              {showForm ? '✕ Annuler' : '+ Ajouter'}
-            </button>
-            <button className="btn btn-secondary btn-small" onClick={() => { setShowSignCanvas(!showSignCanvas); setShowForm(false) }}>
-              {showSignCanvas ? '✕ Annuler' : '✒️ Dessiner signature'}
-            </button>
-          </div>
+          <button className="btn btn-primary btn-small" onClick={() => setShowForm(!showForm)}>
+            {showForm ? '✕ Annuler' : '+ Ajouter un tampon'}
+          </button>
         )}
       </div>
 
-      <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>📚 Bibliothèque — Tampons & Signatures</h1>
+      <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>📚 Bibliothèque — Tampons</h1>
 
       {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}
 

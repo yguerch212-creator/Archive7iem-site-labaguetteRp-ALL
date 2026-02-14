@@ -202,4 +202,28 @@ router.put('/:id/layout', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
 
+// GET /api/effectifs/:id/signature — Get saved personal signature
+router.get('/:id/signature', auth, async (req, res) => {
+  try {
+    const row = await queryOne('SELECT signature_data FROM signatures_effectifs WHERE effectif_id = ?', [req.params.id])
+    res.json(row || { signature_data: null })
+  } catch (err) { res.status(500).json({ error: err.message }) }
+})
+
+// PUT /api/effectifs/:id/signature — Save personal signature (only own)
+router.put('/:id/signature', auth, async (req, res) => {
+  try {
+    if (parseInt(req.params.id) !== req.user.effectif_id && !req.user.isAdmin) {
+      return res.status(403).json({ error: 'Vous ne pouvez sauvegarder que votre propre signature' })
+    }
+    const { signature_data } = req.body
+    await query(
+      `INSERT INTO signatures_effectifs (effectif_id, signature_data) VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE signature_data = ?`,
+      [req.params.id, signature_data, signature_data]
+    )
+    res.json({ success: true })
+  } catch (err) { res.status(500).json({ error: err.message }) }
+})
+
 module.exports = router

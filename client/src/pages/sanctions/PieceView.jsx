@@ -24,7 +24,17 @@ export default function PieceView() {
   const [piece, setPiece] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showSign, setShowSign] = useState(null)
+  const [mySignature, setMySignature] = useState(null)
   const [msg, setMsg] = useState('')
+
+  // Load saved signature for current user
+  useEffect(() => {
+    if (user?.effectif_id) {
+      api.get(`/effectifs/${user.effectif_id}/signature`).then(r => {
+        if (r.data?.signature_data) setMySignature(r.data.signature_data)
+      }).catch(() => {})
+    }
+  }, [user?.effectif_id])
 
   const load = () => {
     api.get(`/affaires/pieces/${id}`).then(r => {
@@ -39,8 +49,23 @@ export default function PieceView() {
     if (!showSign) return
     try {
       await api.put(`/affaires/signatures/${showSign}/sign`, { signature_data: dataUrl })
+      // Save signature for future reuse
+      if (user?.effectif_id) {
+        await api.put(`/effectifs/${user.effectif_id}/signature`, { signature_data: dataUrl }).catch(() => {})
+        setMySignature(dataUrl)
+      }
       setShowSign(null)
       setMsg('✅ Signature apposée')
+      setTimeout(() => setMsg(''), 3000)
+      load()
+    } catch { setMsg('❌ Erreur') }
+  }
+
+  const autoSign = async (sigId) => {
+    if (!mySignature) { setShowSign(sigId); return }
+    try {
+      await api.put(`/affaires/signatures/${sigId}/sign`, { signature_data: mySignature })
+      setMsg('✅ Signature apposée automatiquement')
       setTimeout(() => setMsg(''), 3000)
       load()
     } catch { setMsg('❌ Erreur') }
@@ -162,8 +187,15 @@ export default function PieceView() {
                   <td>{sig.role_signataire || '—'}</td>
                   <td>{sig.signe ? <span style={{ color: 'var(--success)' }}>✅ Signé</span> : <span style={{ color: 'var(--warning)' }}>⏳ En attente</span>}</td>
                   <td style={{ display: 'flex', gap: 6 }}>
-                    {canSign(sig) && <button className="btn btn-sm btn-primary" onClick={() => setShowSign(sig.id)}>✍️ Signer</button>}
-                    {!sig.signe && (user?.isAdmin || user?.isOfficier || user?.isFeldgendarmerie) && (
+                    {canSign(sig) && (
+                      <>
+                        <button className="btn btn-sm btn-primary" onClick={() => autoSign(sig.id)}>
+                          {mySignature ? '✍️ Signer' : '✍️ Dessiner & Signer'}
+                        </button>
+                        {mySignature && <button className="btn btn-sm btn-secondary" onClick={() => setShowSign(sig.id)} title="Redessiner">🔄</button>}
+                      </>
+                    )}
+                    {!sig.signe && !canSign(sig) && (user?.isAdmin || user?.isOfficier || user?.isFeldgendarmerie) && (
                       <button className="btn btn-sm btn-secondary" onClick={() => sendTelegram(sig)}>⚡ Télégramme</button>
                     )}
                   </td>

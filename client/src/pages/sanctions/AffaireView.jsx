@@ -391,6 +391,15 @@ function PieceViewPopup({ pieceId, userId, canWrite, onClose, onRefresh }) {
   const [showAddSig, setShowAddSig] = useState(false)
   const [showSignCanvas, setShowSignCanvas] = useState(null)
   const [message, setMessage] = useState('')
+  const [mySignature, setMySignature] = useState(null)
+
+  useEffect(() => {
+    if (userId) {
+      api.get(`/effectifs/${userId}/signature`).then(r => {
+        if (r.data?.signature_data) setMySignature(r.data.signature_data)
+      }).catch(() => {})
+    }
+  }, [userId])
 
   useEffect(() => { loadPiece() }, [pieceId])
   const loadPiece = async () => {
@@ -424,7 +433,23 @@ function PieceViewPopup({ pieceId, userId, canWrite, onClose, onRefresh }) {
   const signDocument = async (sigId, signatureData) => {
     try {
       await api.put(`/affaires/signatures/${sigId}/sign`, { signature_data: signatureData })
+      // Save for future reuse
+      if (userId) {
+        await api.put(`/effectifs/${userId}/signature`, { signature_data: signatureData }).catch(() => {})
+        setMySignature(signatureData)
+      }
       setShowSignCanvas(null)
+      loadPiece()
+      onRefresh()
+    } catch (err) { setMessage(err.response?.data?.error || 'Erreur') }
+  }
+
+  const autoSign = async (sigId) => {
+    if (!mySignature) { setShowSignCanvas(sigId); return }
+    try {
+      await api.put(`/affaires/signatures/${sigId}/sign`, { signature_data: mySignature })
+      setMessage('✅ Signature apposée')
+      setTimeout(() => setMessage(''), 3000)
       loadPiece()
       onRefresh()
     } catch (err) { setMessage(err.response?.data?.error || 'Erreur') }
@@ -494,8 +519,13 @@ function PieceViewPopup({ pieceId, userId, canWrite, onClose, onRefresh }) {
                     ) : (
                       <div className="sig-actions">
                         <div className="sig-placeholder">[ EN ATTENTE DE SIGNATURE ]</div>
-                        {(s.effectif_id === userId || canWrite) && (
-                          <button className="btn btn-sm btn-primary" onClick={() => setShowSignCanvas(s.id)}>✍️ Signer</button>
+                        {s.effectif_id === userId && (
+                          <>
+                            <button className="btn btn-sm btn-primary" onClick={() => autoSign(s.id)}>
+                              {mySignature ? '✍️ Signer' : '✍️ Dessiner & Signer'}
+                            </button>
+                            {mySignature && <button className="btn btn-sm btn-secondary" onClick={() => setShowSignCanvas(s.id)} title="Redessiner">🔄</button>}
+                          </>
                         )}
                         {canWrite && !s.telegramme_envoye && s.effectif_id && (
                           <button className="btn btn-sm" onClick={() => sendTelegram(s.id)}>📨 Envoyer télégramme</button>
