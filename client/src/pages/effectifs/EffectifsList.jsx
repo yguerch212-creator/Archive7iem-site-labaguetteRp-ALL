@@ -16,8 +16,10 @@ export default function EffectifsList() {
   const [filters, setFilters] = useState({ nom: '', grade: '', categorie: '' })
   const [selected, setSelected] = useState(null)
 
+  const load = () => apiClient.get(`/effectifs?unite_id=${uniteId}`).then(r => setEffectifs(r.data.data || [])).catch(() => {})
+
   useEffect(() => {
-    apiClient.get(`/effectifs?unite_id=${uniteId}`).then(r => setEffectifs(r.data.data || [])).catch(() => {})
+    load()
     apiClient.get(`/unites/${uniteId}/grades`).then(r => setGrades(r.data.data || [])).catch(() => {})
     apiClient.get('/unites').then(r => {
       const u = (r.data.data || []).find(x => x.id == uniteId)
@@ -103,7 +105,7 @@ export default function EffectifsList() {
               <tr><td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-lg)', color: 'var(--text-muted)' }}>Aucun effectif</td></tr>
             ) : filtered.map(e => (
               <tr key={e.id} onClick={() => setSelected(e)} style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={ev => ev.currentTarget.style.background = 'var(--military-light)'} onMouseLeave={ev => ev.currentTarget.style.background = ''}>
-                <td style={tdStyle}><strong>{e.prenom} {e.nom}</strong></td>
+                <td style={tdStyle}><strong>{e.prenom} {e.nom}</strong>{e.en_reserve ? <span style={{ marginLeft: 6, fontSize: '0.65rem', background: '#8a7d6b', color: '#fff', padding: '1px 6px', borderRadius: 8, fontWeight: 700 }}>RÉSERVE</span> : null}</td>
                 <td style={tdStyle}>{e.grade_nom || '—'}</td>
                 <td style={tdStyle}><span className={`badge ${e.categorie === 'Officier' ? 'badge-warning' : e.categorie === 'Sous-officier' ? 'badge-success' : 'badge-muted'}`}>{e.categorie || e.grade_categorie || '—'}</span></td>
                 <td style={tdStyle}>{e.fonction || '—'}</td>
@@ -144,6 +146,17 @@ export default function EffectifsList() {
                 <div style={{ fontSize: '2rem', marginBottom: 6 }}>🔎</div>
                 <strong>Rechercher</strong>
               </button>
+              {(user?.isAdmin || user?.isOfficier || user?.isRecenseur) && (
+                <button className="paper-card unit-card" style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-lg)', border: '1px solid var(--border-color)', background: selected.en_reserve ? 'rgba(60,143,60,0.08)' : 'rgba(140,120,60,0.08)' }} onClick={async () => {
+                  try {
+                    await apiClient.put(`/effectifs/${selected.id}/reserve`)
+                    setSelected(null); load()
+                  } catch (err) { alert(err.response?.data?.message || 'Erreur') }
+                }}>
+                  <div style={{ fontSize: '2rem', marginBottom: 6 }}>{selected.en_reserve ? '🔄' : '🏕️'}</div>
+                  <strong>{selected.en_reserve ? 'Sortir de réserve' : 'Mettre en réserve'}</strong>
+                </button>
+              )}
               {user?.isAdmin && (
                 <button className="paper-card unit-card" style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-lg)', border: '1px solid var(--border-color)', background: 'rgba(180,40,40,0.05)' }} onClick={async () => {
                   if (!confirm(`Supprimer ${selected.prenom} ${selected.nom} ?`)) return

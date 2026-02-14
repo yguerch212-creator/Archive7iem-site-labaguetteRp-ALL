@@ -226,4 +226,38 @@ router.put('/:id/signature', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }) }
 })
 
+// PUT /api/effectifs/:id/reserve — Toggle réserve
+router.put('/:id/reserve', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isRecenseur) return res.status(403).json({ success: false, message: 'Non autorisé' })
+    const eff = await queryOne('SELECT * FROM effectifs WHERE id = ?', [req.params.id])
+    if (!eff) return res.status(404).json({ success: false, message: 'Effectif introuvable' })
+
+    const unite716 = await queryOne("SELECT id FROM unites WHERE code = '716'")
+    if (!unite716) return res.status(500).json({ success: false, message: 'Unité 716 Reserve introuvable' })
+
+    if (!eff.en_reserve) {
+      // Passer en réserve: sauvegarder unité/grade d'origine, basculer vers 716
+      // Trouver le grade équivalent dans 716
+      const gradeOrigine = await queryOne('SELECT * FROM grades WHERE id = ?', [eff.grade_id])
+      let grade716 = null
+      if (gradeOrigine) {
+        grade716 = await queryOne('SELECT id FROM grades WHERE nom_complet = ? AND unite_id = ? LIMIT 1', [gradeOrigine.nom_complet, unite716.id])
+      }
+      await pool.execute(
+        'UPDATE effectifs SET en_reserve = 1, unite_origine_id = ?, grade_origine_id = ?, unite_id = ?, grade_id = ? WHERE id = ?',
+        [eff.unite_id, eff.grade_id, unite716.id, grade716 ? grade716.id : eff.grade_id, req.params.id]
+      )
+      res.json({ success: true, message: 'Effectif mis en réserve' })
+    } else {
+      // Sortir de réserve: restaurer unité/grade d'origine
+      await pool.execute(
+        'UPDATE effectifs SET en_reserve = 0, unite_id = COALESCE(unite_origine_id, unite_id), grade_id = COALESCE(grade_origine_id, grade_id), unite_origine_id = NULL, grade_origine_id = NULL WHERE id = ?',
+        [req.params.id]
+      )
+      res.json({ success: true, message: 'Effectif sorti de réserve' })
+    }
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
 module.exports = router
