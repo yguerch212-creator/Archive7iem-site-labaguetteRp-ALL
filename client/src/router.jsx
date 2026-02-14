@@ -43,6 +43,9 @@ import Galerie from './pages/galerie/Galerie'
 import Commandement from './pages/commandement/Commandement'
 import Gazette from './pages/gazette/Gazette'
 import Organigramme from './pages/effectifs/Organigramme'
+import JournalList from './pages/journal/JournalList'
+import JournalView from './pages/journal/JournalView'
+import JournalEdit from './pages/journal/JournalEdit'
 
 function AppRouter() {
   const { user } = useAuth()
@@ -102,6 +105,9 @@ function AppRouter() {
       <Route path="/galerie" element={<ProtectedRoute><Galerie /></ProtectedRoute>} />
       <Route path="/commandement" element={<ProtectedRoute><Commandement /></ProtectedRoute>} />
       <Route path="/gazette" element={<ProtectedRoute><Gazette /></ProtectedRoute>} />
+      <Route path="/journal" element={<ProtectedRoute><JournalList /></ProtectedRoute>} />
+      <Route path="/journal/:id" element={<ProtectedRoute><JournalView /></ProtectedRoute>} />
+      <Route path="/journal/:id/edit" element={<ProtectedRoute><JournalEdit /></ProtectedRoute>} />
       <Route path="/organigramme" element={<ProtectedRoute><Organigramme /></ProtectedRoute>} />
       
       {/* Search */}

@@ -26,7 +26,7 @@ const GRID = 5
 
 let blockCounter = Date.now()
 
-export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPublish, title = 'Éditeur de mise en page', width = 800, height = 1100, readOnly = false, affaireId = null, onBlocksChange = null }) {
+export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPublish, title = 'Éditeur de mise en page', width = 800, height = 1100, readOnly = false, affaireId = null, onBlocksChange = null, publishLabel = '📜 Publier' }) {
   const [blocks, setBlocks] = useState(initialBlocks)
 
   // Sync if parent pushes new blocks (e.g. import)
@@ -285,7 +285,7 @@ export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPub
             <button className="toolbar-btn" onClick={undo} disabled={historyIdx <= 0} title="Annuler (Ctrl+Z)">↩️</button>
             <button className="toolbar-btn" onClick={redo} disabled={historyIdx >= history.length - 1} title="Rétablir (Ctrl+Y)">↪️</button>
             {onSave && <button className="btn btn-secondary btn-small" onClick={handleSave}>💾 Sauvegarder</button>}
-            {onPublish && <button className="btn btn-primary btn-small" onClick={handlePublish}>📜 Publier</button>}
+            {onPublish && <button className="btn btn-primary btn-small" onClick={handlePublish}>{publishLabel}</button>}
           </div>
         </div>
       )}

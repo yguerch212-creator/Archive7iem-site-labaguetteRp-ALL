@@ -11,6 +11,7 @@ const ALL_GROUPS = [
   { name: 'Sous-officier', icon: '🎖️', color: '#27ae60', desc: 'Soumet docs, accès sous-off' },
   { name: 'Feldgendarmerie', icon: '🛡️', color: '#8e44ad', desc: 'Interdits de front, casier' },
   { name: 'Sanitaets', icon: '🏥', color: '#1abc9c', desc: 'Visites médicales, fiches patients' },
+  { name: 'Etat-Major', icon: '⭐', color: '#f39c12', desc: 'État-major — équivalent admin' },
 ]
 
 export default function AdminUsers() {
@@ -183,7 +184,8 @@ export default function AdminUsers() {
                       {u.is_sousofficier && <span style={badge('#27ae60')}>🎖️ Sous-off</span>}
                       {u.is_feldgendarmerie && <span style={badge('#8e44ad')}>🛡️ Feld</span>}
                       {u.is_sanitaets && <span style={badge('#1abc9c')}>🏥 Sanit.</span>}
-                      {!u.is_admin && !u.is_recenseur && !u.is_officier && !u.is_sousofficier && !u.is_feldgendarmerie && !u.is_sanitaets && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Aucun rôle</span>}
+                      {u.is_etatmajor && <span style={badge('#f39c12')}>⭐ É-M</span>}
+                      {!u.is_admin && !u.is_recenseur && !u.is_officier && !u.is_sousofficier && !u.is_feldgendarmerie && !u.is_sanitaets && !u.is_etatmajor && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Aucun rôle</span>}
                     </div>
                   </td>
                   <td style={td}>

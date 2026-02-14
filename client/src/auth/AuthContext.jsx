@@ -22,7 +22,7 @@ export function AuthProvider({ children }) {
         setUser({
           id: 0, nom: 'Invité', prenom: '', username: 'guest',
           isGuest: true, isAdmin: false, isRecenseur: false, isOfficier: false,
-          isFeldgendarmerie: false, isSanitaets: false
+          isFeldgendarmerie: false, isSanitaets: false, isEtatMajor: false
         })
       }
     } catch (error) {
@@ -54,7 +54,7 @@ export function AuthProvider({ children }) {
     const guestUser = {
       id: 0, nom: 'Invité', prenom: '', username: 'guest',
       isGuest: true, isAdmin: false, isRecenseur: false, isOfficier: false,
-      isFeldgendarmerie: false, isSanitaets: false
+      isFeldgendarmerie: false, isSanitaets: false, isEtatMajor: false
     }
     localStorage.setItem('guestMode', 'true')
     setUser(guestUser)

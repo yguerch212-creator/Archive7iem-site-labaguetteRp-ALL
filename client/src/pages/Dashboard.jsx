@@ -47,7 +47,7 @@ export default function Dashboard() {
     { icon: '📜', title: 'Ordres', desc: 'Ordres & directives', to: '/ordres' },
     { icon: '📸', title: 'Galerie', desc: 'Photos RP', to: '/galerie' },
     { icon: '🗺️', title: 'Organigramme', desc: 'Organisation du Korps', to: '/organigramme' },
-    { icon: '📰', title: 'Gazette', desc: 'Gazette hebdomadaire', to: '/gazette' },
+    { icon: '📰', title: 'Journal', desc: 'Nachrichtenblatt du Korps', to: '/journal' },
   ]
 
   if (user?.isAdmin || user?.isOfficier) {

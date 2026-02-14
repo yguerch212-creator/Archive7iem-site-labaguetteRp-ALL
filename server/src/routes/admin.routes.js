@@ -22,7 +22,9 @@ router.get('/users', auth, admin, async (req, res) => {
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
               WHERE ug.user_id = u.id AND gp.name = 'Feldgendarmerie') > 0 AS is_feldgendarmerie,
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
-              WHERE ug.user_id = u.id AND gp.name = 'Sanitaets') > 0 AS is_sanitaets
+              WHERE ug.user_id = u.id AND gp.name = 'Sanitaets') > 0 AS is_sanitaets,
+             (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
+              WHERE ug.user_id = u.id AND gp.name = 'Etat-Major') > 0 AS is_etatmajor
       FROM users u
       LEFT JOIN grades g ON g.id = u.grade_id
       LEFT JOIN unites un ON un.id = u.unite_id

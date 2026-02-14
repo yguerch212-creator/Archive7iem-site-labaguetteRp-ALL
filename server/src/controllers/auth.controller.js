@@ -57,6 +57,13 @@ async function login(req, res) {
     `, [user.id])
     const isOfficier = officierCheck.c > 0
 
+    const etatMajorCheck = await queryOne(`
+      SELECT COUNT(*) as c FROM user_groups ug
+      JOIN \`groups\` g ON g.id = ug.group_id
+      WHERE ug.user_id = ? AND g.name = 'Etat-Major'
+    `, [user.id])
+    const isEtatMajor = etatMajorCheck.c > 0
+
     const token = jwt.sign({ userId: user.id }, config.jwt.secret, { expiresIn: config.jwt.expiresIn })
 
     // Log login
@@ -79,6 +86,7 @@ async function login(req, res) {
         isAdmin,
         isRecenseur,
         isOfficier,
+        isEtatMajor,
         effectif_id: user.effectif_id || null,
         mustChangePassword: !!user.must_change_password
       }
