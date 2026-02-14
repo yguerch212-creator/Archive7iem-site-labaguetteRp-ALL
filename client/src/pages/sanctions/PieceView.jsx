@@ -6,6 +6,7 @@ import BackButton from '../../components/BackButton'
 import SignatureCanvas from '../../components/SignatureCanvas'
 import { formatDate } from '../../utils/dates'
 import { exportToPdf } from '../../utils/exportPdf'
+import ShareButton from '../../components/ShareButton'
 
 const TYPE_LABELS = {
   'Proces-verbal': 'PROCÈS-VERBAL',
