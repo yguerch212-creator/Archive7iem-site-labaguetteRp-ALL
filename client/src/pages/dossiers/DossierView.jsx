@@ -20,7 +20,6 @@ export default function DossierView() {
   const [message, setMessage] = useState(null)
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(0)
-  const [layoutPages, setLayoutPages] = useState(null) // saved layout pages
   useEffect(() => { load() }, [id])
 
   const load = async () => {
@@ -28,11 +27,6 @@ export default function DossierView() {
       const res = await api.get(`/dossiers/${id}`)
       setDossier(res.data.data.dossier)
       setEntrees(res.data.data.entrees || [])
-      // Load saved layout
-      try {
-        const lRes = await api.get(`/dossiers/${id}/layout`)
-        if (lRes.data?.pages) setLayoutPages(lRes.data.pages)
-      } catch {}
     } catch (err) { console.error(err) }
     setLoading(false)
   }
@@ -64,60 +58,11 @@ export default function DossierView() {
   if (loading) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div>
   if (!dossier) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Dossier non trouvé</div>
 
-  const STYLE_MAP = {
-    'stamp': { color: 'rgba(180,40,40,0.5)', fontWeight: '900', letterSpacing: '3px', textAlign: 'center', fontSize: '1.2rem' },
-    'emblem': { textAlign: 'center', fontSize: '3rem', lineHeight: '1' },
-    'title': { fontWeight: '800', fontSize: '1.4rem', textAlign: 'center', borderBottom: '2px solid #8a7a5a' },
-    'subtitle': { textAlign: 'center', fontStyle: 'italic', color: '#555', fontSize: '0.85rem' },
-    'meta': { textAlign: 'center', color: '#777', fontSize: '0.75rem' },
-    'footer': { textAlign: 'center', color: '#8a7a5a', fontSize: '0.75rem', borderTop: '1px solid #ccc', paddingTop: '4px' },
-    'page-num': { fontWeight: '700', fontSize: '0.7rem', color: '#999' },
-    'date': { textAlign: 'right', fontSize: '0.75rem', color: '#666', fontStyle: 'italic' },
-    'entry-title': { fontWeight: '700', fontSize: '1.1rem', borderBottom: '1px solid #b8a88a', paddingBottom: '4px' },
-    'entry-content': { fontSize: '0.82rem', lineHeight: '1.5', whiteSpace: 'pre-wrap' },
-    'author': { fontSize: '0.7rem', color: '#888', fontStyle: 'italic' },
-  }
-
-  // Build page keys from layout or entries
-  const pageKeys = layoutPages
-    ? ['cover', ...Object.keys(layoutPages).filter(k => k !== 'cover').sort((a, b) => (parseInt(a.split('-')[1]) || 0) - (parseInt(b.split('-')[1]) || 0))]
-    : ['cover', ...entrees.map((_, i) => `page-${i + 1}`)]
-
-  const totalPages = pageKeys.length
+  const totalPages = entrees.length + 1
   const canWrite = user?.isAdmin || user?.isOfficier || user?.isRecenseur || user?.id === dossier.created_by
 
   const prevPage = () => setCurrentPage(p => Math.max(0, p - 1))
   const nextPage = () => setCurrentPage(p => Math.min(totalPages - 1, p + 1))
-
-  // Render a layout page (saved blocks with positions)
-  const renderLayoutPage = (pageKey) => {
-    const blocks = layoutPages[pageKey] || []
-    const isCover = pageKey === 'cover'
-    return (
-      <div className={`book-layout-page ${isCover ? 'is-cover' : ''}`} style={{ position: 'relative', minHeight: 540 }}>
-        {blocks.map((block, i) => (
-          <div
-            key={block.id}
-            style={{
-              position: 'absolute',
-              left: block.x,
-              top: block.y,
-              width: block.w,
-              height: block.h,
-              zIndex: i + 1,
-              padding: '2px 4px',
-              boxSizing: 'border-box',
-              overflow: 'hidden',
-              fontFamily: "'IBM Plex Mono', monospace",
-              ...(STYLE_MAP[block.style] || {}),
-            }}
-          >
-            {block.content}
-          </div>
-        ))}
-      </div>
-    )
-  }
 
   return (
     <div className="dossier-detail-page">
@@ -146,52 +91,44 @@ export default function DossierView() {
         </div>
 
         <div className="book-page">
-          {layoutPages ? (
-            /* Render from saved layout */
-            renderLayoutPage(pageKeys[currentPage])
-          ) : (
-            /* Default rendering */
-            <>
-              {currentPage === 0 && (
-                <div className="book-cover">
-                  <div className="book-cover-stamp">GEHEIM</div>
-                  <div className="book-cover-emblem">✠</div>
-                  <h1 className="book-cover-title">{dossier.titre}</h1>
-                  {dossier.description && <p className="book-cover-desc">{dossier.description}</p>}
-                  <div className="book-cover-meta">
-                    <span>{dossier.type}</span>
-                    <span>{dossier.visibilite === 'public' ? '🌐 Public' : dossier.visibilite === 'prive' ? '🔒 Privé' : '🔗 Par lien'}</span>
-                    <span>{entrees.length} entrée{entrees.length !== 1 ? 's' : ''}</span>
-                  </div>
-                  <div className="book-cover-footer">
-                    Archives du 7e Armeekorps<br/>
-                    <span style={{ fontSize: '0.7rem' }}>Créé le {formatDate(dossier.created_at)}</span>
-                  </div>
-                </div>
-              )}
-
-              {currentPage > 0 && currentPage <= entrees.length && (() => {
-                const e = entrees[currentPage - 1]
-                return (
-                  <div className="book-entry">
-                    <div className="book-entry-header">
-                      <span className="book-entry-num">N° {currentPage}</span>
-                      <span className="book-entry-date">{e.date_rp || formatDate(e.created_at)}</span>
-                    </div>
-                    {e.titre && <h2 className="book-entry-title">{e.titre}</h2>}
-                    <div className="book-entry-content">{e.contenu}</div>
-                    <div className="book-entry-footer">
-                      <span>Par {e.created_by_nom}</span>
-                      <span>{formatDate(e.created_at)}</span>
-                      {(user?.isAdmin || user?.id === e.created_by) && (
-                        <button className="btn btn-sm" style={{ color: 'var(--danger)', fontSize: '0.7rem', padding: '2px 6px' }} onClick={() => deleteEntry(e.id)}>🗑️</button>
-                      )}
-                    </div>
-                  </div>
-                )
-              })()}
-            </>
+          {currentPage === 0 && (
+            <div className="book-cover">
+              <div className="book-cover-stamp">GEHEIM</div>
+              <div className="book-cover-emblem">✠</div>
+              <h1 className="book-cover-title">{dossier.titre}</h1>
+              {dossier.description && <p className="book-cover-desc">{dossier.description}</p>}
+              <div className="book-cover-meta">
+                <span>{dossier.type}</span>
+                <span>{dossier.visibilite === 'public' ? '🌐 Public' : dossier.visibilite === 'prive' ? '🔒 Privé' : '🔗 Par lien'}</span>
+                <span>{entrees.length} entrée{entrees.length !== 1 ? 's' : ''}</span>
+              </div>
+              <div className="book-cover-footer">
+                Archives du 7e Armeekorps<br/>
+                <span style={{ fontSize: '0.7rem' }}>Créé le {formatDate(dossier.created_at)}</span>
+              </div>
+            </div>
           )}
+
+          {currentPage > 0 && currentPage <= entrees.length && (() => {
+            const e = entrees[currentPage - 1]
+            return (
+              <div className="book-entry">
+                <div className="book-entry-header">
+                  <span className="book-entry-num">N° {currentPage}</span>
+                  <span className="book-entry-date">{e.date_rp || formatDate(e.created_at)}</span>
+                </div>
+                {e.titre && <h2 className="book-entry-title">{e.titre}</h2>}
+                <div className="book-entry-content">{e.contenu}</div>
+                <div className="book-entry-footer">
+                  <span>Par {e.created_by_nom}</span>
+                  <span>{formatDate(e.created_at)}</span>
+                  {(user?.isAdmin || user?.id === e.created_by) && (
+                    <button className="btn btn-sm" style={{ color: 'var(--danger)', fontSize: '0.7rem', padding: '2px 6px' }} onClick={() => deleteEntry(e.id)}>🗑️</button>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
         </div>
 
         {entrees.length > 0 && (

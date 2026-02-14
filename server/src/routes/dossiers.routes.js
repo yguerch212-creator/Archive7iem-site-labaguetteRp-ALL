@@ -212,8 +212,8 @@ router.get('/:id/layout', auth, async (req, res) => {
 // PUT /api/dossiers/:id/layout
 router.put('/:id/layout', auth, async (req, res) => {
   try {
-    const { blocks, html_published, pages, published } = req.body
-    const json = JSON.stringify({ blocks, html_published, pages, published })
+    const { blocks, html_published } = req.body
+    const json = JSON.stringify({ blocks, html_published })
     await pool.execute(
       `INSERT INTO dossier_layouts (dossier_id, layout_json) VALUES (?, ?)
        ON DUPLICATE KEY UPDATE layout_json = VALUES(layout_json)`,
