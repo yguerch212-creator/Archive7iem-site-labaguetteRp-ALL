@@ -11,6 +11,7 @@ export default function Organigramme() {
   const [showAdd, setShowAdd] = useState(null) // parent_id or 'root'
   const [editNode, setEditNode] = useState(null)
   const [form, setForm] = useState({ effectif_id: '', titre_poste: '', unite_id: '' })
+  const [searchText, setSearchText] = useState('')
   const [msg, setMsg] = useState('')
 
   const canEdit = user?.isAdmin || user?.isOfficier
@@ -22,7 +23,7 @@ export default function Organigramme() {
 
   const load = () => api.get('/organigramme').then(r => setNodes(r.data.data || [])).catch(() => {})
 
-  const resetForm = () => { setForm({ effectif_id: '', titre_poste: '', unite_id: '' }); setShowAdd(null); setEditNode(null) }
+  const resetForm = () => { setForm({ effectif_id: '', titre_poste: '', unite_id: '' }); setSearchText(''); setShowAdd(null); setEditNode(null) }
 
   const submit = async () => {
     if (!form.effectif_id && !form.titre_poste) { setMsg('Effectif ou titre requis'); return }
@@ -57,6 +58,7 @@ export default function Organigramme() {
   const startEdit = (node) => {
     setEditNode(node)
     setForm({ effectif_id: node.effectif_id || '', titre_poste: node.titre_poste || '', unite_id: node.unite_id || '' })
+    setSearchText(node.prenom ? `${node.prenom} ${node.nom}` : '')
     setShowAdd(null)
   }
 
@@ -132,7 +134,7 @@ export default function Organigramme() {
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'end' }}>
         <div style={{ flex: 1, minWidth: 160 }}>
           <label style={{ fontSize: '0.72rem', fontWeight: 600 }}>Effectif (officier)</label>
-          <EffectifAutocomplete value={form.effectif_id} onChange={(id) => setForm(f => ({ ...f, effectif_id: id }))} placeholder="Rechercher..." />
+          <EffectifAutocomplete value={searchText} onChange={(text) => { setSearchText(text); if (!text) setForm(f => ({ ...f, effectif_id: '' })) }} onSelect={(eff) => { setForm(f => ({ ...f, effectif_id: eff.id })); setSearchText(`${eff.prenom} ${eff.nom}`) }} placeholder="Rechercher un effectif..." />
         </div>
         <div style={{ minWidth: 140 }}>
           <label style={{ fontSize: '0.72rem', fontWeight: 600 }}>Titre du poste</label>
