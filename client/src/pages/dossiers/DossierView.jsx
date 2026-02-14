@@ -63,7 +63,7 @@ export default function DossierView() {
   if (loading) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div>
   if (!dossier) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Dossier non trouvé</div>
 
-  const totalPages = entrees.length + 1
+  const totalPages = savedPages ? Math.max(Object.keys(savedPages).length, entrees.length + 1) : entrees.length + 1
   const canWrite = user?.isAdmin || user?.isOfficier || user?.isRecenseur || user?.id === dossier.created_by
 
   const prevPage = () => setCurrentPage(p => Math.max(0, p - 1))

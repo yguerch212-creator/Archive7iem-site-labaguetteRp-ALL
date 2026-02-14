@@ -281,10 +281,17 @@ router.post('/signatures/:sid/telegram', auth, async (req, res) => {
 
     const contenu = `DEMANDE DE SIGNATURE\n\nAffaire: ${sig.affaire_numero} — ${sig.affaire_titre}\nDocument: ${sig.piece_titre}\nRôle: ${sig.role_signataire || 'Signataire'}\n\nVeuillez vous rendre sur la page de l'affaire pour apposer votre signature.\n\n/sanctions → Affaire ${sig.affaire_numero}`
 
-    await query(`INSERT INTO telegrammes (numero, expediteur_id, destinataire_id, objet, contenu, priorite)
-      VALUES (?, ?, ?, ?, ?, ?)`,
-      [telNumero, req.user.effectif_id || null, sig.eff_id,
-       `Signature requise — ${sig.piece_titre}`, contenu, 'Urgent'])
+    // Get sender name
+    const sender = req.user.effectif_id
+      ? await queryOne('SELECT CONCAT(prenom," ",nom) AS n FROM effectifs WHERE id=?', [req.user.effectif_id])
+      : null
+    const senderName = sender?.n || req.user.username || 'Tribunal Militaire'
+    const recipientName = `${sig.eff_prenom || ''} ${sig.eff_nom || ''}`.trim()
+
+    await query(`INSERT INTO telegrammes (numero, expediteur_id, expediteur_nom, destinataire_id, destinataire_nom, objet, contenu, priorite, created_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [telNumero, req.user.effectif_id || null, senderName, sig.eff_id, recipientName,
+       `Signature requise — ${sig.piece_titre}`, contenu, 'Urgent', req.user.id])
 
     await query('UPDATE affaires_signatures SET telegramme_envoye=1, telegramme_date=NOW() WHERE id=?', [req.params.sid])
     res.json({ success: true, telegramme: telNumero })

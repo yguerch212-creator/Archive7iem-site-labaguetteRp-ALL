@@ -5,6 +5,7 @@ import api from '../../api/client'
 import BackButton from '../../components/BackButton'
 import EffectifAutocomplete from '../../components/EffectifAutocomplete'
 import { formatDate, formatDateTime } from '../../utils/dates'
+import { exportToPdf } from '../../utils/exportPdf'
 import './sanctions.css'
 
 const ROLES = ['Accuse', 'Temoin', 'Victime', 'Enqueteur', 'Juge', 'Defenseur']
@@ -235,7 +236,7 @@ function AddPersonnePopup({ onAdd, onClose }) {
           </div>
         ) : (
           <div className="form-group"><label>Effectif</label>
-            <EffectifAutocomplete value={effectif_display} onChange={(id, display) => { setEffectifId(id); setEffectifDisplay(display) }} placeholder="Rechercher un effectif..." />
+            <EffectifAutocomplete value={effectif_display} onChange={(text, eff) => { setEffectifId(eff?.id || ''); setEffectifDisplay(text) }} placeholder="Rechercher un effectif..." />
           </div>
         )}
         <div className="form-group"><label>Notes</label>
@@ -259,6 +260,10 @@ function AddPiecePopup({ onAdd, onClose, infractions }) {
     infraction_id: '', infraction_custom: '', confidentiel: false
   })
 
+  const [showDocPicker, setShowDocPicker] = useState(false)
+  const [siteDocuments, setSiteDocuments] = useState([])
+  const [docSearch, setDocSearch] = useState('')
+
   const placeholders = {
     'Proces-verbal': 'Décrivez les faits constatés, les circonstances, les personnes présentes...',
     'Temoignage': 'Transcription du témoignage, identité du témoin, conditions de l\'audition...',
@@ -267,6 +272,39 @@ function AddPiecePopup({ onAdd, onClose, infractions }) {
     'Requisitoire': 'Argumentaire de l\'accusation, peines requises...',
     'Note-interne': 'Notes confidentielles de l\'enquête...',
   }
+
+  const loadSiteDocs = async () => {
+    if (siteDocuments.length > 0) { setShowDocPicker(true); return }
+    try {
+      const [rap, med, tel, inter] = await Promise.all([
+        api.get('/rapports').catch(() => ({ data: { data: [] } })),
+        api.get('/medical').catch(() => ({ data: { data: [] } })),
+        api.get('/telegrammes').catch(() => ({ data: { data: [] } })),
+        api.get('/interdits').catch(() => ({ data: { data: [] } })),
+      ])
+      const all = [
+        ...(rap.data.data || []).map(r => ({ id: r.id, type: '📋 Rapport', label: r.titre || r.type, sub: `${r.auteur_nom || ''} — ${r.date_rp || ''}`, ref: `Rapport #${r.numero || r.id}` })),
+        ...(med.data.data || []).map(r => ({ id: r.id, type: '🏥 Visite', label: `${r.effectif_prenom || ''} ${r.effectif_nom || ''}`, sub: r.date_visite_rp || '', ref: `Visite #${r.id}` })),
+        ...(tel.data.data || []).map(r => ({ id: r.id, type: '📨 Télégramme', label: r.objet || r.numero, sub: `${r.expediteur_texte || ''} → ${r.destinataire_texte || ''}`, ref: r.numero })),
+        ...(inter.data.data || []).map(r => ({ id: r.id, type: '⛔ Interdit', label: `${r.effectif_prenom || ''} ${r.effectif_nom || ''}`, sub: r.motif?.slice(0, 60), ref: `Interdit #${r.id}` })),
+      ]
+      setSiteDocuments(all)
+      setShowDocPicker(true)
+    } catch {}
+  }
+
+  const linkDoc = (doc) => {
+    setForm(f => ({
+      ...f,
+      titre: f.titre || doc.ref,
+      contenu: (f.contenu ? f.contenu + '\n\n' : '') + `📎 Document lié : ${doc.type} — ${doc.label}\n${doc.sub || ''}\nRéférence : ${doc.ref}`
+    }))
+    setShowDocPicker(false)
+  }
+
+  const filteredDocs = docSearch
+    ? siteDocuments.filter(d => `${d.type} ${d.label} ${d.sub} ${d.ref}`.toLowerCase().includes(docSearch.toLowerCase()))
+    : siteDocuments
 
   return (
     <div className="popup-overlay" onClick={onClose}>
@@ -297,11 +335,36 @@ function AddPiecePopup({ onAdd, onClose, infractions }) {
           </div>
         )}
 
-        <div className="form-group"><label>Contenu</label>
+        <div className="form-group">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <label>Contenu</label>
+            <button type="button" className="btn btn-sm btn-secondary" style={{ padding: '2px 8px', fontSize: '0.75rem' }} onClick={loadSiteDocs}>📎 Lier un document du site</button>
+          </div>
           <textarea className="form-input piece-textarea" rows={10} value={form.contenu}
             onChange={e => setForm(f => ({...f, contenu: e.target.value}))}
             placeholder={placeholders[form.type] || 'Contenu de la pièce...'} />
         </div>
+        {showDocPicker && (
+          <div style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid var(--border-color)', borderRadius: 6, padding: '0.75rem', marginBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <strong style={{ fontSize: '0.85rem' }}>📎 Documents du site</strong>
+              <button className="btn btn-sm" onClick={() => setShowDocPicker(false)}>✕</button>
+            </div>
+            <input className="form-input" value={docSearch} onChange={e => setDocSearch(e.target.value)} placeholder="🔍 Rechercher..." style={{ marginBottom: '0.5rem' }} />
+            <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+              {filteredDocs.slice(0, 15).map((d, i) => (
+                <div key={`${d.type}-${d.id}-${i}`} onClick={() => linkDoc(d)}
+                  style={{ padding: '0.4rem 0.6rem', cursor: 'pointer', borderBottom: '1px solid var(--border-color)', fontSize: '0.8rem', transition: 'background 0.1s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(107,143,60,0.08)'}
+                  onMouseLeave={e => e.currentTarget.style.background = ''}>
+                  <span style={{ fontWeight: 600 }}>{d.type}</span> {d.label}
+                  {d.sub && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{d.sub}</div>}
+                </div>
+              ))}
+              {filteredDocs.length === 0 && <p style={{ textAlign: 'center', color: '#999', padding: '0.5rem' }}>Aucun résultat</p>}
+            </div>
+          </div>
+        )}
         <div className="form-row">
           <div className="form-group"><label>Date RP</label><input className="form-input" value={form.date_rp} onChange={e => setForm(f => ({...f, date_rp: e.target.value}))} placeholder="Ex: 12 Juin 1944" /></div>
           <div className="form-group"><label>Date IRL</label><input type="date" className="form-input" value={form.date_irl} onChange={e => setForm(f => ({...f, date_irl: e.target.value}))} /></div>
@@ -338,8 +401,21 @@ function PieceViewPopup({ pieceId, userId, canWrite, onClose, onRefresh }) {
 
   const addSignatureSlot = async (data) => {
     try {
-      await api.post(`/affaires/pieces/${pieceId}/signatures`, data)
+      const res = await api.post(`/affaires/pieces/${pieceId}/signatures`, data)
       setShowAddSig(false)
+      // Auto-send telegram if effectif selected
+      if (data.effectif_id && data.sendTelegram) {
+        try {
+          const sigId = res.data?.data?.id || res.data?.id
+          if (sigId) {
+            const telRes = await api.post(`/affaires/signatures/${sigId}/telegram`)
+            setMessage(`✅ Signature ajoutée + 📨 Télégramme ${telRes.data.telegramme} envoyé`)
+          }
+        } catch { setMessage('✅ Signature ajoutée (télégramme échoué)') }
+      } else {
+        setMessage('✅ Signature ajoutée')
+      }
+      setTimeout(() => setMessage(''), 4000)
       loadPiece()
     } catch (err) { setMessage('Erreur') }
   }
@@ -371,7 +447,7 @@ function PieceViewPopup({ pieceId, userId, canWrite, onClose, onRefresh }) {
         <button className="popup-close" onClick={onClose}>✕</button>
         {message && <div className="alert alert-success" style={{marginBottom:'0.5rem'}}>{message}</div>}
 
-        <div className="piece-document">
+        <div className="piece-document" id="piece-doc-print">
           <div className="piece-doc-header">
             <span className="piece-type-badge">{PIECE_ICONS[p.type]} {p.type.replace(/-/g,' ')}</span>
             {p.confidentiel && <span className="piece-confidentiel">🔒 CONFIDENTIEL</span>}
@@ -433,6 +509,11 @@ function PieceViewPopup({ pieceId, userId, canWrite, onClose, onRefresh }) {
           </div>
         </div>
 
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', justifyContent: 'center' }}>
+          <button className="btn btn-secondary btn-small" onClick={() => exportToPdf('piece-doc-print', `Piece_${p.titre?.replace(/\s/g,'_')}`)}>📄 PDF</button>
+          <button className="btn btn-secondary btn-small" onClick={() => window.print()}>🖨️ Imprimer</button>
+        </div>
+
         {showAddSig && <AddSignatureSlot onAdd={addSignatureSlot} onClose={() => setShowAddSig(false)} />}
         {showSignCanvas && <SignatureCanvas sigId={showSignCanvas} onSign={signDocument} onClose={() => setShowSignCanvas(null)} />}
       </div>
@@ -447,23 +528,34 @@ function AddSignatureSlot({ onAdd, onClose }) {
   const [nom_signataire, setNom] = useState('')
   const [role_signataire, setRole] = useState('')
   const [useLibre, setUseLibre] = useState(false)
+  const [sendTelegram, setSendTelegram] = useState(true)
 
   return (
     <div style={{marginTop:'1rem',padding:'1rem',background:'rgba(0,0,0,0.03)',borderRadius:6}}>
       <h4>Ajouter une case signature</h4>
       <div className="form-group">
-        <label><input type="checkbox" checked={useLibre} onChange={e => setUseLibre(e.target.checked)} /> Nom libre</label>
+        <label><input type="checkbox" checked={useLibre} onChange={e => setUseLibre(e.target.checked)} /> Nom libre (pas de télégramme)</label>
       </div>
       {useLibre ? (
         <div className="form-group"><input className="form-input" value={nom_signataire} onChange={e => setNom(e.target.value)} placeholder="Nom du signataire..." /></div>
       ) : (
-        <div className="form-group">
-          <EffectifAutocomplete value={effectif_display} onChange={(id, d) => { setEffectifId(id); setEffectifDisplay(d); setNom(d) }} placeholder="Effectif..." />
-        </div>
+        <>
+          <div className="form-group">
+            <EffectifAutocomplete value={effectif_display} onChange={(text, eff) => { setEffectifId(eff?.id || ''); setEffectifDisplay(text); setNom(text) }} placeholder="Effectif..." />
+          </div>
+          <div className="form-group">
+            <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', cursor: 'pointer', fontSize: '0.85rem' }}>
+              <input type="checkbox" checked={sendTelegram} onChange={e => setSendTelegram(e.target.checked)} />
+              📨 Envoyer un télégramme de demande de signature
+            </label>
+          </div>
+        </>
       )}
       <div className="form-group"><input className="form-input" value={role_signataire} onChange={e => setRole(e.target.value)} placeholder="Rôle (Ex: Enquêteur, Témoin, Juge...)" /></div>
       <div style={{display:'flex',gap:'0.5rem'}}>
-        <button className="btn btn-sm btn-primary" onClick={() => onAdd({ effectif_id: useLibre ? null : effectif_id, nom_signataire: useLibre ? nom_signataire : effectif_display, role_signataire })}>Ajouter</button>
+        <button className="btn btn-sm btn-primary" onClick={() => onAdd({ effectif_id: useLibre ? null : effectif_id, nom_signataire: useLibre ? nom_signataire : effectif_display, role_signataire, sendTelegram: !useLibre && sendTelegram })}>
+          {!useLibre && sendTelegram ? '✍️📨 Ajouter + Télégramme' : '✍️ Ajouter'}
+        </button>
         <button className="btn btn-sm" onClick={onClose}>Annuler</button>
       </div>
     </div>
