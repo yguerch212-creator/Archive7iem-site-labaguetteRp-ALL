@@ -1,10 +1,17 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from './useAuth'
 
 function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth()
+  const { user, loading, loginAsGuest } = useAuth()
   const location = useLocation()
+
+  // Auto-guest: if not logged in and arriving via a direct link (not /login), auto-enable guest mode
+  useEffect(() => {
+    if (!loading && !user && location.pathname !== '/login') {
+      loginAsGuest()
+    }
+  }, [loading, user])
 
   if (loading) {
     return (
@@ -17,7 +24,14 @@ function ProtectedRoute({ children }) {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />
+    // Will be handled by useEffect above, show loading briefly
+    return (
+      <div className="loading-screen">
+        <div className="paper-card">
+          <p>Accès visiteur...</p>
+        </div>
+      </div>
+    )
   }
 
   // Force password change on first login
