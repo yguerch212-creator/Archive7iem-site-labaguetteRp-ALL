@@ -1,13 +1,30 @@
 /**
- * LayoutRenderer — renders saved layout blocks (from LayoutEditor) as positioned elements.
- * Used by Soldbuch, RapportView, AffaireView to display custom layouts.
- * Blocks have: { id, type, content, x, y, w, h, docRef?, style? }
+ * LayoutRenderer — renders saved layout HTML or blocks.
+ * If `html` is provided, renders it directly. Otherwise renders blocks as positioned elements.
  */
-export default function LayoutRenderer({ blocks = [], width = 800, minHeight = 1100 }) {
+export default function LayoutRenderer({ html, blocks = [], width = 800, minHeight = 600 }) {
+  // If raw HTML is provided (from publish), render it directly
+  if (html) {
+    return (
+      <div
+        className="layout-canvas"
+        style={{
+          width, minHeight, margin: '0 auto', position: 'relative',
+          background: '#f5f2e8', border: '1px solid #c4b99a', borderRadius: 4,
+          fontFamily: "'IBM Plex Mono', monospace",
+        }}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    )
+  }
+
   if (!blocks || blocks.length === 0) return null
 
+  // Auto-calculate height from blocks
+  const autoHeight = Math.max(minHeight, ...blocks.map(b => (b.y || 0) + (b.h || 0) + 40))
+
   return (
-    <div style={{ position: 'relative', width, minHeight, margin: '0 auto' }}>
+    <div style={{ position: 'relative', width, minHeight: autoHeight, margin: '0 auto' }}>
       {blocks.map(block => (
         <div
           key={block.id}
@@ -58,7 +75,6 @@ function BlockContent({ block }) {
       )
 
     case 'signature':
-      // content can be base64 image or text
       if (block.content && block.content.startsWith('data:image')) {
         return <img src={block.content} alt="Signature" style={{ maxWidth: '100%', maxHeight: '100%' }} />
       }

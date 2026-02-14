@@ -297,7 +297,7 @@ export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPub
         <div
           ref={canvasRef}
           className="layout-canvas"
-          style={{ width, minHeight: height }}
+          style={{ width, minHeight: Math.max(height, ...blocks.map(b => (b.y || 0) + (b.h || 0) + 60)) }}
           onClick={(e) => { if (e.target === e.currentTarget) setSelectedId(null) }}
         >
           {blocks.map((block, zIdx) => (

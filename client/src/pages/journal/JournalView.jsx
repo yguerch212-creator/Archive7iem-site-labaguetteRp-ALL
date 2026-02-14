@@ -24,7 +24,8 @@ export default function JournalView() {
     setLoading(false)
   }
 
-  const canEdit = article && (article.auteur_id === user?.effectif_id || user?.isAdmin || user?.isEtatMajor) && article.statut !== 'publie'
+  const isAuthor = article?.auteur_id === user?.effectif_id
+  const canEdit = article && (isAuthor || user?.isAdmin || user?.isEtatMajor) && article.statut !== 'publie'
   const canDelete = article && (article.auteur_id === user?.effectif_id || user?.isAdmin || user?.isEtatMajor)
   const layout = article?.layout ? (typeof article.layout === 'string' ? JSON.parse(article.layout) : article.layout) : null
 
