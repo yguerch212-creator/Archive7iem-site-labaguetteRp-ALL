@@ -1,4 +1,5 @@
 const { logActivity } = require('../utils/logger')
+const { logHistorique } = require('../utils/historique')
 const router = require('express').Router()
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
@@ -46,6 +47,7 @@ router.post('/effectif/:id', auth, async (req, res) => {
       [req.params.id, decoration_id || null, nom_custom || null, date_attribution || null, attribue_par || null, motif || null]
     )
     logActivity(req, 'award_decoration', 'effectif', parseInt(req.params.id), nom_custom || `decoration #${decoration_id}`)
+    logHistorique(parseInt(req.params.id), 'decoration', `Décoration attribuée : ${nom_custom || 'médaille'} — ${motif || ''}`, { decoration_id, motif })
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })

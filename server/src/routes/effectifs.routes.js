@@ -1,4 +1,5 @@
 const { logActivity } = require('../utils/logger')
+const { logHistorique } = require('../utils/historique')
 const router = require('express').Router()
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
@@ -87,6 +88,7 @@ router.post('/', auth, recenseur, async (req, res) => {
     const effectifId = result.insertId
 
     logActivity(req, 'create_effectif', 'effectif', effectifId, `${f.prenom} ${f.nom}`)
+    logHistorique(effectifId, 'creation', `Création de la fiche — ${f.prenom} ${f.nom}`)
 
     // Discord notification
     const { notifyEffectif } = require('../utils/discordNotify')
@@ -248,6 +250,7 @@ router.put('/:id/reserve', auth, async (req, res) => {
         'UPDATE effectifs SET en_reserve = 1, unite_origine_id = ?, grade_origine_id = ?, unite_id = ?, grade_id = ? WHERE id = ?',
         [eff.unite_id, eff.grade_id, unite716.id, grade716 ? grade716.id : eff.grade_id, req.params.id]
       )
+      logHistorique(eff.id, 'reserve', `Passage en réserve (716. Reserve)`, { unite_origine: eff.unite_id, grade_origine: eff.grade_id })
       res.json({ success: true, message: 'Effectif mis en réserve' })
     } else {
       // Sortir de réserve: restaurer unité/grade d'origine
@@ -255,8 +258,47 @@ router.put('/:id/reserve', auth, async (req, res) => {
         'UPDATE effectifs SET en_reserve = 0, unite_id = COALESCE(unite_origine_id, unite_id), grade_id = COALESCE(grade_origine_id, grade_id), unite_origine_id = NULL, grade_origine_id = NULL WHERE id = ?',
         [req.params.id]
       )
+      logHistorique(eff.id, 'reintegration', `Réintégration depuis la réserve`)
       res.json({ success: true, message: 'Effectif sorti de réserve' })
     }
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
+// GET /api/effectifs/:id/historique — Full timeline
+router.get('/:id/historique', auth, async (req, res) => {
+  try {
+    const id = req.params.id
+
+    // Manual historique entries
+    const historique = await query('SELECT * FROM effectif_historique WHERE effectif_id = ? ORDER BY date_evenement DESC', [id])
+
+    // PDS recap (all weeks)
+    const pds = await query('SELECT semaine, total_heures, created_at FROM pds_semaines WHERE effectif_id = ? ORDER BY semaine DESC', [id])
+
+    // Rapports where this person is author
+    const rapports = await query(`SELECT id, numero, titre, type, auteur_nom, date_irl, created_at FROM rapports WHERE auteur_id = ? ORDER BY created_at DESC`, [id])
+
+    // Interdits
+    const interdits = await query('SELECT * FROM interdits_front WHERE effectif_id = ? ORDER BY created_at DESC', [id])
+
+    // Visites médicales
+    const medical = await query('SELECT id, motif, medecin_nom, resultat, date_visite, valide, created_at FROM visites_medicales WHERE effectif_id = ? ORDER BY created_at DESC', [id])
+
+    // Décorations
+    const decorations = await query(`
+      SELECT ed.*, d.nom AS decoration_nom FROM effectif_decorations ed
+      LEFT JOIN decorations d ON d.id = ed.decoration_id
+      WHERE ed.effectif_id = ? ORDER BY ed.date_attribution DESC
+    `, [id])
+
+    // Affaires (impliqué)
+    const affaires = await query(`
+      SELECT a.id, a.numero, a.titre, a.statut, ap.role, a.created_at
+      FROM affaires_personnes ap JOIN affaires a ON a.id = ap.affaire_id
+      WHERE ap.effectif_id = ? ORDER BY a.created_at DESC
+    `, [id])
+
+    res.json({ success: true, historique, pds, rapports, interdits, medical, decorations, affaires })
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
 

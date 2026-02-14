@@ -16,6 +16,8 @@ export default function DossierPersonnel() {
   const [noteForm, setNoteForm] = useState({ titre: '', contenu: '', date_rp: '' })
   const [message, setMessage] = useState(null)
   const [tab, setTab] = useState('timeline')
+  const [hist, setHist] = useState(null)
+  const [showCompteRendu, setShowCompteRendu] = useState(false)
 
   const canEdit = user?.isAdmin || user?.isOfficier || user?.isRecenseur
 
@@ -25,12 +27,14 @@ export default function DossierPersonnel() {
 
   const loadAll = async () => {
     try {
-      const [dossierRes, effRes] = await Promise.all([
+      const [dossierRes, effRes, histRes] = await Promise.all([
         api.get(`/dossiers/effectif/${effectifId}`),
-        api.get(`/effectifs/${effectifId}`)
+        api.get(`/effectifs/${effectifId}`),
+        api.get(`/effectifs/${effectifId}/historique`)
       ])
       setData(dossierRes.data.data)
       setEffectif(effRes.data.data)
+      setHist(histRes.data)
     } catch (err) { console.error(err) }
   }
 
@@ -62,13 +66,81 @@ export default function DossierPersonnel() {
 
   const { dossier, rapports, interdits, medical, entrees } = data
 
-  // Build unified timeline
+  // Build unified timeline (including historique, PDS, decorations, affaires)
   const timeline = [
     ...rapports.map(r => ({ type: 'rapport', date: r.created_at, data: r })),
     ...interdits.map(i => ({ type: 'interdit', date: i.created_at, data: i })),
     ...medical.map(m => ({ type: 'medical', date: m.created_at || m.date_visite, data: m })),
-    ...entrees.map(e => ({ type: 'note', date: e.created_at, data: e }))
+    ...entrees.map(e => ({ type: 'note', date: e.created_at, data: e })),
+    ...(hist?.historique || []).map(h => ({ type: 'historique', date: h.date_evenement, data: h })),
+    ...(hist?.pds || []).map(p => ({ type: 'pds', date: p.created_at, data: p })),
+    ...(hist?.decorations || []).map(d => ({ type: 'decoration', date: d.date_attribution || d.created_at, data: d })),
+    ...(hist?.affaires || []).map(a => ({ type: 'affaire', date: a.created_at, data: a })),
   ].sort((a, b) => new Date(b.date) - new Date(a.date))
+
+  // Generate compte rendu text
+  const genCompteRendu = () => {
+    const e = effectif
+    let text = `COMPTE RENDU D'ACTIVITÉ\n`
+    text += `═══════════════════════════════════════\n\n`
+    text += `Effectif : ${e.grade_nom || ''} ${e.prenom} ${e.nom}\n`
+    text += `Unité : ${e.unite_code}. ${e.unite_nom}\n`
+    text += `Fonction : ${e.fonction || '—'} | Spécialité : ${e.specialite || '—'}\n`
+    text += `Statut : ${e.en_reserve ? 'EN RÉSERVE' : 'Actif'}\n\n`
+
+    // Decorations
+    if (hist?.decorations?.length) {
+      text += `🎖️ DÉCORATIONS (${hist.decorations.length})\n`
+      hist.decorations.forEach(d => { text += `  • ${formatDate(d.date_attribution)} — ${d.decoration_nom || d.nom_custom || '?'} ${d.motif ? `(${d.motif})` : ''}\n` })
+      text += `\n`
+    }
+
+    // PDS
+    if (hist?.pds?.length) {
+      const totalH = hist.pds.reduce((s, p) => s + (p.total_heures || 0), 0)
+      text += `⏱️ PRISE DE SERVICE (${hist.pds.length} semaines, ${totalH}h total)\n`
+      hist.pds.slice(0, 10).forEach(p => { text += `  • Semaine ${p.semaine} — ${p.total_heures}h\n` })
+      if (hist.pds.length > 10) text += `  ... et ${hist.pds.length - 10} semaines précédentes\n`
+      text += `\n`
+    }
+
+    // Rapports
+    text += `📝 RAPPORTS (${rapports.length})\n`
+    rapports.forEach(r => { text += `  • ${formatDate(r.created_at)} — [${r.type}] ${r.titre}\n` })
+    text += `\n`
+
+    // Interdits
+    if (interdits.length) {
+      text += `🚫 INTERDITS DE FRONT (${interdits.length})\n`
+      interdits.forEach(i => { text += `  • ${formatDate(i.created_at)} — ${i.type} : ${i.motif} (${i.actif ? 'ACTIF' : 'Levé'})\n` })
+      text += `\n`
+    }
+
+    // Medical
+    if (medical.length) {
+      text += `🏥 VISITES MÉDICALES (${medical.length})\n`
+      medical.forEach(m => { text += `  • ${formatDate(m.date_visite || m.created_at)} — ${m.aptitude || '?'} ${m.diagnostic ? `: ${m.diagnostic}` : ''}\n` })
+      text += `\n`
+    }
+
+    // Affaires
+    if (hist?.affaires?.length) {
+      text += `⚖️ AFFAIRES JUDICIAIRES (${hist.affaires.length})\n`
+      hist.affaires.forEach(a => { text += `  • ${a.numero} — ${a.titre} (${a.role || '?'}, ${a.statut})\n` })
+      text += `\n`
+    }
+
+    // Historique events
+    if (hist?.historique?.length) {
+      text += `📜 HISTORIQUE\n`
+      hist.historique.forEach(h => { text += `  • ${formatDate(h.date_evenement)} — [${h.type}] ${h.description}\n` })
+      text += `\n`
+    }
+
+    text += `═══════════════════════════════════════\n`
+    text += `Généré le ${new Date().toLocaleDateString('fr-FR')} — Archives du 7. Armeekorps`
+    return text
+  }
 
   const formatDate = (d) => {
     if (!d) return '—'
@@ -97,11 +169,15 @@ export default function DossierPersonnel() {
               <span className="dossier-stat">🚫 {interdits.length} interdit{interdits.length !== 1 ? 's' : ''}</span>
               <span className="dossier-stat">🏥 {medical.length} visite{medical.length !== 1 ? 's' : ''}</span>
               <span className="dossier-stat">📝 {entrees.length} note{entrees.length !== 1 ? 's' : ''}</span>
+              <span className="dossier-stat">🎖️ {hist?.decorations?.length || 0} décoration{(hist?.decorations?.length || 0) !== 1 ? 's' : ''}</span>
+              <span className="dossier-stat">⏱️ {hist?.pds?.length || 0} sem. PDS</span>
+              {effectif.en_reserve ? <span className="dossier-stat" style={{ color: '#8a7d6b', fontWeight: 700 }}>🏕️ RÉSERVE</span> : null}
             </div>
           </div>
         </div>
         <div className="dossier-header-actions">
           <Link to={`/effectifs/${effectifId}/soldbuch`} className="btn btn-sm">📖 Soldbuch</Link>
+          <button className="btn btn-sm btn-secondary" onClick={() => setShowCompteRendu(true)}>📄 Compte rendu</button>
           {canEdit && (
             <button className="btn btn-sm btn-primary" onClick={() => setShowNoteForm(!showNoteForm)}>
               {showNoteForm ? '✕' : '+ Ajouter une note'}
@@ -147,6 +223,8 @@ export default function DossierPersonnel() {
         <button className={`pds-tab ${tab === 'rapports' ? 'active' : ''}`} onClick={() => setTab('rapports')}>📋 Rapports ({rapports.length})</button>
         <button className={`pds-tab ${tab === 'interdits' ? 'active' : ''}`} onClick={() => setTab('interdits')}>🚫 Interdits ({interdits.length})</button>
         <button className={`pds-tab ${tab === 'medical' ? 'active' : ''}`} onClick={() => setTab('medical')}>🏥 Médical ({medical.length})</button>
+        <button className={`pds-tab ${tab === 'pds' ? 'active' : ''}`} onClick={() => setTab('pds')}>⏱️ PDS ({hist?.pds?.length || 0})</button>
+        <button className={`pds-tab ${tab === 'decorations' ? 'active' : ''}`} onClick={() => setTab('decorations')}>🎖️ Décorations ({hist?.decorations?.length || 0})</button>
       </div>
 
       {/* Timeline view */}
@@ -167,6 +245,10 @@ export default function DossierPersonnel() {
                       {item.type === 'interdit' && `🚫 Interdit de front — ${item.data.type}`}
                       {item.type === 'medical' && `🏥 Visite médicale — ${item.data.aptitude || ''}`}
                       {item.type === 'note' && `📝 Note`}
+                      {item.type === 'historique' && `📜 ${item.data.type === 'creation' ? 'Création' : item.data.type === 'reserve' ? 'Réserve' : item.data.type === 'reintegration' ? 'Réintégration' : item.data.type === 'decoration' ? 'Décoration' : item.data.type === 'grade' ? 'Changement de grade' : item.data.type}`}
+                      {item.type === 'pds' && `⏱️ PDS — Semaine ${item.data.semaine}`}
+                      {item.type === 'decoration' && `🎖️ Décoration`}
+                      {item.type === 'affaire' && `⚖️ Affaire ${item.data.numero}`}
                     </span>
                     <span className="timeline-date">{formatDate(item.date)}</span>
                   </div>
@@ -197,6 +279,10 @@ export default function DossierPersonnel() {
                         )}
                       </>
                     )}
+                    {item.type === 'historique' && <p>{item.data.description}</p>}
+                    {item.type === 'pds' && <p><strong>{item.data.total_heures}h</strong> {(item.data.total_heures || 0) >= 6 ? '✅' : '❌ < 6h minimum'}</p>}
+                    {item.type === 'decoration' && <p><strong>{item.data.decoration_nom || item.data.nom_custom}</strong>{item.data.motif ? ` — ${item.data.motif}` : ''}</p>}
+                    {item.type === 'affaire' && <p><Link to={`/sanctions/${item.data.id}`}>{item.data.titre}</Link> — Rôle: {item.data.role || '?'} ({item.data.statut})</p>}
                   </div>
                 </div>
               </div>
@@ -249,6 +335,67 @@ export default function DossierPersonnel() {
               </div>
             ))
           )}
+        </div>
+      )}
+      {/* PDS tab */}
+      {tab === 'pds' && (
+        <div className="dossier-list">
+          {!hist?.pds?.length ? <p className="text-muted">Aucune donnée PDS</p> : (
+            <div className="card" style={{ overflow: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                <thead><tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+                  <th style={{ padding: '8px 12px', textAlign: 'left' }}>Semaine</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>Heures</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>Statut</th>
+                </tr></thead>
+                <tbody>
+                  {hist.pds.map((p, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '8px 12px' }}>{p.semaine}</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 600, color: (p.total_heures || 0) >= 6 ? 'var(--success)' : 'var(--danger)' }}>{p.total_heures || 0}h</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'center' }}>{(p.total_heures || 0) >= 6 ? '✅' : '❌ < 6h'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Decorations tab */}
+      {tab === 'decorations' && (
+        <div className="dossier-list">
+          {!hist?.decorations?.length ? <p className="text-muted">Aucune décoration</p> : (
+            hist.decorations.map((d, i) => (
+              <div key={i} className="card dossier-list-item">
+                <div>
+                  <span>🎖️ <strong>{d.decoration_nom || d.nom_custom || '—'}</strong></span>
+                  {d.motif && <p style={{ margin: '4px 0 0', fontSize: '0.85rem' }}>{d.motif}</p>}
+                  <p className="text-muted">{formatDate(d.date_attribution)} — Par {d.attribue_par || '—'}</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Compte rendu popup */}
+      {showCompteRendu && (
+        <div className="popup-overlay" onClick={() => setShowCompteRendu(false)}>
+          <div className="popup-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 800, maxHeight: '85vh', overflow: 'auto' }}>
+            <button className="popup-close" onClick={() => setShowCompteRendu(false)}>✕</button>
+            <h2 style={{ marginTop: 0, textAlign: 'center' }}>📄 Compte rendu d'activité</h2>
+            <pre style={{ whiteSpace: 'pre-wrap', fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.82rem', lineHeight: 1.6, background: '#f5f2e8', border: '1px solid #c4b99a', borderRadius: 4, padding: '30px 40px' }}>{genCompteRendu()}</pre>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 12 }}>
+              <button className="btn btn-primary btn-sm" onClick={() => {
+                const blob = new Blob([genCompteRendu()], { type: 'text/plain;charset=utf-8' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a'); a.href = url; a.download = `CompteRendu_${effectif.prenom}_${effectif.nom}.txt`; a.click()
+              }}>📥 Télécharger (.txt)</button>
+              <button className="btn btn-secondary btn-sm" onClick={() => { navigator.clipboard.writeText(genCompteRendu()); }}>📋 Copier</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
