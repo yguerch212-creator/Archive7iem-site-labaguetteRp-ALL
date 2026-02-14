@@ -11,6 +11,9 @@ export default function Commandement() {
   const [newNote, setNewNote] = useState('')
   const [notePrivate, setNotePrivate] = useState(false)
   const [msg, setMsg] = useState('')
+  const [etat, setEtat] = useState(null)
+  const [showEtat, setShowEtat] = useState(false)
+  const [etatFilter, setEtatFilter] = useState('')
 
   useEffect(() => {
     api.get('/commandement/dashboard').then(r => setData(r.data)).catch(() => {})
@@ -110,6 +113,9 @@ export default function Commandement() {
       <div className="paper-card" style={{ marginTop: 'var(--space-lg)' }}>
         <h3 style={{ marginTop: 0 }}>⚡ Accès rapide</h3>
         <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+          <button className="btn btn-primary btn-sm" onClick={async () => {
+            try { const r = await api.get('/commandement/etat'); setEtat(r.data); setShowEtat(true) } catch { setMsg('Erreur chargement état') }
+          }}>📊 État PDS & Rapports</button>
           <Link to="/ordres" className="btn btn-secondary btn-sm">📜 Ordres</Link>
           <Link to="/calendrier" className="btn btn-secondary btn-sm">📅 Calendrier</Link>
           <Link to="/rapports" className="btn btn-secondary btn-sm">📝 Rapports</Link>
@@ -118,6 +124,64 @@ export default function Commandement() {
           <Link to="/admin/stats" className="btn btn-secondary btn-sm">📊 Statistiques</Link>
         </div>
       </div>
+
+      {/* État PDS & Rapports popup */}
+      {showEtat && etat && (
+        <div className="popup-overlay" onClick={() => setShowEtat(false)}>
+          <div className="popup-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 900, maxHeight: '85vh', overflow: 'auto' }}>
+            <button className="popup-close" onClick={() => setShowEtat(false)}>✕</button>
+            <h2 style={{ marginTop: 0, textAlign: 'center' }}>📊 État de la semaine</h2>
+            <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Semaine du {new Date(etat.weekStart).toLocaleDateString('fr-FR')} — {etat.data?.length || 0} effectifs actifs</p>
+            
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
+              <button className={`btn btn-sm ${!etatFilter ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setEtatFilter('')}>Tous</button>
+              <button className={`btn btn-sm ${etatFilter === 'pds_manquant' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setEtatFilter('pds_manquant')}>❌ PDS manquant</button>
+              <button className={`btn btn-sm ${etatFilter === 'rapport_manquant' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setEtatFilter('rapport_manquant')}>❌ Rapport manquant</button>
+              <button className={`btn btn-sm ${etatFilter === 'ok' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setEtatFilter('ok')}>✅ Tout OK</button>
+            </div>
+
+            {(() => {
+              let rows = etat.data || []
+              if (etatFilter === 'pds_manquant') rows = rows.filter(r => !r.pds_fait)
+              else if (etatFilter === 'rapport_manquant') rows = rows.filter(r => !r.rapports_semaine)
+              else if (etatFilter === 'ok') rows = rows.filter(r => r.pds_fait && r.rapports_semaine)
+
+              const totalPds = rows.filter(r => r.pds_fait).length
+              const totalRapports = rows.filter(r => r.rapports_semaine).length
+
+              return (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-lg)', marginBottom: 'var(--space-md)' }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: totalPds === rows.length ? 'var(--success)' : 'var(--warning)' }}>{totalPds}/{rows.length}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>PDS remplis</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: totalRapports === rows.length ? 'var(--success)' : 'var(--warning)' }}>{totalRapports}/{rows.length}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Ont un rapport</div>
+                    </div>
+                  </div>
+                  <table className="table" style={{ fontSize: '0.8rem' }}>
+                    <thead><tr><th>Unité</th><th>Grade</th><th>Nom</th><th style={{ textAlign: 'center' }}>PDS</th><th style={{ textAlign: 'center' }}>Heures</th><th style={{ textAlign: 'center' }}>Rapport</th></tr></thead>
+                    <tbody>
+                      {rows.map(r => (
+                        <tr key={r.id}>
+                          <td>{r.unite_code || '—'}</td>
+                          <td style={{ fontSize: '0.75rem' }}>{r.grade_nom || '—'}</td>
+                          <td><strong>{r.prenom} {r.nom}</strong></td>
+                          <td style={{ textAlign: 'center', fontSize: '1.1rem' }}>{r.pds_fait ? '✅' : '❌'}</td>
+                          <td style={{ textAlign: 'center', fontWeight: 600, color: (r.pds_heures || 0) >= 6 ? 'var(--success)' : 'var(--danger)' }}>{r.pds_heures ? `${r.pds_heures}h` : '—'}</td>
+                          <td style={{ textAlign: 'center', fontSize: '1.1rem' }}>{r.rapports_semaine ? `✅ (${r.rapports_semaine})` : '❌'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )
+            })()}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -87,4 +87,38 @@ router.delete('/notes/:id', auth, officier, async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
 
+// GET /api/commandement/etat — État PDS + rapports par effectif cette semaine
+router.get('/etat', auth, officier, async (req, res) => {
+  try {
+    // Current RP week (Friday 20h → Friday 20h)
+    const now = new Date()
+    const day = now.getUTCDay() // 0=Sun
+    const hour = now.getUTCHours()
+    // Find last Friday 20h UTC
+    let daysBack = (day - 5 + 7) % 7
+    if (daysBack === 0 && hour < 20) daysBack = 7
+    const friday = new Date(now)
+    friday.setUTCDate(friday.getUTCDate() - daysBack)
+    friday.setUTCHours(20, 0, 0, 0)
+    const weekStart = friday.toISOString().slice(0, 19).replace('T', ' ')
+    const semaine = friday.toISOString().slice(0, 10)
+
+    const rows = await query(`
+      SELECT e.id, e.prenom, e.nom, e.en_reserve,
+             g.nom_complet AS grade_nom, g.rang AS grade_rang,
+             u.code AS unite_code, u.nom AS unite_nom,
+             (SELECT COUNT(*) FROM pds_semaines p WHERE p.effectif_id = e.id AND p.semaine = ?) AS pds_fait,
+             (SELECT SUM(p.total_heures) FROM pds_semaines p WHERE p.effectif_id = e.id AND p.semaine = ?) AS pds_heures,
+             (SELECT COUNT(*) FROM rapports r WHERE r.auteur_id = e.id AND r.created_at >= ?) AS rapports_semaine
+      FROM effectifs e
+      LEFT JOIN grades g ON g.id = e.grade_id
+      LEFT JOIN unites u ON u.id = e.unite_id
+      WHERE e.en_reserve = 0
+      ORDER BY u.code, g.rang DESC, e.nom
+    `, [semaine, semaine, weekStart])
+
+    res.json({ success: true, data: rows, semaine, weekStart })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
 module.exports = router
