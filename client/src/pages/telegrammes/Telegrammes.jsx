@@ -21,7 +21,8 @@ export default function Telegrammes() {
   const [unread, setUnread] = useState(0)
   const [selected, setSelected] = useState(null)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ destinataire_id: '', destinataire_nom: '', destinataire_unite: '', objet: '', contenu: '', priorite: 'Normal', prive: false })
+  const [form, setForm] = useState({ destinataires: [], objet: '', contenu: '', priorite: 'Normal', prive: false })
+  const [destInput, setDestInput] = useState('')
   const [message, setMessage] = useState(null)
 
   const hasEffectif = !!user?.effectif_id
@@ -39,7 +40,7 @@ export default function Telegrammes() {
 
   const openTel = async (t) => {
     // Privé: only sender/receiver/privileged can open
-    if (t.prive && t.expediteur_id !== user?.effectif_id && t.destinataire_id !== user?.effectif_id && !isPrivileged) {
+    if (t.prive && t.expediteur_id !== user?.effectif_id && !(t.destinataires || []).some(d => d.effectif_id === user?.effectif_id) && !isPrivileged) {
       return
     }
     try {
@@ -60,8 +61,8 @@ export default function Telegrammes() {
   const submit = async (e) => {
     e.preventDefault()
     try {
-      const res = await api.post('/telegrammes', form)
-      setForm({ destinataire_id: '', destinataire_nom: '', destinataire_unite: '', objet: '', contenu: '', priorite: 'Normal', prive: false })
+      const res = await api.post('/telegrammes', { ...form, destinataires: form.destinataires })
+      setForm({ destinataires: [], objet: '', contenu: '', priorite: 'Normal', prive: false }); setDestInput('')
       setShowForm(false)
       setMessage({ type: 'success', text: `Télégramme ${res.data.data.numero} envoyé ✓` })
       setTimeout(() => setMessage(null), 3000)
@@ -72,8 +73,18 @@ export default function Telegrammes() {
   }
 
   const handleDestSelect = (eff) => {
-    setForm(p => ({ ...p, destinataire_id: eff.id, destinataire_nom: `${eff.prenom} ${eff.nom}`, destinataire_unite: eff.unite_code || '' }))
+    const entry = { effectif_id: eff.id, nom_libre: `${eff.prenom} ${eff.nom}` }
+    if (!form.destinataires.some(d => d.effectif_id === eff.id)) {
+      setForm(p => ({ ...p, destinataires: [...p.destinataires, entry] }))
+    }
+    setDestInput('')
   }
+  const addFreeTextDest = () => {
+    if (!destInput.trim()) return
+    setForm(p => ({ ...p, destinataires: [...p.destinataires, { effectif_id: null, nom_libre: destInput.trim() }] }))
+    setDestInput('')
+  }
+  const removeDest = (i) => setForm(p => ({ ...p, destinataires: p.destinataires.filter((_, j) => j !== i) }))
 
   // View: telegram detail popup
   if (selected) {
@@ -85,9 +96,7 @@ export default function Telegrammes() {
           {hasEffectif && t.expediteur_id !== user?.effectif_id && (
             <button className="btn btn-primary btn-small" onClick={() => {
               setForm({
-                destinataire_id: t.expediteur_id || '',
-                destinataire_nom: t.expediteur_nom || '',
-                destinataire_unite: t.expediteur_unite || '',
+                destinataires: [{ effectif_id: t.expediteur_id, nom_libre: t.expediteur_nom }],
                 objet: `RE: ${t.objet}`,
                 contenu: '',
                 priorite: t.priorite,
@@ -120,7 +129,7 @@ export default function Telegrammes() {
             <span className="telegram-field-label">DE :</span>
             <span className="telegram-field-value">{t.expediteur_grade ? `${t.expediteur_grade} ` : ''}{t.expediteur_nom} {t.expediteur_unite ? `[${t.expediteur_unite}]` : ''}</span>
             <span className="telegram-field-label">À :</span>
-            <span className="telegram-field-value">{t.destinataire_nom} {t.destinataire_unite ? `[${t.destinataire_unite}]` : ''}</span>
+            <span className="telegram-field-value">{t.destinataires?.length ? t.destinataires.map(d => d.nom_libre || `${d.prenom || ''} ${d.nom || ''}`.trim()).join(', ') : (t.destinataire_nom || '—')}</span>
             <span className="telegram-field-label">OBJET :</span>
             <span className="telegram-field-value">{t.objet}</span>
             <span className="telegram-field-label">DATE :</span>
@@ -150,14 +159,29 @@ export default function Telegrammes() {
         <div className="tel-form">
           <form onSubmit={submit}>
             <div className="form-group">
-              <label className="form-label">Destinataire *</label>
-              <EffectifAutocomplete
-                value={form.destinataire_nom}
-                onChange={val => setForm(p => ({ ...p, destinataire_nom: val, destinataire_id: '' }))}
-                onSelect={handleDestSelect}
-                placeholder="Nom ou rechercher un effectif..."
-              />
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Sélectionnez un effectif ou saisissez un nom librement</span>
+              <label className="form-label">Destinataire(s) *</label>
+              {form.destinataires.length > 0 && (
+                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
+                  {form.destinataires.map((d, i) => (
+                    <span key={i} style={{ background: 'var(--military-green)', color: '#fff', padding: '2px 8px', borderRadius: 12, fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      {d.nom_libre}
+                      <button type="button" onClick={() => removeDest(i)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '0.8rem', lineHeight: 1 }}>✕</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ flex: 1 }}>
+                  <EffectifAutocomplete
+                    value={destInput}
+                    onChange={val => setDestInput(val)}
+                    onSelect={handleDestSelect}
+                    placeholder="Rechercher un effectif..."
+                  />
+                </div>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={addFreeTextDest} title="Ajouter en texte libre">+</button>
+              </div>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Sélectionnez ou tapez un nom puis cliquez + pour ajouter plusieurs destinataires</span>
             </div>
 
             <div className="form-row">

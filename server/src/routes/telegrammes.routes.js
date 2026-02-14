@@ -12,107 +12,128 @@ async function nextNumero() {
   return `TEL-${year}-${String(seq).padStart(3, '0')}`
 }
 
-// GET /api/telegrammes — inbox + sent for current user's effectif
+// Helper: check if user can see a confidential telegramme
+function canSeeConfidential(tel, destinataires, effectifId) {
+  if (!tel.prive) return true
+  if (tel.expediteur_id === effectifId) return true
+  if (destinataires.some(d => d.effectif_id === effectifId)) return true
+  return false
+}
+
+// GET /api/telegrammes
 router.get('/', optionalAuth, async (req, res) => {
   try {
-    const effectifId = req.user.effectif_id
-    const tab = req.query.tab || 'recu' // recu, envoye, tous
-    const isPrivileged = req.user.isAdmin || req.user.isRecenseur || req.user.isOfficier
+    const effectifId = req.user?.effectif_id
+    const tab = req.query.tab || 'tous'
+    const isPrivileged = req.user?.isAdmin || req.user?.isRecenseur || req.user?.isOfficier
 
-    let where = ''
-    const params = []
-    if (tab === 'recu' && effectifId) {
-      where = "WHERE t.destinataire_id = ? AND t.statut != 'Archivé'"
-      params.push(effectifId)
-    } else if (tab === 'envoye' && effectifId) {
-      where = "WHERE t.expediteur_id = ? AND t.statut != 'Archivé'"
-      params.push(effectifId)
-    } else if (tab === 'archive' && effectifId) {
-      where = "WHERE t.statut = 'Archivé' AND (t.destinataire_id = ? OR t.expediteur_id = ?)"
-      params.push(effectifId, effectifId)
-    } else if (tab === 'tous') {
-      where = "WHERE t.statut != 'Archivé'"
-    } else if (effectifId) {
-      where = 'WHERE t.destinataire_id = ? OR t.expediteur_id = ?'
-      params.push(effectifId, effectifId)
-    }
-
-    const rows = await query(`
+    let rows = await query(`
       SELECT t.*,
-        exp_e.prenom AS exp_prenom, exp_e.nom AS exp_nom,
-        dest_e.prenom AS dest_prenom, dest_e.nom AS dest_nom
+        exp_e.prenom AS exp_prenom, exp_e.nom AS exp_nom
       FROM telegrammes t
       LEFT JOIN effectifs exp_e ON exp_e.id = t.expediteur_id
-      LEFT JOIN effectifs dest_e ON dest_e.id = t.destinataire_id
-      ${where}
-      ORDER BY t.created_at DESC
-      LIMIT 100
-    `, params)
+      ORDER BY t.created_at DESC LIMIT 200
+    `)
 
-    // Count unread
+    // Load destinataires for each
+    for (const t of rows) {
+      t.destinataires = await query(`
+        SELECT td.*, e.prenom, e.nom, g.nom_complet AS grade_nom
+        FROM telegramme_destinataires td
+        LEFT JOIN effectifs e ON e.id = td.effectif_id
+        LEFT JOIN grades g ON g.id = e.grade_id
+        WHERE td.telegramme_id = ?
+      `, [t.id])
+      // Build display name from destinataires
+      t.destinataire_nom = t.destinataires.map(d => d.nom_libre || `${d.prenom || ''} ${d.nom || ''}`.trim()).join(', ') || t.destinataire_nom
+    }
+
+    // Filter confidential: only show if user is sender or recipient
+    if (effectifId) {
+      rows = rows.filter(t => canSeeConfidential(t, t.destinataires, effectifId))
+    } else if (!isPrivileged) {
+      rows = rows.filter(t => !t.prive)
+    }
+
+    // Tab filter
+    if (tab === 'recu' && effectifId) {
+      rows = rows.filter(t => t.destinataires.some(d => d.effectif_id === effectifId) && t.statut !== 'Archivé')
+    } else if (tab === 'envoye' && effectifId) {
+      rows = rows.filter(t => t.expediteur_id === effectifId && t.statut !== 'Archivé')
+    } else if (tab === 'archive' && effectifId) {
+      rows = rows.filter(t => t.statut === 'Archivé' && (t.expediteur_id === effectifId || t.destinataires.some(d => d.effectif_id === effectifId)))
+    }
+
+    // Unread count
     let unread = 0
     if (effectifId) {
-      const ur = await queryOne(`SELECT COUNT(*) AS cnt FROM telegrammes WHERE destinataire_id = ? AND statut IN ('Envoyé','Reçu')`, [effectifId])
+      const ur = await queryOne(`
+        SELECT COUNT(DISTINCT td.telegramme_id) AS cnt
+        FROM telegramme_destinataires td
+        JOIN telegrammes t ON t.id = td.telegramme_id
+        WHERE td.effectif_id = ? AND td.lu_at IS NULL AND t.statut IN ('Envoyé','Reçu')
+      `, [effectifId])
       unread = ur?.cnt || 0
     }
 
     res.json({ success: true, data: rows, unread })
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
-  }
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
 
 // GET /api/telegrammes/:id
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
-    const row = await queryOne(`
-      SELECT t.*,
-        exp_e.prenom AS exp_prenom, exp_e.nom AS exp_nom,
-        dest_e.prenom AS dest_prenom, dest_e.nom AS dest_nom
-      FROM telegrammes t
-      LEFT JOIN effectifs exp_e ON exp_e.id = t.expediteur_id
-      LEFT JOIN effectifs dest_e ON dest_e.id = t.destinataire_id
-      WHERE t.id = ?
-    `, [req.params.id])
-    if (!row) return res.status(404).json({ success: false, message: 'Télégramme introuvable' })
+    const row = await queryOne(`SELECT t.* FROM telegrammes t WHERE t.id = ?`, [req.params.id])
+    if (!row) return res.status(404).json({ success: false, message: 'Introuvable' })
 
-    // Mark as read if recipient
-    if (req.user.effectif_id && row.destinataire_id === req.user.effectif_id && row.statut !== 'Lu' && row.statut !== 'Archivé') {
-      await pool.execute('UPDATE telegrammes SET statut = "Lu", lu_at = NOW() WHERE id = ?', [req.params.id])
-      row.statut = 'Lu'
+    row.destinataires = await query(`
+      SELECT td.*, e.prenom, e.nom, g.nom_complet AS grade_nom
+      FROM telegramme_destinataires td
+      LEFT JOIN effectifs e ON e.id = td.effectif_id
+      LEFT JOIN grades g ON g.id = e.grade_id
+      WHERE td.telegramme_id = ?
+    `, [row.id])
+
+    // Confidential check
+    const effectifId = req.user?.effectif_id
+    if (row.prive && !req.user?.isAdmin) {
+      if (!canSeeConfidential(row, row.destinataires, effectifId)) {
+        return res.status(403).json({ success: false, message: 'Télégramme confidentiel' })
+      }
+    }
+
+    // Mark as read for this recipient
+    if (effectifId) {
+      await pool.execute('UPDATE telegramme_destinataires SET lu_at = NOW() WHERE telegramme_id = ? AND effectif_id = ? AND lu_at IS NULL', [row.id, effectifId])
     }
 
     res.json({ success: true, data: row })
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
-  }
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
 
-// POST /api/telegrammes — send
+// POST /api/telegrammes — send (supports multiple destinataires)
 router.post('/', auth, async (req, res) => {
   try {
-    const { destinataire_id, destinataire_nom, destinataire_unite, objet, contenu, priorite } = req.body
+    const { destinataires, objet, contenu, priorite, prive } = req.body
+    // destinataires = [{effectif_id, nom_libre}, ...]
     if (!objet || !contenu) return res.status(400).json({ success: false, message: 'Objet et contenu requis' })
 
     const numero = await nextNumero()
 
-    // Get sender info from effectif
+    // Sender info
     let expNom = req.user.username, expGrade = null, expUnite = null, expId = null
     if (req.user.effectif_id) {
       const eff = await queryOne(`
         SELECT e.prenom, e.nom, g.nom_complet AS grade_nom, u.code AS unite_code
-        FROM effectifs e
-        LEFT JOIN grades g ON g.id = e.grade_id
-        LEFT JOIN unites u ON u.id = e.unite_id
+        FROM effectifs e LEFT JOIN grades g ON g.id = e.grade_id LEFT JOIN unites u ON u.id = e.unite_id
         WHERE e.id = ?
       `, [req.user.effectif_id])
-      if (eff) {
-        expNom = `${eff.prenom} ${eff.nom}`
-        expGrade = eff.grade_nom
-        expUnite = eff.unite_code
-        expId = req.user.effectif_id
-      }
+      if (eff) { expNom = `${eff.prenom} ${eff.nom}`; expGrade = eff.grade_nom; expUnite = eff.unite_code; expId = req.user.effectif_id }
     }
+
+    // Build destinataire_nom for legacy column
+    const destList = Array.isArray(destinataires) ? destinataires : (req.body.destinataire_id ? [{ effectif_id: req.body.destinataire_id, nom_libre: req.body.destinataire_nom }] : [])
+    const destNomLegacy = destList.map(d => d.nom_libre || '?').join(', ')
 
     const [result] = await pool.execute(`
       INSERT INTO telegrammes (numero, expediteur_id, expediteur_nom, expediteur_grade, expediteur_unite,
@@ -120,18 +141,21 @@ router.post('/', auth, async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       numero, expId, expNom, expGrade, expUnite,
-      destinataire_id || null, destinataire_nom || 'Inconnu', destinataire_unite || null,
-      objet, contenu, priorite || 'Normal', req.body.prive ? 1 : 0, req.user.id
+      destList[0]?.effectif_id || null, destNomLegacy, req.body.destinataire_unite || null,
+      objet, contenu, priorite || 'Normal', prive ? 1 : 0, req.user.id
     ])
 
-    // Discord notification
+    // Insert all destinataires
+    for (const d of destList) {
+      await pool.execute('INSERT INTO telegramme_destinataires (telegramme_id, effectif_id, nom_libre) VALUES (?,?,?)',
+        [result.insertId, d.effectif_id || null, d.nom_libre || null])
+    }
+
     const { notifyTelegramme } = require('../utils/discordNotify')
-    notifyTelegramme({ numero, expediteur_nom: expNom, destinataire_nom, objet, priorite: priorite || 'Normal', prive: req.body.prive }).catch(() => {})
+    notifyTelegramme({ numero, expediteur_nom: expNom, destinataire_nom: destNomLegacy, objet, priorite: priorite || 'Normal', prive }).catch(() => {})
 
     res.json({ success: true, data: { id: result.insertId, numero } })
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
-  }
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
 
 // PUT /api/telegrammes/:id/archiver
@@ -139,22 +163,10 @@ router.put('/:id/archiver', auth, async (req, res) => {
   try {
     await pool.execute('UPDATE telegrammes SET statut = "Archivé" WHERE id = ?', [req.params.id])
     res.json({ success: true })
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
-  }
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
 
-// GET /api/telegrammes/next-number (for preview)
-router.get('/next-number', auth, async (req, res) => {
-  try {
-    const numero = await nextNumero()
-    res.json({ success: true, numero })
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
-  }
-})
-
-// DELETE /api/telegrammes/:id (admin only)
+// DELETE /api/telegrammes/:id
 router.delete('/:id', auth, async (req, res) => {
   try {
     if (!req.user.isAdmin) return res.status(403).json({ success: false, message: 'Admin requis' })
