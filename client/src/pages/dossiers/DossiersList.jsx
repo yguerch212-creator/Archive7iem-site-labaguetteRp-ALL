@@ -60,9 +60,16 @@ export default function DossiersList() {
     api.get('/effectifs/all').then(r => setAllEffectifs(r.data.data || [])).catch(() => {})
   }, [])
 
-  const filteredEffectifs = allEffectifs.filter(e =>
-    !search || `${e.prenom} ${e.nom} ${e.grade_nom || ''} ${e.unite_nom || ''}`.toLowerCase().includes(search.toLowerCase())
-  )
+  const [filterUnite, setFilterUnite] = useState('')
+  const [unitesAll, setUnitesAll] = useState([])
+
+  useEffect(() => { api.get('/unites').then(r => setUnitesAll(r.data.data || r.data)).catch(() => {}) }, [])
+
+  const filteredEffectifs = allEffectifs.filter(e => {
+    if (search && !`${e.prenom} ${e.nom} ${e.grade_nom || ''} ${e.unite_nom || ''}`.toLowerCase().includes(search.toLowerCase())) return false
+    if (filterUnite && e.unite_id != filterUnite) return false
+    return true
+  }).sort((a, b) => (a.unite_code || '').localeCompare(b.unite_code || '') || (b.grade_rang || 0) - (a.grade_rang || 0))
 
   const nonPersonal = dossiers.filter(d => d.type !== 'personnel')
   const filtered = nonPersonal.filter(d => {
@@ -153,6 +160,10 @@ export default function DossiersList() {
       {/* Recherche + filtre */}
       <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', marginBottom: 'var(--space-lg)', flexWrap: 'wrap' }}>
         <input className="form-input" style={{ maxWidth: 300 }} placeholder={tab === 'dossiers' ? '🔍 Rechercher un dossier...' : '🔍 Rechercher un effectif...'} value={search} onChange={e => setSearch(e.target.value)} />
+        {tab === 'effectifs' && <select className="form-input" style={{ maxWidth: 200 }} value={filterUnite} onChange={e => setFilterUnite(e.target.value)}>
+          <option value="">— Toutes unités —</option>
+          {unitesAll.map(u => <option key={u.id} value={u.id}>{u.code}. {u.nom}</option>)}
+        </select>}
         {tab === 'dossiers' && <select className="form-input" style={{ maxWidth: 180 }} value={filterType} onChange={e => setFilterType(e.target.value)}>
           <option value="">— Tous types —</option>
           <option value="thematique">📂 Thématique</option>
@@ -166,7 +177,7 @@ export default function DossiersList() {
         <div className="paper-card" style={{ overflow: 'auto', marginBottom: 'var(--space-xl)' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
             <thead><tr style={{ borderBottom: '2px solid var(--border-color)' }}>
-              <th style={th}>Grade</th><th style={th}>Nom</th><th style={th}>Prénom</th><th style={th}>Unité</th>
+              <th style={th}>Unité</th><th style={th}>Grade</th><th style={th}>Nom</th><th style={th}>Prénom</th>
             </tr></thead>
             <tbody>
               {filteredEffectifs.length === 0 ? (
@@ -176,10 +187,10 @@ export default function DossiersList() {
                   style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer', transition: 'background 0.15s' }}
                   onMouseEnter={ev => ev.currentTarget.style.background = 'rgba(107,143,60,0.08)'}
                   onMouseLeave={ev => ev.currentTarget.style.background = ''}>
+                  <td style={td}><span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{e.unite_code || '—'}</span></td>
                   <td style={td}>{e.grade_nom || '—'}</td>
                   <td style={td}><strong>{e.nom}</strong></td>
                   <td style={td}>{e.prenom}</td>
-                  <td style={td}>{e.unite_nom || '—'}</td>
                 </tr>
               ))}
             </tbody>

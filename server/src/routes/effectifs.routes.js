@@ -276,13 +276,15 @@ router.get('/:id/historique', auth, async (req, res) => {
     const pds = await query('SELECT semaine, total_heures, created_at FROM pds_semaines WHERE effectif_id = ? ORDER BY semaine DESC', [id])
 
     // Rapports where this person is author
-    const rapports = await query(`SELECT id, numero, titre, type, auteur_nom, date_irl, created_at FROM rapports WHERE auteur_id = ? ORDER BY created_at DESC`, [id])
+    const rapports = await query(`SELECT id, titre, type, auteur_nom, date_irl, created_at FROM rapports WHERE auteur_id = ? ORDER BY created_at DESC`, [id])
 
     // Interdits
-    const interdits = await query('SELECT * FROM interdits_front WHERE effectif_id = ? ORDER BY created_at DESC', [id])
+    const interdits = await query(`SELECT i.*, CONCAT(e2.prenom,' ',e2.nom) AS ordonne_par_nom
+      FROM interdits_front i LEFT JOIN effectifs e2 ON e2.id = i.ordonne_par
+      WHERE i.effectif_id = ? ORDER BY i.created_at DESC`, [id])
 
     // Visites médicales
-    const medical = await query('SELECT id, motif, medecin_nom, resultat, date_visite, valide, created_at FROM visites_medicales WHERE effectif_id = ? ORDER BY created_at DESC', [id])
+    const medical = await query('SELECT id, diagnostic, medecin, aptitude, restrictions, date_visite, valide, created_at FROM visites_medicales WHERE effectif_id = ? ORDER BY created_at DESC', [id])
 
     // Décorations
     const decorations = await query(`

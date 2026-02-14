@@ -14,6 +14,7 @@ export default function Commandement() {
   const [etat, setEtat] = useState(null)
   const [showEtat, setShowEtat] = useState(false)
   const [etatFilter, setEtatFilter] = useState('')
+  const [etatUnite, setEtatUnite] = useState('')
 
   useEffect(() => {
     api.get('/commandement/dashboard').then(r => setData(r.data)).catch(() => {})
@@ -131,27 +132,35 @@ export default function Commandement() {
           <div className="popup-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 900, maxHeight: '85vh', overflow: 'auto' }}>
             <button className="popup-close" onClick={() => setShowEtat(false)}>✕</button>
             <h2 style={{ marginTop: 0, textAlign: 'center' }}>📊 État de la semaine</h2>
-            <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Semaine du {new Date(etat.weekStart).toLocaleDateString('fr-FR')} — {etat.data?.length || 0} effectifs actifs</p>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-sm)' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Semaine :</span>
+              <select className="form-input" style={{ maxWidth: 180, fontSize: '0.8rem' }} value={etat.semaine} onChange={async (e) => {
+                try { const r = await api.get('/commandement/etat', { params: { semaine: e.target.value } }); setEtat(r.data) } catch {}
+              }}>
+                {(etat.weeks || []).map(w => <option key={w} value={w}>{w}</option>)}
+              </select>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>— {etat.data?.length || 0} effectifs actifs</span>
+            </div>
             
             <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
               <button className={`btn btn-sm ${!etatFilter ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setEtatFilter('')}>Tous</button>
               <button className={`btn btn-sm ${etatFilter === 'pds_manquant' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setEtatFilter('pds_manquant')}>❌ PDS manquant</button>
               <button className={`btn btn-sm ${etatFilter === 'rapport_manquant' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setEtatFilter('rapport_manquant')}>❌ Rapport manquant</button>
               <button className={`btn btn-sm ${etatFilter === 'ok' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setEtatFilter('ok')}>✅ Tout OK</button>
-              <select className="form-input" style={{ maxWidth: 180, fontSize: '0.8rem' }} value={etatFilter.startsWith('u:') ? etatFilter : ''} onChange={e => setEtatFilter(e.target.value || '')}>
+              <select className="form-input" style={{ maxWidth: 180, fontSize: '0.8rem' }} value={etatUnite} onChange={e => setEtatUnite(e.target.value)}>
                 <option value="">— Toutes unités —</option>
                 {[...new Set((etat.data||[]).map(r => r.unite_code).filter(Boolean))].sort().map(c => (
-                  <option key={c} value={`u:${c}`}>{c}</option>
+                  <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </div>
 
             {(() => {
               let rows = etat.data || []
+              if (etatUnite) rows = rows.filter(r => r.unite_code === etatUnite)
               if (etatFilter === 'pds_manquant') rows = rows.filter(r => !r.pds_fait)
               else if (etatFilter === 'rapport_manquant') rows = rows.filter(r => !r.rapports_semaine)
               else if (etatFilter === 'ok') rows = rows.filter(r => r.pds_fait && r.rapports_semaine)
-              else if (etatFilter.startsWith('u:')) rows = rows.filter(r => r.unite_code === etatFilter.slice(2))
 
               const totalPds = rows.filter(r => r.pds_fait).length
               const totalRapports = rows.filter(r => r.rapports_semaine).length

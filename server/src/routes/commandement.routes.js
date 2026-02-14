@@ -90,18 +90,29 @@ router.delete('/notes/:id', auth, officier, async (req, res) => {
 // GET /api/commandement/etat — État PDS + rapports par effectif cette semaine
 router.get('/etat', auth, officier, async (req, res) => {
   try {
-    // Current RP week (Friday 20h → Friday 20h)
-    const now = new Date()
-    const day = now.getUTCDay() // 0=Sun
-    const hour = now.getUTCHours()
-    // Find last Friday 20h UTC
-    let daysBack = (day - 5 + 7) % 7
-    if (daysBack === 0 && hour < 20) daysBack = 7
-    const friday = new Date(now)
-    friday.setUTCDate(friday.getUTCDate() - daysBack)
-    friday.setUTCHours(20, 0, 0, 0)
-    const weekStart = friday.toISOString().slice(0, 19).replace('T', ' ')
-    const semaine = friday.toISOString().slice(0, 10)
+    let semaine = req.query.semaine
+    let weekStart
+
+    if (semaine) {
+      // Use provided week
+      const d = new Date(semaine + 'T20:00:00Z')
+      weekStart = d.toISOString().slice(0, 19).replace('T', ' ')
+    } else {
+      // Current RP week (Friday 20h → Friday 20h)
+      const now = new Date()
+      const day = now.getUTCDay()
+      const hour = now.getUTCHours()
+      let daysBack = (day - 5 + 7) % 7
+      if (daysBack === 0 && hour < 20) daysBack = 7
+      const friday = new Date(now)
+      friday.setUTCDate(friday.getUTCDate() - daysBack)
+      friday.setUTCHours(20, 0, 0, 0)
+      weekStart = friday.toISOString().slice(0, 19).replace('T', ' ')
+      semaine = friday.toISOString().slice(0, 10)
+    }
+
+    // Available weeks
+    const weeks = await query("SELECT DISTINCT semaine FROM pds_semaines ORDER BY semaine DESC LIMIT 20")
 
     const rows = await query(`
       SELECT e.id, e.prenom, e.nom, e.en_reserve,
@@ -117,7 +128,7 @@ router.get('/etat', auth, officier, async (req, res) => {
       ORDER BY u.code, g.rang DESC, e.nom
     `, [semaine, semaine, weekStart])
 
-    res.json({ success: true, data: rows, semaine, weekStart })
+    res.json({ success: true, data: rows, semaine, weekStart, weeks: weeks.map(w => w.semaine) })
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
 
