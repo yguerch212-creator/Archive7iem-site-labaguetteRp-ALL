@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '../auth/useAuth'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 export default function Login() {
   const [username, setUsername] = useState('')
@@ -9,6 +9,16 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const { login, loginAsGuest } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const redirectTo = location.state?.from || '/dashboard'
+
+  // Auto-guest if arriving from a shared link (has a from path that's not dashboard)
+  useEffect(() => {
+    if (location.state?.from && location.state.from !== '/dashboard' && location.state.from !== '/') {
+      loginAsGuest()
+      navigate(location.state.from, { replace: true })
+    }
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -17,7 +27,7 @@ export default function Login() {
     const result = await login({ username, password })
     setLoading(false)
     if (result.success) {
-      navigate(result.mustChangePassword ? '/change-password' : '/dashboard')
+      navigate(result.mustChangePassword ? '/change-password' : redirectTo)
     } else {
       setError(result.error)
     }
@@ -66,7 +76,7 @@ export default function Login() {
 
         <div style={{ textAlign: 'center', margin: '1rem 0' }}>
           <button className="btn btn-secondary" style={{ opacity: 0.7, fontSize: '0.8rem' }}
-            onClick={() => { loginAsGuest(); navigate('/dashboard') }}>
+            onClick={() => { loginAsGuest(); navigate(redirectTo) }}>
             👁️ Accès invité (lecture seule)
           </button>
         </div>
