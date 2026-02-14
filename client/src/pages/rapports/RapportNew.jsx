@@ -58,11 +58,31 @@ export default function RapportNew() {
   }, [form])
 
   // Load data
+  const [templates, setTemplates] = useState([])
+
   useEffect(() => {
     setHasDraft(!!loadDraft())
     apiClient.get('/unites').then(r => setUnites(r.data.data || []))
     apiClient.get('/effectifs/all').then(r => setEffectifs(r.data.data || [])).catch(() => {})
+    apiClient.get('/rapports/templates/list').then(r => setTemplates(r.data.data || [])).catch(() => {})
   }, [])
+
+  const applyTemplate = (tpl) => {
+    let champs = tpl.champs
+    if (typeof champs === 'string') { try { champs = JSON.parse(champs) } catch { champs = {} } }
+    setForm(f => ({
+      ...f,
+      type: tpl.type,
+      titre: tpl.nom,
+      contexte: champs.contexte || f.contexte,
+      resume: champs.resume || f.resume,
+      bilan: champs.bilan || f.bilan,
+      raison_1: champs.raison_1 || f.raison_1,
+      recompense: champs.recompense || f.recompense,
+      compte_rendu: champs.compte_rendu || f.compte_rendu,
+      lieu_incident: champs.lieu_incident || f.lieu_incident,
+    }))
+  }
 
   // Fetch next number on type change
   useEffect(() => {
@@ -130,6 +150,20 @@ export default function RapportNew() {
       )}
 
       {error && <div className="alert alert-error">{error}</div>}
+
+      {/* Template picker */}
+      {templates.length > 0 && (
+        <div className="paper-card" style={{ marginBottom: 'var(--space-md)' }}>
+          <label className="form-label">📋 Utiliser un modèle pré-rempli</label>
+          <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+            {templates.map(t => (
+              <button key={t.id} type="button" className="btn btn-sm btn-secondary" onClick={() => applyTemplate(t)} title={t.description || ''}>
+                {TYPE_INFO[t.type]?.icon || '📋'} {t.nom}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="paper-card">
         {/* Type selector — big buttons */}

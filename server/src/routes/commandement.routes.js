@@ -1,0 +1,90 @@
+const router = require('express').Router()
+const { query, queryOne, pool } = require('../config/db')
+const auth = require('../middleware/auth')
+
+// Middleware: officier/admin only
+function officier(req, res, next) {
+  if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isRecenseur) return res.status(403).json({ success: false, message: 'Réservé aux officiers' })
+  next()
+}
+
+// GET /api/commandement/dashboard — Officer dashboard data
+router.get('/dashboard', auth, officier, async (req, res) => {
+  try {
+    const effectifs = await queryOne('SELECT COUNT(*) as c FROM effectifs')
+    const interditsActifs = await queryOne('SELECT COUNT(*) as c FROM interdits_front WHERE actif = 1')
+    const rapportsNonValides = await queryOne('SELECT COUNT(*) as c FROM rapports WHERE valide = 0 AND published = 1')
+    const rapportsSemaine = await queryOne("SELECT COUNT(*) as c FROM rapports WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")
+    
+    // PDS compliance current week
+    const pdsTotal = await queryOne("SELECT COUNT(DISTINCT effectif_id) as c FROM pds_semaines WHERE semaine = (SELECT MAX(semaine) FROM pds_semaines)")
+    const pdsValides = await queryOne("SELECT COUNT(DISTINCT effectif_id) as c FROM pds_semaines WHERE semaine = (SELECT MAX(semaine) FROM pds_semaines) AND total_heures >= 6")
+    
+    // Effectifs par statut
+    const parStatut = {
+      actifs: (effectifs?.c || 0) - (interditsActifs?.c || 0),
+      interdits: interditsActifs?.c || 0,
+    }
+
+    // Recent activity
+    const activiteRecente = await query(`
+      (SELECT 'rapport' as type, titre as label, auteur_nom as auteur, created_at FROM rapports ORDER BY created_at DESC LIMIT 5)
+      UNION ALL
+      (SELECT 'telegramme', CONCAT(numero,' — ',objet), expediteur_nom, created_at FROM telegrammes ORDER BY created_at DESC LIMIT 5)
+      ORDER BY created_at DESC LIMIT 10
+    `)
+
+    // Ordres non-lus
+    const ordresRecents = await query('SELECT id, numero, titre, type, created_at FROM ordres ORDER BY created_at DESC LIMIT 5')
+
+    res.json({
+      success: true,
+      effectifs: effectifs?.c || 0,
+      parStatut,
+      rapportsNonValides: rapportsNonValides?.c || 0,
+      rapportsSemaine: rapportsSemaine?.c || 0,
+      pds: { total: pdsTotal?.c || 0, valides: pdsValides?.c || 0 },
+      activiteRecente,
+      ordresRecents,
+    })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
+// GET /api/commandement/notes
+router.get('/notes', auth, officier, async (req, res) => {
+  try {
+    const rows = await query(`
+      SELECT n.*, u.username AS auteur_username
+      FROM notes_commandement n LEFT JOIN users u ON u.id = n.auteur_id
+      WHERE n.prive = 0 OR n.auteur_id = ? OR n.destinataire_id = ?
+      ORDER BY n.created_at DESC LIMIT 50
+    `, [req.user.id, req.user.id])
+    res.json({ success: true, data: rows })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
+// POST /api/commandement/notes
+router.post('/notes', auth, officier, async (req, res) => {
+  try {
+    const { contenu, destinataire_id, prive } = req.body
+    const nom = `${req.user.prenom || ''} ${req.user.nom || req.user.username}`.trim()
+    const [result] = await pool.execute(
+      'INSERT INTO notes_commandement (contenu, auteur_id, auteur_nom, destinataire_id, prive) VALUES (?,?,?,?,?)',
+      [contenu, req.user.id, nom, destinataire_id || null, prive ? 1 : 0]
+    )
+    res.json({ success: true, data: { id: result.insertId } })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
+// DELETE /api/commandement/notes/:id
+router.delete('/notes/:id', auth, officier, async (req, res) => {
+  try {
+    const note = await queryOne('SELECT * FROM notes_commandement WHERE id = ?', [req.params.id])
+    if (!note) return res.status(404).json({ success: false, message: 'Introuvable' })
+    if (!req.user.isAdmin && note.auteur_id !== req.user.id) return res.status(403).json({ error: 'Non autorisé' })
+    await pool.execute('DELETE FROM notes_commandement WHERE id = ?', [req.params.id])
+    res.json({ success: true })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
+module.exports = router

@@ -28,6 +28,11 @@ const moderationRoutes = require('./routes/moderation.routes')
 const dossiersRoutes = require('./routes/dossiers.routes')
 const decorationsRoutes = require('./routes/decorations.routes')
 const bibliothequeRoutes = require('./routes/bibliotheque.routes')
+const calendrierRoutes = require('./routes/calendrier.routes')
+const ordresRoutes = require('./routes/ordres.routes')
+const galerieRoutes = require('./routes/galerie.routes')
+const commandementRoutes = require('./routes/commandement.routes')
+const gazetteRoutes = require('./routes/gazette.routes')
 
 const app = express()
 app.set('trust proxy', 1) // Behind Nginx
@@ -72,6 +77,11 @@ app.use('/api/moderation', moderationRoutes)
 app.use('/api/dossiers', dossiersRoutes)
 app.use('/api/decorations', decorationsRoutes)
 app.use('/api/bibliotheque', bibliothequeRoutes)
+app.use('/api/calendrier', calendrierRoutes)
+app.use('/api/ordres', ordresRoutes)
+app.use('/api/galerie', galerieRoutes)
+app.use('/api/commandement', commandementRoutes)
+app.use('/api/gazette', gazetteRoutes)
 
 // Stats endpoint
 app.get('/api/stats', async (req, res) => {

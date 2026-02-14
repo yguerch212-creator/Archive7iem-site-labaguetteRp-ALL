@@ -43,7 +43,16 @@ export default function Dashboard() {
     { icon: '📜', title: 'Archives', desc: 'Historique & logs RP', to: '/archives' },
     { icon: '📚', title: 'Bibliothèque', desc: 'Tampons & signatures', to: '/bibliotheque' },
     { icon: '🔎', title: 'Recherche', desc: 'Recherche globale', to: '/search' },
+    { icon: '📅', title: 'Calendrier', desc: 'Événements RP', to: '/calendrier' },
+    { icon: '📜', title: 'Ordres', desc: 'Ordres & directives', to: '/ordres' },
+    { icon: '📸', title: 'Galerie', desc: 'Photos RP', to: '/galerie' },
+    { icon: '🗺️', title: 'Organigramme', desc: 'Organisation du Korps', to: '/organigramme' },
+    { icon: '📰', title: 'Gazette', desc: 'Gazette hebdomadaire', to: '/gazette' },
   ]
+
+  if (user?.isAdmin || user?.isOfficier) {
+    navCards.push({ icon: '🎖️', title: 'Commandement', desc: 'Poste de commandement', to: '/commandement' })
+  }
 
   if (user?.isAdmin || user?.isOfficier || user?.isRecenseur) {
     navCards.push({ icon: '🔔', title: 'Validation', desc: 'Modération & validation', to: '/admin/moderation' })

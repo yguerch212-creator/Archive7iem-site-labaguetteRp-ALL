@@ -53,6 +53,17 @@ export default function DossiersList() {
     }
   }
 
+  const [tab, setTab] = useState('dossiers') // 'dossiers' | 'effectifs'
+  const [allEffectifs, setAllEffectifs] = useState([])
+
+  useEffect(() => {
+    api.get('/effectifs/all').then(r => setAllEffectifs(r.data.data || [])).catch(() => {})
+  }, [])
+
+  const filteredEffectifs = allEffectifs.filter(e =>
+    !search || `${e.prenom} ${e.nom} ${e.grade_nom || ''} ${e.unite_nom || ''}`.toLowerCase().includes(search.toLowerCase())
+  )
+
   const nonPersonal = dossiers.filter(d => d.type !== 'personnel')
   const filtered = nonPersonal.filter(d => {
     if (search && !`${d.titre} ${d.description || ''} ${d.created_by_nom || ''}`.toLowerCase().includes(search.toLowerCase())) return false
@@ -133,18 +144,51 @@ export default function DossiersList() {
         </div>
       )}
 
+      {/* Tabs */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)' }}>
+        <button className={`btn ${tab === 'dossiers' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setTab('dossiers')}>📂 Dossiers ({nonPersonal.length})</button>
+        <button className={`btn ${tab === 'effectifs' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setTab('effectifs')}>👤 Par effectif ({allEffectifs.length})</button>
+      </div>
+
       {/* Recherche + filtre */}
       <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', marginBottom: 'var(--space-lg)', flexWrap: 'wrap' }}>
-        <input className="form-input" style={{ maxWidth: 300 }} placeholder="🔍 Rechercher un dossier..." value={search} onChange={e => setSearch(e.target.value)} />
-        <select className="form-input" style={{ maxWidth: 180 }} value={filterType} onChange={e => setFilterType(e.target.value)}>
+        <input className="form-input" style={{ maxWidth: 300 }} placeholder={tab === 'dossiers' ? '🔍 Rechercher un dossier...' : '🔍 Rechercher un effectif...'} value={search} onChange={e => setSearch(e.target.value)} />
+        {tab === 'dossiers' && <select className="form-input" style={{ maxWidth: 180 }} value={filterType} onChange={e => setFilterType(e.target.value)}>
           <option value="">— Tous types —</option>
           <option value="thematique">📂 Thématique</option>
           <option value="enquete">🔍 Enquête</option>
           <option value="autre">📋 Autre</option>
-        </select>
+        </select>}
       </div>
 
-      {/* Tableau */}
+      {/* Effectifs tab */}
+      {tab === 'effectifs' && (
+        <div className="paper-card" style={{ overflow: 'auto', marginBottom: 'var(--space-xl)' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+            <thead><tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+              <th style={th}>Grade</th><th style={th}>Nom</th><th style={th}>Prénom</th><th style={th}>Unité</th>
+            </tr></thead>
+            <tbody>
+              {filteredEffectifs.length === 0 ? (
+                <tr><td colSpan={4} style={{ textAlign: 'center', padding: 'var(--space-lg)', color: 'var(--text-muted)' }}>Aucun effectif</td></tr>
+              ) : filteredEffectifs.map(e => (
+                <tr key={e.id} onClick={() => navigate(`/dossiers/effectif/${e.id}`)}
+                  style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer', transition: 'background 0.15s' }}
+                  onMouseEnter={ev => ev.currentTarget.style.background = 'rgba(107,143,60,0.08)'}
+                  onMouseLeave={ev => ev.currentTarget.style.background = ''}>
+                  <td style={td}>{e.grade_nom || '—'}</td>
+                  <td style={td}><strong>{e.nom}</strong></td>
+                  <td style={td}>{e.prenom}</td>
+                  <td style={td}>{e.unite_nom || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Dossiers Tableau */}
+      {tab === 'dossiers' && (
       <div className="paper-card" style={{ overflow: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
           <thead>
@@ -179,6 +223,7 @@ export default function DossiersList() {
           </tbody>
         </table>
       </div>
+      )}
     </div>
   )
 }

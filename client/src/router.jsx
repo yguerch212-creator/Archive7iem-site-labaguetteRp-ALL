@@ -36,6 +36,13 @@ import AffaireLayout from './pages/sanctions/AffaireLayout'
 import DossierLayout from './pages/dossiers/DossierLayout'
 import AdminStats from './pages/admin/AdminStats'
 import Moderation from './pages/admin/Moderation'
+import Calendrier from './pages/calendrier/Calendrier'
+import OrdresList from './pages/ordres/OrdresList'
+import OrdreView from './pages/ordres/OrdreView'
+import Galerie from './pages/galerie/Galerie'
+import Commandement from './pages/commandement/Commandement'
+import Gazette from './pages/gazette/Gazette'
+import Organigramme from './pages/effectifs/Organigramme'
 
 function AppRouter() {
   const { user } = useAuth()
@@ -87,6 +94,15 @@ function AppRouter() {
       <Route path="/sanctions" element={<ProtectedRoute><Sanctions /></ProtectedRoute>} />
       <Route path="/sanctions/:id" element={<ProtectedRoute><AffaireView /></ProtectedRoute>} />
       <Route path="/sanctions/:id/layout" element={<ProtectedRoute><AffaireLayout /></ProtectedRoute>} />
+      
+      {/* New features */}
+      <Route path="/calendrier" element={<ProtectedRoute><Calendrier /></ProtectedRoute>} />
+      <Route path="/ordres" element={<ProtectedRoute><OrdresList /></ProtectedRoute>} />
+      <Route path="/ordres/:id" element={<ProtectedRoute><OrdreView /></ProtectedRoute>} />
+      <Route path="/galerie" element={<ProtectedRoute><Galerie /></ProtectedRoute>} />
+      <Route path="/commandement" element={<ProtectedRoute><Commandement /></ProtectedRoute>} />
+      <Route path="/gazette" element={<ProtectedRoute><Gazette /></ProtectedRoute>} />
+      <Route path="/organigramme" element={<ProtectedRoute><Organigramme /></ProtectedRoute>} />
       
       {/* Search */}
       <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />

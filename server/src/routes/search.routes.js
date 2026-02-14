@@ -7,10 +7,10 @@ const { optionalAuth } = require('../middleware/auth')
 router.get('/', optionalAuth, async (req, res) => {
   try {
     const { q, filter = 'all' } = req.query
-    if (!q) return res.json({ success: true, data: { effectifs: [], rapports: [], documentation: [] } })
+    if (!q) return res.json({ success: true, data: { effectifs: [], rapports: [], telegrammes: [], pieces: [], documentation: [] } })
 
     const like = `%${q}%`
-    const result = { effectifs: [], rapports: [], documentation: [] }
+    const result = { effectifs: [], rapports: [], telegrammes: [], pieces: [], documentation: [] }
 
     if (filter === 'all' || filter === 'effectif') {
       result.effectifs = await query(`
@@ -25,10 +25,28 @@ router.get('/', optionalAuth, async (req, res) => {
 
     if (filter === 'all' || filter === 'rapport') {
       result.rapports = await query(`
-        SELECT id, titre, auteur_nom, type, date_irl
+        SELECT id, titre, auteur_nom, auteur_grade, type, date_irl
         FROM rapports
-        WHERE titre LIKE ? OR auteur_nom LIKE ? OR personne_renseignee_nom LIKE ?
+        WHERE titre LIKE ? OR auteur_nom LIKE ? OR personne_renseignee_nom LIKE ? OR contexte LIKE ? OR resume LIKE ? OR compte_rendu LIKE ?
         ORDER BY created_at DESC LIMIT 20
+      `, [like, like, like, like, like, like])
+    }
+
+    if (filter === 'all' || filter === 'telegramme') {
+      result.telegrammes = await query(`
+        SELECT id, numero, objet, expediteur_nom, destinataire_nom
+        FROM telegrammes
+        WHERE objet LIKE ? OR contenu LIKE ? OR expediteur_nom LIKE ? OR destinataire_nom LIKE ?
+        ORDER BY created_at DESC LIMIT 20
+      `, [like, like, like, like])
+    }
+
+    if (filter === 'all' || filter === 'piece') {
+      result.pieces = await query(`
+        SELECT p.id, p.titre, p.type, p.redige_par_nom, p.contenu, a.numero AS affaire_numero
+        FROM affaires_pieces p LEFT JOIN affaires a ON a.id = p.affaire_id
+        WHERE p.titre LIKE ? OR p.contenu LIKE ? OR p.redige_par_nom LIKE ?
+        ORDER BY p.created_at DESC LIMIT 20
       `, [like, like, like])
     }
 

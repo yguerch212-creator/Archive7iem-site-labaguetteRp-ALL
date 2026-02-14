@@ -23,6 +23,14 @@ router.get('/next-number', auth, async (req, res) => {
   }
 })
 
+// GET /api/rapports/templates/list
+router.get('/templates/list', auth, async (req, res) => {
+  try {
+    const rows = await query('SELECT * FROM rapport_templates ORDER BY type, nom')
+    res.json({ success: true, data: rows })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
 // GET /api/rapports (guest: only published+approved, user: all)
 router.get('/', optionalAuth, async (req, res) => {
   try {
@@ -282,4 +290,5 @@ router.put('/:id/validate', auth, async (req, res) => {
   }
 })
 
+// GET /api/rapports/templates/list — rapport templates
 module.exports = router

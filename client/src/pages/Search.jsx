@@ -27,7 +27,7 @@ export default function Search() {
   const typeLabels = { rapport: '📋 Rapport', recommandation: '⭐ Recommandation', incident: '⚠️ Incident' }
   const fmtDate = d => d ? new Date(d + 'T00:00').toLocaleDateString('fr-FR') : '—'
 
-  const totalResults = results ? (results.effectifs?.length || 0) + (results.rapports?.length || 0) + (results.documentation?.length || 0) : 0
+  const totalResults = results ? (results.effectifs?.length || 0) + (results.rapports?.length || 0) + (results.documentation?.length || 0) + (results.telegrammes?.length || 0) + (results.pieces?.length || 0) : 0
 
   return (
     <div className="container" style={{ paddingBottom: 'var(--space-xxl)' }}>
@@ -47,6 +47,8 @@ export default function Search() {
               <option value="effectif">Effectifs</option>
               <option value="rapport">Rapports</option>
               <option value="documentation">Documentation</option>
+              <option value="telegramme">Télégrammes</option>
+              <option value="piece">Pièces judiciaires</option>
             </select>
           </div>
           <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Recherche...' : 'Rechercher'}</button>
@@ -119,6 +121,54 @@ export default function Search() {
                     {d.url && <a href={d.url} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary" style={{ padding: '4px 12px', fontSize: '0.75rem', textDecoration: 'none' }}>🔗 Ouvrir</a>}
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Télégrammes */}
+          {(filter === 'all' || filter === 'telegramme') && results.telegrammes?.length > 0 && (
+            <div style={{ marginBottom: 'var(--space-xl)' }}>
+              <h2 style={{ marginBottom: 'var(--space-sm)' }}>⚡ Télégrammes ({results.telegrammes.length})</h2>
+              <div className="paper-card" style={{ overflow: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                  <thead><tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+                    <th style={th}>Numéro</th><th style={th}>Objet</th><th style={th}>Expéditeur</th><th style={th}>Destinataire</th>
+                  </tr></thead>
+                  <tbody>
+                    {results.telegrammes.map(t => (
+                      <tr key={t.id} style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }} onClick={() => navigate(`/telegrammes`)}>
+                        <td style={td}><strong>{t.numero}</strong></td>
+                        <td style={td}>{t.objet}</td>
+                        <td style={td}>{t.expediteur_nom || '—'}</td>
+                        <td style={td}>{t.destinataire_nom || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Pièces judiciaires */}
+          {(filter === 'all' || filter === 'piece') && results.pieces?.length > 0 && (
+            <div style={{ marginBottom: 'var(--space-xl)' }}>
+              <h2 style={{ marginBottom: 'var(--space-sm)' }}>⚖️ Pièces judiciaires ({results.pieces.length})</h2>
+              <div className="paper-card" style={{ overflow: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                  <thead><tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+                    <th style={th}>Affaire</th><th style={th}>Titre</th><th style={th}>Type</th><th style={th}>Rédigé par</th>
+                  </tr></thead>
+                  <tbody>
+                    {results.pieces.map(p => (
+                      <tr key={p.id} style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }} onClick={() => navigate(`/pieces/${p.id}`)}>
+                        <td style={td}>{p.affaire_numero || '—'}</td>
+                        <td style={td}><strong>{p.titre}</strong></td>
+                        <td style={td}>{p.type}</td>
+                        <td style={td}>{p.redige_par_nom || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
