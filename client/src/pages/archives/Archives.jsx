@@ -8,6 +8,7 @@ const TYPE_CONFIG = {
   rapport: { icon: '📝', label: 'Rapport', color: '#3d5a3e' },
   visite_medicale: { icon: '🏥', label: 'Visite médicale', color: '#2c5f7c' },
   affaire: { icon: '⚖️', label: 'Affaire judiciaire', color: '#5a3d5a' },
+  piece: { icon: '📄', label: 'Pièce judiciaire', color: '#6b4a6b' },
   documentation: { icon: '📚', label: 'Documentation', color: '#4a6741' },
 }
 
@@ -47,6 +48,7 @@ export default function Archives() {
       visite_medicale: `/medical/${item.doc_id}`,
       interdit_front: '/interdits',
       affaire: `/sanctions/${item.doc_id}`,
+      piece: `/sanctions/${item.doc_id}`,
       documentation: '/documentation',
       pds_recap: '/pds',
     }
