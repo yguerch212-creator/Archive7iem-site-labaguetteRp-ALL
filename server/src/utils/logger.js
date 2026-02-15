@@ -1,11 +1,11 @@
-const { pool } = require('../config/db')
+const { query } = require('../config/db')
 
 /**
  * Log an activity for audit trail
  */
 async function logActivity(req, action, targetType = null, targetId = null, details = null) {
   try {
-    await pool.execute(
+    await query(
       'INSERT INTO activity_logs (user_id, username, action, target_type, target_id, details, ip) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [
         req.user?.id || null,
