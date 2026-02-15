@@ -6,6 +6,15 @@ const { optionalAuth } = require('../middleware/auth')
 const admin = require('../middleware/admin')
 const { saveMention } = require('../utils/mentions')
 
+// Helper: convertir date FR (dd/mm/yyyy) → MySQL (yyyy-mm-dd)
+function convertDateFR(dateStr) {
+  if (!dateStr) return null
+  const m = String(dateStr).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`
+  // Already yyyy-mm-dd or other format, return as-is
+  return dateStr
+}
+
 // GET /api/rapports/next-number?type=rapport
 router.get('/next-number', auth, async (req, res) => {
   try {
@@ -86,7 +95,7 @@ router.post('/', auth, async (req, res) => {
        f.recommande_nom || null, f.recommande_grade || null, f.raison_1 || null, f.recompense || null,
        f.intro_nom || null, f.intro_grade || null, f.mise_en_cause_nom || null, f.mise_en_cause_grade || null,
        f.lieu_incident || null, f.compte_rendu || null, f.signature_nom || null, f.signature_grade || null,
-       f.date_rp || null, f.date_irl || null]
+       f.date_rp || null, convertDateFR(f.date_irl)]
     )
     const rapportId = result.insertId
 
@@ -107,6 +116,30 @@ router.post('/', auth, async (req, res) => {
     // Discord notification
     const { notifyRapport } = require('../utils/discordNotify')
     notifyRapport({ type: f.type, titre: f.titre, numero: '', date_rp: f.date_rp }, f.auteur_nom).catch(() => {})
+
+    // Notification in-app pour la Feldgendarmerie si c'est un incident
+    if (f.type === 'incident') {
+      try {
+        // Trouver tous les effectifs Feldgendarmerie (via unite ou role)
+        const feldUsers = await query(
+          `SELECT DISTINCT e.id, u2.id as user_id FROM effectifs e
+           LEFT JOIN unites un ON un.id = e.unite_id
+           LEFT JOIN users u2 ON u2.effectif_id = e.id
+           WHERE un.nom LIKE '%Feldgendarmerie%' OR un.code LIKE '%feld%'`
+        )
+        for (const feld of feldUsers) {
+          if (feld.user_id) {
+            await pool.execute(
+              `INSERT INTO notifications (user_id, type, titre, message, lien, created_at)
+               VALUES (?, 'incident', '🚨 Nouveau rapport d\\'incident', ?, ?, NOW())`,
+              [feld.user_id, `Incident signalé par ${f.auteur_nom || 'Inconnu'}: ${f.titre}`, `/rapports/${rapportId}`]
+            ).catch(() => {})
+          }
+        }
+      } catch (notifErr) {
+        console.error('Erreur notification Feldgendarmerie:', notifErr.message)
+      }
+    }
 
     // Save mentions for name fields
     const mentionFields = [
@@ -191,13 +224,6 @@ router.put('/:id/prendre-en-charge', auth, async (req, res) => {
 
     const feldName = `${req.user.prenom || ''} ${req.user.nom || req.user.username}`.trim()
 
-    // Convert dd/mm/yyyy date to yyyy-mm-dd for MySQL
-    function convertDate(d) {
-      if (!d) return null
-      const m = String(d).match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
-      return m ? `${m[3]}-${m[2]}-${m[1]}` : d
-    }
-
     // Create affaire
     const [affResult] = await pool.execute(
       `INSERT INTO affaires (numero, titre, resume, statut, created_by) VALUES (?, ?, ?, 'Ouverte', ?)`,
@@ -211,7 +237,7 @@ router.put('/:id/prendre-en-charge', auth, async (req, res) => {
        VALUES (?, 'Autre', ?, ?, ?, ?, ?, ?, 0, ?)`,
       [affaireId, `Rapport d'incident — ${rapport.titre}`,
        `Lieu: ${rapport.lieu_incident || '—'}\nCompte-rendu: ${rapport.compte_rendu || '—'}\nAuteur: ${rapport.auteur_nom || '—'}\nMis en cause: ${rapport.mise_en_cause_nom || '—'}`,
-       rapport.date_rp, convertDate(rapport.date_irl), rapport.auteur_id, rapport.auteur_nom, req.user.id]
+       rapport.date_rp, convertDateFR(rapport.date_irl), rapport.auteur_id, rapport.auteur_nom, req.user.id]
     )
 
     // Add mis en cause as accusé if present
@@ -338,6 +364,7 @@ router.put('/:id/validate', auth, async (req, res) => {
     const rapport = await queryOne('SELECT * FROM rapports WHERE id = ?', [req.params.id])
     if (!rapport) return res.status(404).json({ success: false, message: 'Rapport introuvable' })
     if (rapport.valide) return res.status(400).json({ success: false, message: 'Rapport déjà validé' })
+    if (!rapport.published) return res.status(400).json({ success: false, message: 'Le rapport doit d\'abord être soumis (publié) avant de pouvoir être validé' })
 
     const validatorRang = req.user.grade_rang || 0
     const auteurRang = rapport.auteur_rang || 0

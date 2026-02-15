@@ -3,6 +3,13 @@ const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
 const { optionalAuth } = require('../middleware/auth')
 
+function convertDateFR(dateStr) {
+  if (!dateStr) return null
+  const m = String(dateStr).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`
+  return dateStr
+}
+
 // Auto-number ORD-YYYY-NNN
 async function nextNumero(type) {
   const prefix = type === 'ordre_de_mission' ? 'OM' : type === 'directive' ? 'DIR' : type === 'communique' ? 'COM' : 'OJ'
@@ -56,7 +63,7 @@ router.post('/', auth, async (req, res) => {
     const nom = `${req.user.prenom || ''} ${req.user.nom || req.user.username}`.trim()
     const [result] = await pool.execute(
       'INSERT INTO ordres (numero, type, titre, contenu, unite_id, emis_par, emis_par_nom, emis_par_grade, date_rp, date_irl) VALUES (?,?,?,?,?,?,?,?,?,?)',
-      [numero, type || 'ordre_du_jour', titre, contenu || null, unite_id || null, req.user.id, nom, req.user.grade || null, date_rp || null, date_irl || null]
+      [numero, type || 'ordre_du_jour', titre, contenu || null, unite_id || null, req.user.id, nom, req.user.grade || null, date_rp || null, convertDateFR(date_irl)]
     )
 
     // Auto-create calendrier event if date provided

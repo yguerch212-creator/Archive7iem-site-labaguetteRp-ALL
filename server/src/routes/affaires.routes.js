@@ -8,6 +8,13 @@ function canWrite(req) {
   return req.user.isAdmin || req.user.isOfficier || req.user.isFeldgendarmerie
 }
 
+function convertDateFR(dateStr) {
+  if (!dateStr) return null
+  const m = String(dateStr).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`
+  return dateStr
+}
+
 async function nextNumero() {
   const year = new Date().getFullYear()
   const row = await queryOne("SELECT numero FROM affaires WHERE numero LIKE ? ORDER BY id DESC LIMIT 1", [`AFF-${year}-%`])
@@ -151,7 +158,7 @@ router.post('/:id/pieces', auth, async (req, res) => {
       `INSERT INTO affaires_pieces (affaire_id, type, titre, contenu, date_rp, date_irl,
         redige_par, redige_par_nom, infraction_id, infraction_custom, confidentiel, created_by)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [req.params.id, type, titre, contenu || null, date_rp || null, date_irl || null,
+      [req.params.id, type, titre, contenu || null, date_rp || null, convertDateFR(date_irl),
        redige_par || null, redige_par_nom || null, infraction_id || null,
        infraction_custom || null, confidentiel ? 1 : 0, req.user.id]
     )

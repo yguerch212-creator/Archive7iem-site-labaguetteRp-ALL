@@ -51,7 +51,7 @@ export default function RapportView() {
     }
   }
 
-  const canValidate = rapport && !rapport.valide && (
+  const canValidate = rapport && !rapport.valide && rapport.published && (
     (rapport.auteur_rang < 35 && (user?.grade_rang >= 35 || user?.isAdmin)) ||
     (rapport.auteur_rang >= 35 && rapport.auteur_rang < 60 && (user?.grade_rang >= 60 || user?.isOfficier || user?.isAdmin))
   )

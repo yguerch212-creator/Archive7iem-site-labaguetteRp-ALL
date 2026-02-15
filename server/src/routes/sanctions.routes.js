@@ -3,6 +3,13 @@ const router = require('express').Router();
 const { query, queryOne } = require('../config/db');
 const auth = require('../middleware/auth');
 
+function convertDateFR(dateStr) {
+  if (!dateStr) return null
+  const m = String(dateStr).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`
+  return dateStr
+}
+
 // Helper: check if user can write sanctions (admin, officier, feldgendarmerie)
 function canWrite(req) {
   return req.user.isAdmin || req.user.isOfficier || req.user.isFeldgendarmerie;
@@ -132,7 +139,7 @@ router.post('/', auth, async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [numero, effectif_id, infraction_id || null, infraction_custom || null,
         groupe_sanction, description, sanction_appliquee || null,
-        date_rp || null, date_irl || null, lieu || null,
+        date_rp || null, convertDateFR(date_irl), lieu || null,
         agent_id || null, agent_nom || null, recidive ? 1 : 0,
         notes_internes || null, req.user.id]);
     
