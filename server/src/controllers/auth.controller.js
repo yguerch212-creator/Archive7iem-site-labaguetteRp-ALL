@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken')
 const { query, queryOne } = require('../config/db')
 const config = require('../config/env')
 const { logActivity } = require('../utils/logger')
+const devLog = require('../utils/devLogger')
 
 async function login(req, res) {
   try {
@@ -22,16 +23,19 @@ async function login(req, res) {
 
     if (!user) {
       logActivity(req, 'login_failed', 'user', null, `Tentative: ${username}`)
+      devLog.logAuth('login', username, false, req.ip, 'user not found')
       return res.status(401).json({ success: false, message: 'Nom ou mot de passe incorrect' })
     }
     if (!user.active) {
       logActivity(req, 'login_blocked', 'user', user.id, `Compte désactivé: ${username}`)
+      devLog.logAuth('login', username, false, req.ip, 'account disabled')
       return res.status(401).json({ success: false, message: 'Compte désactivé' })
     }
 
     const valid = await bcrypt.compare(password, user.password_hash)
     if (!valid) {
       logActivity(req, 'login_failed', 'user', user.id, `Mauvais mdp: ${username}`)
+      devLog.logAuth('login', username, false, req.ip, 'wrong password')
       return res.status(401).json({ success: false, message: 'Nom ou mot de passe incorrect' })
     }
 

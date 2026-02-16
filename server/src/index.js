@@ -3,6 +3,7 @@ const cors = require('cors')
 const helmet = require('helmet')
 const rateLimit = require('express-rate-limit')
 require('./config/env')
+const devLog = require('./utils/devLogger')
 
 const { queryOne, query } = require('./config/db')
 const auth = require('./middleware/auth')
@@ -54,6 +55,13 @@ app.use(express.urlencoded({ extended: true }))
 
 // Static uploads
 app.use('/uploads', express.static('uploads'))
+
+// Request timing & dev logs
+app.use((req, res, next) => {
+  const start = Date.now()
+  res.on('finish', () => devLog.logRequest(req, res, Date.now() - start))
+  next()
+})
 
 // Auto-log all write operations
 const { autoLog } = require('./middleware/autoLog')
@@ -275,18 +283,34 @@ app.use((err, req, res, next) => {
   })
 })
 
-// Graceful error handling — prevent crashes
+// Global error handler middleware (must be last)
+app.use((err, req, res, next) => {
+  devLog.error('app', `Unhandled route error: ${err.message}`, { stack: err.stack?.slice(0, 500), url: req.originalUrl })
+  res.status(500).json({ success: false, message: 'Erreur interne du serveur' })
+})
+
+// Graceful error handling — prevent crashes + log to file
 process.on('uncaughtException', (err) => {
-  console.error('⚠️ Uncaught Exception:', err.message)
-  console.error(err.stack)
+  devLog.logCrash('uncaughtException', err)
 })
 process.on('unhandledRejection', (reason) => {
-  console.error('⚠️ Unhandled Rejection:', reason)
+  devLog.logCrash('unhandledRejection', reason instanceof Error ? reason : new Error(String(reason)))
+})
+process.on('SIGTERM', () => {
+  devLog.log('process', 'SIGTERM received — shutting down gracefully')
+  process.exit(0)
 })
 
 app.listen(PORT, () => {
+  devLog.log('startup', `Archives Wehrmacht RP API started on port ${PORT}`, {
+    node: process.version,
+    env: process.env.NODE_ENV || 'development',
+    pid: process.pid,
+    logDir: devLog.LOG_DIR
+  })
   console.log(`🚀 Archives Wehrmacht RP API — http://localhost:${PORT}`)
   console.log(`📋 Health: http://localhost:${PORT}/api/health`)
+  console.log(`📁 Logs: ${devLog.LOG_DIR}`)
 })
 
 module.exports = app

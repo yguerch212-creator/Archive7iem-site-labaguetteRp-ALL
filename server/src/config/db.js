@@ -27,10 +27,12 @@ async function query(sql, params = []) {
         err.code === 'ECONNRESET' || 
         err.code === 'ECONNREFUSED' ||
         (err.message && err.message.includes('Connection lost'))) {
+      try { require('../utils/devLogger').logDbError('retry', err, sql) } catch(e) {}
       console.warn('[DB] Connection lost, retrying...')
       const [rows] = await pool[method](sql, params)
       return rows
     }
+    try { require('../utils/devLogger').logDbError('query', err, sql) } catch(e) {}
     throw err
   }
 }
