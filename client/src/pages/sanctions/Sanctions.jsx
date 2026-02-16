@@ -38,8 +38,8 @@ export default function Sanctions() {
         api.get('/affaires'),
         api.get('/affaires/ref/infractions')
       ])
-      setAffaires(aRes.data)
-      setInfractions(iRes.data)
+      setAffaires(aRes.data?.data || aRes.data || [])
+      setInfractions(iRes.data?.data || iRes.data || [])
     } catch (err) { console.error(err) }
     setLoading(false)
   }, [])

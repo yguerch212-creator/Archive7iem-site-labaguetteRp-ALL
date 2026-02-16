@@ -40,8 +40,8 @@ export default function AffaireView() {
         api.get(`/affaires/${id}`),
         api.get('/affaires/ref/infractions')
       ])
-      setAffaire(aRes.data)
-      setInfractions(iRes.data)
+      setAffaire(aRes.data?.data || aRes.data)
+      setInfractions(iRes.data?.data || iRes.data || [])
     } catch (err) { console.error(err) }
     setLoading(false)
   }, [id])
@@ -406,7 +406,7 @@ function PieceViewPopup({ pieceId, userId, canWrite, onClose, onRefresh }) {
   useEffect(() => { loadPiece() }, [pieceId])
   const loadPiece = async () => {
     setLoading(true)
-    try { const res = await api.get(`/affaires/pieces/${pieceId}`); setPiece(res.data) }
+    try { const res = await api.get(`/affaires/pieces/${pieceId}`); setPiece(res.data?.data || res.data) }
     catch (err) { console.error(err) }
     setLoading(false)
   }

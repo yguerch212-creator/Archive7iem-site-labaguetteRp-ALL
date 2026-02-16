@@ -39,7 +39,7 @@ export default function PieceView() {
 
   const load = () => {
     api.get(`/affaires/pieces/${id}`).then(r => {
-      setPiece(r.data)
+      setPiece(r.data?.data || r.data)
       setLoading(false)
     }).catch(() => setLoading(false))
   }
