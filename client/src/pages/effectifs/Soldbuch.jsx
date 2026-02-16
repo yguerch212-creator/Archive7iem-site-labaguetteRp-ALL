@@ -1,6 +1,7 @@
 import BackButton from '../../components/BackButton'
 import ShareButton from '../../components/ShareButton'
 import LayoutRenderer from '../../components/LayoutRenderer'
+import SignaturePopup from '../../components/SignaturePopup'
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
@@ -19,8 +20,12 @@ export default function Soldbuch() {
   const [decoForm, setDecoForm] = useState({ decoration_id: '', nom_custom: '', date_attribution: '', attribue_par: '', motif: '' })
   const [decoMsg, setDecoMsg] = useState(null)
 
+  const [signPopup, setSignPopup] = useState(null) // null | { slot: 'soldat'|'referent' }
+
   const isSelf = user?.effectif_id && String(user.effectif_id) === String(id)
   const canManageDecos = user?.isAdmin || user?.isRecenseur || isSelf
+  const canSignSoldat = isSelf || user?.isAdmin
+  const canSignReferent = user?.isOfficier || user?.isAdmin || user?.isRecenseur
 
   const loadDecos = () => apiClient.get(`/decorations/effectif/${id}`).then(r => setDecorations(r.data.data || []))
 
@@ -179,12 +184,24 @@ export default function Soldbuch() {
               {e.signature_soldat && <img src={e.signature_soldat} alt="" style={{ maxHeight: 50, maxWidth: 180 }} />}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>Signature du soldat</div>
+            {(canSignSoldat || canSignReferent) && !e.signature_soldat && (
+              <button className="btn btn-secondary btn-small" style={{ marginTop: 4, fontSize: '0.75rem' }}
+                onClick={() => setSignPopup({ slot: 'soldat' })}>
+                ✍️ Signer
+              </button>
+            )}
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ borderBottom: '1px solid var(--text-primary)', width: 200, height: 60, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 4 }}>
               {e.signature_referent && <img src={e.signature_referent} alt="" style={{ maxHeight: 50, maxWidth: 180 }} />}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>Signature du référent</div>
+            {(canSignSoldat || canSignReferent) && !e.signature_referent && (
+              <button className="btn btn-secondary btn-small" style={{ marginTop: 4, fontSize: '0.75rem' }}
+                onClick={() => setSignPopup({ slot: 'referent' })}>
+                ✍️ Signer
+              </button>
+            )}
           </div>
           {e.stamp_path && (
             <div style={{ textAlign: 'center' }}>
@@ -261,6 +278,30 @@ export default function Soldbuch() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Signature Popup */}
+      {signPopup && (
+        <SignaturePopup
+          onClose={() => setSignPopup(null)}
+          onSign={async (signatureData) => {
+            try {
+              await apiClient.put(`/soldbuch/${id}/sign`, { slot: signPopup.slot, signature_data: signatureData })
+              setSignPopup(null)
+              // Reload data
+              const res = await apiClient.get(`/soldbuch/${id}`)
+              setData(res.data.data)
+            } catch (err) {
+              alert(err.response?.data?.message || 'Erreur lors de la signature')
+            }
+          }}
+          onRequestSent={() => setSignPopup(null)}
+          documentType="soldbuch"
+          documentId={id}
+          documentLabel={`Soldbuch de ${e.prenom} ${e.nom}`}
+          slotLabel={signPopup.slot === 'soldat' ? 'Signature du soldat' : 'Signature du référent'}
+          hideSelf={signPopup.slot === 'soldat' ? !canSignSoldat : !canSignReferent}
+        />
       )}
 
       <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-xl)', display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>

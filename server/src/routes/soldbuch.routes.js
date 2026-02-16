@@ -54,4 +54,36 @@ router.put('/:effectifId/layout', auth, async (req, res) => {
   }
 })
 
+// PUT /api/soldbuch/:effectif_id/sign — Sign a soldbuch slot (soldat or referent)
+router.put('/:effectifId/sign', auth, async (req, res) => {
+  try {
+    const { slot, signature_data } = req.body
+    if (!['soldat', 'referent'].includes(slot)) {
+      return res.status(400).json({ success: false, message: 'Slot invalide (soldat ou referent)' })
+    }
+    if (!signature_data) {
+      return res.status(400).json({ success: false, message: 'Signature requise' })
+    }
+
+    const effectifId = parseInt(req.params.effectifId)
+    const isOwner = req.user.effectif_id === effectifId
+
+    // soldat slot: only the effectif themselves
+    // referent slot: officier, admin, or recenseur
+    if (slot === 'soldat' && !isOwner && !req.user.isAdmin) {
+      return res.status(403).json({ success: false, message: 'Seul le soldat peut signer son propre Soldbuch' })
+    }
+    if (slot === 'referent' && !req.user.isOfficier && !req.user.isAdmin && !req.user.isRecenseur) {
+      return res.status(403).json({ success: false, message: 'Seul un officier ou référent peut signer ici' })
+    }
+
+    const col = slot === 'soldat' ? 'signature_soldat' : 'signature_referent'
+    await pool.execute(`UPDATE effectifs SET ${col} = ? WHERE id = ?`, [signature_data, effectifId])
+
+    res.json({ success: true, message: 'Signature enregistrée' })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
 module.exports = router

@@ -8,6 +8,7 @@ import apiClient from '../../api/client'
 import { exportToPdf } from '../../utils/exportPdf'
 import EffectifAutocomplete from '../../components/EffectifAutocomplete'
 import SignatureCanvas from '../../components/SignatureCanvas'
+import SignaturePopup from '../../components/SignaturePopup'
 
 const TYPE_LABELS = { rapport: 'Rapport Journalier', recommandation: 'Recommandation', incident: 'Rapport d\'Incident' }
 const STAMPS = [
@@ -23,6 +24,7 @@ export default function RapportView() {
   const [layoutBlocks, setLayoutBlocks] = useState(null)
   const [mySignature, setMySignature] = useState(null)
   const [showValidateSign, setShowValidateSign] = useState(false)
+  const [showSignPopup, setShowSignPopup] = useState(false)
 
   useEffect(() => {
     load()
@@ -215,6 +217,10 @@ export default function RapportView() {
               {R.signature_image && <img src={R.signature_image} alt="" style={{ maxHeight: 35, maxWidth: 180 }} />}
             </div>
             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2 }}>Signature</div>
+            {!R.signature_image && user && (
+              <button className="btn btn-secondary btn-small" style={{ marginTop: 4, fontSize: '0.72rem' }}
+                onClick={() => setShowSignPopup(true)}>✍️ Signer</button>
+            )}
           </div>
           {R.stamp && (
             <div style={{ textAlign: 'center' }}>
@@ -275,6 +281,27 @@ export default function RapportView() {
             <SignatureCanvas onSave={(dataUrl) => validateRapport(dataUrl)} width={480} height={200} />
           </div>
         </div>
+      )}
+
+      {/* Signature popup for author */}
+      {showSignPopup && (
+        <SignaturePopup
+          onClose={() => setShowSignPopup(false)}
+          onSign={async (signatureData) => {
+            try {
+              await apiClient.put(`/rapports/${id}/sign`, { signature_data: signatureData })
+              setShowSignPopup(false)
+              load()
+            } catch (err) {
+              alert(err.response?.data?.message || 'Erreur')
+            }
+          }}
+          onRequestSent={() => setShowSignPopup(false)}
+          documentType="rapport"
+          documentId={id}
+          documentLabel={`Rapport — ${R.titre || R.numero}`}
+          slotLabel="Signature de l'auteur"
+        />
       )}
 
       <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>

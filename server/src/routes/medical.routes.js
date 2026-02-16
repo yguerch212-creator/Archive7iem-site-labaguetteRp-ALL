@@ -190,4 +190,31 @@ router.get('/my-signature', auth, async (req, res) => {
   }
 })
 
+// PUT /api/medical/:id/sign — Sign a visite médicale
+router.put('/:id/sign', auth, async (req, res) => {
+  try {
+    const { signature_data } = req.body
+    if (!signature_data) return res.status(400).json({ success: false, message: 'Signature requise' })
+
+    // Only Sanitäts officier or admin
+    if (!req.user.isSanitaets && !req.user.isOfficier && !req.user.isAdmin) {
+      return res.status(403).json({ success: false, message: 'Seul un médecin ou officier peut signer' })
+    }
+
+    await pool.execute('UPDATE visites_medicales SET signature_medecin = ? WHERE id = ?', [signature_data, req.params.id])
+
+    // Save personal signature
+    if (req.user.effectif_id) {
+      await pool.execute(
+        'INSERT INTO signatures_effectifs (effectif_id, signature_data) VALUES (?, ?) ON DUPLICATE KEY UPDATE signature_data = ?',
+        [req.user.effectif_id, signature_data, signature_data]
+      ).catch(() => {})
+    }
+
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
 module.exports = router

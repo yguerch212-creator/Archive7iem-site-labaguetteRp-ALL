@@ -415,4 +415,46 @@ router.put('/:id/validate', auth, async (req, res) => {
 })
 
 // GET /api/rapports/templates/list — rapport templates
+// PUT /api/rapports/:id/sign — Sign a rapport (author signature)
+router.put('/:id/sign', auth, async (req, res) => {
+  try {
+    const { signature_data } = req.body
+    if (!signature_data) return res.status(400).json({ success: false, message: 'Signature requise' })
+
+    const rapport = await queryOne('SELECT id, created_by FROM rapports WHERE id = ?', [req.params.id])
+    if (!rapport) return res.status(404).json({ success: false, message: 'Rapport introuvable' })
+
+    // Only author or admin can sign the author slot
+    if (rapport.created_by !== req.user.id && !req.user.isAdmin) {
+      return res.status(403).json({ success: false, message: 'Seul l\'auteur peut signer ce rapport' })
+    }
+
+    // Get signer info
+    let sigNom = req.user.username, sigGrade = null
+    if (req.user.effectif_id) {
+      const eff = await queryOne('SELECT prenom, nom, grade_id FROM effectifs e WHERE e.id = ?', [req.user.effectif_id])
+      if (eff) {
+        sigNom = `${eff.prenom} ${eff.nom}`
+        const g = await queryOne('SELECT nom_complet FROM grades WHERE id = ?', [eff.grade_id])
+        if (g) sigGrade = g.nom_complet
+      }
+    }
+
+    await pool.execute('UPDATE rapports SET signature_image = ?, signature_nom = ?, signature_grade = ? WHERE id = ?',
+      [signature_data, sigNom, sigGrade, req.params.id])
+
+    // Save personal signature
+    if (req.user.effectif_id) {
+      await pool.execute(
+        'INSERT INTO signatures_effectifs (effectif_id, signature_data) VALUES (?, ?) ON DUPLICATE KEY UPDATE signature_data = ?',
+        [req.user.effectif_id, signature_data, signature_data]
+      ).catch(() => {})
+    }
+
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
 module.exports = router

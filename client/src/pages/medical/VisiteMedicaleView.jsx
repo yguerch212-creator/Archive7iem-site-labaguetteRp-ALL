@@ -1,5 +1,6 @@
 import ShareButton from '../../components/ShareButton'
 import BackButton from '../../components/BackButton'
+import SignaturePopup from '../../components/SignaturePopup'
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
@@ -11,6 +12,7 @@ export default function VisiteMedicaleView() {
   const { user } = useAuth()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showSignPopup, setShowSignPopup] = useState(false)
 
   useEffect(() => {
     api.get(`/medical/${id}`).then(r => { setData(r.data.data); setLoading(false) }).catch(() => setLoading(false))
@@ -133,11 +135,35 @@ export default function VisiteMedicaleView() {
             </p>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ borderBottom: '1px solid var(--text-primary)', width: 180, height: 50 }}></div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>Signature</div>
+            <div style={{ borderBottom: '1px solid var(--text-primary)', width: 180, height: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 4 }}>
+              {v.signature_medecin && <img src={v.signature_medecin} alt="" style={{ maxHeight: 45, maxWidth: 170 }} />}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>Signature du médecin</div>
+            {!v.signature_medecin && user && (user.isSanitaets || user.isOfficier || user.isAdmin) && (
+              <button className="btn btn-secondary btn-small" style={{ marginTop: 4, fontSize: '0.72rem' }}
+                onClick={() => setShowSignPopup(true)}>✍️ Signer</button>
+            )}
           </div>
         </div>
       </div>
+
+      {showSignPopup && (
+        <SignaturePopup
+          onClose={() => setShowSignPopup(false)}
+          onSign={async (signatureData) => {
+            try {
+              await api.put(`/medical/${id}/sign`, { signature_data: signatureData })
+              setShowSignPopup(false)
+              api.get(`/medical/${id}`).then(r => setData(r.data.data))
+            } catch (err) { alert(err.response?.data?.message || 'Erreur') }
+          }}
+          onRequestSent={() => setShowSignPopup(false)}
+          documentType="visite"
+          documentId={id}
+          documentLabel={`Visite médicale — ${v.effectif_prenom} ${v.effectif_nom}`}
+          slotLabel="Signature du médecin"
+        />
+      )}
 
       <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
         <button className="btn btn-secondary" onClick={() => window.print()}>🖨️ Imprimer</button>
