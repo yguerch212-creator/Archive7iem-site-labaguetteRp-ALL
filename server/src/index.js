@@ -41,8 +41,8 @@ app.set('trust proxy', 1) // Behind Nginx
 const PORT = process.env.PORT || 3001
 
 // Rate limiting (login stricter)
-const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, validate: { trustProxy: false } })
-const generalLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200, validate: { trustProxy: false } })
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, validate: { trustProxy: false } })
+const generalLimiter = rateLimit({ windowMs: 1 * 60 * 1000, max: 300, validate: { trustProxy: false } })
 
 // Middlewares
 app.use(helmet({ crossOriginResourcePolicy: false }))
