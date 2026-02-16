@@ -40,7 +40,7 @@ router.get('/', optionalAuth, async (req, res) => {
       LEFT JOIN users u ON a.created_by = u.id
       ORDER BY a.created_at DESC
     `)
-    res.json(rows)
+    res.json({ success: true, data: rows })
   } catch (err) { console.error(err); res.status(500).json({ error: 'Erreur serveur' }) }
 })
 

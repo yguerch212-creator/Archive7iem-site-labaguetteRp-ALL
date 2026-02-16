@@ -17,17 +17,18 @@ const pool = mysql.createPool({
 
 // Retry wrapper — retries once on connection lost
 async function query(sql, params = []) {
+  // Use pool.query for template literals (LIMIT etc), pool.execute for prepared statements
+  const method = params.length > 0 ? 'execute' : 'query'
   try {
-    const [rows] = await pool.execute(sql, params)
+    const [rows] = await pool[method](sql, params)
     return rows
   } catch (err) {
-    // Retry on connection lost / gone away
     if (err.code === 'PROTOCOL_CONNECTION_LOST' || 
         err.code === 'ECONNRESET' || 
         err.code === 'ECONNREFUSED' ||
         (err.message && err.message.includes('Connection lost'))) {
-      console.warn('[DB] Connection lost, retrying query...')
-      const [rows] = await pool.execute(sql, params)
+      console.warn('[DB] Connection lost, retrying...')
+      const [rows] = await pool[method](sql, params)
       return rows
     }
     throw err

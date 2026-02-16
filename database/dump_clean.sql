@@ -36,7 +36,7 @@ CREATE TABLE `activity_logs` (
   KEY `idx_log_user` (`user_id`),
   KEY `idx_log_action` (`action`),
   KEY `idx_log_date` (`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -104,7 +104,7 @@ CREATE TABLE `affaires` (
   PRIMARY KEY (`id`),
   KEY `idx_statut` (`statut`),
   KEY `idx_type` (`type`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -136,7 +136,7 @@ CREATE TABLE `affaires_personnes` (
   KEY `idx_affaire` (`affaire_id`),
   CONSTRAINT `affaires_personnes_ibfk_1` FOREIGN KEY (`affaire_id`) REFERENCES `affaires` (`id`) ON DELETE CASCADE,
   CONSTRAINT `affaires_personnes_ibfk_2` FOREIGN KEY (`effectif_id`) REFERENCES `effectifs` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -176,7 +176,7 @@ CREATE TABLE `affaires_pieces` (
   KEY `idx_affaire` (`affaire_id`),
   CONSTRAINT `affaires_pieces_ibfk_1` FOREIGN KEY (`affaire_id`) REFERENCES `affaires` (`id`) ON DELETE CASCADE,
   CONSTRAINT `affaires_pieces_ibfk_2` FOREIGN KEY (`infraction_id`) REFERENCES `infractions` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -280,7 +280,7 @@ CREATE TABLE `calendrier` (
   KEY `created_by` (`created_by`),
   CONSTRAINT `calendrier_ibfk_1` FOREIGN KEY (`unite_id`) REFERENCES `unites` (`id`) ON DELETE SET NULL,
   CONSTRAINT `calendrier_ibfk_2` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -346,7 +346,7 @@ CREATE TABLE `documentation` (
   KEY `idx_doc_repertoire` (`repertoire_id`),
   KEY `idx_doc_statut` (`statut`),
   CONSTRAINT `documentation_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -443,7 +443,7 @@ CREATE TABLE `dossiers` (
   KEY `created_by` (`created_by`),
   CONSTRAINT `dossiers_ibfk_1` FOREIGN KEY (`effectif_id`) REFERENCES `effectifs` (`id`) ON DELETE SET NULL,
   CONSTRAINT `dossiers_ibfk_2` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -503,7 +503,7 @@ CREATE TABLE `effectif_historique` (
   PRIMARY KEY (`id`),
   KEY `effectif_id` (`effectif_id`),
   CONSTRAINT `effectif_historique_ibfk_1` FOREIGN KEY (`effectif_id`) REFERENCES `effectifs` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -589,7 +589,7 @@ CREATE TABLE `effectifs` (
   KEY `grade_id` (`grade_id`),
   CONSTRAINT `effectifs_ibfk_1` FOREIGN KEY (`unite_id`) REFERENCES `unites` (`id`) ON DELETE SET NULL,
   CONSTRAINT `effectifs_ibfk_2` FOREIGN KEY (`grade_id`) REFERENCES `grades` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -883,7 +883,7 @@ CREATE TABLE `mentions` (
   KEY `idx_mentions_nom` (`nom_saisi`),
   KEY `idx_mentions_effectif` (`effectif_id`),
   KEY `idx_mentions_source` (`source_type`,`source_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -959,6 +959,36 @@ CREATE TABLE `notes_commandement` (
 LOCK TABLES `notes_commandement` WRITE;
 /*!40000 ALTER TABLE `notes_commandement` DISABLE KEYS */;
 /*!40000 ALTER TABLE `notes_commandement` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `notifications`
+--
+
+DROP TABLE IF EXISTS `notifications`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `notifications` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'info',
+  `titre` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `message` text COLLATE utf8mb4_unicode_ci,
+  `lien` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `lu` tinyint DEFAULT '0',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_lu` (`user_id`,`lu`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `notifications`
+--
+
+LOCK TABLES `notifications` WRITE;
+/*!40000 ALTER TABLE `notifications` DISABLE KEYS */;
+/*!40000 ALTER TABLE `notifications` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -1113,7 +1143,7 @@ CREATE TABLE `pds_semaines` (
   UNIQUE KEY `unique_effectif_semaine` (`effectif_id`,`semaine`),
   KEY `idx_semaine` (`semaine`),
   CONSTRAINT `pds_semaines_ibfk_1` FOREIGN KEY (`effectif_id`) REFERENCES `effectifs` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1206,7 +1236,7 @@ CREATE TABLE `rapport_layouts` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `rapport_id` (`rapport_id`),
   CONSTRAINT `rapport_layouts_ibfk_1` FOREIGN KEY (`rapport_id`) REFERENCES `rapports` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1315,7 +1345,7 @@ CREATE TABLE `rapports` (
   `pris_par_nom` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `pris_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1462,7 +1492,7 @@ CREATE TABLE `telegrammes` (
   CONSTRAINT `telegrammes_ibfk_1` FOREIGN KEY (`expediteur_id`) REFERENCES `effectifs` (`id`) ON DELETE SET NULL,
   CONSTRAINT `telegrammes_ibfk_2` FOREIGN KEY (`destinataire_id`) REFERENCES `effectifs` (`id`) ON DELETE SET NULL,
   CONSTRAINT `telegrammes_ibfk_3` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1558,7 +1588,7 @@ CREATE TABLE `users` (
   CONSTRAINT `users_ibfk_1` FOREIGN KEY (`unite_id`) REFERENCES `unites` (`id`) ON DELETE SET NULL,
   CONSTRAINT `users_ibfk_2` FOREIGN KEY (`grade_id`) REFERENCES `grades` (`id`) ON DELETE SET NULL,
   CONSTRAINT `users_ibfk_3` FOREIGN KEY (`effectif_id`) REFERENCES `effectifs` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1567,7 +1597,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'Admin','System','admin','$2b$10$Nsyr6D7soHbKhuuWtXpPo.ac0rAEvYMq4g00XcxqyWViwFPLGGpiu',NULL,NULL,NULL,5,0,1,'2026-02-14 18:48:23','2026-02-12 18:36:36','2026-02-14 18:48:23'),(2,'Zussman','Siegfried','siegfried.zussman','$2b$10$KDN.Deo8jkiN.iwiS2sqfeTUrUUNbZawlNhIH3cN4YSs4xcGmE7e.',1,9,53,1,0,1,'2026-02-14 20:31:22','2026-02-13 09:36:31','2026-02-14 20:31:22');
+INSERT INTO `users` VALUES (1,'Admin','System','admin','$2b$10$Nsyr6D7soHbKhuuWtXpPo.ac0rAEvYMq4g00XcxqyWViwFPLGGpiu',NULL,NULL,NULL,5,0,1,'2026-02-16 22:02:17','2026-02-12 18:36:36','2026-02-16 22:02:17'),(2,'Zussman','Siegfried','siegfried.zussman','$2b$10$KDN.Deo8jkiN.iwiS2sqfeTUrUUNbZawlNhIH3cN4YSs4xcGmE7e.',1,9,53,1,0,1,'2026-02-16 22:00:41','2026-02-13 09:36:31','2026-02-16 22:00:41');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1638,4 +1668,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-14 20:35:15
+-- Dump completed on 2026-02-16 22:02:40
