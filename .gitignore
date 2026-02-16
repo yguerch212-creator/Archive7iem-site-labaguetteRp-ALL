@@ -71,6 +71,14 @@ temp/
 *.rar
 
 # Local configuration
-config/local.jsonarchives7e-migration.zip
+config/local.json
+
+# Migration/backup archives
 *.zip
+*.tar.gz
+
+# Server logs (generated)
 server/logs/
+
+# Backups (sensitive data — never commit)
+backups/

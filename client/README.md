@@ -1,16 +1,46 @@
-# React + Vite
+# Archives 7e Armeekorps — Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend React de la plateforme Archives Wehrmacht RP.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React 18 + Vite
+- React Router v6
+- Axios (API client)
+- InteractJS (drag & drop layout editors)
+- DOMPurify (XSS protection)
+- CSS Variables (design parchemin militaire)
 
-## React Compiler
+## Développement
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+npm run dev     # Serveur dev (port 5173)
+npm run build   # Build production → dist/
+```
 
-## Expanding the ESLint configuration
+## Structure
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```
+src/
+├── api/            # Client Axios configuré
+├── auth/           # AuthContext, ProtectedRoute, useAuth
+├── components/     # Composants réutilisables
+│   ├── LayoutEditor.jsx       # Éditeur drag & drop
+│   ├── LayoutRenderer.jsx     # Rendu des blocs
+│   ├── SignatureCanvas.jsx    # Canvas de signature Paint-style
+│   ├── SignaturePopup.jsx     # Popup signer / demander signature
+│   ├── EffectifAutocomplete.jsx # Autocomplete effectifs
+│   ├── ShareButton.jsx        # Liens partageables
+│   └── layout/Topbar.jsx     # Navigation principale
+├── pages/          # Pages par module
+│   ├── effectifs/  # Soldbuch, organigramme, liste
+│   ├── rapports/   # Création, vue, validation, layout
+│   ├── sanctions/  # Affaires, pièces judiciaires
+│   ├── medical/    # Visites médicales
+│   ├── pds/        # Plan de service
+│   └── ...
+├── styles/         # CSS global + unités
+├── utils/          # Helpers (dates, export PDF/CSV)
+└── router.jsx      # Routes de l'application
+```

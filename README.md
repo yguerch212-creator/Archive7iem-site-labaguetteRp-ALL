@@ -1,229 +1,193 @@
-# Archives Wehrmacht RP
+# 🏛️ Archives 7e Armeekorps
 
-Application de gestion documentaire et administrative pour la 7ème Division d'Infanterie Wehrmacht RP.
+Plateforme de gestion documentaire et administrative immersive pour le serveur RP **Axe | LaBaguetteRP** (Garry's Mod WW2).
 
-## 📋 Description
+🔗 **Site officiel** : [archives-7earmekorps.com](https://archives-7earmekorps.com)
 
-Archives Wehrmacht RP est une plateforme complète de gestion des effectifs, rapports militaires, dossiers personnels et casiers disciplinaires pour les communautés de jeu de rôle militaire historique.
+---
 
-### Fonctionnalités principales
+## 📋 Fonctionnalités
 
-- **Gestion des effectifs** : Création et suivi des soldats avec système de grades et d'unités
-- **Rapports militaires** : Rédaction de rapports, incidents, recommandations et missions
-- **Casiers disciplinaires** : Suivi des infractions et sanctions
-- **Dossiers personnels** : Documents confidentiels et évaluations
-- **Système d'authentification** : Gestion des utilisateurs et permissions par groupes
-- **Interface moderne** : Design inspiré du papier parchemin avec typographie militaire
+### Documents & Rapports
+- **Soldbuch** — Livret militaire individuel avec mise en page personnalisable
+- **Rapports** — Journaliers, incidents, recommandations avec chaîne de validation hiérarchique
+- **Dossiers personnels** — Carnets avec layout drag & drop (InteractJS)
+- **Documentation** — Dossiers avec Google Docs/Sheets/PDF intégrés, validation officier
+- **Journal** — Gazette style "Wacht am Korps" multi-articles
+
+### Gestion des effectifs
+- **Effectifs** — Fiches complètes avec grades, unités, spécialités, photo
+- **Organigramme** — Arbre hiérarchique interactif sur fond parchemin
+- **PDS (Plan de Service)** — Self-service par semaine RP (vendredi → vendredi)
+- **Interdits de front** — Suivi des soldats interdits d'opérations
+- **Visites médicales** — Certificats avec signature médecin
+
+### Communication & Justice
+- **Télégrammes** — Système de messagerie RP avec multi-destinataires et confidentialité
+- **Justice militaire** — Affaires, pièces à conviction, signatures, code pénal complet
+- **Notifications** — Alertes in-app (Feldgendarmerie notifiée sur incidents)
+
+### Administration
+- **Signatures** — Canvas Paint-style, réutilisables, demande par télégramme
+- **Bibliothèque** — Tampons officiels
+- **Calendrier & Ordres** — Événements et ordres avec accusés de réception
+- **Archives** — Consultation et export PDF de tous les documents
+- **Galerie** — Photos du régiment
+- **Logs d'activité** — Audit trail complet
+
+### Permissions hiérarchiques
+| Groupe | Rôle |
+|--------|------|
+| Administration | Gestion technique du système |
+| Administratif | Gestion des effectifs, PDS, comptes |
+| Officier | Validation, documentation, commandement |
+| Sous-officier | Rapports, documentation (avec validation) |
+| Feldgendarmerie | Justice militaire, prise en charge incidents |
+| Sanitäts | Visites médicales |
+| État-Major | Équivalent admin |
+
+---
 
 ## 🛠 Stack Technique
 
-- **Frontend** : React 18 + Vite + React Router
-- **Backend** : Node.js + Express + MySQL
-- **Authentification** : JWT + bcrypt
-- **Base de données** : MySQL 8.0
-- **Déploiement** : Docker + Nginx
-- **Design** : CSS Variables + IBM Plex Mono
+| Couche | Technologie |
+|--------|-------------|
+| Frontend | React 18, Vite, React Router |
+| Backend | Node.js 22, Express |
+| Base de données | MySQL 8.0 (Docker) |
+| Auth | JWT + bcrypt |
+| Serveur web | Nginx (reverse proxy) |
+| Process manager | PM2 |
+| SSL | Let's Encrypt (certbot) |
+| Design | CSS Variables, IBM Plex Mono, style parchemin militaire |
+| Drag & Drop | InteractJS |
+
+---
 
 ## 📁 Structure du Projet
 
 ```
-├── client/                 # Frontend React
+├── client/                 # Frontend React (Vite)
 │   ├── src/
-│   │   ├── components/     # Composants réutilisables
-│   │   ├── pages/         # Pages de l'application
-│   │   ├── auth/          # Système d'authentification
-│   │   ├── api/           # Client API (Axios)
-│   │   └── styles/        # Feuilles de style
-│   └── public/            # Assets statiques
+│   │   ├── components/     # Composants réutilisables (Topbar, LayoutEditor, SignatureCanvas...)
+│   │   ├── pages/          # Pages par module (effectifs, rapports, sanctions...)
+│   │   ├── auth/           # AuthContext, ProtectedRoute
+│   │   ├── api/            # Client Axios
+│   │   └── styles/         # CSS global + unités
+│   └── dist/               # Build production (généré)
 ├── server/                 # Backend Node.js
 │   ├── src/
-│   │   ├── controllers/   # Logique métier
-│   │   ├── routes/        # Routes API
-│   │   ├── middleware/    # Middleware Express
-│   │   └── config/        # Configuration
-│   └── uploads/           # Fichiers uploadés
-├── database/              # Schémas et seeds SQL
-├── docker/                # Configuration Docker
-└── legacy/                # Code PHP original (référence)
+│   │   ├── controllers/    # Auth controller
+│   │   ├── routes/         # 25+ fichiers de routes API
+│   │   ├── middleware/      # auth, admin, recenseur, autoLog, feldgendarmerie
+│   │   ├── config/         # DB pool, env
+│   │   └── utils/          # Logger, devLogger, historique, discordNotify
+│   ├── uploads/            # Fichiers uploadés (photos, signatures)
+│   └── logs/               # Logs dev (rotation 30j, pas dans git)
+├── database/
+│   ├── schema.sql          # Schéma complet (47 tables)
+│   ├── seed.sql            # Données initiales (grades, unités, infractions)
+│   └── dump_clean.sql      # Dump propre pour migration
+├── deploy/
+│   ├── README.md           # Guide de déploiement complet
+│   ├── backup.sh           # Script de sauvegarde DB automatique
+│   ├── restore.sh          # Script de restauration
+│   └── nginx-https.conf    # Config Nginx avec SSL
+├── docs/                   # Documentation projet
+├── legacy/                 # Ancien code PHP (référence uniquement)
+└── .env.example            # Template des variables d'environnement
 ```
-
-## 🚀 Installation & Développement
-
-### Prérequis
-
-- Docker & Docker Compose
-- Node.js 20+ (pour développement local)
-- MySQL 8.0+ (pour développement local)
-
-### Démarrage rapide avec Docker
-
-1. **Cloner le repository**
-```bash
-git clone <url-du-repo>
-cd Archive7iem-site-labaguetteRp-ALL
-```
-
-2. **Lancer l'environnement complet**
-```bash
-cd docker
-docker-compose up -d
-```
-
-3. **Accéder à l'application**
-- Frontend : http://localhost (via Nginx)
-- Backend API : http://localhost/api
-- Base de données : localhost:3306
-
-### Développement local
-
-1. **Base de données**
-```bash
-mysql -u root -p < database/schema.sql
-mysql -u root -p < database/seed.sql
-```
-
-2. **Backend**
-```bash
-cd server
-cp .env.example .env
-# Configurer les variables d'environnement
-npm install
-npm run dev
-```
-
-3. **Frontend**
-```bash
-cd client
-npm install
-npm run dev
-```
-
-## 🔐 Authentification
-
-### Utilisateur administrateur par défaut
-
-- **Username** : `admin`
-- **Password** : `admin123`
-- **Email** : `admin@archives7e.com`
-
-⚠️ **Important** : Changer le mot de passe administrateur lors du premier déploiement.
-
-### Groupes d'utilisateurs
-
-- **Administration** : Accès complet au système
-- **Officier** : Gestion des effectifs et rapports
-- **Sous-Officier** : Consultation et rapports basiques
-- **Utilisateur** : Consultation uniquement
-
-## 📚 API Documentation
-
-### Endpoints principaux
-
-- `POST /api/auth/login` - Connexion utilisateur
-- `GET /api/auth/me` - Profil utilisateur actuel
-- `GET /api/effectifs` - Liste des effectifs
-- `POST /api/effectifs` - Créer un effectif
-- `GET /api/rapports` - Liste des rapports
-- `POST /api/rapports` - Créer un rapport
-- `GET /api/unites` - Liste des unités
-- `GET /api/admin/*` - Endpoints d'administration
-
-### Authentification API
-
-Toutes les routes (sauf `/auth/login`) nécessitent un token JWT dans l'en-tête :
-```
-Authorization: Bearer <token>
-```
-
-## 🎨 Design System
-
-### Palette de couleurs
-
-- **Militaire Principal** : `#2d4a34`
-- **Accent** : `#8b7355`
-- **Papier** : `#f5f2e8`
-- **Texte** : `#2c2317`
-
-### Typographie
-
-- **Police principale** : IBM Plex Mono
-- **Tailles** : 14px base, échelle modulaire
-
-### Composants
-
-- `PaperCard` : Carte avec effet parchemin
-- `Button` : Boutons stylisés (primary, secondary, danger)
-- `TypeTag` : Tags colorés pour les types de rapports
-- `Topbar` : Navigation principale
-
-## 🏛 Unités & Grades
-
-### 7 Unités de la Division
-
-1. **916 Grenadier Regiment** - Infanterie de ligne
-2. **254 Feldgendarmerie** - Police militaire  
-3. **916 Sanitäts Kompanie** - Service de santé
-4. **001 Marine Pionier Bataillon** - Génie amphibie
-5. **919 Logistik Kompanie** - Logistique
-6. **130 Panzer Lehr Abteilung** - Blindés d'instruction
-7. **009 Fallschirmjäger Kompanie** - Parachutistes
-
-### Hiérarchie des grades
-
-Du plus élevé au plus bas : Oberst → Oberstleutnant → Major → Hauptmann → Oberleutnant → Leutnant → Hauptfeldwebel → Oberfeldwebel → Feldwebel → Unterfeldwebel → Unteroffizier → Stabsgefreiter → Obergefreiter → Gefreiter → Oberschütze → Schütze → Rekrut
-
-## 🛡 Sécurité
-
-- Authentification JWT avec expiration
-- Hachage bcrypt pour les mots de passe
-- Validation des données avec express-validator
-- Rate limiting sur les API
-- Headers de sécurité avec Helmet
-- Upload de fichiers sécurisé avec Multer
-
-## 📊 Base de Données
-
-### Tables principales
-
-- `users` - Utilisateurs du système
-- `groups` - Groupes de permissions  
-- `unites` - Unités militaires
-- `grades` - Grades et hiérarchie
-- `effectifs` - Soldats et personnel
-- `rapports` - Rapports militaires
-- `casiers` - Dossiers disciplinaires
-- `dossiers` - Documents personnels
-
-## 🚀 Déploiement
-
-### Production avec Docker
-
-1. Modifier les mots de passe dans `docker-compose.yml`
-2. Configurer les variables d'environnement
-3. Lancer : `docker-compose -f docker/docker-compose.yml up -d`
-
-### Variables d'environnement critiques
-
-```env
-DB_PASS=mot_de_passe_securise
-JWT_SECRET=cle_jwt_ultra_secrete_256_bits
-MYSQL_ROOT_PASSWORD=mot_de_passe_root_mysql
-```
-
-## 🤝 Contribution
-
-Ce projet utilise une architecture moderne et maintenable. Pour contribuer :
-
-1. Fork du repository
-2. Créer une branche feature
-3. Développer en suivant les conventions du projet
-4. Tester localement avec Docker
-5. Soumettre une Pull Request
-
-## 📄 Licence
-
-Projet personnel pour communauté de jeu de rôle. Usage privé uniquement.
 
 ---
 
-**Archives Wehrmacht RP** - Gestion documentaire pour communautés RP militaires historiques
+## 🚀 Démarrage rapide
+
+### 1. Cloner
+
+```bash
+git clone https://github.com/yguerch212-creator/Archive7iem-site-labaguetteRp-ALL.git
+cd Archive7iem-site-labaguetteRp-ALL
+```
+
+### 2. Base de données
+
+```bash
+docker run -d --name archives-mysql --restart unless-stopped \
+  -e MYSQL_ROOT_PASSWORD='MotDePasseRoot' \
+  -e MYSQL_DATABASE='archives7e' \
+  -e MYSQL_USER='archives_user' \
+  -e MYSQL_PASSWORD='MotDePasseDB' \
+  -p 3306:3306 -v mysql_data:/var/lib/mysql \
+  mysql:8.0 --default-authentication-plugin=mysql_native_password \
+  --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+# Importer le schéma
+docker exec -i archives-mysql mysql -u archives_user -p'MotDePasseDB' archives7e < database/dump_clean.sql
+```
+
+### 3. Configuration
+
+```bash
+cp .env.example .env
+# Éditer .env avec vos identifiants
+```
+
+### 4. Backend
+
+```bash
+cd server && npm install && cd ..
+```
+
+### 5. Frontend
+
+```bash
+cd client && npm install && npm run build && cd ..
+```
+
+### 6. Lancer
+
+```bash
+# Dev
+cd server && node src/index.js
+
+# Production (avec PM2)
+pm2 start server/src/index.js --name archives7e
+```
+
+> 📖 **Guide complet de déploiement production** : voir [`deploy/README.md`](deploy/README.md)
+
+---
+
+## 🔐 Sécurité
+
+- Mots de passe hashés avec **bcrypt** (salt 10)
+- Authentification **JWT** avec expiration 24h
+- **Rate limiting** : 300 req/min (general), 30/15min (login)
+- **Helmet** : headers de sécurité
+- **DOMPurify** : protection XSS sur le rendu HTML
+- Validation des uploads (type, taille)
+- Logs d'audit (activité + erreurs + crashes)
+
+---
+
+## 🔄 Sauvegardes
+
+Sauvegarde automatique quotidienne de la DB. Voir [`deploy/README.md`](deploy/README.md#-sauvegardes-automatiques) pour la configuration.
+
+```bash
+# Backup manuel
+./deploy/backup.sh
+
+# Restauration
+./deploy/restore.sh
+```
+
+---
+
+## 📄 Licence
+
+Projet open source pour communauté de jeu de rôle. Utilisation libre.
+
+---
+
+**Archives 7e Armeekorps** — *Dieses Archiv ist ein offizielles Dokument der Wehrmacht.*
