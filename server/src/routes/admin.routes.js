@@ -14,7 +14,7 @@ router.get('/users', auth, admin, async (req, res) => {
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
               WHERE ug.user_id = u.id AND gp.name = 'Administration') > 0 AS is_admin,
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
-              WHERE ug.user_id = u.id AND gp.name = 'Recenseur') > 0 AS is_recenseur,
+              WHERE ug.user_id = u.id AND gp.name = 'Administratif') > 0 AS is_recenseur,
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
               WHERE ug.user_id = u.id AND gp.name = 'Officier') > 0 AS is_officier,
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
@@ -83,7 +83,7 @@ router.post('/users', auth, admin, async (req, res) => {
 // PUT /api/admin/users/:id/group
 router.put('/users/:id/group', auth, admin, async (req, res) => {
   try {
-    const { action, group } = req.body // action: 'add'|'remove', group: 'Administration'|'Recenseur'
+    const { action, group } = req.body // action: 'add'|'remove', group: 'Administration'|'Administratif'|etc.
     const groupName = group || 'Administration'
     const grp = await queryOne("SELECT id FROM `groups` WHERE name = ?", [groupName])
     if (!grp) return res.status(500).json({ success: false, message: `Groupe ${groupName} introuvable` })

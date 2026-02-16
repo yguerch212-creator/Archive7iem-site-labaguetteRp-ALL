@@ -24,8 +24,10 @@ export default function Soldbuch() {
 
   const isSelf = user?.effectif_id && String(user.effectif_id) === String(id)
   const canManageDecos = user?.isAdmin || user?.isRecenseur || isSelf
-  const canSignSoldat = isSelf || user?.isAdmin
-  const canSignReferent = user?.isOfficier || user?.isAdmin || user?.isRecenseur
+  // Seul le soldat lui-même peut signer son slot. Un officier peut signer le slot référent.
+  // Admins et administratifs ne signent PAS (ils gèrent, pas signent)
+  const canSignSoldat = isSelf
+  const canSignReferent = user?.isOfficier && !isSelf
 
   const loadDecos = () => apiClient.get(`/decorations/effectif/${id}`).then(r => setDecorations(r.data.data || []))
 
@@ -184,10 +186,16 @@ export default function Soldbuch() {
               {e.signature_soldat && <img src={e.signature_soldat} alt="" style={{ maxHeight: 50, maxWidth: 180 }} />}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>Signature du soldat</div>
-            {(canSignSoldat || canSignReferent) && !e.signature_soldat && (
+            {canSignSoldat && !e.signature_soldat && (
               <button className="btn btn-secondary btn-small" style={{ marginTop: 4, fontSize: '0.75rem' }}
                 onClick={() => setSignPopup({ slot: 'soldat' })}>
                 ✍️ Signer
+              </button>
+            )}
+            {!canSignSoldat && !e.signature_soldat && user && (
+              <button className="btn btn-secondary btn-small" style={{ marginTop: 4, fontSize: '0.72rem' }}
+                onClick={() => setSignPopup({ slot: 'soldat' })}>
+                📨 Demander
               </button>
             )}
           </div>
@@ -196,10 +204,16 @@ export default function Soldbuch() {
               {e.signature_referent && <img src={e.signature_referent} alt="" style={{ maxHeight: 50, maxWidth: 180 }} />}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>Signature du référent</div>
-            {(canSignSoldat || canSignReferent) && !e.signature_referent && (
+            {canSignReferent && !e.signature_referent && (
               <button className="btn btn-secondary btn-small" style={{ marginTop: 4, fontSize: '0.75rem' }}
                 onClick={() => setSignPopup({ slot: 'referent' })}>
                 ✍️ Signer
+              </button>
+            )}
+            {!canSignReferent && !e.signature_referent && user && (
+              <button className="btn btn-secondary btn-small" style={{ marginTop: 4, fontSize: '0.72rem' }}
+                onClick={() => setSignPopup({ slot: 'referent' })}>
+                📨 Demander
               </button>
             )}
           </div>
@@ -301,6 +315,7 @@ export default function Soldbuch() {
           documentLabel={`Soldbuch de ${e.prenom} ${e.nom}`}
           slotLabel={signPopup.slot === 'soldat' ? 'Signature du soldat' : 'Signature du référent'}
           hideSelf={signPopup.slot === 'soldat' ? !canSignSoldat : !canSignReferent}
+          hideRequest={signPopup.slot === 'soldat' ? canSignSoldat : canSignReferent}
         />
       )}
 

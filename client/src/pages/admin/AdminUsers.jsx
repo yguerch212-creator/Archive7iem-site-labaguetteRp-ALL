@@ -6,7 +6,7 @@ import api from '../../api/client'
 
 const ALL_GROUPS = [
   { name: 'Administration', icon: '👑', color: '#e74c3c', desc: 'Accès total au site' },
-  { name: 'Recenseur', icon: '📋', color: '#3498db', desc: 'Gère les effectifs, PDS, comptes' },
+  { name: 'Administratif', icon: '📋', color: '#3498db', desc: 'Gère les effectifs, PDS, comptes' },
   { name: 'Officier', icon: '⭐', color: '#f39c12', desc: 'Valide docs, crée dossiers, interdits' },
   { name: 'Sous-officier', icon: '🎖️', color: '#27ae60', desc: 'Soumet docs, accès sous-off' },
   { name: 'Feldgendarmerie', icon: '🛡️', color: '#8e44ad', desc: 'Interdits de front, casier' },
@@ -179,7 +179,7 @@ export default function AdminUsers() {
                   <td style={td}>
                     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                       {u.is_admin && <span style={badge('#e74c3c')}>👑 Admin</span>}
-                      {u.is_recenseur && <span style={badge('#3498db')}>📋 Recenseur</span>}
+                      {u.is_recenseur && <span style={badge('#3498db')}>📋 Administratif</span>}
                       {u.is_officier && <span style={badge('#f39c12')}>⭐ Officier</span>}
                       {u.is_sousofficier && <span style={badge('#27ae60')}>🎖️ Sous-off</span>}
                       {u.is_feldgendarmerie && <span style={badge('#8e44ad')}>🛡️ Feld</span>}

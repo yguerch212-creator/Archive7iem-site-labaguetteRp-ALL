@@ -715,7 +715,7 @@ CREATE TABLE `groups` (
 
 LOCK TABLES `groups` WRITE;
 /*!40000 ALTER TABLE `groups` DISABLE KEYS */;
-INSERT INTO `groups` VALUES (1,'Administration','2026-02-12 18:36:36'),(2,'Recenseur','2026-02-13 00:34:29'),(3,'Officier','2026-02-13 00:42:09'),(4,'Sous-officier','2026-02-13 14:02:31'),(5,'Feldgendarmerie','2026-02-13 14:02:31'),(6,'Sanitaets','2026-02-13 14:02:31'),(7,'Etat-Major','2026-02-14 18:03:09');
+INSERT INTO `groups` VALUES (1,'Administration','2026-02-12 18:36:36'),(2,'Administratif','2026-02-13 00:34:29'),(3,'Officier','2026-02-13 00:42:09'),(4,'Sous-officier','2026-02-13 14:02:31'),(5,'Feldgendarmerie','2026-02-13 14:02:31'),(6,'Sanitaets','2026-02-13 14:02:31'),(7,'Etat-Major','2026-02-14 18:03:09');
 /*!40000 ALTER TABLE `groups` ENABLE KEYS */;
 UNLOCK TABLES;
 
