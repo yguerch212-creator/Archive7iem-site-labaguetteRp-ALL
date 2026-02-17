@@ -2,6 +2,7 @@ import BackButton from '../../components/BackButton'
 import ShareButton from '../../components/ShareButton'
 import LayoutRenderer from '../../components/LayoutRenderer'
 import SignaturePopup from '../../components/SignaturePopup'
+import SoldbuchBook from './SoldbuchBook'
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
@@ -21,6 +22,7 @@ export default function Soldbuch() {
   const [decoMsg, setDecoMsg] = useState(null)
 
   const [signPopup, setSignPopup] = useState(null) // null | { slot: 'soldat'|'referent' }
+  const [viewMode, setViewMode] = useState('book') // 'book' | 'classic'
 
   const isSelf = user?.effectif_id && String(user.effectif_id) === String(id)
   const canManageDecos = user?.isAdmin || user?.isRecenseur || isSelf
@@ -75,16 +77,26 @@ export default function Soldbuch() {
 
   return (
     <div className="container" style={{ maxWidth: 900 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-lg)', flexWrap: 'wrap', gap: '0.5rem' }}>
         <BackButton className="btn btn-secondary btn-small" label="← Retour" />
-        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+          <button className={`btn btn-small ${viewMode === 'book' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setViewMode('book')}>📕 Soldbuch</button>
+          <button className={`btn btn-small ${viewMode === 'classic' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setViewMode('classic')}>📋 Classique</button>
           <Link to={`/effectifs/${id}/edit`} className="btn btn-secondary btn-small">✏️ Modifier</Link>
           <Link to={`/dossiers/effectif/${id}`} className="btn btn-secondary btn-small">📁 Dossier</Link>
           <Link to={`/effectifs/${id}/soldbuch/edit`} className="btn btn-primary btn-small layout-desktop-only">🖋️ Mise en page</Link>
         </div>
       </div>
 
-      {layoutBlocks && layoutBlocks.length > 0 ? (
+      {/* Book View */}
+      {viewMode === 'book' && (
+        <SoldbuchBook effectif={e} decorations={decorations} />
+      )}
+
+      {/* Classic View */}
+      {viewMode === 'classic' && (layoutBlocks && layoutBlocks.length > 0 ? (
         <div className="document-paper" id="soldbuch-paper">
           <LayoutRenderer blocks={layoutBlocks} />
         </div>
@@ -224,7 +236,7 @@ export default function Soldbuch() {
           )}
         </div>
       </div>
-      )}
+      ))}
 
       {/* Decoration management (outside paper — not in PDF) */}
       {canManageDecos && (
