@@ -17,7 +17,7 @@ router.get('/', optionalAuth, async (req, res) => {
 })
 
 // GET /api/decorations/effectif/:id — Decorations for an effectif
-router.get('/effectif/:id', auth, async (req, res) => {
+router.get('/effectif/:id', optionalAuth, async (req, res) => {
   try {
     const rows = await query(`
       SELECT ed.*, d.nom AS decoration_nom, d.nom_allemand, d.categorie, d.rang, d.image_url

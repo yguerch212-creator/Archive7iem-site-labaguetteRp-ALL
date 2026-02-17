@@ -233,7 +233,7 @@ router.delete('/:id', auth, admin, async (req, res) => {
 })
 
 // GET /api/effectifs/:id/layout — Get layout blocks
-router.get('/:id/layout', auth, async (req, res) => {
+router.get('/:id/layout', optionalAuth, async (req, res) => {
   try {
     const row = await queryOne('SELECT layout_json FROM effectif_layouts WHERE effectif_id = ?', [req.params.id])
     if (!row || !row.layout_json) return res.json({ blocks: null })
@@ -257,7 +257,7 @@ router.put('/:id/layout', auth, async (req, res) => {
 })
 
 // GET /api/effectifs/:id/signature — Get saved personal signature
-router.get('/:id/signature', auth, async (req, res) => {
+router.get('/:id/signature', optionalAuth, async (req, res) => {
   try {
     const row = await queryOne('SELECT signature_data FROM signatures_effectifs WHERE effectif_id = ?', [req.params.id])
     res.json(row || { signature_data: null })
@@ -317,7 +317,7 @@ router.put('/:id/reserve', auth, async (req, res) => {
 })
 
 // GET /api/effectifs/:id/historique — Full timeline
-router.get('/:id/historique', auth, async (req, res) => {
+router.get('/:id/historique', optionalAuth, async (req, res) => {
   try {
     const id = req.params.id
 
