@@ -35,7 +35,7 @@ router.get('/', optionalAuth, async (req, res) => {
 })
 
 // GET /api/ordres/:id
-router.get('/:id', auth, async (req, res) => {
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const ordre = await queryOne('SELECT o.*, u.nom AS unite_nom, u.code AS unite_code FROM ordres o LEFT JOIN unites u ON u.id = o.unite_id WHERE o.id = ?', [req.params.id])
     if (!ordre) return res.status(404).json({ success: false, message: 'Ordre introuvable' })

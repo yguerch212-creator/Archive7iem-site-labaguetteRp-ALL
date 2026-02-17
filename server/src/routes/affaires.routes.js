@@ -213,7 +213,7 @@ router.delete('/pieces/:pid', auth, async (req, res) => {
 // ==================== PIECE LAYOUT ====================
 
 // GET /api/affaires/pieces/:pid/layout
-router.get('/pieces/:pid/layout', auth, async (req, res) => {
+router.get('/pieces/:pid/layout', optionalAuth, async (req, res) => {
   try {
     const layout = await queryOne('SELECT * FROM piece_layouts WHERE piece_id = ?', [req.params.pid])
     res.json({ success: true, data: layout || null })
@@ -347,7 +347,7 @@ router.get('/ref/infractions', auth, async (req, res) => {
 })
 
 // GET /api/affaires/:id/layout
-router.get('/:id/layout', auth, async (req, res) => {
+router.get('/:id/layout', optionalAuth, async (req, res) => {
   try {
     const row = await queryOne('SELECT layout_json FROM affaire_layouts WHERE affaire_id = ?', [req.params.id])
     if (!row || !row.layout_json) return res.json({ blocks: null })

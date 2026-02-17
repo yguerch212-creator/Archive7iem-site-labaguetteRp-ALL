@@ -67,7 +67,7 @@ router.get('/', optionalAuth, async (req, res) => {
 })
 
 // GET /api/rapports/:id
-router.get('/:id', auth, async (req, res) => {
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const row = await queryOne('SELECT * FROM rapports WHERE id = ?', [req.params.id])
     if (!row) return res.status(404).json({ success: false, message: 'Rapport non trouvé' })
@@ -335,7 +335,7 @@ router.delete('/:id', auth, admin, async (req, res) => {
 // (Duplicate /publish route removed — handled above)
 
 // GET /api/rapports/:id/layout — Get layout blocks
-router.get('/:id/layout', auth, async (req, res) => {
+router.get('/:id/layout', optionalAuth, async (req, res) => {
   try {
     const row = await queryOne('SELECT layout_json FROM rapport_layouts WHERE rapport_id = ?', [req.params.id])
     if (!row || !row.layout_json) return res.json({ blocks: null })
