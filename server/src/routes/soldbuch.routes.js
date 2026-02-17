@@ -140,4 +140,19 @@ router.put('/:effectifId/details/validate', auth, async (req, res) => {
   }
 })
 
+// PUT /api/soldbuch/:effectif_id/stamp — Set stamp from bibliothèque
+router.put('/:effectifId/stamp', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin && !req.user.isRecenseur && !req.user.isOfficier) {
+      return res.status(403).json({ success: false, message: 'Seul un officier ou administratif peut apposer le tampon' })
+    }
+    const { stamp_path } = req.body
+    if (!stamp_path) return res.status(400).json({ success: false, message: 'Tampon requis' })
+    await pool.execute('UPDATE effectifs SET stamp_path = ? WHERE id = ?', [stamp_path, req.params.effectifId])
+    res.json({ success: true, message: 'Tampon apposé' })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
 module.exports = router

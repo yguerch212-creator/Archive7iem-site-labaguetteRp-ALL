@@ -132,6 +132,24 @@ h4.sb-center { font-size:.62rem; margin:.12rem 0; font-weight:700; }
 .sb-theme-marine .sb-page { background:#f0e6cc; color:#2c2416; }
 .sb-theme-marine .sb-page-dark { background:#3a4a6a; color:#d0d8e8; }
 
+/* CLICKABLE SIGNATURES */
+.sb-sig-clickable { cursor:pointer; }
+.sb-sig-clickable:hover .sb-sig-empty { background:rgba(0,0,0,.08); }
+.sb-sig-empty { font-size:.42rem; color:#555; display:inline-flex; align-items:center; justify-content:center; border:1px dashed rgba(0,0,0,.3); border-radius:2px; padding:2px 8px; }
+.sb-sig-img { max-height:28px; max-width:100px; }
+.sb-stamp-clickable { cursor:pointer; font-size:.4rem; color:#555; border:1px dashed rgba(0,0,0,.3); border-radius:2px; padding:3px 8px; text-align:center; }
+.sb-stamp-clickable:hover { background:rgba(0,0,0,.08); }
+
+/* STAMP PICKER MODAL */
+.sb-modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.5); z-index:1000; display:flex; align-items:center; justify-content:center; }
+.sb-modal { background:#f0e6cc; border:2px solid #8b7355; border-radius:4px; padding:1rem; max-width:400px; width:90%; max-height:70vh; overflow-y:auto; font-family:'Courier New',monospace; }
+.sb-modal h3 { margin:0 0 .5rem; font-size:.9rem; text-align:center; }
+.sb-stamp-grid { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+.sb-stamp-option { cursor:pointer; border:1px solid rgba(0,0,0,.2); border-radius:3px; padding:6px; text-align:center; width:100px; transition:background .2s; }
+.sb-stamp-option:hover { background:rgba(0,0,0,.08); }
+.sb-stamp-option img { max-width:80px; max-height:60px; display:block; margin:0 auto 4px; }
+.sb-stamp-option span { font-size:.45rem; display:block; }
+
 /* RESPONSIVE */
 @media(max-width:768px){
   .sb-spread{flex-direction:column;max-width:100%}

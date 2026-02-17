@@ -1,4 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useAuth } from '../../auth/useAuth'
+import api from '../../api/client'
+import SignaturePopup from '../../components/SignaturePopup'
 import './soldbuch-book.css'
 
 const NB = '\u00A0'
@@ -28,12 +31,80 @@ const REGLES=[
 const W8A=['Fusil','Pistolet','Baïonnette','Boussole','Jumelles','Pioche','Pelle','Hachette']
 const W8B=['Cisaille','Kit nettoyage','Masque à gaz','Lunettes masque','Ouate/vaseline']
 
-export default function SoldbuchBook({effectif,decorations=[]}){
+export default function SoldbuchBook({effectif,decorations=[],onUpdate}){
+  const { user } = useAuth()
   const[isOpen,setIsOpen]=useState(false)
   const[spread,setSpread]=useState(0)
+  const[sigPopup,setSigPopup]=useState(null) // {slot:'soldat'|'referent'}
+  const[stampPicker,setStampPicker]=useState(false)
+  const[tampons,setTampons]=useState([])
+  const[saving,setSaving]=useState(false)
   const e=effectif, theme=getTheme(e.unite_code), isLw=theme==='luftwaffe'
   const branch={luftwaffe:'Luftwaffe',marine:'Kriegsmarine'}[theme]||null
   const TOTAL=14
+
+  // Permissions
+  const isOwner = user?.effectif_id === e.id
+  const isOfficier = user?.isOfficier
+  const isAdmin = user?.isAdmin
+  const canSignSoldat = isOwner && !e.signature_soldat
+  const canSignReferent = isOfficier && !e.signature_referent
+  const canStamp = (isOfficier || isAdmin || user?.isRecenseur) && !e.stamp_path
+
+  // Load tampons from bibliothèque when stamp picker opens
+  useEffect(() => {
+    if (stampPicker) {
+      api.get('/bibliotheque?type=tampon').then(r => setTampons(r.data?.data || r.data || [])).catch(() => {})
+    }
+  }, [stampPicker])
+
+  // Sign handler
+  const handleSign = async (signatureData) => {
+    if (!sigPopup) return
+    setSaving(true)
+    try {
+      await api.put(`/soldbuch/${e.id}/sign`, { slot: sigPopup.slot, signature_data: signatureData })
+      setSigPopup(null)
+      if (onUpdate) onUpdate()
+    } catch (err) {
+      alert(err.response?.data?.message || 'Erreur signature')
+    }
+    setSaving(false)
+  }
+
+  // Stamp handler
+  const handleStamp = async (stampPath) => {
+    setSaving(true)
+    try {
+      await api.put(`/soldbuch/${e.id}/stamp`, { stamp_path: stampPath })
+      setStampPicker(false)
+      if (onUpdate) onUpdate()
+    } catch (err) {
+      alert(err.response?.data?.message || 'Erreur tampon')
+    }
+    setSaving(false)
+  }
+
+  // Clickable signature slot component
+  function SigSlot({ data, slot, label, canSign: allowed }) {
+    if (data) {
+      return <div className="sb-sig-area"><img src={data} alt={label} className="sb-sig-img"/><p className="sb-xs">{label}</p></div>
+    }
+    if (allowed) {
+      return <div className="sb-sig-area sb-sig-clickable" onClick={() => setSigPopup({ slot })}>
+        <div className="sb-sig-box sb-sig-empty">✍️ Signer</div>
+        <p className="sb-xs">{label}</p>
+      </div>
+    }
+    return <div className="sb-sig-area"><div className="sb-sig-box">{NB}</div><p className="sb-xs">{label}</p></div>
+  }
+
+  // Clickable stamp slot
+  function StampSlot({ data }) {
+    if (data) return <img src={data} alt="Tampon" className="sb-stamp-img"/>
+    if (canStamp) return <div className="sb-stamp-clickable" onClick={() => setStampPicker(true)}>🔏 Tampon</div>
+    return null
+  }
 
   if(!isOpen) return(
     <div className={`sb-wrapper sb-theme-${theme}`}>
@@ -102,13 +173,10 @@ export default function SoldbuchBook({effectif,decorations=[]}){
         <R4 a="Pointure" b={e.schuhzeuglaenge} c="Largeur" d=""/>
       </tbody></table>
       <div className="sb-spacer"/>
-      <div className="sb-sig-area">
-        <div className="sb-sig-box">{e.signature_soldat&&<img src={e.signature_soldat} alt=""/>}</div>
-        <p className="sb-xs">(Signature du détenteur)</p>
-      </div>
+      <SigSlot data={e.signature_soldat} slot="soldat" label="(Signature du détenteur)" canSign={canSignSoldat}/>
       <div className="sb-stamp-row">
-        <div>{e.stamp_path&&<img src={e.stamp_path} alt="" className="sb-stamp-img"/>}</div>
-        <div className="sb-sig-area"><div className="sb-sig-box sb-sig-sm">{e.signature_referent&&<img src={e.signature_referent} alt=""/>}</div></div>
+        <StampSlot data={e.stamp_path}/>
+        <SigSlot data={e.signature_referent} slot="referent" label="(Signature officier référent)" canSign={canSignReferent}/>
       </div>
       <PageNum n={2}/>
     </div>
@@ -408,6 +476,34 @@ export default function SoldbuchBook({effectif,decorations=[]}){
         <span className="sb-nav-info">{spread===0?'Règl./P.1':`P.${spread*2}–${spread*2+1}`} ({spread+1}/{TOTAL})</span>
         <button onClick={()=>setSpread(s=>Math.min(TOTAL-1,s+1))} disabled={spread>=TOTAL-1}>▶</button>
       </div>
+
+      {/* Signature Popup */}
+      {sigPopup && <SignaturePopup
+        onClose={() => setSigPopup(null)}
+        onSign={handleSign}
+        documentType="soldbuch"
+        documentId={e.id}
+        documentLabel={`Soldbuch de ${e.prenom} ${e.nom}`}
+        slotLabel={sigPopup.slot === 'soldat' ? 'Signature du soldat' : 'Signature officier référent'}
+        hideRequest={sigPopup.slot === 'soldat'}
+      />}
+
+      {/* Stamp Picker Modal */}
+      {stampPicker && <div className="sb-modal-overlay" onClick={() => setStampPicker(false)}>
+        <div className="sb-modal" onClick={ev => ev.stopPropagation()}>
+          <h3>Sélectionner un tampon</h3>
+          {tampons.length === 0 && <p>Aucun tampon dans la bibliothèque.</p>}
+          <div className="sb-stamp-grid">
+            {tampons.map(t => (
+              <div key={t.id} className="sb-stamp-option" onClick={() => handleStamp(t.image_path || t.url)}>
+                <img src={t.image_path || t.url} alt={t.nom || 'Tampon'}/>
+                <span>{t.nom || `Tampon #${t.id}`}</span>
+              </div>
+            ))}
+          </div>
+          <button className="btn btn-secondary" onClick={() => setStampPicker(false)} style={{marginTop:8}}>Annuler</button>
+        </div>
+      </div>}
     </div>
   )
 }

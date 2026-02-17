@@ -125,7 +125,10 @@ export default function Soldbuch() {
 
       {/* Book View */}
       {viewMode === 'book' && (
-        <SoldbuchBook effectif={e} decorations={decorations} />
+        <SoldbuchBook effectif={e} decorations={decorations} onUpdate={async () => {
+          const res = await apiClient.get(`/soldbuch/${id}`, { noCache: true })
+          setData(res.data.data)
+        }} />
       )}
 
       {/* Classic View */}
