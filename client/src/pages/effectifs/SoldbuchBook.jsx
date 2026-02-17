@@ -7,47 +7,9 @@ import './soldbuch-book.css'
    Data appears as handwritten on pre-printed pages
    ============================================= */
 
-// Denazified Wehrmacht eagle SVG (Balkenkreuz + instead of swastika)
-function EagleSVG({ color = '#1a1a1a', size = 80 }) {
-  return (
-    <svg width={size} height={size * 0.65} viewBox="0 0 200 130" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M100 45 L5 20 Q0 18 2 22 L40 50 Q60 58 80 52 Z" fill={color} opacity="0.9"/>
-      <path d="M100 45 L195 20 Q200 18 198 22 L160 50 Q140 58 120 52 Z" fill={color} opacity="0.9"/>
-      <path d="M15 22 L45 35 M25 25 L50 40 M35 28 L58 42 M45 32 L65 45 M55 36 L72 47" stroke={color} strokeWidth="1.5" opacity="0.6"/>
-      <path d="M185 22 L155 35 M175 25 L150 40 M165 28 L142 42 M155 32 L135 45 M145 36 L128 47" stroke={color} strokeWidth="1.5" opacity="0.6"/>
-      <ellipse cx="100" cy="55" rx="18" ry="14" fill={color} opacity="0.85"/>
-      <circle cx="100" cy="38" r="7" fill={color}/>
-      <path d="M100 38 L105 43 L100 41 Z" fill={color}/>
-      <circle cx="100" cy="85" r="22" stroke={color} strokeWidth="3" fill="none" opacity="0.7"/>
-      <path d="M80 78 Q75 85 80 92" stroke={color} strokeWidth="2" fill="none" opacity="0.5"/>
-      <path d="M83 75 Q77 83 83 95" stroke={color} strokeWidth="1.5" fill="none" opacity="0.4"/>
-      <path d="M120 78 Q125 85 120 92" stroke={color} strokeWidth="2" fill="none" opacity="0.5"/>
-      <path d="M117 75 Q123 83 117 95" stroke={color} strokeWidth="1.5" fill="none" opacity="0.4"/>
-      <rect x="96" y="75" width="8" height="20" fill={color} opacity="0.8"/>
-      <rect x="90" y="81" width="20" height="8" fill={color} opacity="0.8"/>
-      <path d="M90 68 L88 80 M92 68 L90 78" stroke={color} strokeWidth="1.5"/>
-      <path d="M110 68 L112 80 M108 68 L110 78" stroke={color} strokeWidth="1.5"/>
-    </svg>
-  )
-}
-
-function LuftwaffeEagleSVG({ color = '#1a1a1a', size = 80 }) {
-  return (
-    <svg width={size} height={size * 0.7} viewBox="0 0 200 140" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M100 40 L2 10 Q-2 8 2 14 L50 45 Q70 52 85 48 Z" fill={color} opacity="0.9"/>
-      <path d="M100 40 L198 10 Q202 8 198 14 L150 45 Q130 52 115 48 Z" fill={color} opacity="0.9"/>
-      <path d="M10 12 L45 32 M20 15 L52 35 M30 18 L60 38 M42 22 L68 40" stroke={color} strokeWidth="1.2" opacity="0.5"/>
-      <path d="M190 12 L155 32 M180 15 L148 35 M170 18 L140 38 M158 22 L132 40" stroke={color} strokeWidth="1.2" opacity="0.5"/>
-      <ellipse cx="100" cy="50" rx="15" ry="12" fill={color} opacity="0.85"/>
-      <circle cx="100" cy="35" r="6" fill={color}/>
-      <path d="M100 35 L106 40 L100 38 Z" fill={color}/>
-      <path d="M92 62 L90 75 M95 62 L93 73" stroke={color} strokeWidth="1.5"/>
-      <path d="M108 62 L110 75 M105 62 L107 73" stroke={color} strokeWidth="1.5"/>
-      <rect x="96" y="72" width="8" height="18" fill={color} opacity="0.8"/>
-      <rect x="90" y="78" width="20" height="8" fill={color} opacity="0.8"/>
-    </svg>
-  )
-}
+// Eagle images — real PNG/SVG assets (denazified)
+const EAGLE_HEER = '/assets/eagles/heer-eagle.svg'       // Bundesadler style
+const EAGLE_LUFTWAFFE = '/assets/eagles/luftwaffe-eagle.svg' // Luftwaffe without swastika
 
 // Handwritten-style value — appears as if written on the document
 function Ink({ children, center }) {
@@ -118,9 +80,11 @@ export default function SoldbuchBook({ effectif, decorations = [] }) {
           <span className="cover-name">{e.nom}</span>
           <div className="cover-border">
             <div className="cover-eagle">
-              {isLuftwaffe
-                ? <LuftwaffeEagleSVG color="currentColor" size={90} />
-                : <EagleSVG color="currentColor" size={90} />}
+              <img
+                src={isLuftwaffe ? EAGLE_LUFTWAFFE : EAGLE_HEER}
+                alt="Eagle"
+                className="cover-eagle-img"
+              />
             </div>
             <div className="cover-title">Soldbuch</div>
             <div className="cover-subtitle">zugleich Personalausweis</div>
