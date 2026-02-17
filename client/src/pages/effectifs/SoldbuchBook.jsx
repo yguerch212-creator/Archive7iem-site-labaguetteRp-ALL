@@ -6,14 +6,75 @@ import './soldbuch-book.css'
    Per-regiment templates, page-flip, denazified
    ============================================= */
 
+// Denazified Wehrmacht eagle SVG (Balkenkreuz + instead of swastika)
+function EagleSVG({ color = '#1a1a1a', size = 80 }) {
+  return (
+    <svg width={size} height={size * 0.65} viewBox="0 0 200 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Wings */}
+      <path d="M100 45 L5 20 Q0 18 2 22 L40 50 Q60 58 80 52 Z" fill={color} opacity="0.9"/>
+      <path d="M100 45 L195 20 Q200 18 198 22 L160 50 Q140 58 120 52 Z" fill={color} opacity="0.9"/>
+      {/* Wing feathers left */}
+      <path d="M15 22 L45 35 M25 25 L50 40 M35 28 L58 42 M45 32 L65 45 M55 36 L72 47" stroke={color} strokeWidth="1.5" opacity="0.6"/>
+      {/* Wing feathers right */}
+      <path d="M185 22 L155 35 M175 25 L150 40 M165 28 L142 42 M155 32 L135 45 M145 36 L128 47" stroke={color} strokeWidth="1.5" opacity="0.6"/>
+      {/* Body */}
+      <ellipse cx="100" cy="55" rx="18" ry="14" fill={color} opacity="0.85"/>
+      {/* Head */}
+      <circle cx="100" cy="38" r="7" fill={color}/>
+      {/* Beak */}
+      <path d="M100 38 L105 43 L100 41 Z" fill={color}/>
+      {/* Wreath circle */}
+      <circle cx="100" cy="85" r="22" stroke={color} strokeWidth="3" fill="none" opacity="0.7"/>
+      {/* Laurel leaves left */}
+      <path d="M80 78 Q75 85 80 92" stroke={color} strokeWidth="2" fill="none" opacity="0.5"/>
+      <path d="M83 75 Q77 83 83 95" stroke={color} strokeWidth="1.5" fill="none" opacity="0.4"/>
+      {/* Laurel leaves right */}
+      <path d="M120 78 Q125 85 120 92" stroke={color} strokeWidth="2" fill="none" opacity="0.5"/>
+      <path d="M117 75 Q123 83 117 95" stroke={color} strokeWidth="1.5" fill="none" opacity="0.4"/>
+      {/* Balkenkreuz (Iron Cross / +) instead of swastika */}
+      <rect x="96" y="75" width="8" height="20" fill={color} opacity="0.8"/>
+      <rect x="90" y="81" width="20" height="8" fill={color} opacity="0.8"/>
+      {/* Talons */}
+      <path d="M90 68 L88 80 M92 68 L90 78" stroke={color} strokeWidth="1.5"/>
+      <path d="M110 68 L112 80 M108 68 L110 78" stroke={color} strokeWidth="1.5"/>
+    </svg>
+  )
+}
+
+// Luftwaffe eagle (different pose — diving eagle)
+function LuftwaffeEagleSVG({ color = '#1a1a1a', size = 80 }) {
+  return (
+    <svg width={size} height={size * 0.7} viewBox="0 0 200 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Wings spread wide */}
+      <path d="M100 40 L2 10 Q-2 8 2 14 L50 45 Q70 52 85 48 Z" fill={color} opacity="0.9"/>
+      <path d="M100 40 L198 10 Q202 8 198 14 L150 45 Q130 52 115 48 Z" fill={color} opacity="0.9"/>
+      {/* Feather details */}
+      <path d="M10 12 L45 32 M20 15 L52 35 M30 18 L60 38 M42 22 L68 40" stroke={color} strokeWidth="1.2" opacity="0.5"/>
+      <path d="M190 12 L155 32 M180 15 L148 35 M170 18 L140 38 M158 22 L132 40" stroke={color} strokeWidth="1.2" opacity="0.5"/>
+      {/* Body */}
+      <ellipse cx="100" cy="50" rx="15" ry="12" fill={color} opacity="0.85"/>
+      {/* Head */}
+      <circle cx="100" cy="35" r="6" fill={color}/>
+      <path d="M100 35 L106 40 L100 38 Z" fill={color}/>
+      {/* Talons gripping + */}
+      <path d="M92 62 L90 75 M95 62 L93 73" stroke={color} strokeWidth="1.5"/>
+      <path d="M108 62 L110 75 M105 62 L107 73" stroke={color} strokeWidth="1.5"/>
+      {/* Balkenkreuz below */}
+      <rect x="96" y="72" width="8" height="18" fill={color} opacity="0.8"/>
+      <rect x="90" y="78" width="20" height="8" fill={color} opacity="0.8"/>
+    </svg>
+  )
+}
+
 // Regiment theme mapping
 function getTheme(uniteCode) {
   if (!uniteCode) return 'heer'
   const c = String(uniteCode).toLowerCase()
-  if (c === '009' || c === '007') return 'luftwaffe' // Fallschirmjaeger / FSM
+  if (c === '009') return 'luftwaffe' // Fallschirmjaeger
   if (c === '254') return 'feld'
   if (c === '130') return 'panzer'
   if (c === '916s') return 'sanit'
+  if (c === '001') return 'marine' // Marine Pionier
   return 'heer' // 916, 919, 084, 716, etc.
 }
 
@@ -21,34 +82,22 @@ function getRegimentLabel(uniteCode, uniteNom) {
   const c = String(uniteCode || '')
   if (c === '009') return 'Fallschirmjaeger Regiment'
   if (c === '254') return 'Feldgendarmerie'
-  if (c === '130') return 'Panzer Lehr'
+  if (c === '130') return 'Panzer Lehr Division'
   if (c === '916S' || c === '916s') return 'Sanitaets-Abteilung'
   if (c === '919') return 'Logistik-Abteilung'
   if (c === '084') return 'Armeekorps'
   if (c === '716') return 'Reserve'
+  if (c === '001') return 'Marine Pionier Bataillon'
   return uniteNom || 'Grenadier Regiment'
 }
 
-function getFlag(theme) {
-  if (theme === 'luftwaffe') return '🇫🇷'
-  return '🇩🇪'
+function getCoverSubtitle(theme) {
+  if (theme === 'luftwaffe') return 'Luftwaffe'
+  if (theme === 'marine') return 'Kriegsmarine'
+  return null // Heer doesn't have branch subtitle on cover
 }
 
-// 10 Gebote — German version (Heer default)
-const ZEHN_GEBOTE_DE = [
-  'Der deutsche Soldat kaempft ritterlich fuer den Sieg seines Volkes. Grausamkeiten und nutzlose Zerstoerung sind seiner unwuerdig.',
-  'Der Kaempfer muss uniformiert sein oder mit einem besonderen, weithin sichtbaren Abzeichen versehen sein. Kaempfen in Zivilkleidung ohne ein solches Abzeichen ist verboten.',
-  'Es darf kein Gegner getoetet werden, der sich ergibt, auch nicht der Freischaerler und der Spion. Diese erhalten ihre gerechte Strafe durch die Gerichte.',
-  'Kriegsgefangene duerfen nicht misshandelt oder beleidigt werden. Waffen, Plaene und Aufzeichnungen sind abzunehmen. Von ihrer Habe darf sonst nichts abgenommen werden.',
-  'Dum-Dum-Geschosse sind verboten. Geschosse duerfen auch nicht in solche umgeaendert werden.',
-  'Das rote Kreuz ist unverletzlich. Verwundete Gegner sind menschlich zu behandeln. Sanitaetspersonal und Feldgeistliche duerfen in ihrer aerztlichen bzw. seelsorgerischen Taetigkeit nicht gehindert werden.',
-  'Die Zivilbevoelkerung ist unverletzlich. Der Soldat darf nicht pluendern oder mutwillig zerstoeren. Geschichtliche Denkmaeler und Gebaeude, die dem Gottesdienst, der Kunst, Wissenschaft oder der Wohltaetigkeit dienen, sind besonders zu achten. Natural- und Dienstleistungen von der Bevoelkerung duerfen nur auf Befehl von Vorgesetzten gegen Entschaedigung beansprucht werden.',
-  'Neutrales Gebiet darf weder durch Betreten oder Ueberfliegen noch durch Beschiessen in die Kriegshandlungen einbezogen werden.',
-  'Geraet ein deutscher Soldat in Gefangenschaft, so muss er auf Befragen seinen Namen und Dienstgrad angeben. Unter keinen Umstaenden darf er ueber seine Zugehoerigkeit zu seinem Truppenteil und ueber militaerische, politische und wirtschaftliche Verhaeltnisse auf der deutschen Seite aussagen. Weder durch Versprechungen noch durch Drohungen darf er sich dazu verleiten lassen.',
-  'Zuwiderhandlungen gegen die vorstehenden Befehle in Dienstvorschriften sind strafbar. Verstoesse des Feindes gegen die unter 1 bis 8 aufgefuehrten Grundsaetze sind zu melden. Vergeltungsmassregeln sind nur auf Befehl der hoeheren Truppenfuehrung zulaessig.'
-]
-
-// 10 Commandements — French version (FSM)
+// 10 Commandements — French version
 const ZEHN_GEBOTE_FR = [
   "Le soldat allemand combat avec chevalerie. Il lutte pour la victoire de son peuple. Les actes de cruaute et la destruction inutile sont indignes de lui.",
   "Le combattant doit etre en uniforme ou porter un insigne distinctif, specialement retroussit et bien visible. Se battre en civil sans un tel insigne est interdit.",
@@ -69,15 +118,8 @@ export default function SoldbuchBook({ effectif, decorations = [] }) {
   const e = effectif
   const theme = getTheme(e.unite_code)
   const regimentLabel = getRegimentLabel(e.unite_code, e.unite_nom)
-  const flag = getFlag(theme)
-  const isFrench = theme === 'luftwaffe'
-  const gebote = isFrench ? ZEHN_GEBOTE_FR : ZEHN_GEBOTE_DE
-  const geboteTitle = isFrench
-    ? '10 Commandements'
-    : '10 Gebote'
-  const geboteSubtitle = isFrench
-    ? 'pour la conduite du soldat allemand en temps de guerre'
-    : 'fuer die Kriegsfuehrung des deutschen Soldaten'
+  const coverSubtitle = getCoverSubtitle(theme)
+  const isLuftwaffe = theme === 'luftwaffe'
 
   // Total spreads
   const totalSpreads = 3 // spread 0: gebote+page1, spread 1: page2+page3, spread 2: page4+page5
@@ -88,10 +130,15 @@ export default function SoldbuchBook({ effectif, decorations = [] }) {
         <div className="soldbuch-cover" onClick={() => setIsOpen(true)}>
           <span className="cover-name">{e.nom}</span>
           <div className="cover-border">
-            <div className="cover-eagle">🦅</div>
+            <div className="cover-eagle">
+              {isLuftwaffe
+                ? <LuftwaffeEagleSVG color="currentColor" size={90} />
+                : <EagleSVG color="currentColor" size={90} />
+              }
+            </div>
             <div className="cover-title">Soldbuch</div>
             <div className="cover-subtitle">zugleich Personalausweis</div>
-            <div className="cover-regiment">{regimentLabel}</div>
+            {coverSubtitle && <div className="cover-regiment">{coverSubtitle}</div>}
           </div>
           <div className="cover-hint">Cliquer pour ouvrir</div>
         </div>
@@ -105,13 +152,13 @@ export default function SoldbuchBook({ effectif, decorations = [] }) {
         <div className="soldbuch-spread">
           {currentSpread === 0 && (
             <>
-              {/* Left: 10 Gebote */}
+              {/* Left: 10 Commandements */}
               <div className="soldbuch-page soldbuch-page-left soldbuch-page-gebote">
                 <div className="sb-gebote">
-                  <h3>{geboteTitle}</h3>
-                  <h4>{geboteSubtitle}</h4>
+                  <h3>10 Commandements</h3>
+                  <h4>pour la conduite du soldat allemand en temps de guerre</h4>
                   <ol>
-                    {gebote.map((g, i) => <li key={i}>{g}</li>)}
+                    {ZEHN_GEBOTE_FR.map((g, i) => <li key={i}>{g}</li>)}
                   </ol>
                   <div style={{ marginTop: '0.5rem', fontSize: '0.5rem', opacity: 0.5 }}>
                     W.N.3. 11/III. 4. 1000. 4/1901.
@@ -122,11 +169,9 @@ export default function SoldbuchBook({ effectif, decorations = [] }) {
 
               {/* Right: Page 1 — Identity */}
               <div className="soldbuch-page soldbuch-page-right">
-                <span className="sb-flag">{flag}</span>
-
                 <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
                   <div style={{ fontSize: '1.4rem', fontWeight: 700, letterSpacing: '4px' }}>Soldbuch</div>
-                  <div style={{ fontSize: '0.7rem', letterSpacing: '2px' }}>zugleich Personalausweis</div>
+                  <div style={{ fontSize: '0.7rem', letterSpacing: '2px' }}>et carte d'identite</div>
                 </div>
 
                 {/* Nr. */}
@@ -141,17 +186,15 @@ export default function SoldbuchBook({ effectif, decorations = [] }) {
                   </span>
                 </div>
 
-                <div style={{ textAlign: 'center', marginBottom: '0.5rem', fontWeight: 600 }}>
-                  {isFrench ? 'pour' : 'fuer'}
-                </div>
+                <div style={{ textAlign: 'center', marginBottom: '0.5rem', fontWeight: 600 }}>pour</div>
 
-                {/* Dienstgrad */}
+                {/* Rang */}
                 <div className="sb-field">
-                  <span className="sb-field-label">{isFrench ? 'le' : 'den'}</span>
+                  <span className="sb-field-label">le</span>
                   <span className="sb-field-value">{e.grade_nom || '—'}</span>
                 </div>
                 <div style={{ textAlign: 'center', fontSize: '0.65rem', opacity: 0.5, marginBottom: '0.5rem' }}>
-                  ({isFrench ? 'rang' : 'Dienstgrad'})
+                  (rang)
                 </div>
 
                 {/* Promotion box */}
@@ -159,30 +202,30 @@ export default function SoldbuchBook({ effectif, decorations = [] }) {
                   <div className="sb-promo-row">
                     <span className="sb-promo-label" style={{ minWidth: 'auto' }}></span>
                     <span className="sb-promo-date" style={{ textAlign: 'center', fontSize: '0.65rem', opacity: 0.5, borderBottom: 'none' }}>
-                      ({isFrench ? 'Date' : 'Datum'})
+                      (Date)
                     </span>
                     <span className="sb-promo-grade" style={{ textAlign: 'center', fontSize: '0.65rem', opacity: 0.5, borderBottom: 'none' }}>
-                      ({isFrench ? 'nouveau grade' : 'neuer Dienstgrad'})
+                      (nouveau grade)
                     </span>
                   </div>
                   <div className="sb-promo-row">
-                    <span className="sb-promo-label">{isFrench ? 'le' : 'ab'}</span>
+                    <span className="sb-promo-label">le</span>
                     <span className="sb-promo-date">{e.date_entree_ig || ''}</span>
                     <span className="sb-promo-grade">{e.grade_nom || ''}</span>
                   </div>
                   <div className="sb-promo-row">
-                    <span className="sb-promo-label">{isFrench ? 'le' : 'ab'}</span>
+                    <span className="sb-promo-label">le</span>
                     <span className="sb-promo-date"></span>
                     <span className="sb-promo-grade"></span>
                   </div>
                   <div className="sb-promo-row">
-                    <span className="sb-promo-label">{isFrench ? 'le' : 'ab'}</span>
+                    <span className="sb-promo-label">le</span>
                     <span className="sb-promo-date"></span>
                     <span className="sb-promo-grade"></span>
                   </div>
                 </div>
 
-                {/* Vor- und Zuname */}
+                {/* Prenom et nom */}
                 <div style={{ marginTop: '1.5rem' }}>
                   <div className="sb-field">
                     <span className="sb-field-value" style={{ textAlign: 'center', fontWeight: 600, fontSize: '0.95rem' }}>
@@ -190,26 +233,26 @@ export default function SoldbuchBook({ effectif, decorations = [] }) {
                     </span>
                   </div>
                   <div style={{ textAlign: 'center', fontSize: '0.65rem', opacity: 0.5 }}>
-                    ({isFrench ? 'Prenom et nom' : 'Vor- und Zuname'})
+                    (Prenom et nom)
                   </div>
                 </div>
 
                 {/* Bottom fields */}
                 <div style={{ marginTop: '1.5rem' }}>
                   <div className="sb-field">
-                    <span className="sb-field-label">{isFrench ? 'Plaque d\'identite' : 'Erkennungsmarke'}</span>
+                    <span className="sb-field-label">Plaque d'identite</span>
                     <span className="sb-field-value">{e.numero_service || ''}</span>
                   </div>
                   <div className="sb-field">
-                    <span className="sb-field-label">{isFrench ? 'Groupe sanguin' : 'Blutgruppe'}</span>
+                    <span className="sb-field-label">Groupe sanguin</span>
                     <span className="sb-field-value">{e.blutgruppe || ''}</span>
                   </div>
                   <div className="sb-field">
-                    <span className="sb-field-label">{isFrench ? 'Taille du masque a gaz' : 'Gasmaskengroesse'}</span>
+                    <span className="sb-field-label">Taille du masque a gaz</span>
                     <span className="sb-field-value">{e.gasmaskengroesse || ''}</span>
                   </div>
                   <div className="sb-field">
-                    <span className="sb-field-label">{isFrench ? 'Numero de service' : 'Wehrnummer'}</span>
+                    <span className="sb-field-label">Numero de service</span>
                     <span className="sb-field-value">{e.wehrnummer || ''}</span>
                   </div>
                 </div>
@@ -221,21 +264,20 @@ export default function SoldbuchBook({ effectif, decorations = [] }) {
 
           {currentSpread === 1 && (
             <>
-              {/* Left: Page 2 — Personalbeschreibung */}
+              {/* Left: Page 2 — Description personnelle */}
               <div className="soldbuch-page soldbuch-page-left">
-                {/* Birth info */}
                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
                   <div className="sb-field" style={{ flex: 1 }}>
-                    <span className="sb-field-label">geb. am</span>
+                    <span className="sb-field-label">Ne le</span>
                     <span className="sb-field-value">{e.date_naissance || ''}</span>
                   </div>
                   <div className="sb-field" style={{ flex: 1 }}>
-                    <span className="sb-field-label">in</span>
+                    <span className="sb-field-label">a</span>
                     <span className="sb-field-value">{e.lieu_naissance || ''}</span>
                   </div>
                 </div>
                 <div style={{ textAlign: 'right', fontSize: '0.6rem', opacity: 0.5, marginBottom: '0.5rem' }}>
-                  (Ort, Kreis, Verw.-Bezirk)
+                  (Lieu, district)
                 </div>
 
                 <hr className="sb-divider" />
@@ -246,49 +288,48 @@ export default function SoldbuchBook({ effectif, decorations = [] }) {
                     <span className="sb-field-value">{e.religion || ''}</span>
                   </div>
                   <div className="sb-field" style={{ flex: 1 }}>
-                    <span className="sb-field-label">Stand, Beruf</span>
+                    <span className="sb-field-label">Profession</span>
                     <span className="sb-field-value">{e.beruf || ''}</span>
                   </div>
                 </div>
 
-                {/* Personalbeschreibung */}
-                <div className="sb-section-title">Personalbeschreibung :</div>
+                <div className="sb-section-title">Description personnelle :</div>
 
                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.3rem' }}>
                   <div className="sb-field" style={{ flex: 1 }}>
-                    <span className="sb-field-label">Groesse</span>
+                    <span className="sb-field-label">Taille</span>
                     <span className="sb-field-value">{e.taille_cm ? `${e.taille_cm}` : ''}</span>
                   </div>
                   <div className="sb-field" style={{ flex: 1 }}>
-                    <span className="sb-field-label">Gestalt</span>
+                    <span className="sb-field-label">Corpulence</span>
                     <span className="sb-field-value">{e.gestalt || ''}</span>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.3rem' }}>
                   <div className="sb-field" style={{ flex: 1 }}>
-                    <span className="sb-field-label">Gesicht</span>
+                    <span className="sb-field-label">Visage</span>
                     <span className="sb-field-value">{e.gesicht || ''}</span>
                   </div>
                   <div className="sb-field" style={{ flex: 1 }}>
-                    <span className="sb-field-label">Haar</span>
+                    <span className="sb-field-label">Cheveux</span>
                     <span className="sb-field-value">{e.haar || ''}</span>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.3rem' }}>
                   <div className="sb-field" style={{ flex: 1 }}>
-                    <span className="sb-field-label">Bart</span>
+                    <span className="sb-field-label">Barbe</span>
                     <span className="sb-field-value">{e.bart || ''}</span>
                   </div>
                   <div className="sb-field" style={{ flex: 1 }}>
-                    <span className="sb-field-label">Augen</span>
+                    <span className="sb-field-label">Yeux</span>
                     <span className="sb-field-value">{e.augen || ''}</span>
                   </div>
                 </div>
 
                 <div style={{ marginTop: '0.5rem' }}>
-                  <div style={{ fontWeight: 700 }}>Besondere</div>
-                  <div style={{ fontWeight: 700 }}>Kennzeichen (z.</div>
-                  <div style={{ fontWeight: 700 }}>B. Brillentraeger):</div>
+                  <div style={{ fontWeight: 700 }}>Signes</div>
+                  <div style={{ fontWeight: 700 }}>particuliers (ex.</div>
+                  <div style={{ fontWeight: 700 }}>porteur de lunettes) :</div>
                   <div className="sb-field-value" style={{ minHeight: '1.2em', borderBottom: '1px dotted rgba(0,0,0,0.3)' }}>
                     {e.besondere_kennzeichen || ''}
                   </div>
@@ -296,12 +337,8 @@ export default function SoldbuchBook({ effectif, decorations = [] }) {
 
                 <div style={{ display: 'flex', gap: '1rem', marginTop: '0.8rem' }}>
                   <div className="sb-field" style={{ flex: 1 }}>
-                    <span className="sb-field-label">Schuhzeuglaenge</span>
+                    <span className="sb-field-label">Pointure</span>
                     <span className="sb-field-value">{e.schuhzeuglaenge || ''}</span>
-                  </div>
-                  <div className="sb-field" style={{ flex: 1 }}>
-                    <span className="sb-field-label">Schuhzeugweite</span>
-                    <span className="sb-field-value">{e.schuhzeugweite || ''}</span>
                   </div>
                 </div>
 
@@ -311,30 +348,30 @@ export default function SoldbuchBook({ effectif, decorations = [] }) {
                     {e.signature_soldat && <img src={e.signature_soldat} alt="Signature" />}
                   </div>
                   <div className="sb-signature-caption">
-                    (Vor- und Zuname, eigenhaendige Unterschrift des Inhabers)
+                    (Prenom et nom, signature manuscrite du titulaire)
                   </div>
                 </div>
 
                 <hr className="sb-divider" />
 
                 <div style={{ fontSize: '0.65rem', lineHeight: 1.4 }}>
-                  <strong>Die Richtigkeit der nicht umgeaenderten Angaben auf Seiten 1 und 2 und
-                  der eigenhaendigen Unterschrift des Inhabers bescheinigt</strong>
+                  <strong>L'exactitude des informations non modifiees des pages 1 et 2 ainsi que
+                  la signature manuscrite du titulaire sont certifiees</strong>
                 </div>
 
                 <div className="sb-field" style={{ marginTop: '0.5rem' }}>
-                  <span className="sb-field-label" style={{ minWidth: 30 }}>den</span>
+                  <span className="sb-field-label" style={{ minWidth: 30 }}>le</span>
                   <span className="sb-field-value">{e.date_entree_ig || ''}</span>
                 </div>
 
                 <div className="sb-field" style={{ marginTop: '0.3rem' }}>
                   <span className="sb-field-value" style={{ textAlign: 'center', fontSize: '0.65rem' }}>
-                    (Ausfertigender Truppenteil, Dienststelle)
+                    (Unite emettrice, poste de service)
                   </span>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '0.3rem' }}>
-                  <div style={{ fontSize: '0.65rem', fontWeight: 700 }}>Dienststempel</div>
+                  <div style={{ fontSize: '0.65rem', fontWeight: 700 }}>Tampon</div>
                   <div>
                     {e.stamp_path && <img src={e.stamp_path} alt="Tampon" style={{ maxHeight: 50, opacity: 0.6 }} />}
                   </div>
@@ -350,59 +387,58 @@ export default function SoldbuchBook({ effectif, decorations = [] }) {
 
               {/* Right: Page 3 — Photo + Affectation */}
               <div className="soldbuch-page soldbuch-page-right">
-                {/* Photo */}
                 <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
                   <div className="sb-photo-area">
                     {e.photo
                       ? <img src={e.photo} alt="Photo" />
-                      : <span style={{ fontSize: '0.65rem', opacity: 0.4 }}>Lichtbild</span>
+                      : <span style={{ fontSize: '0.65rem', opacity: 0.4 }}>Photo</span>
                     }
                   </div>
-                  <div style={{ fontSize: '0.6rem', opacity: 0.5, marginTop: 4 }}>(Lichtbild des Inhabers)</div>
+                  <div style={{ fontSize: '0.6rem', opacity: 0.5, marginTop: 4 }}>(Photo du titulaire)</div>
                 </div>
 
-                <div className="sb-section-title">Truppenzugehoerigkeit</div>
+                <div className="sb-section-title">Affectation</div>
 
                 <div className="sb-field">
-                  <span className="sb-field-label">Einheit</span>
+                  <span className="sb-field-label">Unite</span>
                   <span className="sb-field-value">{`${e.unite_code || ''} ${e.unite_nom || ''}`.trim()}</span>
                 </div>
                 <div className="sb-field">
-                  <span className="sb-field-label">Dienstgrad</span>
+                  <span className="sb-field-label">Grade</span>
                   <span className="sb-field-value">{e.grade_nom || '—'}</span>
                 </div>
                 <div className="sb-field">
-                  <span className="sb-field-label">Funktion</span>
+                  <span className="sb-field-label">Fonction</span>
                   <span className="sb-field-value">{e.fonction || ''}</span>
                 </div>
                 <div className="sb-field">
-                  <span className="sb-field-label">Spezialitaet</span>
+                  <span className="sb-field-label">Specialite</span>
                   <span className="sb-field-value">{e.specialite || ''}</span>
                 </div>
                 <div className="sb-field">
-                  <span className="sb-field-label">Eintritt (RP)</span>
+                  <span className="sb-field-label">Entree (RP)</span>
                   <span className="sb-field-value">{e.date_entree_ig || ''}</span>
                 </div>
                 <div className="sb-field">
-                  <span className="sb-field-label">Eintritt (IRL)</span>
+                  <span className="sb-field-label">Entree (IRL)</span>
                   <span className="sb-field-value">{e.date_entree_irl || ''}</span>
                 </div>
 
-                <div className="sb-section-title" style={{ marginTop: '1.5rem' }}>Ausruestung</div>
+                <div className="sb-section-title" style={{ marginTop: '1.5rem' }}>Equipement</div>
                 <div className="sb-field">
-                  <span className="sb-field-label">Hauptwaffe</span>
+                  <span className="sb-field-label">Arme principale</span>
                   <span className="sb-field-value">{e.arme_principale || ''}</span>
                 </div>
                 <div className="sb-field">
-                  <span className="sb-field-label">Nebenwaffe</span>
+                  <span className="sb-field-label">Arme secondaire</span>
                   <span className="sb-field-value">{e.arme_secondaire || ''}</span>
                 </div>
                 <div className="sb-field">
-                  <span className="sb-field-label">Sonderausruestung</span>
+                  <span className="sb-field-label">Equipement special</span>
                   <span className="sb-field-value">{e.equipement_special || ''}</span>
                 </div>
                 <div className="sb-field">
-                  <span className="sb-field-label">Uniform</span>
+                  <span className="sb-field-label">Tenue</span>
                   <span className="sb-field-value">{e.tenue || ''}</span>
                 </div>
 
@@ -413,12 +449,9 @@ export default function SoldbuchBook({ effectif, decorations = [] }) {
 
           {currentSpread === 2 && (
             <>
-              {/* Left: Page 4 — Historique / Dienstlaufbahn */}
+              {/* Left: Page 4 — Historique */}
               <div className="soldbuch-page soldbuch-page-left">
-                <div className="sb-section-title">Dienstlaufbahn</div>
-                <div style={{ fontSize: '0.65rem', opacity: 0.5, textAlign: 'center', marginBottom: '0.5rem' }}>
-                  (Historique de service)
-                </div>
+                <div className="sb-section-title">Parcours de service</div>
                 <div style={{ whiteSpace: 'pre-line', fontSize: '0.8rem', lineHeight: 1.6 }}>
                   {e.historique || '—'}
                 </div>
@@ -428,10 +461,7 @@ export default function SoldbuchBook({ effectif, decorations = [] }) {
 
               {/* Right: Page 5 — Decorations */}
               <div className="soldbuch-page soldbuch-page-right">
-                <div className="sb-section-title">Auszeichnungen</div>
-                <div style={{ fontSize: '0.65rem', opacity: 0.5, textAlign: 'center', marginBottom: '0.5rem' }}>
-                  (Decorations)
-                </div>
+                <div className="sb-section-title">Decorations</div>
 
                 {decorations.length > 0 ? (
                   <div>
@@ -443,7 +473,7 @@ export default function SoldbuchBook({ effectif, decorations = [] }) {
                         </div>
                         <div style={{ fontSize: '0.72rem', opacity: 0.7 }}>
                           {d.date_attribution && <span>{d.date_attribution}</span>}
-                          {d.attribue_par && <span> — verliehen von {d.attribue_par}</span>}
+                          {d.attribue_par && <span> — decerne par {d.attribue_par}</span>}
                         </div>
                         {d.motif && <div style={{ fontSize: '0.7rem', fontStyle: 'italic', opacity: 0.6 }}>"{d.motif}"</div>}
                       </div>
@@ -451,7 +481,7 @@ export default function SoldbuchBook({ effectif, decorations = [] }) {
                   </div>
                 ) : (
                   <div style={{ textAlign: 'center', opacity: 0.4, marginTop: '2rem' }}>
-                    Keine Auszeichnungen eingetragen
+                    Aucune decoration enregistree
                   </div>
                 )}
 

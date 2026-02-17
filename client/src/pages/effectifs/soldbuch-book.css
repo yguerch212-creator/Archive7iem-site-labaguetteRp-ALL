@@ -296,72 +296,86 @@
 }
 
 /* ---- Regiment Themes ---- */
-/* Heer (default) — beige/cream */
+/* Heer (default) — brown-red like real Soldbuch */
 .soldbuch-theme-heer .soldbuch-cover {
-  background: linear-gradient(135deg, #d4c5a0, #c7b88a);
-  color: #2c2416;
+  background: linear-gradient(135deg, #7a4a3a, #5e3828);
+  color: #e8d8c0;
 }
 .soldbuch-theme-heer .soldbuch-page {
-  background: #f5ecd5;
+  background: #f2e8d0;
   color: #2c2416;
 }
 .soldbuch-theme-heer .soldbuch-page-gebote {
-  background: #e8dfca;
+  background: #ddd4be;
 }
 
-/* Luftwaffe / FSM — blue-grey */
+/* Luftwaffe / Fallschirmjaeger / FSM — blue-grey */
 .soldbuch-theme-luftwaffe .soldbuch-cover {
-  background: linear-gradient(135deg, #5c7a8a, #4d6b7a);
-  color: #1a2a33;
+  background: linear-gradient(135deg, #536d7a, #3f5868);
+  color: #d8e0e6;
 }
 .soldbuch-theme-luftwaffe .soldbuch-page {
-  background: #f5ecd5;
+  background: #f2e8d0;
   color: #2c2416;
 }
 .soldbuch-theme-luftwaffe .soldbuch-page-gebote {
-  background: #6b8fa0;
+  background: #6b8a9a;
   color: #1a2a33;
 }
 
-/* Feldgendarmerie — dark green */
+/* Feldgendarmerie — feldgrau (field grey-green) */
 .soldbuch-theme-feld .soldbuch-cover {
-  background: linear-gradient(135deg, #4a5e3a, #3d4f30);
-  color: #e8e0c8;
+  background: linear-gradient(135deg, #4a5540, #3a4530);
+  color: #d8d4c0;
 }
 .soldbuch-theme-feld .soldbuch-page {
-  background: #f5ecd5;
+  background: #f2e8d0;
   color: #2c2416;
 }
 .soldbuch-theme-feld .soldbuch-page-gebote {
-  background: #5a7048;
+  background: #5a6a4e;
   color: #e8e0c8;
 }
 
-/* Panzer — dark grey */
+/* Panzer — dark grey/black */
 .soldbuch-theme-panzer .soldbuch-cover {
-  background: linear-gradient(135deg, #4a4a4a, #3a3a3a);
-  color: #e0d8c0;
+  background: linear-gradient(135deg, #3a3a3a, #2a2a2a);
+  color: #d8d0b8;
 }
 .soldbuch-theme-panzer .soldbuch-page {
-  background: #f5ecd5;
+  background: #f2e8d0;
   color: #2c2416;
 }
 .soldbuch-theme-panzer .soldbuch-page-gebote {
-  background: #555;
-  color: #e0d8c0;
+  background: #4a4a4a;
+  color: #d8d0b8;
 }
 
-/* Sanitäts — white/cream */
+/* Sanitäts — white with red cross accent */
 .soldbuch-theme-sanit .soldbuch-cover {
-  background: linear-gradient(135deg, #e8e0c8, #ddd5b8);
+  background: linear-gradient(135deg, #e0d8c0, #d0c8b0);
   color: #2c2416;
 }
 .soldbuch-theme-sanit .soldbuch-page {
-  background: #f5ecd5;
+  background: #f2e8d0;
   color: #2c2416;
 }
 .soldbuch-theme-sanit .soldbuch-page-gebote {
-  background: #e0d8c0;
+  background: #d8d0b8;
+}
+
+/* Marine — navy blue */
+.soldbuch-theme-marine .soldbuch-cover {
+  background: linear-gradient(135deg, #2a3a5a, #1e2e4a);
+  color: #d0d8e8;
+}
+.soldbuch-theme-marine .soldbuch-page {
+  background: #f2e8d0;
+  color: #2c2416;
+}
+.soldbuch-theme-marine .soldbuch-page-gebote {
+  background: #3a4a6a;
+  color: #d0d8e8;
 }
 
 /* Flag indicator */
