@@ -48,6 +48,12 @@ router.post('/effectif/:id', auth, async (req, res) => {
     )
     logActivity(req, 'award_decoration', 'effectif', parseInt(req.params.id), nom_custom || `decoration #${decoration_id}`)
     logHistorique(parseInt(req.params.id), 'decoration', `Décoration attribuée : ${nom_custom || 'médaille'} — ${motif || ''}`, { decoration_id, motif })
+    // Auto-attestation
+    try {
+      const { createAutoAttestation } = require('./attestations.routes')
+      const decoName = nom_custom || (decoration_id ? (await queryOne('SELECT nom FROM decorations WHERE id = ?', [decoration_id]))?.nom : 'Décoration')
+      await createAutoAttestation(parseInt(req.params.id), `Décoration : ${decoName}`, 'medal', result.insertId, req.user.id, '22')
+    } catch {}
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })

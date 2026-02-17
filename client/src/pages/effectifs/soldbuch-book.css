@@ -157,3 +157,10 @@ h4.sb-center { font-size:.62rem; margin:.12rem 0; font-weight:700; }
   .sb-page-l{border-right:none;border-bottom:1px solid rgba(0,0,0,.1)}
   .sb-cover{width:85%;min-height:380px}
 }
+
+/* Attestation table scroll if overflow */
+.sb-att-wrap { max-height: 400px; overflow-y: auto; }
+.sb-att-wrap table { margin-bottom: 0; }
+/* Pending edit indicator */
+.sb-pending { background: rgba(243,156,18,0.15); }
+

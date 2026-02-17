@@ -20,8 +20,13 @@ import AdminLogs from './pages/admin/AdminLogs'
 import PDS from './pages/pds/PDS'
 import PDSRecap from './pages/pds/PDSRecap'
 import InterditsFront from './pages/interdits/InterditsFront'
+import MedicalDashboard from './pages/medical/MedicalDashboard'
 import VisitesMedicales from './pages/medical/VisitesMedicales'
 import VisiteMedicaleView from './pages/medical/VisiteMedicaleView'
+import Hospitalisations from './pages/medical/Hospitalisations'
+import Vaccinations from './pages/medical/Vaccinations'
+import Blessures from './pages/medical/Blessures'
+import DescriptionPersonnelle from './pages/medical/DescriptionPersonnelle'
 import Documentation from './pages/documentation/Documentation'
 import Bibliotheque from './pages/bibliotheque/Bibliotheque'
 import Archives from './pages/archives/Archives'
@@ -79,7 +84,13 @@ function AppRouter() {
       <Route path="/interdits" element={<ProtectedRoute><InterditsFront /></ProtectedRoute>} />
       
       {/* Médical */}
-      <Route path="/medical" element={<ProtectedRoute><VisitesMedicales /></ProtectedRoute>} />
+      <Route path="/medical" element={<ProtectedRoute><MedicalDashboard /></ProtectedRoute>} />
+      <Route path="/medical/visites" element={<ProtectedRoute><VisitesMedicales /></ProtectedRoute>} />
+      <Route path="/medical/visites/:id" element={<ProtectedRoute><VisiteMedicaleView /></ProtectedRoute>} />
+      <Route path="/medical/hospitalisations" element={<ProtectedRoute><Hospitalisations /></ProtectedRoute>} />
+      <Route path="/medical/vaccinations" element={<ProtectedRoute><Vaccinations /></ProtectedRoute>} />
+      <Route path="/medical/blessures" element={<ProtectedRoute><Blessures /></ProtectedRoute>} />
+      <Route path="/medical/description" element={<ProtectedRoute><DescriptionPersonnelle /></ProtectedRoute>} />
       <Route path="/medical/:id" element={<ProtectedRoute><VisiteMedicaleView /></ProtectedRoute>} />
       
       {/* Documentation */}

@@ -125,10 +125,18 @@ export default function Soldbuch() {
 
       {/* Book View */}
       {viewMode === 'book' && (
-        <SoldbuchBook effectif={e} decorations={decorations} onUpdate={async () => {
-          const res = await apiClient.get(`/soldbuch/${id}`, { noCache: true })
-          setData(res.data.data)
-        }} />
+        <SoldbuchBook effectif={e} decorations={decorations}
+          hospitalisations={data.hospitalisations || []}
+          vaccinations={data.vaccinations || []}
+          blessures={data.blessures || []}
+          permissions={data.permissions || []}
+          bookCells={data.layout?.bookCells || {}}
+          attestations={data.attestations || []}
+          pendingEdits={data.pendingEdits || []}
+          onUpdate={async () => {
+            const res = await apiClient.get(`/soldbuch/${id}`, { noCache: true })
+            setData(res.data.data)
+          }} />
       )}
 
       {/* Classic View */}

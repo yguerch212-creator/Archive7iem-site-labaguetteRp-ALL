@@ -1,5 +1,5 @@
 const router = require('express').Router()
-const { queryOne, pool } = require('../config/db')
+const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
 const { optionalAuth } = require('../middleware/auth')
 
@@ -21,11 +21,28 @@ router.get('/:effectifId', optionalAuth, async (req, res) => {
       layoutData = typeof layout.layout_json === 'string' ? JSON.parse(layout.layout_json) : layout.layout_json
     }
 
+    // Medical data for Soldbuch pages
+    const hospitalisations = await query('SELECT * FROM hospitalisations WHERE effectif_id = ? ORDER BY date_entree', [req.params.effectifId])
+    const vaccinations = await query('SELECT * FROM vaccinations WHERE effectif_id = ? ORDER BY date_vaccination', [req.params.effectifId])
+    const blessures = await query('SELECT * FROM blessures WHERE effectif_id = ? ORDER BY date_blessure', [req.params.effectifId])
+    // Permissions d'absence approuvées
+    const permissions = await query("SELECT * FROM permissions_absence WHERE effectif_id = ? AND statut = 'Approuvee' ORDER BY date_debut", [req.params.effectifId])
+    // Attestations
+    const attestations = await query(`SELECT a.*, CONCAT(s.prenom,' ',s.nom) AS signe_par_nom FROM soldbuch_attestations a LEFT JOIN effectifs s ON s.id = a.signe_par WHERE a.effectif_id = ? ORDER BY a.numero`, [req.params.effectifId])
+    // Pending edits
+    const pendingEdits = await query("SELECT * FROM soldbuch_pending_edits WHERE effectif_id = ? AND statut = 'pending'", [req.params.effectifId])
+
     res.json({
       success: true,
       data: {
         effectif,
-        layout: layoutData
+        layout: layoutData,
+        hospitalisations,
+        vaccinations,
+        blessures,
+        permissions,
+        attestations,
+        pendingEdits
       }
     })
   } catch (err) {
@@ -54,6 +71,38 @@ router.put('/:effectifId/layout', auth, async (req, res) => {
   }
 })
 
+// PUT /api/soldbuch/:effectif_id/book-cells — Save inline cell edits in book mode
+router.put('/:effectifId/book-cells', auth, async (req, res) => {
+  try {
+    const effectifId = parseInt(req.params.effectifId)
+    const isOwner = req.user.effectif_id === effectifId
+    if (!isOwner && !req.user.isAdmin && !req.user.isRecenseur && !req.user.isOfficier) {
+      return res.status(403).json({ success: false, message: 'Non autorisé' })
+    }
+    const { cellId, value } = req.body
+    if (!cellId) return res.status(400).json({ success: false, message: 'cellId requis' })
+
+    const existing = await queryOne('SELECT id, layout_json FROM effectif_layouts WHERE effectif_id = ?', [effectifId])
+    let layout = {}
+    if (existing?.layout_json) {
+      layout = typeof existing.layout_json === 'string' ? JSON.parse(existing.layout_json) : existing.layout_json
+    }
+    if (!layout.bookCells) layout.bookCells = {}
+    if (value) layout.bookCells[cellId] = value
+    else delete layout.bookCells[cellId]
+
+    const json = JSON.stringify(layout)
+    if (existing) {
+      await pool.execute('UPDATE effectif_layouts SET layout_json = ? WHERE effectif_id = ?', [json, effectifId])
+    } else {
+      await pool.execute('INSERT INTO effectif_layouts (effectif_id, layout_json) VALUES (?, ?)', [effectifId, json])
+    }
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
 // PUT /api/soldbuch/:effectif_id/sign — Sign a soldbuch slot (soldat or referent)
 router.put('/:effectifId/sign', auth, async (req, res) => {
   try {
@@ -73,7 +122,7 @@ router.put('/:effectifId/sign', auth, async (req, res) => {
     if (slot === 'soldat' && !isOwner) {
       return res.status(403).json({ success: false, message: 'Seul le soldat concerné peut signer son propre Soldbuch' })
     }
-    if (slot === 'referent' && !req.user.isOfficier) {
+    if (slot === 'referent' && !req.user.isOfficier && !req.user.isRecenseur) {
       return res.status(403).json({ success: false, message: 'Seul un officier peut signer en tant que référent' })
     }
 

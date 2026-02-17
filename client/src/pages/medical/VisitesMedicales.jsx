@@ -22,7 +22,7 @@ export default function VisitesMedicales() {
   const [searchParams] = useSearchParams()
   const effectifFilter = searchParams.get('effectif')
   const [visites, setVisites] = useState([])
-  const [showForm, setShowForm] = useState(false)
+  const [showForm, setShowForm] = useState(searchParams.get('new') === '1')
   const [message, setMessage] = useState(null)
   const [filterAptitude, setFilterAptitude] = useState('')
   const [search, setSearch] = useState('')

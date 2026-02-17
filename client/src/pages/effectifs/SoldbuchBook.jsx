@@ -31,14 +31,18 @@ const REGLES=[
 const W8A=['Fusil','Pistolet','Baïonnette','Boussole','Jumelles','Pioche','Pelle','Hachette']
 const W8B=['Cisaille','Kit nettoyage','Masque à gaz','Lunettes masque','Ouate/vaseline']
 
-export default function SoldbuchBook({effectif,decorations=[],onUpdate}){
+export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[],vaccinations=[],blessures=[],permissions=[],bookCells:initCells={},attestations=[],pendingEdits=[],onUpdate}){
   const { user } = useAuth()
   const[isOpen,setIsOpen]=useState(false)
   const[spread,setSpread]=useState(0)
-  const[sigPopup,setSigPopup]=useState(null) // {slot:'soldat'|'referent'}
+  const[sigPopup,setSigPopup]=useState(null)
   const[stampPicker,setStampPicker]=useState(false)
   const[tampons,setTampons]=useState([])
   const[saving,setSaving]=useState(false)
+  const[cells,setCells]=useState(initCells||{})
+  const[editingCell,setEditingCell]=useState(null)
+  const[editVal,setEditVal]=useState('')
+  const fmtD=(d)=>{if(!d)return'—';try{return new Date(d).toLocaleDateString('fr-FR')}catch{return d}}
   const e=effectif, theme=getTheme(e.unite_code), isLw=theme==='luftwaffe'
   const branch={luftwaffe:'Luftwaffe',marine:'Kriegsmarine'}[theme]||null
   const TOTAL=14
@@ -48,8 +52,59 @@ export default function SoldbuchBook({effectif,decorations=[],onUpdate}){
   const isOfficier = user?.isOfficier
   const isAdmin = user?.isAdmin
   const canSignSoldat = isOwner && !e.signature_soldat
-  const canSignReferent = isOfficier && !e.signature_referent
+  const canSignReferent = (isOfficier || user?.isRecenseur) && !e.signature_referent
   const canStamp = (isOfficier || isAdmin || user?.isRecenseur) && !e.stamp_path
+  const canEditDirect = isOfficier || isAdmin || user?.isRecenseur  // Edit without validation
+  const canEditPending = isOwner && !canEditDirect  // Soldier: needs validation
+  const canEdit = canEditDirect || canEditPending
+
+  // Sync cells when prop changes
+  useEffect(()=>{setCells(initCells||{})},[initCells])
+
+  // Save a cell edit to backend
+  const saveCell = async (cellId, value) => {
+    if (canEditDirect) {
+      // Direct save
+      const newCells = { ...cells }
+      if (value) newCells[cellId] = value; else delete newCells[cellId]
+      setCells(newCells)
+      setEditingCell(null)
+      try { await api.put(`/soldbuch/${e.id}/book-cells`, { cellId, value }) } catch {}
+    } else if (canEditPending) {
+      // Submit for validation
+      setEditingCell(null)
+      try {
+        await api.post(`/attestations/pending/${e.id}`, { cell_id: cellId, old_value: cells[cellId] || '', new_value: value })
+        alert('Modification soumise pour validation ✓')
+        if (onUpdate) onUpdate()
+      } catch (err) { alert(err.response?.data?.message || 'Erreur') }
+    }
+  }
+
+  // Editable cell: click to edit, shows saved value or empty
+  function EC({ id, placeholder, serial }) {
+    const val = cells[id] || ''
+    if (editingCell === id) {
+      return <span style={{display:'inline-flex',gap:2,alignItems:'center'}}>
+        <input type="text" value={editVal} onChange={ev=>setEditVal(ev.target.value)}
+          onKeyDown={ev=>{if(ev.key==='Enter')saveCell(id,editVal);if(ev.key==='Escape')setEditingCell(null)}}
+          onBlur={()=>saveCell(id,editVal)}
+          autoFocus style={{width:'100%',border:'none',borderBottom:'1px solid var(--military-green)',background:'transparent',fontFamily:'inherit',fontSize:'inherit',padding:'1px 2px',color:'var(--ink-color, #1a1a2e)'}}
+          placeholder={placeholder||''} />
+        {serial && <button onClick={(ev)=>{ev.stopPropagation();const sn=genSerial();setEditVal(sn);saveCell(id,sn)}} title="Générer N° série" style={{background:'none',border:'none',cursor:'pointer',fontSize:'.7rem',padding:0}}>🎲</button>}
+      </span>
+    }
+    if (val) return <span className="sb-ink sb-ink-sm" style={{cursor:canEdit?'pointer':'default'}} onClick={()=>{if(canEdit){setEditingCell(id);setEditVal(val)}}}>{val}</span>
+    if (!canEdit) return <>{NB}</>
+    return <span style={{cursor:'pointer',color:'var(--text-muted)',fontSize:'.6rem',opacity:.5}} onClick={()=>{setEditingCell(id);setEditVal('')}}>{placeholder||'...'}</span>
+  }
+
+  // Serial number generator: UNIT-YYYY-NNNN
+  function genSerial() {
+    const yr = new Date().getFullYear()
+    const rnd = String(Math.floor(Math.random()*9000)+1000)
+    return `${e.unite_code||'000'}-${yr}-${rnd}`
+  }
 
   // Load tampons from bibliothèque when stamp picker opens
   useEffect(() => {
@@ -183,10 +238,15 @@ export default function SoldbuchBook({effectif,decorations=[],onUpdate}){
     <div className="sb-page sb-page-r">
       <h4 className="sb-center">Attestations</h4>
       <p className="sb-center sb-xs">Modifications aux pages 1 et 2</p>
-      <table className="sb-t">
-        <thead><tr><th>N°</th><th>Modification</th><th>Page</th><th>Date</th><th>Signature</th></tr></thead>
-        <tbody><ER cols={5} n={18}/></tbody>
-      </table>
+      <div className="sb-att-wrap">
+        <table className="sb-t">
+          <thead><tr><th>N°</th><th>Modification</th><th>Page</th><th>Date</th><th>Signature</th></tr></thead>
+          <tbody>
+            {attestations.map((a)=><tr key={a.id}><td><Ink small>{a.numero}</Ink></td><td><Ink small>{a.modification}</Ink></td><td><Ink small>{a.page||''}</Ink></td><td><Ink small>{fmtD(a.date_attestation)}</Ink></td><td>{a.signature_data?<img src={a.signature_data} alt="sig" style={{maxHeight:16,maxWidth:40}}/>:<Ink small>{a.signe_par_nom||'—'}</Ink>}</td></tr>)}
+            {attestations.length < 18 && <ER cols={5} n={18 - attestations.length}/>}
+          </tbody>
+        </table>
+      </div>
       <PageNum n={3}/>
     </div>
   </div>)
@@ -194,23 +254,23 @@ export default function SoldbuchBook({effectif,decorations=[],onUpdate}){
   /* 2: Page 4 | Page 5 */
   S.push(<div className="sb-spread" key="s2">
     <div className="sb-page sb-page-l">
-      <table className="sb-t"><tbody><R l="A. Bureau de recrutement" v=""/></tbody></table>
+      <table className="sb-t"><tbody><tr><td className="sb-lbl-cell">A. Bureau de recrutement</td><td className="sb-val-cell"><EC id="p4-bureau-recr" placeholder="bureau"/></td></tr></tbody></table>
       <p className="sb-label">B. Envoyé à l'armée par :</p>
       <table className="sb-t">
         <colgroup><col style={{width:'8%'}}/><col/><col style={{width:'14%'}}/><col style={{width:'18%'}}/></colgroup>
         <thead><tr><th>{NB}</th><th>Unité de remplacement</th><th>Cie</th><th>N° registre</th></tr></thead>
-        <tbody><tr><td>a</td><td><Ink small>{`${e.unite_code||''} ${e.unite_nom||''}`.trim()}</Ink></td><td>{NB}</td><td>{NB}</td></tr><tr><td>b</td><td>{NB}</td><td>{NB}</td><td>{NB}</td></tr><tr><td>c</td><td>{NB}</td><td>{NB}</td><td>{NB}</td></tr></tbody>
+        <tbody><tr><td>a</td><td><Ink small>{`${e.unite_code||''} ${e.unite_nom||''}`.trim()}</Ink></td><td><EC id="p4-b-cie-a"/></td><td><EC id="p4-b-reg-a" serial/></td></tr><tr><td>b</td><td><EC id="p4-b-unite-b"/></td><td><EC id="p4-b-cie-b"/></td><td><EC id="p4-b-reg-b" serial/></td></tr><tr><td>c</td><td><EC id="p4-b-unite-c"/></td><td><EC id="p4-b-cie-c"/></td><td><EC id="p4-b-reg-c" serial/></td></tr></tbody>
       </table>
       <p className="sb-label">C. Unité de campagne :</p>
       <table className="sb-t">
         <colgroup><col style={{width:'8%'}}/><col/><col style={{width:'14%'}}/><col style={{width:'18%'}}/></colgroup>
         <thead><tr><th>{NB}</th><th>Unité de campagne</th><th>Cie</th><th>N° guerre</th></tr></thead>
-        <tbody><ER cols={4} n={3}/></tbody>
+        <tbody>{[1,2,3].map(n=><tr key={n}><td>{n}</td><td><EC id={`p4-camp-${n}`}/></td><td><EC id={`p4-camp-cie-${n}`}/></td><td><EC id={`p4-camp-nr-${n}`} serial/></td></tr>)}</tbody>
       </table>
       <p className="sb-label">D.</p>
       <table className="sb-t">
         <thead><tr><th>Unité actuelle</th><th style={{width:'30%'}}>Garnison</th></tr></thead>
-        <tbody><ER cols={2} n={2}/></tbody>
+        <tbody>{[1,2].map(n=><tr key={n}><td><EC id={`p4-unite-${n}`}/></td><td><EC id={`p4-garni-${n}`}/></td></tr>)}</tbody>
       </table>
       <div className="sb-spacer"/>
       <p className="sb-sm">→ Suite page 17.</p>
@@ -220,11 +280,11 @@ export default function SoldbuchBook({effectif,decorations=[],onUpdate}){
       <h4 className="sb-center">Adresses des proches</h4>
       <table className="sb-t"><tbody><R l="de" v={`${e.prenom||''} ${e.nom||''}`}/></tbody></table>
       <p className="sb-label">1. Épouse</p>
-      <table className="sb-t"><tbody><R l="Nom" v=""/><R l="Domicile" v=""/><R l="Rue" v=""/></tbody></table>
+      <table className="sb-t"><tbody><tr><td className="sb-lbl-cell">Nom</td><td className="sb-val-cell"><EC id="p5-ep-nom"/></td></tr><tr><td className="sb-lbl-cell">Domicile</td><td className="sb-val-cell"><EC id="p5-ep-dom"/></td></tr><tr><td className="sb-lbl-cell">Rue</td><td className="sb-val-cell"><EC id="p5-ep-rue"/></td></tr></tbody></table>
       <p className="sb-label">2. Parents</p>
-      <table className="sb-t"><tbody><R l="Père" v=""/><R l="Profession" v=""/><R l="Mère" v=""/><R l="Domicile" v=""/><R l="Rue" v=""/></tbody></table>
+      <table className="sb-t"><tbody><tr><td className="sb-lbl-cell">Père</td><td className="sb-val-cell"><EC id="p5-pere"/></td></tr><tr><td className="sb-lbl-cell">Profession</td><td className="sb-val-cell"><EC id="p5-pere-prof"/></td></tr><tr><td className="sb-lbl-cell">Mère</td><td className="sb-val-cell"><EC id="p5-mere"/></td></tr><tr><td className="sb-lbl-cell">Domicile</td><td className="sb-val-cell"><EC id="p5-par-dom"/></td></tr><tr><td className="sb-lbl-cell">Rue</td><td className="sb-val-cell"><EC id="p5-par-rue"/></td></tr></tbody></table>
       <p className="sb-label">3. Autre proche*</p>
-      <table className="sb-t"><tbody><R l="Nom" v=""/><R l="Profession" v=""/><R l="Domicile" v=""/><R l="Rue" v=""/></tbody></table>
+      <table className="sb-t"><tbody><tr><td className="sb-lbl-cell">Nom</td><td className="sb-val-cell"><EC id="p5-aut-nom"/></td></tr><tr><td className="sb-lbl-cell">Profession</td><td className="sb-val-cell"><EC id="p5-aut-prof"/></td></tr><tr><td className="sb-lbl-cell">Domicile</td><td className="sb-val-cell"><EC id="p5-aut-dom"/></td></tr><tr><td className="sb-lbl-cell">Rue</td><td className="sb-val-cell"><EC id="p5-aut-rue"/></td></tr></tbody></table>
       <div className="sb-spacer"/>
       <p className="sb-xs">* Seulement si 1 et 2 non remplis.</p>
       <PageNum n={5}/>
@@ -263,7 +323,7 @@ export default function SoldbuchBook({effectif,decorations=[],onUpdate}){
       <h4 className="sb-center">Armes et matériel</h4>
       <table className="sb-t">
         <thead><tr><th>Type</th><th>Marque</th><th>N° série</th><th>Reçu le</th><th>Sign.</th></tr></thead>
-        <tbody>{W8A.map(w=><tr key={w}><td><strong style={{fontSize:'.38rem'}}>{w}</strong></td><td>{NB}</td><td>{NB}</td><td>{NB}</td><td>{NB}</td></tr>)}</tbody>
+        <tbody>{W8A.map(w=><tr key={w}><td><strong style={{fontSize:'.38rem'}}>{w}</strong></td><td><EC id={`w8a-${w}-marque`} placeholder="marque"/></td><td><EC id={`w8a-${w}-serie`} placeholder="N°" serial/></td><td><EC id={`w8a-${w}-date`} placeholder="date"/></td><td>{NB}</td></tr>)}</tbody>
       </table>
       <PageNum n="8a"/>
     </div>
@@ -275,18 +335,26 @@ export default function SoldbuchBook({effectif,decorations=[],onUpdate}){
       <h4 className="sb-center">Armes (suite)</h4>
       <table className="sb-t">
         <thead><tr><th>Type</th><th>Marque</th><th>N° série</th><th>Reçu le</th><th>Sign.</th></tr></thead>
-        <tbody>{W8B.map(w=><tr key={w}><td><strong style={{fontSize:'.38rem'}}>{w}</strong></td><td>{NB}</td><td>{NB}</td><td>{NB}</td><td>{NB}</td></tr>)}<ER cols={5} n={5}/></tbody>
+        <tbody>{W8B.map(w=><tr key={w}><td><strong style={{fontSize:'.38rem'}}>{w}</strong></td><td><EC id={`w8b-${w}-marque`} placeholder="marque"/></td><td><EC id={`w8b-${w}-serie`} placeholder="N°" serial/></td><td><EC id={`w8b-${w}-date`} placeholder="date"/></td><td>{NB}</td></tr>)}<ER cols={5} n={5}/></tbody>
       </table>
       <PageNum n="8b"/>
     </div>
     <div className="sb-page sb-page-r">
       <h4 className="sb-center">Vaccinations</h4>
-      {['a) Variole','b) Typhus','c) Dysenterie','d) Choléra','e) Autres'].map((v,i)=>(
-        <div key={i} className="sb-impf">
+      {['a) Variole','b) Typhus','c) Dysenterie','d) Choléra','e) Autres'].map((v,i)=>{
+        const typeMap={'a) Variole':'Variole','b) Typhus':'Typhus','c) Dysenterie':'Dysenterie','d) Choléra':['Cholera','Choléra'],'e) Autres':null}
+        const match=typeMap[v]
+        const vacc=vaccinations.filter(vc=>{
+          if(!match) return !['Variole','Typhus','Dysenterie','Cholera','Choléra'].some(t=>vc.type_vaccin?.includes(t))
+          if(Array.isArray(match)) return match.some(m=>vc.type_vaccin?.includes(m))
+          return vc.type_vaccin?.includes(match)
+        })
+        const first=vacc[0]
+        return <div key={i} className="sb-impf">
           <p className="sb-label">{v}</p>
-          <table className="sb-t"><thead><tr><th>Le</th><th>1ère</th><th>2ème</th><th>3ème</th><th>Médecin</th></tr></thead><tbody><tr><td>{NB}</td><td>{NB}</td><td>{NB}</td><td>{NB}</td><td>{NB}</td></tr></tbody></table>
+          <table className="sb-t"><thead><tr><th>Le</th><th>1ère</th><th>2ème</th><th>3ème</th><th>Médecin</th></tr></thead><tbody><tr><td>{first?<Ink small>{fmtD(first.date_vaccination)}</Ink>:NB}</td><td>{first?<Ink small>✓</Ink>:NB}</td><td>{vacc[1]?<Ink small>✓</Ink>:NB}</td><td>{vacc[2]?<Ink small>✓</Ink>:NB}</td><td>{first?<Ink small>{first.medecin_nom||''}</Ink>:NB}</td></tr></tbody></table>
         </div>
-      ))}
+      })}
       <div className="sb-spacer"/>
       <PageNum n={9}/>
     </div>
@@ -322,16 +390,22 @@ export default function SoldbuchBook({effectif,decorations=[],onUpdate}){
     <div className="sb-page sb-page-l">
       <h4 className="sb-center">Hospitalisations</h4>
       <table className="sb-t">
-        <thead><tr><th>Hôpital</th><th>Jour</th><th>Année</th><th>Maladie</th></tr></thead>
-        <tbody><ER cols={4} n={18}/></tbody>
+        <thead><tr><th>Hôpital</th><th>Entrée</th><th>Sortie</th><th>Motif</th></tr></thead>
+        <tbody>
+          {hospitalisations.slice(0,16).map((h,i)=><tr key={i}><td><Ink small>{h.etablissement}</Ink></td><td><Ink small>{fmtD(h.date_entree)}</Ink></td><td><Ink small>{fmtD(h.date_sortie)}</Ink></td><td><Ink small>{h.motif}</Ink></td></tr>)}
+          <ER cols={4} n={Math.max(0,16-hospitalisations.length)}/>
+        </tbody>
       </table>
       <PageNum n={12}/>
     </div>
     <div className="sb-page sb-page-r">
       <h4 className="sb-center">Blessures</h4>
       <table className="sb-t">
-        <thead><tr><th>Date</th><th>Nature</th><th>Hôpital</th><th>Médecin</th></tr></thead>
-        <tbody><ER cols={4} n={18}/></tbody>
+        <thead><tr><th>Date</th><th>Nature</th><th>Localisation</th><th>Gravité</th></tr></thead>
+        <tbody>
+          {blessures.slice(0,16).map((b,i)=><tr key={i}><td><Ink small>{fmtD(b.date_blessure)}</Ink></td><td><Ink small>{b.type_blessure}</Ink></td><td><Ink small>{b.localisation}</Ink></td><td><Ink small>{b.gravite}</Ink></td></tr>)}
+          <ER cols={4} n={Math.max(0,16-blessures.length)}/>
+        </tbody>
       </table>
       <PageNum n={13}/>
     </div>
@@ -443,9 +517,9 @@ export default function SoldbuchBook({effectif,decorations=[],onUpdate}){
     <div className="sb-page sb-page-r">
       <h4 className="sb-center">Permissions (+5 jours)</h4>
       <p className="sb-xs sb-center">(À remplir avant le départ)</p>
-      {[1,2,3,4].map(n=><div key={n} className="sb-urlaub">
-        <table className="sb-t"><tbody><R l={`${n}. Du`} v=""/><R4 a="au" b="" c="vers" d=""/><R l="Motif" v=""/></tbody></table>
-      </div>)}
+      {[1,2,3,4].map(n=>{const p=permissions[n-1];return <div key={n} className="sb-urlaub">
+        <table className="sb-t"><tbody><R l={`${n}. Du`} v={p?fmtD(p.date_debut):''}/><R4 a="au" b={p?fmtD(p.date_fin):''} c="vers" d=""/><R l="Motif" v={p?p.raison:''}/></tbody></table>
+      </div>})}
       <div className="sb-spacer"/>
       <PageNum n={23}/>
     </div>
@@ -454,9 +528,9 @@ export default function SoldbuchBook({effectif,decorations=[],onUpdate}){
   /* 13: Page 24 | Couverture arrière */
   S.push(<div className="sb-spread" key="s13">
     <div className="sb-page sb-page-l">
-      {[5,6,7,8].map(n=><div key={n} className="sb-urlaub">
-        <table className="sb-t"><tbody><R l={`${n}. Du`} v=""/><R4 a="au" b="" c="vers" d=""/><R l="Motif" v=""/></tbody></table>
-      </div>)}
+      {[5,6,7,8].map(n=>{const p=permissions[n-1];return <div key={n} className="sb-urlaub">
+        <table className="sb-t"><tbody><R l={`${n}. Du`} v={p?fmtD(p.date_debut):''}/><R4 a="au" b={p?fmtD(p.date_fin):''} c="vers" d=""/><R l="Motif" v={p?p.raison:''}/></tbody></table>
+      </div>})}
       <div className="sb-spacer"/>
       <PageNum n={24}/>
     </div>

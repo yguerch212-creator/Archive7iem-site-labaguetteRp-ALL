@@ -97,6 +97,14 @@ router.post('/', auth, recenseur, async (req, res) => {
     // Auto-reconcile mentions
     if (f.nom && f.prenom) {
       reconcileForEffectif(effectifId, f.nom, f.prenom).catch(() => {})
+      // Auto-reconcile medical records (hospitalisations, vaccinations, blessures)
+      const fullName = `${f.prenom} ${f.nom}`
+      const patterns = [fullName, `${f.nom} ${f.prenom}`, f.nom]
+      for (const table of ['hospitalisations', 'vaccinations', 'blessures']) {
+        for (const pat of patterns) {
+          pool.execute(`UPDATE ${table} SET effectif_id = ?, effectif_nom_libre = NULL WHERE effectif_id IS NULL AND effectif_nom_libre LIKE ?`, [effectifId, `%${pat}%`]).catch(() => {})
+        }
+      }
     }
 
     // Auto-create user account
@@ -189,6 +197,10 @@ router.post('/', auth, recenseur, async (req, res) => {
 router.put('/:id', auth, recenseur, async (req, res) => {
   try {
     const f = req.body
+    // Detect grade change for auto-attestation
+    const oldEff = await queryOne('SELECT grade_id FROM effectifs WHERE id = ?', [req.params.id])
+    const gradeChanged = oldEff && f.grade_id && parseInt(f.grade_id) !== oldEff.grade_id
+
     await pool.execute(
       `UPDATE effectifs SET nom=?, prenom=?, surnom=?, unite_id=?, grade_id=?, fonction=?, categorie=?, specialite=?,
         date_naissance=?, lieu_naissance=?, nationalite=?, taille_cm=?,
@@ -204,6 +216,14 @@ router.put('/:id', auth, recenseur, async (req, res) => {
        f.historique || null, f.date_entree_ig || null, f.date_entree_irl || null,
        f.discord_id || null, req.params.id]
     )
+    // Auto-attestation on promotion
+    if (gradeChanged) {
+      try {
+        const { createAutoAttestation } = require('./attestations.routes')
+        const newGrade = await queryOne('SELECT nom_complet FROM grades WHERE id = ?', [f.grade_id])
+        await createAutoAttestation(parseInt(req.params.id), `Promotion : ${newGrade?.nom_complet || 'nouveau grade'}`, 'promotion', null, req.user.id, '1')
+      } catch {}
+    }
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })

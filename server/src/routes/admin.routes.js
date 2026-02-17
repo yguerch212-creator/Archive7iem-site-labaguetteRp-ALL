@@ -5,6 +5,14 @@ const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
 const admin = require('../middleware/admin')
 
+// GET /api/admin/groups — List all groups
+router.get('/groups', auth, async (req, res) => {
+  try {
+    const rows = await query('SELECT id, name FROM `groups` ORDER BY name')
+    res.json({ success: true, data: rows })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
 // GET /api/admin/users
 router.get('/users', auth, admin, async (req, res) => {
   try {

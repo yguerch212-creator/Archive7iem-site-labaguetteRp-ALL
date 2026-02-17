@@ -3,6 +3,7 @@ import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import BackButton from '../../components/BackButton'
 import SignatureCanvas from '../../components/SignatureCanvas'
+import EffectifAutocomplete from '../../components/EffectifAutocomplete'
 
 const TYPES = [
   { value: 'tampon', label: '🔴 Tampons', icon: '🔴' },
@@ -13,6 +14,7 @@ export default function Bibliotheque() {
   const { user } = useAuth()
   const [items, setItems] = useState([])
   const [unites, setUnites] = useState([])
+  const [groups, setGroups] = useState([])
   const [tab, setTab] = useState('tampon')
   const [showForm, setShowForm] = useState(false)
   const [showSignCanvas, setShowSignCanvas] = useState(false)
@@ -20,11 +22,24 @@ export default function Bibliotheque() {
   const [form, setForm] = useState({ type: 'tampon', nom: '', description: '', unite_id: '', image_data: '' })
   const [preview, setPreview] = useState(null)
   const fileRef = useRef()
+  // Permissions
+  const [permPopup, setPermPopup] = useState(null) // { tamponId, perms: [] }
+  const [permEffText, setPermEffText] = useState('')
 
   const canCreate = user?.isAdmin || user?.isOfficier
+  const canManagePerms = user?.isAdmin || user?.isOfficier
 
   useEffect(() => {
     api.get('/unites').then(r => setUnites(r.data.data || r.data)).catch(() => {})
+    api.get('/admin/groups').then(r => setGroups(r.data.data || r.data || [])).catch(() => {
+      // Fallback: hardcode known groups
+      setGroups([
+        { id: 1, name: 'Administration' }, { id: 2, name: 'Administratif' },
+        { id: 3, name: 'Officier' }, { id: 4, name: 'Sous-officier' },
+        { id: 5, name: 'Feldgendarmerie' }, { id: 6, name: 'Sanitaets' },
+        { id: 7, name: 'Etat-Major' }
+      ])
+    })
   }, [])
 
   useEffect(() => { load() }, [tab])
@@ -83,6 +98,56 @@ export default function Bibliotheque() {
       await api.delete(`/bibliotheque/${id}`)
       load()
     } catch (err) { alert('Erreur') }
+  }
+
+  // ---- Permissions popup ----
+  const openPerms = async (item) => {
+    try {
+      const res = await api.get(`/bibliotheque/${item.id}/permissions`)
+      setPermPopup({ tamponId: item.id, tamponNom: item.nom, perms: res.data.data || [] })
+      setPermEffText('')
+    } catch (err) { alert('Erreur chargement permissions') }
+  }
+
+  const addGroupPerm = (groupId) => {
+    if (!permPopup) return
+    if (permPopup.perms.find(p => p.group_id === groupId)) return
+    const g = groups.find(gr => gr.id === groupId)
+    setPermPopup(pp => ({
+      ...pp,
+      perms: [...pp.perms, { group_id: groupId, group_name: g?.name || `Groupe ${groupId}` }]
+    }))
+  }
+
+  const addEffPerm = (eff) => {
+    if (!permPopup || !eff?.id) return
+    if (permPopup.perms.find(p => p.effectif_id === eff.id)) return
+    setPermPopup(pp => ({
+      ...pp,
+      perms: [...pp.perms, { effectif_id: eff.id, effectif_nom: `${eff.prenom} ${eff.nom}` }]
+    }))
+    setPermEffText('')
+  }
+
+  const removePerm = (idx) => {
+    setPermPopup(pp => ({ ...pp, perms: pp.perms.filter((_, i) => i !== idx) }))
+  }
+
+  const savePerms = async () => {
+    if (!permPopup) return
+    try {
+      await api.put(`/bibliotheque/${permPopup.tamponId}/permissions`, {
+        permissions: permPopup.perms.map(p => ({
+          group_id: p.group_id || null,
+          effectif_id: p.effectif_id || null
+        }))
+      })
+      setMessage({ type: 'success', text: 'Permissions mises à jour ✓' })
+      setTimeout(() => setMessage(null), 3000)
+      setPermPopup(null)
+    } catch (err) {
+      alert(err.response?.data?.message || 'Erreur')
+    }
   }
 
   return (
@@ -181,12 +246,76 @@ export default function Bibliotheque() {
             {item.description && <p style={{ margin: '0 0 4px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{item.description}</p>}
             {item.unite_nom && <span className="badge badge-muted" style={{ fontSize: '0.7rem' }}>{item.unite_code}. {item.unite_nom}</span>}
             <p style={{ margin: '4px 0 0', fontSize: '0.7rem', color: 'var(--text-muted)' }}>par {item.created_by_nom}</p>
-            {(user?.isAdmin || user?.id === item.created_by) && (
-              <button onClick={() => remove(item.id)} style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem' }} title="Supprimer">🗑️</button>
-            )}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 8 }}>
+              {canManagePerms && tab === 'tampon' && (
+                <button onClick={() => openPerms(item)} className="btn btn-sm btn-secondary" style={{ fontSize: '0.7rem' }} title="Gérer les permissions">
+                  🔒 Permissions
+                </button>
+              )}
+              {(user?.isAdmin || user?.id === item.created_by) && (
+                <button onClick={() => remove(item.id)} className="btn btn-sm btn-secondary" style={{ fontSize: '0.7rem', color: 'var(--danger)' }} title="Supprimer">
+                  🗑️
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>
+
+      {/* Permissions popup */}
+      {permPopup && (
+        <div className="popup-overlay" onClick={() => setPermPopup(null)}>
+          <div className="popup-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
+            <button className="popup-close" onClick={() => setPermPopup(null)}>✕</button>
+            <h3 style={{ margin: '0 0 4px' }}>🔒 Permissions — {permPopup.tamponNom}</h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 16px' }}>
+              Sans permissions = accessible à tous. Ajoutez des groupes ou personnes pour restreindre l'accès.
+            </p>
+
+            {/* Current permissions */}
+            {permPopup.perms.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 8 }}>Accès autorisé :</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {permPopup.perms.map((p, i) => (
+                    <span key={i} style={{ background: 'var(--bg-dark)', padding: '4px 10px', borderRadius: 12, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {p.group_name ? `👥 ${p.group_name}` : `👤 ${p.effectif_nom}`}
+                      <span onClick={() => removePerm(i)} style={{ cursor: 'pointer', color: 'var(--danger)', fontWeight: 700 }}>✕</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add group */}
+            <div className="form-group" style={{ marginBottom: 12 }}>
+              <label className="form-label">Ajouter un groupe</label>
+              <select className="form-input" onChange={e => { if (e.target.value) addGroupPerm(parseInt(e.target.value)); e.target.value = '' }}>
+                <option value="">— Choisir un groupe —</option>
+                {groups.filter(g => !permPopup.perms.find(p => p.group_id === g.id)).map(g => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Add effectif */}
+            <div className="form-group" style={{ marginBottom: 16 }}>
+              <label className="form-label">Ajouter une personne</label>
+              <EffectifAutocomplete
+                value={permEffText}
+                onChange={(text) => setPermEffText(text)}
+                onSelect={(eff) => addEffPerm(eff)}
+                placeholder="Rechercher un effectif..."
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-primary" onClick={savePerms}>✓ Enregistrer</button>
+              <button className="btn btn-secondary" onClick={() => setPermPopup(null)}>Annuler</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
