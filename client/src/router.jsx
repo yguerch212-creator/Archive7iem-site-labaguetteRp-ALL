@@ -27,6 +27,8 @@ import Hospitalisations from './pages/medical/Hospitalisations'
 import Vaccinations from './pages/medical/Vaccinations'
 import Blessures from './pages/medical/Blessures'
 import DescriptionPersonnelle from './pages/medical/DescriptionPersonnelle'
+import SoinsFront from './pages/medical/SoinsFront'
+import MedicalStats from './pages/medical/MedicalStats'
 import Documentation from './pages/documentation/Documentation'
 import Bibliotheque from './pages/bibliotheque/Bibliotheque'
 import Archives from './pages/archives/Archives'
@@ -91,6 +93,8 @@ function AppRouter() {
       <Route path="/medical/vaccinations" element={<ProtectedRoute><Vaccinations /></ProtectedRoute>} />
       <Route path="/medical/blessures" element={<ProtectedRoute><Blessures /></ProtectedRoute>} />
       <Route path="/medical/description" element={<ProtectedRoute><DescriptionPersonnelle /></ProtectedRoute>} />
+      <Route path="/medical/soins" element={<ProtectedRoute><SoinsFront /></ProtectedRoute>} />
+      <Route path="/medical/stats" element={<ProtectedRoute><MedicalStats /></ProtectedRoute>} />
       <Route path="/medical/:id" element={<ProtectedRoute><VisiteMedicaleView /></ProtectedRoute>} />
       
       {/* Documentation */}

@@ -32,6 +32,14 @@ export default function SoldbuchDetails({ effectifId, effectif, onSaved, onClose
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
+  const genWehrnummer = () => {
+    const code = effectif?.unite_code || '000'
+    const rang = String(effectif?.grade_rang || 0).padStart(2, '0')
+    const id = String(effectifId).padStart(3, '0')
+    const yr = new Date().getFullYear().toString().slice(-2)
+    set('wehrnummer', `${code}/${rang}/${id}/${yr}`)
+  }
+
   const handleSubmit = async (ev) => {
     ev.preventDefault()
     setSaving(true)
@@ -81,6 +89,17 @@ export default function SoldbuchDetails({ effectifId, effectif, onSaved, onClose
                   placeholder={placeholder}
                   rows={2}
                 />
+              ) : key === 'wehrnummer' ? (
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input
+                    className="form-input"
+                    value={form[key]}
+                    onChange={e => set(key, e.target.value)}
+                    placeholder={placeholder}
+                    style={{ flex: 1 }}
+                  />
+                  <button type="button" className="btn btn-secondary btn-small" onClick={genWehrnummer} title="Générer automatiquement">🎲 Auto</button>
+                </div>
               ) : (
                 <input
                   className="form-input"

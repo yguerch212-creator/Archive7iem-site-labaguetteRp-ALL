@@ -5,13 +5,20 @@ import BackButton from '../../components/BackButton'
 export default function MedicalDashboard() {
   const { user } = useAuth()
 
+  const isSanit = user?.unite_code === '916S'
+  const isPrivileged = user?.isAdmin || user?.isOfficier || user?.isRecenseur
+
   const cards = [
+    { icon: '⚕️', title: 'Soins au front', desc: 'Enregistrement rapide des patients soignés', to: '/medical/soins' },
     { icon: '🏥', title: 'Visites médicales', desc: 'Examens, aptitudes & suivi médical', to: '/medical/visites' },
     { icon: '🏨', title: 'Hospitalisations', desc: 'Lazarettbehandlung — Séjours en infirmerie', to: '/medical/hospitalisations' },
     { icon: '💉', title: 'Vaccinations', desc: 'Schutzimpfungen — Registre des vaccins', to: '/medical/vaccinations' },
     { icon: '🩹', title: 'Blessures', desc: 'Verwundungen — Blessures de guerre & accidents', to: '/medical/blessures' },
     { icon: '📏', title: 'Description personnelle', desc: 'Taille, corpulence, yeux, groupe sanguin, pointure...', to: '/medical/description' },
   ]
+  if (isPrivileged || isSanit) {
+    cards.push({ icon: '📊', title: 'Statistiques', desc: 'Vue d\'ensemble des soins & activité médicale', to: '/medical/stats' })
+  }
 
   return (
     <div className="container">

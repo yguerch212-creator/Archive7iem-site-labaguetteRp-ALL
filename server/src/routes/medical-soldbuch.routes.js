@@ -131,6 +131,74 @@ router.put('/sync-physique/:effectifId', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
 
+// ==================== SOINS AU FRONT ====================
+
+// GET /api/medical-soldbuch/soins — List soins (filterable by medecin_id, date range)
+router.get('/soins', optionalAuth, async (req, res) => {
+  try {
+    const { medecin_id, date_from, date_to } = req.query
+    let sql = `SELECT s.*, CONCAT(m.prenom,' ',m.nom) AS medecin_nom,
+      COALESCE(CONCAT(p.prenom,' ',p.nom), s.patient_nom_libre) AS patient_nom
+      FROM soins_front s
+      LEFT JOIN effectifs m ON m.id = s.medecin_id
+      LEFT JOIN effectifs p ON p.id = s.patient_id
+      WHERE 1=1`
+    const params = []
+    if (medecin_id) { sql += ' AND s.medecin_id = ?'; params.push(medecin_id) }
+    if (date_from) { sql += ' AND s.date_soin >= ?'; params.push(date_from) }
+    if (date_to) { sql += ' AND s.date_soin <= ?'; params.push(date_to + ' 23:59:59') }
+    sql += ' ORDER BY s.date_soin DESC LIMIT 500'
+    res.json({ success: true, data: await query(sql, params) })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
+// POST /api/medical-soldbuch/soins — Quick log a soin (Sanitäts)
+router.post('/soins', auth, async (req, res) => {
+  try {
+    const { medecin_id, patient_id, patient_nom_libre, type_soin, notes } = req.body
+    const medecinId = medecin_id || req.user.effectif_id
+    if (!medecinId) return res.status(400).json({ success: false, message: 'Médecin requis' })
+    const [result] = await pool.execute(
+      `INSERT INTO soins_front (medecin_id, patient_id, patient_nom_libre, date_soin, type_soin, notes, created_by)
+       VALUES (?, ?, ?, NOW(), ?, ?, ?)`,
+      [medecinId, patient_id || null, patient_nom_libre || null, type_soin || 'Soin au front', notes || null, req.user.id]
+    )
+    res.json({ success: true, data: { id: result.insertId } })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
+// GET /api/medical-soldbuch/stats — Medical stats (for officers)
+router.get('/stats', auth, async (req, res) => {
+  try {
+    const totalSoins = await query('SELECT COUNT(*) as total FROM soins_front')
+    const soinsParMedecin = await query(`
+      SELECT s.medecin_id, CONCAT(e.prenom,' ',e.nom) AS medecin_nom, COUNT(*) AS total,
+        COUNT(DISTINCT DATE(s.date_soin)) AS jours_actifs
+      FROM soins_front s LEFT JOIN effectifs e ON e.id = s.medecin_id
+      GROUP BY s.medecin_id ORDER BY total DESC
+    `)
+    const soinsParJour = await query(`
+      SELECT DATE(date_soin) AS jour, COUNT(*) AS total
+      FROM soins_front WHERE date_soin >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      GROUP BY DATE(date_soin) ORDER BY jour DESC
+    `)
+    const totalVisites = await query('SELECT COUNT(*) as total FROM visites_medicales')
+    const totalHospit = await query('SELECT COUNT(*) as total FROM hospitalisations')
+    const totalBlessures = await query('SELECT COUNT(*) as total FROM blessures')
+    const totalVaccins = await query('SELECT COUNT(*) as total FROM vaccinations')
+
+    res.json({ success: true, data: {
+      soins_total: totalSoins[0]?.total || 0,
+      soins_par_medecin: soinsParMedecin,
+      soins_par_jour: soinsParJour,
+      visites_total: totalVisites[0]?.total || 0,
+      hospitalisations_total: totalHospit[0]?.total || 0,
+      blessures_total: totalBlessures[0]?.total || 0,
+      vaccinations_total: totalVaccins[0]?.total || 0,
+    }})
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
 // ==================== AUTO-RECONCILIATION ====================
 // Called when a new effectif is created — match nom_libre to effectif_id
 
@@ -141,6 +209,13 @@ router.put('/reconcile/:effectifId', auth, async (req, res) => {
     const fullName = `${prenom} ${nom}`
     const patterns = [fullName, `${nom} ${prenom}`, nom]
 
+    // Also reconcile soins_front
+    for (const pat of patterns) {
+      await pool.execute(
+        `UPDATE soins_front SET patient_id = ?, patient_nom_libre = NULL WHERE patient_id IS NULL AND patient_nom_libre LIKE ?`,
+        [req.params.effectifId, `%${pat}%`]
+      )
+    }
     for (const table of ['hospitalisations', 'vaccinations', 'blessures']) {
       for (const pat of patterns) {
         await pool.execute(

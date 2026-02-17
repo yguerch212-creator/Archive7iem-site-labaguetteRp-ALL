@@ -82,21 +82,29 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
   }
 
   // Editable cell: click to edit, shows saved value or empty
+  const blurTimer = React.useRef(null)
   function EC({ id, placeholder, serial }) {
     const val = cells[id] || ''
     if (editingCell === id) {
-      return <span style={{display:'inline-flex',gap:2,alignItems:'center'}}>
+      return <span style={{display:'inline-flex',gap:3,alignItems:'center',width:'100%'}}>
         <input type="text" value={editVal} onChange={ev=>setEditVal(ev.target.value)}
           onKeyDown={ev=>{if(ev.key==='Enter')saveCell(id,editVal);if(ev.key==='Escape')setEditingCell(null)}}
-          onBlur={()=>saveCell(id,editVal)}
-          autoFocus style={{width:'100%',border:'none',borderBottom:'1px solid var(--military-green)',background:'transparent',fontFamily:'inherit',fontSize:'inherit',padding:'1px 2px',color:'var(--ink-color, #1a1a2e)'}}
+          onBlur={()=>{blurTimer.current=setTimeout(()=>saveCell(id,editVal),150)}}
+          autoFocus style={{flex:1,border:'none',borderBottom:'1px solid var(--military-green)',background:'transparent',fontFamily:'inherit',fontSize:'inherit',padding:'1px 2px',color:'var(--ink-color, #1a1a2e)'}}
           placeholder={placeholder||''} />
-        {serial && <button onClick={(ev)=>{ev.stopPropagation();const sn=genSerial();setEditVal(sn);saveCell(id,sn)}} title="Générer N° série" style={{background:'none',border:'none',cursor:'pointer',fontSize:'.7rem',padding:0}}>🎲</button>}
+        {serial && <button onMouseDown={(ev)=>{ev.preventDefault();clearTimeout(blurTimer.current);const sn=genSerial();setEditVal(sn);saveCell(id,sn)}} title="Générer N° série" style={{background:'var(--military-green)',color:'white',border:'none',cursor:'pointer',fontSize:'.65rem',padding:'2px 5px',borderRadius:3,whiteSpace:'nowrap'}}>🎲 N°</button>}
+        <button onMouseDown={(ev)=>{ev.preventDefault();clearTimeout(blurTimer.current);saveCell(id,editVal)}} style={{background:'var(--military-green)',color:'white',border:'none',cursor:'pointer',fontSize:'.65rem',padding:'2px 5px',borderRadius:3}}>✓</button>
       </span>
     }
-    if (val) return <span className="sb-ink sb-ink-sm" style={{cursor:canEdit?'pointer':'default'}} onClick={()=>{if(canEdit){setEditingCell(id);setEditVal(val)}}}>{val}</span>
+    if (val) return <span style={{display:'inline-flex',gap:3,alignItems:'center'}}>
+      <span className="sb-ink sb-ink-sm" style={{cursor:canEdit?'pointer':'default'}} onClick={()=>{if(canEdit){setEditingCell(id);setEditVal(val)}}}>{val}</span>
+      {serial && canEdit && <button onClick={()=>{const sn=genSerial();saveCell(id,sn)}} title="Regénérer" style={{background:'none',border:'none',cursor:'pointer',fontSize:'.6rem',padding:0,opacity:.5}}>🎲</button>}
+    </span>
     if (!canEdit) return <>{NB}</>
-    return <span style={{cursor:'pointer',color:'var(--text-muted)',fontSize:'.6rem',opacity:.5}} onClick={()=>{setEditingCell(id);setEditVal('')}}>{placeholder||'...'}</span>
+    return <span style={{display:'inline-flex',gap:3,alignItems:'center',cursor:'pointer'}} onClick={()=>{setEditingCell(id);setEditVal('')}}>
+      <span style={{color:'var(--text-muted)',fontSize:'.6rem',opacity:.5}}>{placeholder||'...'}</span>
+      {serial && <button onClick={(ev)=>{ev.stopPropagation();const sn=genSerial();saveCell(id,sn)}} title="Générer N° série" style={{background:'var(--military-green)',color:'white',border:'none',cursor:'pointer',fontSize:'.55rem',padding:'1px 4px',borderRadius:3,whiteSpace:'nowrap'}}>🎲 N°</button>}
+    </span>
   }
 
   // Serial number generator: UNIT-YYYY-NNNN
