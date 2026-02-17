@@ -78,7 +78,7 @@ export default function Soldbuch() {
   const unitTitle = `${e.unite_code || ''} ${e.unite_nom || ''}`.trim()
 
   return (
-    <div className="container" style={{ maxWidth: 900 }}>
+    <div className="container" style={{ maxWidth: 960, overflowX: 'hidden' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-lg)', flexWrap: 'wrap', gap: '0.5rem' }}>
         <BackButton className="btn btn-secondary btn-small" label="← Retour" />
         <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
