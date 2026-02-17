@@ -1,6 +1,6 @@
 /* ============================================
-   SOLDBUCH BOOK — Authentic WW2 Soldbuch Style
-   Page-flip book with per-regiment templates
+   SOLDBUCH BOOK — Authentic WW2 Document Style
+   Looks like a REAL filled-out Soldbuch
    ============================================ */
 
 .soldbuch-book-wrapper {
@@ -12,46 +12,50 @@
 
 /* ---- Book Container ---- */
 .soldbuch-book {
-  width: 700px;
-  min-height: 500px;
+  width: 720px;
   position: relative;
   perspective: 1500px;
   margin: 0 auto;
 }
 
-/* ---- Cover (closed book) ---- */
+/* ---- COVER ---- */
 .soldbuch-cover {
-  width: 350px;
-  min-height: 500px;
+  width: 360px;
+  min-height: 520px;
   margin: 0 auto;
-  border-radius: 4px 8px 8px 4px;
+  border-radius: 3px 6px 6px 3px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 2rem;
   cursor: pointer;
-  box-shadow: 3px 3px 12px rgba(0,0,0,0.4), 0 0 4px rgba(0,0,0,0.2);
+  box-shadow: 3px 3px 15px rgba(0,0,0,0.5), 0 0 3px rgba(0,0,0,0.2);
   position: relative;
   transition: transform 0.3s ease;
   text-align: center;
 }
-.soldbuch-cover:hover {
-  transform: scale(1.02);
-}
+.soldbuch-cover:hover { transform: scale(1.015); }
+/* Spine effect */
 .soldbuch-cover::before {
   content: '';
   position: absolute;
-  left: 0;
-  top: 10px;
-  bottom: 10px;
-  width: 8px;
-  background: rgba(0,0,0,0.1);
+  left: 0; top: 8px; bottom: 8px; width: 10px;
+  background: rgba(0,0,0,0.12);
   border-radius: 2px 0 0 2px;
+}
+/* Paper texture */
+.soldbuch-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  border-radius: inherit;
 }
 
 .soldbuch-cover .cover-border {
-  border: 2px solid rgba(0,0,0,0.3);
+  border: 2px solid rgba(0,0,0,0.25);
   padding: 2rem 1.5rem;
   width: 100%;
   flex: 1;
@@ -59,341 +63,343 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
+  gap: 0.8rem;
+  position: relative;
+  z-index: 1;
 }
+.cover-eagle { opacity: 0.85; line-height: 1; }
+.cover-title { font-family: 'Courier New', monospace; font-size: 1.8rem; font-weight: 700; letter-spacing: 4px; }
+.cover-subtitle { font-family: 'Courier New', monospace; font-size: 0.8rem; letter-spacing: 2px; }
+.cover-regiment { font-family: 'Courier New', monospace; font-size: 1rem; font-weight: 700; letter-spacing: 2px; margin-top: 0.3rem; }
+.cover-name { position: absolute; top: 10px; right: 12px; font-family: 'Courier New', monospace; font-size: 0.85rem; font-style: italic; opacity: 0.6; z-index: 1; }
+.cover-hint { font-size: 0.65rem; opacity: 0.4; margin-top: 0.8rem; font-style: italic; z-index: 1; }
 
-.soldbuch-cover .cover-eagle {
-  font-size: 3rem;
-  line-height: 1;
-  opacity: 0.8;
-}
-
-.soldbuch-cover .cover-title {
-  font-family: 'Courier New', monospace;
-  font-size: 1.8rem;
-  font-weight: 700;
-  letter-spacing: 3px;
-}
-
-.soldbuch-cover .cover-subtitle {
-  font-family: 'Courier New', monospace;
-  font-size: 0.85rem;
-  letter-spacing: 2px;
-}
-
-.soldbuch-cover .cover-regiment {
-  font-family: 'Courier New', monospace;
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: 2px;
-  margin-top: 0.5rem;
-}
-
-.soldbuch-cover .cover-name {
-  position: absolute;
-  top: 12px;
-  right: 14px;
-  font-family: 'Courier New', monospace;
-  font-size: 0.85rem;
-  font-style: italic;
-  opacity: 0.7;
-}
-
-.soldbuch-cover .cover-hint {
-  font-size: 0.7rem;
-  opacity: 0.5;
-  margin-top: 1rem;
-  font-style: italic;
-}
-
-/* ---- Open Book (two-page spread) ---- */
+/* ---- OPEN BOOK SPREAD ---- */
 .soldbuch-spread {
   display: flex;
   width: 100%;
-  min-height: 500px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-  border-radius: 4px;
+  box-shadow: 0 4px 25px rgba(0,0,0,0.35);
+  border-radius: 3px;
   overflow: hidden;
 }
 
 .soldbuch-page {
   width: 50%;
-  padding: 1.5rem;
+  padding: 1.2rem 1.4rem;
   position: relative;
   font-family: 'Courier New', monospace;
-  font-size: 0.82rem;
-  line-height: 1.5;
-  min-height: 500px;
-}
-
-.soldbuch-page-left {
-  border-right: 1px solid rgba(0,0,0,0.15);
-  box-shadow: inset -5px 0 10px rgba(0,0,0,0.05);
-}
-
-.soldbuch-page-right {
-  box-shadow: inset 5px 0 10px rgba(0,0,0,0.05);
-}
-
-.soldbuch-page .page-number {
-  position: absolute;
-  bottom: 8px;
-  font-size: 0.7rem;
-  opacity: 0.5;
-}
-.soldbuch-page-left .page-number { left: 1.5rem; }
-.soldbuch-page-right .page-number { right: 1.5rem; }
-
-/* ---- Page Navigation ---- */
-.soldbuch-nav {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-.soldbuch-nav button {
-  font-family: 'Courier New', monospace;
-  padding: 0.4rem 1.2rem;
-  cursor: pointer;
-  background: rgba(0,0,0,0.05);
-  border: 1px solid rgba(0,0,0,0.2);
-  border-radius: 3px;
-  font-size: 0.8rem;
-  transition: background 0.2s;
-}
-.soldbuch-nav button:hover {
-  background: rgba(0,0,0,0.12);
-}
-.soldbuch-nav button:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-/* ---- Page Content Styles ---- */
-.sb-field {
-  display: flex;
-  margin-bottom: 0.3rem;
-  gap: 0.3rem;
-}
-.sb-field-label {
-  font-weight: 700;
-  min-width: 140px;
-  white-space: nowrap;
-}
-.sb-field-value {
-  border-bottom: 1px dotted rgba(0,0,0,0.3);
-  flex: 1;
-  padding-bottom: 1px;
-  min-height: 1.2em;
-}
-
-.sb-section-title {
-  font-weight: 700;
-  font-size: 0.9rem;
-  text-align: center;
-  margin: 1rem 0 0.8rem;
-  letter-spacing: 1px;
-}
-
-.sb-divider {
-  border: none;
-  border-top: 1px solid rgba(0,0,0,0.15);
-  margin: 0.8rem 0;
-}
-
-.sb-box {
-  border: 1.5px solid rgba(0,0,0,0.4);
-  padding: 0.5rem;
-  margin: 0.5rem 0;
-}
-
-.sb-promo-row {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.2rem;
   font-size: 0.78rem;
+  line-height: 1.45;
+  min-height: 520px;
 }
-.sb-promo-row .sb-promo-label {
-  font-weight: 700;
-  min-width: 20px;
+.soldbuch-page-left {
+  border-right: 1px solid rgba(0,0,0,0.12);
+  box-shadow: inset -8px 0 12px rgba(0,0,0,0.04);
 }
-.sb-promo-row .sb-promo-date,
-.sb-promo-row .sb-promo-grade {
-  border-bottom: 1px dotted rgba(0,0,0,0.3);
+.soldbuch-page-right {
+  box-shadow: inset 8px 0 12px rgba(0,0,0,0.04);
+}
+
+.page-number {
+  position: absolute;
+  bottom: 6px;
+  font-size: 0.65rem;
+  opacity: 0.4;
+}
+.soldbuch-page-left .page-number { left: 1.4rem; }
+.soldbuch-page-right .page-number { right: 1.4rem; }
+
+/* ---- INK (handwritten values) ---- */
+.sb-ink {
+  color: #1a3a6a;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+/* ---- PRINTED LINE: label + dotted underline + ink value ---- */
+.sb-printed-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  margin-bottom: 0.25rem;
+}
+.sb-printed-label {
+  font-size: 0.72rem;
+  opacity: 0.7;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.sb-printed-label-block {
+  font-size: 0.72rem;
+  opacity: 0.7;
+  font-weight: 600;
+}
+.sb-printed-value {
   flex: 1;
+  border-bottom: 1px dotted rgba(0,0,0,0.25);
+  min-height: 1.3em;
+  padding-bottom: 1px;
+}
+.sb-full-line {
+  border-bottom: 1px dotted rgba(0,0,0,0.25);
+  min-height: 1.3em;
+  padding-bottom: 1px;
+  margin-top: 2px;
+}
+
+/* ---- PAGE 1 SPECIFIC ---- */
+.sb-page1 { }
+.sb-page1-header { text-align: center; margin-bottom: 1rem; }
+.sb-page1-title { display: block; font-size: 1.5rem; font-weight: 700; letter-spacing: 5px; }
+.sb-page1-sub { display: block; font-size: 0.7rem; letter-spacing: 2px; opacity: 0.6; }
+
+.sb-nr-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+.sb-nr-box {
+  background: rgba(0,0,0,0.06);
+  padding: 3px 20px;
+  border-bottom: 1px solid rgba(0,0,0,0.25);
+  flex: 1;
+  text-align: center;
+}
+
+.sb-center-label {
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  font-size: 0.82rem;
+}
+.sb-center-small {
+  text-align: center;
+  font-size: 0.6rem;
+  opacity: 0.45;
+  margin-bottom: 0.4rem;
+}
+
+/* Promotion box */
+.sb-promo-box {
+  border: 1.5px solid rgba(0,0,0,0.3);
+  padding: 0.4rem;
+  margin: 0.4rem 0;
+}
+.sb-promo-header {
+  display: flex;
+  gap: 0.3rem;
+  margin-bottom: 0.15rem;
+}
+.sb-promo-col-label {
+  flex: 1;
+  text-align: center;
+  font-size: 0.58rem;
+  opacity: 0.45;
+}
+.sb-promo-entry {
+  display: flex;
+  gap: 0.3rem;
+  margin-bottom: 0.15rem;
+}
+.sb-promo-entry .sb-printed-label {
+  min-width: 18px;
+}
+.sb-promo-entry .sb-printed-value {
+  flex: 1;
+  border-bottom: 1px dotted rgba(0,0,0,0.2);
   min-height: 1.1em;
 }
 
-.sb-gebote {
-  font-size: 0.6rem;
-  line-height: 1.4;
+.sb-name-line {
+  margin-top: 1.2rem;
+  border-bottom: 1px dotted rgba(0,0,0,0.25);
+  padding-bottom: 3px;
+  min-height: 1.5em;
 }
-.sb-gebote h3 {
-  font-size: 0.75rem;
+.sb-name-line .sb-ink {
+  font-size: 1.05rem;
+}
+
+.sb-bottom-fields {
+  margin-top: 1.2rem;
+}
+
+/* ---- PAGE 2 SPECIFIC ---- */
+.sb-page2 { }
+.sb-row-2col {
+  display: flex;
+  gap: 0.8rem;
+}
+.sb-row-2col .sb-printed-line { flex: 1; }
+
+.sb-thin-divider {
+  border: none;
+  border-top: 1px solid rgba(0,0,0,0.12);
+  margin: 0.5rem 0;
+}
+
+.sb-section-header {
+  font-weight: 700;
+  font-size: 0.82rem;
   text-align: center;
-  margin: 0 0 0.3rem;
+  margin: 0.8rem 0 0.5rem;
   letter-spacing: 1px;
 }
-.sb-gebote h4 {
-  font-size: 0.65rem;
-  text-align: center;
-  margin: 0 0 0.5rem;
-}
-.sb-gebote ol {
-  padding-left: 1.2rem;
-  margin: 0;
-}
-.sb-gebote ol li {
-  margin-bottom: 0.25rem;
-}
 
-.sb-photo-area {
-  width: 100px;
-  height: 130px;
-  border: 2px solid rgba(0,0,0,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  margin: 0 auto;
-}
-.sb-photo-area img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.sb-signature-area {
-  margin-top: 1rem;
+.sb-holder-signature {
+  margin-top: 0.8rem;
   text-align: center;
 }
-.sb-signature-line {
-  border-bottom: 1px solid rgba(0,0,0,0.4);
+.sb-sig-box {
+  border-bottom: 1px solid rgba(0,0,0,0.35);
   width: 200px;
-  height: 40px;
+  height: 45px;
   display: inline-flex;
   align-items: flex-end;
   justify-content: center;
   margin: 0 auto;
 }
-.sb-signature-line img {
-  max-height: 35px;
-  max-width: 180px;
-}
-.sb-signature-caption {
-  font-size: 0.65rem;
-  opacity: 0.6;
-  margin-top: 2px;
-  font-style: italic;
+.sb-sig-box img { max-height: 40px; max-width: 180px; }
+.sb-sig-small { width: 140px; height: 35px; }
+.sb-sig-small img { max-height: 30px; max-width: 120px; }
+
+.sb-certification-text {
+  font-size: 0.62rem;
+  line-height: 1.35;
+  font-weight: 600;
+  opacity: 0.75;
+  margin-bottom: 0.3rem;
 }
 
-.sb-stamp {
-  position: absolute;
-  bottom: 40px;
-  right: 20px;
-  opacity: 0.5;
-  max-height: 70px;
+.sb-stamp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 0.4rem;
+}
+.sb-stamp-area { text-align: center; }
+.sb-stamp-img { max-height: 55px; opacity: 0.55; margin-top: 4px; }
+.sb-officer-sig { text-align: center; }
+
+/* ---- PAGE 3: Photo ---- */
+.sb-page3 { }
+.sb-photo-frame {
+  width: 110px;
+  height: 140px;
+  border: 2px solid rgba(0,0,0,0.3);
+  margin: 0 auto 0.8rem;
+  overflow: hidden;
+  box-shadow: 1px 1px 4px rgba(0,0,0,0.15);
+}
+.sb-photo-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sb-photo-empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  opacity: 0.3;
+  text-align: center;
 }
 
-/* ---- Regiment Themes ---- */
-/* Heer (default) — brown-red like real Soldbuch */
-.soldbuch-theme-heer .soldbuch-cover {
-  background: linear-gradient(135deg, #7a4a3a, #5e3828);
-  color: #e8d8c0;
+/* ---- PAGES 4-5: Historique + Decorations ---- */
+.sb-historique {
+  white-space: pre-line;
+  font-size: 0.78rem;
+  line-height: 1.6;
 }
-.soldbuch-theme-heer .soldbuch-page {
-  background: #f2e8d0;
-  color: #2c2416;
-}
-.soldbuch-theme-heer .soldbuch-page-gebote {
-  background: #ddd4be;
+.sb-empty-page { margin-top: 0.5rem; }
+.sb-empty-line {
+  border-bottom: 1px dotted rgba(0,0,0,0.15);
+  height: 1.8em;
 }
 
-/* Luftwaffe / Fallschirmjaeger / FSM — blue-grey */
-.soldbuch-theme-luftwaffe .soldbuch-cover {
-  background: linear-gradient(135deg, #536d7a, #3f5868);
-  color: #d8e0e6;
+.sb-deco-list { }
+.sb-deco-entry {
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px dotted rgba(0,0,0,0.12);
 }
-.soldbuch-theme-luftwaffe .soldbuch-page {
-  background: #f2e8d0;
-  color: #2c2416;
-}
-.soldbuch-theme-luftwaffe .soldbuch-page-gebote {
-  background: #6b8a9a;
-  color: #1a2a33;
-}
+.sb-deco-name { font-weight: 600; }
+.sb-deco-name .sb-ink { font-size: 0.85rem; }
+.sb-deco-german { font-size: 0.65rem; opacity: 0.5; font-style: italic; margin-left: 4px; }
+.sb-deco-meta { font-size: 0.7rem; opacity: 0.65; }
+.sb-deco-motif { font-size: 0.68rem; opacity: 0.55; font-style: italic; }
 
-/* Feldgendarmerie — feldgrau (field grey-green) */
-.soldbuch-theme-feld .soldbuch-cover {
-  background: linear-gradient(135deg, #4a5540, #3a4530);
-  color: #d8d4c0;
+/* ---- 10 COMMANDEMENTS (left page) ---- */
+.sb-gebote { font-size: 0.57rem; line-height: 1.35; }
+.sb-gebote h3 { font-size: 0.72rem; text-align: center; margin: 0 0 0.2rem; letter-spacing: 1px; }
+.sb-gebote h4 { font-size: 0.6rem; text-align: center; margin: 0 0 0.4rem; font-weight: 400; }
+.sb-gebote ol { padding-left: 1rem; margin: 0; }
+.sb-gebote ol li { margin-bottom: 0.2rem; }
+
+/* ---- NAVIGATION ---- */
+.soldbuch-nav {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-top: 1rem;
 }
-.soldbuch-theme-feld .soldbuch-page {
-  background: #f2e8d0;
-  color: #2c2416;
+.soldbuch-nav button {
+  font-family: 'Courier New', monospace;
+  padding: 0.35rem 1rem;
+  cursor: pointer;
+  background: rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 3px;
+  font-size: 0.75rem;
+  transition: background 0.2s;
 }
-.soldbuch-theme-feld .soldbuch-page-gebote {
-  background: #5a6a4e;
-  color: #e8e0c8;
-}
+.soldbuch-nav button:hover { background: rgba(0,0,0,0.12); }
+.soldbuch-nav button:disabled { opacity: 0.3; cursor: default; }
+
+/* ============ REGIMENT THEMES ============ */
+/* Heer — brown-red (like real Soldbuch covers) */
+.soldbuch-theme-heer .soldbuch-cover { background: linear-gradient(145deg, #7a4a3a, #5a3425); color: #e8d8c0; }
+.soldbuch-theme-heer .soldbuch-page { background: #f0e6cc; color: #2c2416; }
+.soldbuch-theme-heer .soldbuch-page-gebote { background: #e2d8be; }
+
+/* Luftwaffe / FSM — blue-grey */
+.soldbuch-theme-luftwaffe .soldbuch-cover { background: linear-gradient(145deg, #536d7a, #3f5565); color: #d8e0e6; }
+.soldbuch-theme-luftwaffe .soldbuch-page { background: #f0e6cc; color: #2c2416; }
+.soldbuch-theme-luftwaffe .soldbuch-page-gebote { background: #6b8a9a; color: #1a2a33; }
+
+/* Feldgendarmerie — feldgrau */
+.soldbuch-theme-feld .soldbuch-cover { background: linear-gradient(145deg, #4a5540, #384530); color: #d8d4c0; }
+.soldbuch-theme-feld .soldbuch-page { background: #f0e6cc; color: #2c2416; }
+.soldbuch-theme-feld .soldbuch-page-gebote { background: #5a6a4e; color: #e8e0c8; }
 
 /* Panzer — dark grey/black */
-.soldbuch-theme-panzer .soldbuch-cover {
-  background: linear-gradient(135deg, #3a3a3a, #2a2a2a);
-  color: #d8d0b8;
-}
-.soldbuch-theme-panzer .soldbuch-page {
-  background: #f2e8d0;
-  color: #2c2416;
-}
-.soldbuch-theme-panzer .soldbuch-page-gebote {
-  background: #4a4a4a;
-  color: #d8d0b8;
-}
+.soldbuch-theme-panzer .soldbuch-cover { background: linear-gradient(145deg, #3a3a3a, #252525); color: #d8d0b8; }
+.soldbuch-theme-panzer .soldbuch-page { background: #f0e6cc; color: #2c2416; }
+.soldbuch-theme-panzer .soldbuch-page-gebote { background: #4a4a4a; color: #d8d0b8; }
 
-/* Sanitäts — white with red cross accent */
-.soldbuch-theme-sanit .soldbuch-cover {
-  background: linear-gradient(135deg, #e0d8c0, #d0c8b0);
-  color: #2c2416;
-}
-.soldbuch-theme-sanit .soldbuch-page {
-  background: #f2e8d0;
-  color: #2c2416;
-}
-.soldbuch-theme-sanit .soldbuch-page-gebote {
-  background: #d8d0b8;
-}
+/* Sanitäts — cream/white */
+.soldbuch-theme-sanit .soldbuch-cover { background: linear-gradient(145deg, #e0d8c0, #ccc4aa); color: #2c2416; }
+.soldbuch-theme-sanit .soldbuch-page { background: #f0e6cc; color: #2c2416; }
+.soldbuch-theme-sanit .soldbuch-page-gebote { background: #d8d0b8; }
 
-/* Marine — navy blue */
-.soldbuch-theme-marine .soldbuch-cover {
-  background: linear-gradient(135deg, #2a3a5a, #1e2e4a);
-  color: #d0d8e8;
-}
-.soldbuch-theme-marine .soldbuch-page {
-  background: #f2e8d0;
-  color: #2c2416;
-}
-.soldbuch-theme-marine .soldbuch-page-gebote {
-  background: #3a4a6a;
-  color: #d0d8e8;
-}
+/* Marine — navy */
+.soldbuch-theme-marine .soldbuch-cover { background: linear-gradient(145deg, #2a3a5a, #1e2e48); color: #d0d8e8; }
+.soldbuch-theme-marine .soldbuch-page { background: #f0e6cc; color: #2c2416; }
+.soldbuch-theme-marine .soldbuch-page-gebote { background: #3a4a6a; color: #d0d8e8; }
 
-/* Flag indicator */
-.sb-flag {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 1.2rem;
-}
-
-/* ---- Responsive ---- */
+/* ============ RESPONSIVE ============ */
 @media (max-width: 768px) {
   .soldbuch-book { width: 100%; }
-  .soldbuch-cover { width: 90%; min-height: 400px; }
+  .soldbuch-cover { width: 90%; min-height: 420px; }
   .soldbuch-spread { flex-direction: column; }
-  .soldbuch-page { width: 100%; min-height: 400px; }
-  .soldbuch-page-left { border-right: none; border-bottom: 1px solid rgba(0,0,0,0.15); }
-  .sb-field-label { min-width: 100px; font-size: 0.75rem; }
-  .sb-gebote { font-size: 0.55rem; }
+  .soldbuch-page { width: 100%; min-height: auto; padding: 1rem; }
+  .soldbuch-page-left { border-right: none; border-bottom: 1px solid rgba(0,0,0,0.12); box-shadow: none; }
+  .soldbuch-page-right { box-shadow: none; }
+  .sb-row-2col { flex-direction: column; gap: 0; }
+  .sb-gebote { font-size: 0.52rem; }
+  .sb-promo-box { font-size: 0.7rem; }
+  .soldbuch-nav { flex-wrap: wrap; }
 }
