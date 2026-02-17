@@ -86,4 +86,58 @@ router.put('/:effectifId/sign', auth, async (req, res) => {
   }
 })
 
+// PUT /api/soldbuch/:effectif_id/details — Self-service soldbuch details (soldier fills their own)
+router.put('/:effectifId/details', auth, async (req, res) => {
+  try {
+    const effectifId = parseInt(req.params.effectifId)
+    const isOwner = req.user.effectif_id === effectifId
+    const isPrivileged = req.user.isAdmin || req.user.isRecenseur || req.user.isOfficier
+
+    if (!isOwner && !isPrivileged) {
+      return res.status(403).json({ success: false, message: 'Vous ne pouvez modifier que votre propre Soldbuch' })
+    }
+
+    const { religion, beruf, gestalt, gesicht, haar, bart, augen, besondere_kennzeichen, schuhzeuglaenge, blutgruppe, gasmaskengroesse, wehrnummer } = req.body
+
+    if (isOwner && !isPrivileged) {
+      // Soldier submits → mark as pending validation
+      await pool.execute(`UPDATE effectifs SET
+        religion = ?, beruf = ?, gestalt = ?, gesicht = ?, haar = ?, bart = ?, augen = ?,
+        besondere_kennzeichen = ?, schuhzeuglaenge = ?, blutgruppe = ?, gasmaskengroesse = ?, wehrnummer = ?,
+        soldbuch_details_pending = 1
+        WHERE id = ?`,
+        [religion || null, beruf || null, gestalt || null, gesicht || null, haar || null, bart || null, augen || null,
+         besondere_kennzeichen || null, schuhzeuglaenge || null, blutgruppe || null, gasmaskengroesse || null, wehrnummer || null,
+         effectifId])
+      res.json({ success: true, message: 'Details soumis pour validation', pending: true })
+    } else {
+      // Privileged user → save directly, clear pending
+      await pool.execute(`UPDATE effectifs SET
+        religion = ?, beruf = ?, gestalt = ?, gesicht = ?, haar = ?, bart = ?, augen = ?,
+        besondere_kennzeichen = ?, schuhzeuglaenge = ?, blutgruppe = ?, gasmaskengroesse = ?, wehrnummer = ?,
+        soldbuch_details_pending = 0
+        WHERE id = ?`,
+        [religion || null, beruf || null, gestalt || null, gesicht || null, haar || null, bart || null, augen || null,
+         besondere_kennzeichen || null, schuhzeuglaenge || null, blutgruppe || null, gasmaskengroesse || null, wehrnummer || null,
+         effectifId])
+      res.json({ success: true, message: 'Details enregistres' })
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// PUT /api/soldbuch/:effectif_id/details/validate — Validate pending details (officier+)
+router.put('/:effectifId/details/validate', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin && !req.user.isRecenseur && !req.user.isOfficier) {
+      return res.status(403).json({ success: false, message: 'Non autorise' })
+    }
+    await pool.execute('UPDATE effectifs SET soldbuch_details_pending = 0 WHERE id = ?', [req.params.effectifId])
+    res.json({ success: true, message: 'Details valides' })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
 module.exports = router

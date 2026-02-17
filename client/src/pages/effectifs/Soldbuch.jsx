@@ -3,6 +3,7 @@ import ShareButton from '../../components/ShareButton'
 import LayoutRenderer from '../../components/LayoutRenderer'
 import SignaturePopup from '../../components/SignaturePopup'
 import SoldbuchBook from './SoldbuchBook'
+import SoldbuchDetails from './SoldbuchDetails'
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
@@ -23,6 +24,7 @@ export default function Soldbuch() {
 
   const [signPopup, setSignPopup] = useState(null) // null | { slot: 'soldat'|'referent' }
   const [viewMode, setViewMode] = useState('book') // 'book' | 'classic'
+  const [showDetails, setShowDetails] = useState(false)
 
   const isSelf = user?.effectif_id && String(user.effectif_id) === String(id)
   const canManageDecos = user?.isAdmin || user?.isRecenseur || isSelf
@@ -84,11 +86,42 @@ export default function Soldbuch() {
             onClick={() => setViewMode('book')}>📕 Soldbuch</button>
           <button className={`btn btn-small ${viewMode === 'classic' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setViewMode('classic')}>📋 Classique</button>
+          {isSelf && <button className="btn btn-secondary btn-small" onClick={() => setShowDetails(!showDetails)}>
+            {showDetails ? '✕ Fermer' : '📝 Detailler'}
+          </button>}
           <Link to={`/effectifs/${id}/edit`} className="btn btn-secondary btn-small">✏️ Modifier</Link>
           <Link to={`/dossiers/effectif/${id}`} className="btn btn-secondary btn-small">📁 Dossier</Link>
           <Link to={`/effectifs/${id}/soldbuch/edit`} className="btn btn-primary btn-small layout-desktop-only">🖋️ Mise en page</Link>
         </div>
       </div>
+
+      {/* Pending validation badge */}
+      {e.soldbuch_details_pending === 1 && (user?.isAdmin || user?.isRecenseur || user?.isOfficier) && (
+        <div className="alert alert-warning" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
+          <span>⏳ Cet effectif a soumis des details de Soldbuch en attente de validation.</span>
+          <button className="btn btn-primary btn-small" onClick={async () => {
+            try {
+              await apiClient.put(`/soldbuch/${id}/details/validate`)
+              const res = await apiClient.get(`/soldbuch/${id}`, { noCache: true })
+              setData(res.data.data)
+            } catch {}
+          }}>✅ Valider</button>
+        </div>
+      )}
+
+      {/* Details form */}
+      {showDetails && (
+        <SoldbuchDetails
+          effectifId={id}
+          effectif={e}
+          onClose={() => setShowDetails(false)}
+          onSaved={async () => {
+            setShowDetails(false)
+            const res = await apiClient.get(`/soldbuch/${id}`, { noCache: true })
+            setData(res.data.data)
+          }}
+        />
+      )}
 
       {/* Book View */}
       {viewMode === 'book' && (
