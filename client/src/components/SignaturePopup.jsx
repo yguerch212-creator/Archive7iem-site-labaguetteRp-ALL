@@ -26,6 +26,7 @@ export default function SignaturePopup({ onClose, onSign, onRequestSent, documen
   const [message, setMessage] = useState(null)
   // Request form
   const [requestTarget, setRequestTarget] = useState(null)
+  const [requestText, setRequestText] = useState('')
   const [requestMessage, setRequestMessage] = useState('')
   const [sending, setSending] = useState(false)
 
@@ -51,7 +52,7 @@ export default function SignaturePopup({ onClose, onSign, onRequestSent, documen
   }
 
   const handleSendRequest = async () => {
-    if (!requestTarget) return setMessage({ type: 'error', text: 'Sélectionnez un destinataire' })
+    if (!requestTarget && !requestText) return setMessage({ type: 'error', text: 'Sélectionnez un destinataire' })
     setSending(true)
 
     try {
@@ -72,10 +73,11 @@ export default function SignaturePopup({ onClose, onSign, onRequestSent, documen
         `\nLien : ${window.location.origin}${docPath}`
       ].filter(Boolean).join('\n')
 
+      const target = requestTarget || {}
       await api.post('/telegrammes', {
         destinataires: [{
-          effectif_id: requestTarget.id || null,
-          nom_libre: requestTarget.display || requestTarget.nom_libre || `${requestTarget.prenom || ''} ${requestTarget.nom || ''}`.trim()
+          effectif_id: target.id || null,
+          nom_libre: target.id ? `${target.prenom} ${target.nom}` : (target.nom_libre || requestText)
         }],
         objet: `✍️ Demande de signature — ${documentLabel || 'Document'}`,
         contenu,
@@ -159,8 +161,16 @@ export default function SignaturePopup({ onClose, onSign, onRequestSent, documen
             <div className="form-group" style={{ marginBottom: 12 }}>
               <label className="form-label">Destinataire de la demande</label>
               <EffectifAutocomplete
-                value={requestTarget?.display || ''}
-                onChange={(val) => setRequestTarget(val)}
+                value={requestText}
+                onChange={(text, eff) => {
+                  setRequestText(text)
+                  if (eff) setRequestTarget(eff)
+                  else setRequestTarget({ nom_libre: text })
+                }}
+                onSelect={(eff) => {
+                  setRequestTarget(eff)
+                  setRequestText(`${eff.prenom} ${eff.nom}`)
+                }}
                 placeholder="Rechercher un effectif..."
               />
             </div>
