@@ -161,6 +161,16 @@ router.post('/', auth, recenseur, async (req, res) => {
       ).catch(() => {})
     }
 
+    // Insert initial decorations if provided
+    if (Array.isArray(f.decorations) && f.decorations.length > 0) {
+      for (const deco of f.decorations) {
+        await pool.execute(
+          'INSERT INTO effectif_decorations (effectif_id, decoration_id, nom_custom, date_attribution, attribue_par, motif) VALUES (?, ?, ?, ?, ?, ?)',
+          [effectifId, deco.decoration_id || null, deco.nom_custom || null, deco.date_attribution || null, deco.attribue_par || null, deco.motif || null]
+        ).catch(() => {})
+      }
+    }
+
     res.json({ 
       success: true, 
       data: { 

@@ -17,6 +17,7 @@ export default function EffectifNew() {
   const [currentPhoto, setCurrentPhoto] = useState(null)
   const [createdAccount, setCreatedAccount] = useState(null)
   const [decorations, setDecorations] = useState([])
+  const [pendingDecos, setPendingDecos] = useState([]) // for creation mode
   const [allDecorations, setAllDecorations] = useState([])
   const [decoForm, setDecoForm] = useState({ decoration_id: '', nom_custom: '', date_attribution: '', attribue_par: '', motif: '' })
   const [showDecoForm, setShowDecoForm] = useState(false)
@@ -93,7 +94,7 @@ export default function EffectifNew() {
         if (photoFile && effectifId) await uploadPhoto(effectifId)
         navigate(`/effectifs/unite/${form.unite_id}`)
       } else {
-        const res = await apiClient.post('/effectifs', form)
+        const res = await apiClient.post('/effectifs', { ...form, decorations: pendingDecos })
         effectifId = res.data.data?.id
         if (photoFile && effectifId) await uploadPhoto(effectifId)
         // Show created account credentials
@@ -236,84 +237,112 @@ export default function EffectifNew() {
 
           <div className="form-group"><label className="form-label">Historique</label><textarea className="form-textarea" value={form.historique} onChange={e => set('historique', e.target.value)} /></div>
 
-          {/* Décorations — only in edit mode */}
-          {isEdit && (
-            <div style={{ marginTop: 'var(--space-lg)', paddingTop: 'var(--space-md)', borderTop: '2px solid var(--border-color)' }}>
-              <h3>🎖️ Décorations ({decorations.length})</h3>
-              {decoMsg && <div className={`alert alert-${decoMsg.type}`} style={{ margin: '0.5rem 0' }}>{decoMsg.text}</div>}
-              
-              {decorations.length > 0 && (
-                <div style={{ marginBottom: 'var(--space-md)' }}>
-                  {decorations.map(d => (
-                    <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
+          {/* Décorations — both create and edit modes */}
+          <div style={{ marginTop: 'var(--space-lg)', paddingTop: 'var(--space-md)', borderTop: '2px solid var(--border-color)' }}>
+            <h3>🎖️ Médailles {isEdit ? `(${decorations.length})` : pendingDecos.length > 0 ? `(${pendingDecos.length})` : ''}</h3>
+            {decoMsg && <div className={`alert alert-${decoMsg.type}`} style={{ margin: '0.5rem 0' }}>{decoMsg.text}</div>}
+            
+            {/* Edit mode: show saved decorations */}
+            {isEdit && decorations.length > 0 && (
+              <div style={{ marginBottom: 'var(--space-md)' }}>
+                {decorations.map(d => (
+                  <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
+                    <div>
+                      <span>🎖️ <strong>{d.decoration_nom || d.nom_custom}</strong></span>
+                      {d.nom_allemand && <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontStyle: 'italic', marginLeft: 6 }}>({d.nom_allemand})</span>}
+                      {d.date_attribution && <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: 8 }}>— {d.date_attribution}</span>}
+                      {d.motif && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: 24 }}>"{d.motif}"</div>}
+                    </div>
+                    <button type="button" className="btn btn-secondary btn-small" style={{ fontSize: '0.7rem', padding: '2px 8px' }} onClick={async () => {
+                      if (!confirm('Retirer cette décoration ?')) return
+                      try { await apiClient.delete(`/decorations/effectif-decoration/${d.id}`); loadDecos() } catch {}
+                    }}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Create mode: show pending decorations */}
+            {!isEdit && pendingDecos.length > 0 && (
+              <div style={{ marginBottom: 'var(--space-md)' }}>
+                {pendingDecos.map((d, i) => {
+                  const decoInfo = d.decoration_id ? allDecorations.find(ad => String(ad.id) === String(d.decoration_id)) : null
+                  return (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
                       <div>
-                        <span>🎖️ <strong>{d.decoration_nom || d.nom_custom}</strong></span>
-                        {d.nom_allemand && <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontStyle: 'italic', marginLeft: 6 }}>({d.nom_allemand})</span>}
+                        <span>🎖️ <strong>{decoInfo ? decoInfo.nom : d.nom_custom}</strong></span>
+                        {decoInfo?.nom_allemand && <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontStyle: 'italic', marginLeft: 6 }}>({decoInfo.nom_allemand})</span>}
                         {d.date_attribution && <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: 8 }}>— {d.date_attribution}</span>}
                         {d.motif && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: 24 }}>"{d.motif}"</div>}
                       </div>
-                      <button type="button" className="btn btn-secondary btn-small" style={{ fontSize: '0.7rem', padding: '2px 8px' }} onClick={async () => {
-                        if (!confirm('Retirer cette décoration ?')) return
-                        try { await apiClient.delete(`/decorations/effectif-decoration/${d.id}`); loadDecos() } catch {}
+                      <button type="button" className="btn btn-secondary btn-small" style={{ fontSize: '0.7rem', padding: '2px 8px' }} onClick={() => {
+                        setPendingDecos(prev => prev.filter((_, j) => j !== i))
                       }}>✕</button>
                     </div>
-                  ))}
-                </div>
-              )}
+                  )
+                })}
+              </div>
+            )}
 
-              <button type="button" className="btn btn-secondary btn-small" onClick={() => setShowDecoForm(!showDecoForm)}>
-                {showDecoForm ? '✕ Fermer' : '+ Ajouter une décoration'}
-              </button>
+            <button type="button" className="btn btn-secondary btn-small" onClick={() => setShowDecoForm(!showDecoForm)}>
+              {showDecoForm ? '✕ Fermer' : '+ Ajouter une médaille'}
+            </button>
 
-              {showDecoForm && (
-                <div style={{ marginTop: 'var(--space-sm)', padding: 'var(--space-md)', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius)' }}>
-                  <div className="grid grid-cols-2" style={{ gap: 'var(--space-sm)' }}>
+            {showDecoForm && (
+              <div style={{ marginTop: 'var(--space-sm)', padding: 'var(--space-md)', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius)' }}>
+                <div className="grid grid-cols-2" style={{ gap: 'var(--space-sm)' }}>
+                  <div className="form-group">
+                    <label className="form-label">Décoration</label>
+                    <select className="form-select" value={decoForm.decoration_id} onChange={e => setDecoForm(p => ({...p, decoration_id: e.target.value, nom_custom: ''}))}>
+                      <option value="">— Personnalisée —</option>
+                      {Object.entries(allDecorations.reduce((acc, d) => { (acc[d.categorie] = acc[d.categorie] || []).push(d); return acc }, {})).map(([cat, items]) => (
+                        <optgroup key={cat} label={cat}>
+                          {items.map(d => <option key={d.id} value={d.id}>{d.nom} {d.nom_allemand ? `(${d.nom_allemand})` : ''}</option>)}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </div>
+                  {!decoForm.decoration_id && (
                     <div className="form-group">
-                      <label className="form-label">Décoration</label>
-                      <select className="form-select" value={decoForm.decoration_id} onChange={e => setDecoForm(p => ({...p, decoration_id: e.target.value, nom_custom: ''}))}>
-                        <option value="">— Personnalisée —</option>
-                        {Object.entries(allDecorations.reduce((acc, d) => { (acc[d.categorie] = acc[d.categorie] || []).push(d); return acc }, {})).map(([cat, items]) => (
-                          <optgroup key={cat} label={cat}>
-                            {items.map(d => <option key={d.id} value={d.id}>{d.nom} {d.nom_allemand ? `(${d.nom_allemand})` : ''}</option>)}
-                          </optgroup>
-                        ))}
-                      </select>
+                      <label className="form-label">Nom personnalisé</label>
+                      <input className="form-input" value={decoForm.nom_custom} onChange={e => setDecoForm(p => ({...p, nom_custom: e.target.value}))} placeholder="Nom de la décoration" />
                     </div>
-                    {!decoForm.decoration_id && (
-                      <div className="form-group">
-                        <label className="form-label">Nom personnalisé</label>
-                        <input className="form-input" value={decoForm.nom_custom} onChange={e => setDecoForm(p => ({...p, nom_custom: e.target.value}))} placeholder="Nom de la décoration" />
-                      </div>
-                    )}
-                    <div className="form-group">
-                      <label className="form-label">Date d'attribution</label>
-                      <input className="form-input" value={decoForm.date_attribution} onChange={e => setDecoForm(p => ({...p, date_attribution: e.target.value}))} placeholder="Ex: Mars 1944" />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Attribué par</label>
-                      <input className="form-input" value={decoForm.attribue_par} onChange={e => setDecoForm(p => ({...p, attribue_par: e.target.value}))} placeholder="Nom de l'officier" />
-                    </div>
+                  )}
+                  <div className="form-group">
+                    <label className="form-label">Date d'attribution</label>
+                    <input className="form-input" value={decoForm.date_attribution} onChange={e => setDecoForm(p => ({...p, date_attribution: e.target.value}))} placeholder="Ex: Mars 1944" />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Motif</label>
-                    <input className="form-input" value={decoForm.motif} onChange={e => setDecoForm(p => ({...p, motif: e.target.value}))} placeholder="Raison de l'attribution" />
+                    <label className="form-label">Attribué par</label>
+                    <input className="form-input" value={decoForm.attribue_par} onChange={e => setDecoForm(p => ({...p, attribue_par: e.target.value}))} placeholder="Nom de l'officier" />
                   </div>
-                  <button type="button" className="btn btn-primary btn-small" onClick={async () => {
-                    try {
-                      await apiClient.post(`/decorations/effectif/${id}`, decoForm)
-                      setDecoForm({ decoration_id: '', nom_custom: '', date_attribution: '', attribue_par: '', motif: '' })
-                      setShowDecoForm(false)
-                      setDecoMsg({ type: 'success', text: '🎖️ Décoration ajoutée' })
-                      setTimeout(() => setDecoMsg(null), 2000)
-                      loadDecos()
-                    } catch (err) {
-                      setDecoMsg({ type: 'error', text: err.response?.data?.message || 'Erreur' })
-                    }
-                  }}>🎖️ Attribuer</button>
                 </div>
-              )}
-            </div>
-          )}
+                <div className="form-group">
+                  <label className="form-label">Motif</label>
+                  <input className="form-input" value={decoForm.motif} onChange={e => setDecoForm(p => ({...p, motif: e.target.value}))} placeholder="Raison de l'attribution" />
+                </div>
+                <button type="button" className="btn btn-primary btn-small" onClick={isEdit ? async () => {
+                  try {
+                    await apiClient.post(`/decorations/effectif/${id}`, decoForm)
+                    setDecoForm({ decoration_id: '', nom_custom: '', date_attribution: '', attribue_par: '', motif: '' })
+                    setShowDecoForm(false)
+                    setDecoMsg({ type: 'success', text: '🎖️ Décoration ajoutée' })
+                    setTimeout(() => setDecoMsg(null), 2000)
+                    loadDecos()
+                  } catch (err) {
+                    setDecoMsg({ type: 'error', text: err.response?.data?.message || 'Erreur' })
+                  }
+                } : () => {
+                  if (!decoForm.decoration_id && !decoForm.nom_custom) return setDecoMsg({ type: 'error', text: 'Sélectionnez ou nommez une médaille' })
+                  setPendingDecos(prev => [...prev, { ...decoForm }])
+                  setDecoForm({ decoration_id: '', nom_custom: '', date_attribution: '', attribue_par: '', motif: '' })
+                  setShowDecoForm(false)
+                  setDecoMsg({ type: 'success', text: '🎖️ Médaille ajoutée (sera enregistrée avec le soldbuch)' })
+                  setTimeout(() => setDecoMsg(null), 2000)
+                }}>🎖️ {isEdit ? 'Attribuer' : 'Ajouter'}</button>
+              </div>
+            )}
+          </div>
 
           <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)' }}>
             <button className="btn btn-primary btn-large" type="submit">
