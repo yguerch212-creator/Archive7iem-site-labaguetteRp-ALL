@@ -158,4 +158,51 @@ router.get('/logs', auth, admin, async (req, res) => {
   }
 })
 
+// PUT /api/admin/users/:id/reset-password — Reset user password (admin only)
+router.put('/users/:id/reset-password', auth, admin, async (req, res) => {
+  try {
+    const { new_password } = req.body
+    if (!new_password || new_password.length < 6) {
+      return res.status(400).json({ success: false, message: 'Mot de passe requis (min 6 caractères)' })
+    }
+
+    const bcrypt = require('bcryptjs')
+    const hash = await bcrypt.hash(new_password, 10)
+    await pool.execute('UPDATE users SET password_hash = ?, must_change_password = 1 WHERE id = ?', [hash, req.params.id])
+
+    const target = await queryOne('SELECT username FROM users WHERE id = ?', [req.params.id])
+    const { logActivity } = require('../utils/logger')
+    logActivity(req, 'password_reset', 'user', req.params.id, `MDP réinitialisé pour ${target?.username}`)
+
+    res.json({ success: true, message: `Mot de passe réinitialisé. L'utilisateur devra le changer à la prochaine connexion.` })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// GET /api/admin/password-requests — Get pending password reset requests
+router.get('/password-requests', auth, admin, async (req, res) => {
+  try {
+    const rows = await query(`
+      SELECT n.id, n.message AS content, n.created_at, n.lu AS read_at
+      FROM notifications n
+      WHERE n.type = 'password_reset' AND n.user_id = ?
+      ORDER BY n.created_at DESC LIMIT 20
+    `, [req.user.id])
+    res.json({ success: true, data: rows })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// PUT /api/admin/notifications/:id/read — Mark notification as read
+router.put('/notifications/:id/read', auth, admin, async (req, res) => {
+  try {
+    await pool.execute('UPDATE notifications SET lu = 1 WHERE id = ?', [req.params.id])
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
 module.exports = router

@@ -25,8 +25,16 @@ export default function AdminUsers() {
   const [selected, setSelected] = useState(null)
   const [selectedGroups, setSelectedGroups] = useState([])
   const [search, setSearch] = useState('')
+  const [pwdRequests, setPwdRequests] = useState([])
 
-  useEffect(() => { fetchAll() }, [])
+  useEffect(() => { fetchAll(); fetchPwdRequests() }, [])
+
+  const fetchPwdRequests = async () => {
+    try {
+      const res = await api.get('/admin/password-requests')
+      if (res.data.success) setPwdRequests(res.data.data.filter(r => !r.read_at && r.read_at !== 1))
+    } catch {}
+  }
 
   const fetchAll = async () => {
     setLoading(true)
@@ -116,6 +124,25 @@ export default function AdminUsers() {
       <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>⚙️ Administration</h1>
 
       {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}
+
+      {/* Pending password reset requests */}
+      {pwdRequests.length > 0 && (
+        <div className="paper-card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-md)', borderLeft: '3px solid #e74c3c' }}>
+          <h3 style={{ margin: '0 0 var(--space-sm)', fontSize: '0.95rem' }}>🔑 Demandes de réinitialisation de mot de passe ({pwdRequests.length})</h3>
+          {pwdRequests.map(r => (
+            <div key={r.id} style={{ padding: 'var(--space-sm)', borderBottom: '1px solid var(--border-color)', fontSize: '0.85rem', whiteSpace: 'pre-line' }}>
+              {r.content}
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                {new Date(r.created_at).toLocaleString('fr-FR')}
+                <button className="btn btn-secondary btn-small" style={{ marginLeft: 8, fontSize: '0.7rem', padding: '1px 6px' }} onClick={async () => {
+                  await api.put(`/admin/notifications/${r.id}/read`).catch(() => {})
+                  setPwdRequests(prev => prev.filter(p => p.id !== r.id))
+                }}>✓ Traité</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {showCreate && (
         <div className="paper-card" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-lg)' }}>
@@ -257,6 +284,16 @@ export default function AdminUsers() {
             <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap', marginBottom: 'var(--space-lg)' }}>
               <button className="btn btn-secondary btn-small" onClick={toggleActive}>
                 {selected.active ? '🔴 Désactiver' : '🟢 Activer'}
+              </button>
+              <button className="btn btn-secondary btn-small" onClick={async () => {
+                const newPwd = prompt(`Nouveau mot de passe pour ${selected.username} (min 6 car.) :`)
+                if (!newPwd || newPwd.length < 6) { if (newPwd !== null) alert('Minimum 6 caractères'); return }
+                try {
+                  const res = await api.put(`/admin/users/${selected.id}/reset-password`, { new_password: newPwd })
+                  flash('success', res.data.message || 'Mot de passe réinitialisé')
+                } catch (err) { flash('error', err.response?.data?.message || 'Erreur') }
+              }}>
+                🔑 Réinitialiser MDP
               </button>
               <button className="btn btn-small" style={{ background: 'var(--danger)', color: 'white', border: 'none' }} onClick={deleteUser}>
                 🗑️ Supprimer le compte

@@ -89,6 +89,7 @@ export default function Topbar() {
               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                 {user?.unite || ''} — {user?.username || ''}
               </span>
+              <Link to="/change-password" className="btn btn-small btn-secondary" title="Changer mon mot de passe" style={{ padding: '2px 6px', fontSize: '0.7rem' }}>🔑</Link>
               <button className="btn btn-small btn-secondary" onClick={logout}>
                 Déconnexion
               </button>
