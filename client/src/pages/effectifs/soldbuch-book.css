@@ -1,182 +1,494 @@
-/* SOLDBUCH BOOK v3.1 — French labels, fixed layout */
+/* ============================================
+   SOLDBUCH BOOK — Authentic WW2 Soldbuch Style
+   v4: Restored carnet feel from v1 + all v3 features
+   ============================================ */
 
-.sb-wrapper { display:flex; flex-direction:column; align-items:center; padding:1rem 0; font-family:'Courier New',monospace; }
-
-/* COVER */
-.sb-cover { width:340px; max-width:88%; min-height:480px; margin:0 auto; border-radius:2px 5px 5px 2px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem 1.5rem; cursor:pointer; box-shadow:3px 3px 18px rgba(0,0,0,.5); position:relative; transition:transform .25s; text-align:center; }
-.sb-cover:hover { transform:scale(1.02); }
-.sb-cover::before { content:''; position:absolute; left:0; top:6px; bottom:6px; width:10px; background:rgba(0,0,0,.12); border-radius:2px 0 0 2px; }
-.sb-cover-border { border:2px solid rgba(0,0,0,.25); padding:2rem 1rem; width:100%; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.6rem; }
-.sb-cover-eagle { height:90px; width:auto; opacity:.85; }
-.sb-cover-title { font-size:1.7rem; font-weight:700; letter-spacing:4px; }
-.sb-cover-sub { font-size:.65rem; letter-spacing:1px; opacity:.7; }
-.sb-cover-branch { font-size:.95rem; font-weight:700; letter-spacing:2px; margin-top:.3rem; }
-.sb-cover-name { position:absolute; top:8px; right:10px; font-size:.8rem; font-style:italic; opacity:.5; }
-.sb-cover-hint { font-size:.6rem; opacity:.35; margin-top:.6rem; font-style:italic; }
-
-.sb-theme-heer .sb-cover-eagle,.sb-theme-feld .sb-cover-eagle,.sb-theme-panzer .sb-cover-eagle { filter:brightness(0) invert(.85); }
-.sb-theme-luftwaffe .sb-cover-eagle,.sb-theme-marine .sb-cover-eagle { filter:brightness(0) invert(.8); }
-.sb-theme-sanit .sb-cover-eagle { filter:brightness(0) invert(.15); }
-
-/* SPREAD */
-/* Width in % so it scales to viewport — no fixed px that clips on iPad */
-.sb-spread { display:flex; width:92%; max-width:900px; box-shadow:0 4px 25px rgba(0,0,0,.35); border-radius:2px; overflow:hidden; margin:0 auto; }
-
-/* PAGE — FORCED 50%, no grow, no shrink, flex column to fill */
-.sb-page {
-  flex: 0 0 50%; width:50%; max-width:50%;
-  padding:8px 6px; position:relative;
-  font-size:.6rem; line-height:1.35; min-height:500px;
-  box-sizing:border-box; overflow:hidden;
-  display:flex; flex-direction:column;
+.sb-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 0;
+  font-family: 'Courier New', monospace;
 }
-.sb-page-l { border-right:1px solid rgba(0,0,0,.1); }
-.sb-spacer { flex:1; min-height:8px; }
+
+/* ---- COVER (closed book) ---- */
+.sb-cover {
+  width: 350px;
+  max-width: 90%;
+  min-height: 500px;
+  margin: 0 auto;
+  border-radius: 4px 8px 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  cursor: pointer;
+  box-shadow: 3px 3px 12px rgba(0,0,0,0.4), 0 0 4px rgba(0,0,0,0.2);
+  position: relative;
+  transition: transform 0.3s ease;
+  text-align: center;
+}
+.sb-cover:hover { transform: scale(1.02); }
+.sb-cover::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 10px; bottom: 10px;
+  width: 8px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 2px 0 0 2px;
+}
+
+.sb-cover-border {
+  border: 2px solid rgba(0,0,0,0.3);
+  padding: 2rem 1.5rem;
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.sb-cover-eagle { height: 90px; width: auto; opacity: 0.8; }
+.sb-cover-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+}
+.sb-cover-sub {
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+}
+.sb-cover-branch {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-top: 0.5rem;
+}
+.sb-cover-name {
+  position: absolute;
+  top: 12px; right: 14px;
+  font-size: 0.85rem;
+  font-style: italic;
+  opacity: 0.7;
+}
+.sb-cover-hint {
+  font-size: 0.7rem;
+  opacity: 0.5;
+  margin-top: 1rem;
+  font-style: italic;
+}
+
+/* Eagle color inversion per theme */
+.sb-theme-heer .sb-cover-eagle,
+.sb-theme-feld .sb-cover-eagle,
+.sb-theme-panzer .sb-cover-eagle { filter: brightness(0) invert(0.85); }
+.sb-theme-luftwaffe .sb-cover-eagle,
+.sb-theme-marine .sb-cover-eagle { filter: brightness(0) invert(0.8); }
+.sb-theme-sanit .sb-cover-eagle { filter: brightness(0) invert(0.15); }
+
+/* ---- OPEN BOOK (two-page spread) ---- */
+.sb-spread {
+  display: flex;
+  width: 720px;
+  max-width: 96%;
+  min-height: 520px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+/* PAGE — 50% each, generous padding, real carnet feel */
+.sb-page {
+  flex: 0 0 50%;
+  width: 50%;
+  max-width: 50%;
+  padding: 1.2rem 1rem;
+  position: relative;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  min-height: 520px;
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-page-l {
+  border-right: 1px solid rgba(0,0,0,0.15);
+  box-shadow: inset -5px 0 10px rgba(0,0,0,0.05);
+}
+.sb-page:not(.sb-page-l) {
+  box-shadow: inset 5px 0 10px rgba(0,0,0,0.05);
+}
+
+.sb-spacer { flex: 1; min-height: 8px; }
 
 /* PAGE NUMBER */
-.sb-pagenum { text-align:center; font-size:.45rem; opacity:.3; margin-top:auto; padding-top:4px; }
-
-/* TEXT */
-.sb-ink { color:#1a3a6a; font-weight:600; font-size:.6rem; }
-.sb-ink-sm { font-size:.52rem; }
-.sb-center { text-align:center; }
-.sb-u { text-decoration:underline; }
-.sb-label { font-size:.52rem; font-weight:600; opacity:.75; margin:3px 0; }
-.sb-sm { font-size:.46rem; opacity:.55; margin:2px 0; }
-.sb-xs { font-size:.42rem; opacity:.5; line-height:1.2; margin:2px 0; }
-h3.sb-center { font-size:.75rem; margin:.15rem 0; }
-h4.sb-center { font-size:.62rem; margin:.12rem 0; font-weight:700; }
-
-/* TABLES — ALL fixed layout, 100% width, no exceptions */
-.sb-t {
-  width:100%; border-collapse:collapse; margin:3px 0;
-  table-layout:fixed; box-sizing:border-box;
-  min-width:0 !important; /* Override global.css min-width:600px */
-}
-.sb-t th,.sb-t td,.sb-page table th,.sb-page table td {
-  border:1px solid rgba(0,0,0,.22); padding:3px 4px;
-  font-size:.52rem; vertical-align:middle;
-  word-wrap:break-word; overflow-wrap:break-word;
-  word-break:break-word;
-  height:3.2em;
-}
-.sb-t th { background:rgba(0,0,0,.04); font-weight:700; text-align:center; font-size:.4rem; white-space:pre-line; opacity:.75; }
-
-/* Label-value rows */
-.sb-lbl-cell { font-size:.48rem; font-weight:600; opacity:.7; width:40%; word-break:break-word; }
-.sb-val-cell { }
-
-/* Grid tables */
-.sb-t-grid th,.sb-t-grid td { font-size:.36rem; padding:1px 2px; }
-
-/* PHOTO */
-.sb-photo { width:55px; height:70px; border:1.5px solid rgba(0,0,0,.3); margin:0 auto 3px; overflow:hidden; }
-.sb-photo img { width:100%; height:100%; object-fit:cover; }
-.sb-photo-empty { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:.36rem; opacity:.25; }
-
-/* SIGNATURES */
-.sb-sig-area { text-align:center; margin:3px 0; }
-.sb-sig-box { display:inline-flex; align-items:flex-end; justify-content:center; border-bottom:1px solid rgba(0,0,0,.3); width:90px; height:22px; }
-.sb-sig-box img { max-height:20px; max-width:80px; }
-.sb-sig-sm { width:70px; height:18px; }
-.sb-sig-sm img { max-height:16px; max-width:60px; }
-.sb-stamp-row { display:flex; justify-content:space-between; align-items:flex-end; margin-top:2px; }
-.sb-stamp-img { max-height:28px; opacity:.5; }
-
-/* IMPFUNGEN */
-.sb-impf { margin-bottom:3px; }
-
-/* TEETH */
-.sb-teeth { width:80%; margin:3px auto; text-align:center; font-weight:700; font-size:.52rem; letter-spacing:2px; }
-.sb-teeth td { padding:3px; }
-
-/* LINES */
-.sb-lined { margin-top:2px; }
-.sb-line { border-bottom:1px dotted rgba(0,0,0,.15); height:3em; }
-
-/* RULES */
-.sb-rules { font-size:.48rem; line-height:1.6; padding-left:.6rem; margin:0; flex:1; }
-.sb-rules li { margin-bottom:.6rem; }
-
-/* URLAUB */
-.sb-urlaub { margin-bottom:3px; padding-bottom:2px; border-bottom:1px solid rgba(0,0,0,.06); }
-
-/* BACK COVER */
-.sb-back-cover { display:flex; align-items:center; justify-content:center; flex:1; text-align:center; padding:1rem; }
-.sb-back-cover p { font-size:.46rem; line-height:1.4; opacity:.7; }
-
-/* NAV */
-.sb-nav { display:flex; justify-content:center; gap:.4rem; margin-top:.5rem; align-items:center; flex-wrap:wrap; }
-.sb-nav button { font-family:'Courier New',monospace; padding:.2rem .5rem; cursor:pointer; background:rgba(0,0,0,.05); border:1px solid rgba(0,0,0,.2); border-radius:3px; font-size:.6rem; }
-.sb-nav button:hover { background:rgba(0,0,0,.1); }
-.sb-nav button:disabled { opacity:.3; cursor:default; }
-.sb-nav-info { font-size:.6rem; opacity:.45; }
-
-/* THEMES */
-.sb-theme-heer .sb-cover { background:linear-gradient(145deg,#7a4a3a,#5a3425); color:#e8d8c0; }
-.sb-theme-heer .sb-page { background:#f0e6cc; color:#2c2416; }
-.sb-theme-heer .sb-page-dark { background:#e2d8be; }
-.sb-theme-luftwaffe .sb-cover { background:linear-gradient(145deg,#536d7a,#3f5565); color:#d8e0e6; }
-.sb-theme-luftwaffe .sb-page { background:#f0e6cc; color:#2c2416; }
-.sb-theme-luftwaffe .sb-page-dark { background:#6b8a9a; color:#1a2a33; }
-.sb-theme-feld .sb-cover { background:linear-gradient(145deg,#4a5540,#384530); color:#d8d4c0; }
-.sb-theme-feld .sb-page { background:#f0e6cc; color:#2c2416; }
-.sb-theme-feld .sb-page-dark { background:#5a6a4e; color:#e8e0c8; }
-.sb-theme-panzer .sb-cover { background:linear-gradient(145deg,#3a3a3a,#252525); color:#d8d0b8; }
-.sb-theme-panzer .sb-page { background:#f0e6cc; color:#2c2416; }
-.sb-theme-panzer .sb-page-dark { background:#4a4a4a; color:#d8d0b8; }
-.sb-theme-sanit .sb-cover { background:linear-gradient(145deg,#e0d8c0,#ccc4aa); color:#2c2416; }
-.sb-theme-sanit .sb-page { background:#f0e6cc; color:#2c2416; }
-.sb-theme-sanit .sb-page-dark { background:#d8d0b8; }
-.sb-theme-marine .sb-cover { background:linear-gradient(145deg,#2a3a5a,#1e2e48); color:#d0d8e8; }
-.sb-theme-marine .sb-page { background:#f0e6cc; color:#2c2416; }
-.sb-theme-marine .sb-page-dark { background:#3a4a6a; color:#d0d8e8; }
-
-/* CLICKABLE SIGNATURES */
-.sb-sig-clickable { cursor:pointer; }
-.sb-sig-clickable:hover .sb-sig-empty { background:rgba(0,0,0,.08); }
-.sb-sig-empty { font-size:.42rem; color:#555; display:inline-flex; align-items:center; justify-content:center; border:1px dashed rgba(0,0,0,.3); border-radius:2px; padding:2px 8px; }
-.sb-sig-img { max-height:28px; max-width:100px; }
-.sb-stamp-clickable { cursor:pointer; font-size:.4rem; color:#555; border:1px dashed rgba(0,0,0,.3); border-radius:2px; padding:3px 8px; text-align:center; }
-.sb-stamp-clickable:hover { background:rgba(0,0,0,.08); }
-
-/* STAMP PICKER MODAL */
-.sb-modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.5); z-index:1000; display:flex; align-items:center; justify-content:center; }
-.sb-modal { background:#f0e6cc; border:2px solid #8b7355; border-radius:4px; padding:1rem; max-width:400px; width:90%; max-height:70vh; overflow-y:auto; font-family:'Courier New',monospace; }
-.sb-modal h3 { margin:0 0 .5rem; font-size:.9rem; text-align:center; }
-.sb-stamp-grid { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
-.sb-stamp-option { cursor:pointer; border:1px solid rgba(0,0,0,.2); border-radius:3px; padding:6px; text-align:center; width:100px; transition:background .2s; }
-.sb-stamp-option:hover { background:rgba(0,0,0,.08); }
-.sb-stamp-option img { max-width:80px; max-height:60px; display:block; margin:0 auto 4px; }
-.sb-stamp-option span { font-size:.45rem; display:block; }
-
-/* RESPONSIVE */
-@media(max-width:768px){
-  .sb-spread{flex-direction:column;max-width:100%}
-  .sb-page{flex:0 0 100%;width:100%;max-width:100%;min-height:auto;padding:8px}
-  .sb-page-l{border-right:none;border-bottom:1px solid rgba(0,0,0,.1)}
-  .sb-cover{width:85%;min-height:380px}
+.sb-pagenum {
+  text-align: center;
+  font-size: 0.6rem;
+  opacity: 0.4;
+  margin-top: auto;
+  padding-top: 6px;
 }
 
-/* Attestation table scroll if overflow */
-.sb-att-wrap { max-height: 400px; overflow-y: auto; }
-.sb-att-wrap table { margin-bottom: 0; }
-.sb-att-wrap td { vertical-align: middle; position: relative; overflow: visible; }
+/* ---- TEXT & INK STYLES ---- */
+.sb-ink {
+  color: #1a3a6a;
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+.sb-ink-sm { font-size: 0.65rem; }
 
-/* Attestation stamp+signature: stamp overflows like a real Dienststempel */
-.sb-att-stamp { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-8deg); opacity: 0.7; pointer-events: none; z-index: 2; height: 55px; width: auto; }
-/* Pure signature stays contained */
-.sb-att-sig { max-height: 22px; max-width: 55px; object-fit: contain; display: block; }
-/* Pending edit indicator */
-.sb-pending { background: rgba(243,156,18,0.15); }
+.sb-center { text-align: center; }
 
-/* PAGE 1 — Real Soldbuch style */
-.sb-page1-grade { font-size: 1.1rem; margin: 4px 0 0 0; }
-.sb-page1-name { font-size: 1rem; margin: 10px 0 0 0; }
-.sb-grade-box { border: 1.5px solid var(--text-main, #333); padding: 4px 6px; margin: 6px 0; }
-.sb-grade-box .sb-t-inner { border: none; margin: 0; }
-.sb-grade-box .sb-t-inner td { border: none; border-bottom: 1px dotted #999; padding: 2px 4px; }
-.sb-grade-box .sb-t-inner tr:last-child td { border-bottom: none; }
-.sb-grade-box-labels { display: flex; justify-content: space-around; font-size: .55rem; color: var(--text-muted, #777); margin-top: 2px; }
-.sb-page1-field { font-size: .7rem; margin: 3px 0; line-height: 1.4; }
+h4.sb-center {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 0.8rem;
+}
 
+/* ---- FIELD STYLES (label: value with dotted underline) ---- */
+.sb-field {
+  display: flex;
+  margin-bottom: 0.3rem;
+  gap: 0.3rem;
+}
+.sb-field-label {
+  font-weight: 700;
+  min-width: 130px;
+  white-space: nowrap;
+  font-size: 0.75rem;
+}
+.sb-field-value {
+  border-bottom: 1px dotted rgba(0,0,0,0.3);
+  flex: 1;
+  padding-bottom: 1px;
+  min-height: 1.2em;
+}
+
+.sb-section-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-align: center;
+  margin: 0.8rem 0 0.6rem;
+  letter-spacing: 1px;
+}
+
+.sb-divider {
+  border: none;
+  border-top: 1px solid rgba(0,0,0,0.15);
+  margin: 0.6rem 0;
+}
+
+/* ---- PROMOTION BOX (bordered) ---- */
+.sb-box {
+  border: 1.5px solid rgba(0,0,0,0.4);
+  padding: 0.4rem;
+  margin: 0.4rem 0;
+}
+.sb-promo-row {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.2rem;
+  font-size: 0.72rem;
+}
+.sb-promo-row .sb-promo-label {
+  font-weight: 700;
+  min-width: 20px;
+}
+.sb-promo-row .sb-promo-date,
+.sb-promo-row .sb-promo-grade {
+  border-bottom: 1px dotted rgba(0,0,0,0.3);
+  flex: 1;
+  min-height: 1.1em;
+}
+
+/* ---- TABLES ---- */
+.sb-page table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.68rem;
+  margin: 0.4rem 0;
+}
+.sb-page th,
+.sb-page td {
+  border: 1px solid rgba(0,0,0,0.25);
+  padding: 3px 5px;
+  text-align: left;
+  vertical-align: top;
+}
+.sb-page th {
+  font-weight: 700;
+  font-size: 0.62rem;
+  background: rgba(0,0,0,0.04);
+}
+
+/* Numbered rows */
+.sb-page td:first-child {
+  text-align: center;
+  width: 24px;
+  font-weight: 600;
+}
+
+/* ---- GEBOTE (10 Commandments) ---- */
+.sb-gebote {
+  font-size: 0.58rem;
+  line-height: 1.35;
+}
+.sb-gebote h3 {
+  font-size: 0.72rem;
+  text-align: center;
+  margin: 0 0 0.3rem;
+  letter-spacing: 1px;
+}
+.sb-gebote h4 {
+  font-size: 0.6rem;
+  text-align: center;
+  margin: 0 0 0.5rem;
+  font-weight: 400;
+}
+.sb-gebote ol {
+  padding-left: 1.2rem;
+  margin: 0;
+}
+.sb-gebote ol li {
+  margin-bottom: 0.2rem;
+}
+
+/* ---- SIGNATURES & STAMPS ---- */
+.sb-signature-area {
+  margin-top: 0.8rem;
+  text-align: center;
+}
+.sb-signature-line {
+  border-bottom: 1px solid rgba(0,0,0,0.4);
+  width: 200px;
+  height: 45px;
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin: 0 auto;
+  cursor: pointer;
+}
+.sb-signature-line img {
+  max-height: 40px;
+  max-width: 180px;
+}
+.sb-signature-caption {
+  font-size: 0.6rem;
+  opacity: 0.5;
+  margin-top: 2px;
+  font-style: italic;
+}
+
+.sb-stamp {
+  position: absolute;
+  bottom: 40px;
+  right: 20px;
+  opacity: 0.5;
+  max-height: 70px;
+}
+
+.sb-stamp-overlay {
+  position: absolute;
+  opacity: 0.35;
+  max-height: 80px;
+  pointer-events: none;
+}
+
+/* ---- PHOTO AREA ---- */
+.sb-photo-area {
+  width: 100px;
+  height: 130px;
+  border: 2px solid rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin: 0 auto;
+}
+.sb-photo-area img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---- EDITABLE CELLS ---- */
+.sb-ec {
+  cursor: pointer;
+  min-height: 1em;
+  border-bottom: 1px dotted rgba(0,0,0,0.2);
+  padding: 1px 2px;
+  transition: background 0.2s;
+}
+.sb-ec:hover {
+  background: rgba(26, 58, 106, 0.08);
+}
+.sb-ec input {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #1a3a6a;
+  background: rgba(26, 58, 106, 0.06);
+  font-family: inherit;
+  font-size: inherit;
+  color: #1a3a6a;
+  padding: 1px 2px;
+  outline: none;
+}
+
+/* ---- NAVIGATION ---- */
+.sb-nav {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.sb-nav button {
+  font-family: 'Courier New', monospace;
+  padding: 0.5rem 1.5rem;
+  cursor: pointer;
+  background: rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 3px;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+.sb-nav button:hover { background: rgba(0,0,0,0.12); }
+.sb-nav button:disabled { opacity: 0.3; cursor: default; }
+
+/* ---- ACTIONS (equipment presets, etc.) ---- */
+.sb-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 0.8rem 0;
+}
+.sb-actions button {
+  font-family: 'Courier New', monospace;
+  font-size: 0.7rem;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid rgba(0,0,0,0.2);
+  background: rgba(0,0,0,0.04);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.sb-actions button:hover { background: rgba(0,0,0,0.1); }
+
+/* ---- ATTESTATION BARRED ---- */
+.sb-barred td {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+.sb-barred-motif {
+  color: #8b0000;
+  font-size: 0.55rem;
+  font-style: italic;
+}
+
+/* ============================================
+   REGIMENT THEMES
+   Based on real Wehrmacht Soldbuch branch colors
+   ============================================ */
+
+/* Heer (default) — brown-red like authentic Soldbuch */
+.sb-theme-heer .sb-cover {
+  background: linear-gradient(135deg, #7a4a3a, #5e3828);
+  color: #e8d8c0;
+}
+.sb-theme-heer .sb-page {
+  background: #f2e8d0;
+  color: #2c2416;
+}
+
+/* Luftwaffe / Fallschirmjaeger — blue-grey */
+.sb-theme-luftwaffe .sb-cover {
+  background: linear-gradient(135deg, #536d7a, #3f5868);
+  color: #d8e0e6;
+}
+.sb-theme-luftwaffe .sb-page {
+  background: #f2e8d0;
+  color: #2c2416;
+}
+
+/* Feldgendarmerie — feldgrau */
+.sb-theme-feld .sb-cover {
+  background: linear-gradient(135deg, #4a5540, #3a4530);
+  color: #d8d4c0;
+}
+.sb-theme-feld .sb-page {
+  background: #f2e8d0;
+  color: #2c2416;
+}
+
+/* Panzer — dark grey/black */
+.sb-theme-panzer .sb-cover {
+  background: linear-gradient(135deg, #3a3a3a, #2a2a2a);
+  color: #d8d0b8;
+}
+.sb-theme-panzer .sb-page {
+  background: #f2e8d0;
+  color: #2c2416;
+}
+
+/* Sanitäts — white/cream with red cross accent */
+.sb-theme-sanit .sb-cover {
+  background: linear-gradient(135deg, #e0d8c0, #d0c8b0);
+  color: #2c2416;
+}
+.sb-theme-sanit .sb-page {
+  background: #f2e8d0;
+  color: #2c2416;
+}
+
+/* Marine — navy blue */
+.sb-theme-marine .sb-cover {
+  background: linear-gradient(135deg, #2a3a5a, #1e2e4a);
+  color: #d0d8e8;
+}
+.sb-theme-marine .sb-page {
+  background: #f2e8d0;
+  color: #2c2416;
+}
+
+/* Gebote page (left of first spread) — darker tint per theme */
+.sb-theme-heer .sb-page:first-child { background: #ddd4be; }
+.sb-theme-luftwaffe .sb-page:first-child { background: #6b8a9a; color: #1a2a33; }
+.sb-theme-feld .sb-page:first-child { background: #5a6a4e; color: #e8e0c8; }
+.sb-theme-panzer .sb-page:first-child { background: #4a4a4a; color: #d8d0b8; }
+.sb-theme-sanit .sb-page:first-child { background: #d8d0b8; }
+.sb-theme-marine .sb-page:first-child { background: #3a4a6a; color: #d0d8e8; }
+
+/* ---- RESPONSIVE ---- */
+@media (max-width: 768px) {
+  .sb-spread {
+    width: 100%;
+    flex-direction: column;
+    min-height: auto;
+  }
+  .sb-page {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 100%;
+    min-height: 420px;
+    padding: 1rem;
+    font-size: 0.72rem;
+  }
+  .sb-page-l {
+    border-right: none;
+    border-bottom: 1px solid rgba(0,0,0,0.15);
+  }
+  .sb-cover { width: 90%; min-height: 400px; }
+  .sb-field-label { min-width: 100px; font-size: 0.68rem; }
+  .sb-gebote { font-size: 0.5rem; }
+  .sb-actions { display: none; } /* Hide editor controls on mobile */
+  .sb-ec { cursor: default; }
+  .sb-ec:hover { background: none; }
+}
