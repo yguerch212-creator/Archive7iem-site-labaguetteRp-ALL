@@ -76,20 +76,12 @@
   overflow: hidden;
   margin: 0 auto;
 }
-/* Landscape mode — wider spread for table-heavy pages */
-.sb-wrapper.sb-landscape .sb-spread {
-  width: 960px;
-  max-width: 98%;
+/* Rotated view — turn the whole spread 90° like turning a real Soldbuch */
+.sb-wrapper.sb-rotated .sb-spread {
+  transform: rotate(90deg);
+  transform-origin: center center;
+  margin: 120px auto;
 }
-.sb-wrapper.sb-landscape .sb-page {
-  min-height: 380px;
-  padding: 0.8rem 1rem;
-  font-size: 0.68rem;
-}
-.sb-wrapper.sb-landscape .sb-t { font-size: 0.62rem; table-layout: auto; }
-.sb-wrapper.sb-landscape .sb-t th,
-.sb-wrapper.sb-landscape .sb-t td { padding: 2px 4px; overflow: visible; text-overflow: clip; }
-.sb-wrapper.sb-landscape .sb-page { overflow: visible; }
 
 /* ---- PAGE ---- */
 .sb-page {
