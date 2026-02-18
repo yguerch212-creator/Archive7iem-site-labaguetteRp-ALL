@@ -83,7 +83,8 @@ Le <strong>Soldbuch</strong> (livret de solde) est le document d'identité milit
 <li><strong>Décoration</strong> — attribution d'une médaille</li>
 <li><strong>Modification de données</strong> — changement validé sur les pages 1-2</li>
 </ul>
-<p>Un officier peut aussi ajouter des attestations manuelles et les signer. Remplissez les colonnes :</p>
+<p>Un officier peut aussi ajouter des attestations manuelles et les signer. Il peut également <strong>barrer</strong> une attestation (rayée avec motif, visible mais invalide) ou la <strong>supprimer</strong> (admin uniquement).</p>
+<p>Remplissez les colonnes :</p>
 <table>
 <tr><th>Colonne</th><th>Exemple</th></tr>
 <tr><td>N°</td><td>1, 2, 3... (numéro séquentiel)</td></tr>
@@ -112,8 +113,23 @@ Le <strong>Soldbuch</strong> (livret de solde) est le document d'identité milit
 <li><strong>Personne à prévenir</strong> — En cas de blessure/décès</li>
 </ul>
 
-<h2>📄 Pages 6-7 — Serment &amp; Fidélité</h2>
-<p><span class="badge badge-auto">⚙️ AUTO</span> — Pages décoratives avec le texte du serment. Rien à remplir.</p>
+<h2>📄 Pages 6-7 — Habillement</h2>
+<p><span class="badge badge-off">⭐ OFF</span> <span class="badge badge-soldat">👤 SOLDAT</span></p>
+<p>Inventaire des vêtements et tenue du soldat, réparti en 4 colonnes :</p>
+<table>
+<tr><th>Colonne</th><th>Exemples</th></tr>
+<tr><td>Calot (couvre-chef)</td><td>Stahlhelm M35, Feldmütze M43, Schirmmütze</td></tr>
+<tr><td>Veste</td><td>Feldbluse M40, Splitterjacke, Armbinde</td></tr>
+<tr><td>Pantalon</td><td>Feldhose M40, Reithose, Gamaschen</td></tr>
+<tr><td>Manteau</td><td>Mantel M40, Zeltbahn, Tarnhemd</td></tr>
+</table>
+
+<div class="note">
+💡 <strong>Presets d'équipement :</strong> Un bouton permet de charger automatiquement l'équipement standard selon la spécialité (Grenadier, MG-Schütze, Sanitäter, Funker, etc.). Les items sont répartis automatiquement dans les bonnes colonnes. L'équipement non-vestimentaire (bottes, ceinturon, gourde...) va sur la page 8.
+</div>
+
+<h3>Demandes d'habillement</h3>
+<p>Un soldat peut soumettre une <strong>demande d'habillement</strong> depuis le module dédié (page « Habillement »). L'officier approuve ou refuse la demande. Si approuvée, une attestation automatique est créée en page 3 du Soldbuch.</p>
 
 <h2>📄 Pages 8a-8b — Équipement</h2>
 <p><span class="badge badge-off">⭐ OFF</span> <span class="badge badge-soldat">👤 SOLDAT</span></p>
@@ -139,8 +155,20 @@ Le <strong>Soldbuch</strong> (livret de solde) est le document d'identité milit
 <li>Médecin responsable</li>
 </ul>
 
-<h2>📄 Pages 10-11 — Solde &amp; Habillement (détail)</h2>
-<p><span class="badge badge-off">⭐ OFF</span> — Tables de comptabilité. En RP, peu utilisé sauf pour les logisticiens (919).</p>
+<h2>📄 Pages 10-11 — Solde (Wehrsold)</h2>
+<p><span class="badge badge-auto">⚙️ AUTO</span> <span class="badge badge-admin">🔧 ADMIN</span></p>
+<p>Système de solde automatique basé sur les grades historiques de la Wehrmacht :</p>
+<table>
+<tr><th>Grade</th><th>Solde mensuelle</th></tr>
+<tr><td>Schütze / Soldat</td><td>15 RM</td></tr>
+<tr><td>Obergefreiter</td><td>22,50 RM</td></tr>
+<tr><td>Unteroffizier</td><td>30 RM</td></tr>
+<tr><td>Feldwebel</td><td>54 RM</td></tr>
+<tr><td>Leutnant</td><td>210 RM</td></tr>
+<tr><td>Hauptmann</td><td>470 RM</td></tr>
+<tr><td>Major → General</td><td>600 → 1400 RM</td></tr>
+</table>
+<p>Les versements sont déclenchés par un administrateur et apparaissent automatiquement dans l'historique de solde du Soldbuch.</p>
 
 <h2>📄 Page 12 — Hospitalisations</h2>
 <p><span class="badge badge-sanit">🏥 SANIT</span> <span class="badge badge-auto">⚙️ AUTO</span></p>
@@ -169,12 +197,13 @@ Le <strong>Soldbuch</strong> (livret de solde) est le document d'identité milit
 <li>Date d'attribution</li>
 </ul>
 
-<h2>📄 Pages 15-16 — Tir &amp; Dentaire</h2>
-<p><span class="badge badge-off">⭐ OFF</span></p>
-<ul>
-<li><strong>Page 15</strong> — Résultats de tir (Schießergebnis). Arme, date, score.</li>
-<li><strong>Page 16</strong> — Station dentaire. Soins dentaires reçus.</li>
-</ul>
+<h2>📄 Page 15 — Décorations</h2>
+<p><span class="badge badge-auto">⚙️ AUTO</span></p>
+<p>Liste automatique de toutes les décorations/médailles attribuées. Chaque attribution génère aussi une attestation en page 3. Si une décoration est retirée, l'attestation associée est automatiquement supprimée.</p>
+
+<h2>📄 Page 16 — Permissions (+5 jours)</h2>
+<p><span class="badge badge-auto">⚙️ AUTO</span></p>
+<p>Rempli automatiquement depuis le module PDS (Plan de Service). Les permissions d'absence de plus de 5 jours approuvées apparaissent ici.</p>
 
 <h2>📄 Pages 17-20 — Affectations &amp; Mutations</h2>
 <p><span class="badge badge-off">⭐ OFF</span></p>
@@ -233,7 +262,7 @@ Le <strong>Soldbuch</strong> (livret de solde) est le document d'identité milit
 
 <div class="footer">
 Archives 7e Armeekorps — Sanitätsdienst — Guide du Soldbuch<br>
-Document généré automatiquement — Version 1.0
+Document généré automatiquement — Version 1.1 — Mis à jour le 18/02/2026
 </div>
 
 </body>
