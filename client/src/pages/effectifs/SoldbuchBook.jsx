@@ -409,11 +409,12 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       </div>
       <PageNum n={3}/>
       </div>{/* sb-land */}
-      {/* Stamp overlays — rendered on top of the page like real stamps */}
-      {attestations.filter(a=>a.signature_data && !a.barre).map((a,i)=>(
-        <img key={`stamp-${a.id}`} src={a.signature_data} alt="Tampon" className="sb-stamp-overlay"
-          style={{bottom:`${60+i*35}px`, right:`${20+i*15}px`, transform:`rotate(${-8+i*5}deg)`}}/>
-      ))}
+      {/* Stamp overlays — positioned near the signed row like a real stamp */}
+      {attestations.filter(a=>a.signature_data && !a.barre).map((a)=>{
+        const rowPct = Math.min(90, 8 + (a.numero - 1) * 7.5)
+        return <img key={`stamp-${a.id}`} src={a.signature_data} alt="Tampon" className="sb-stamp-overlay"
+          style={{top:`${rowPct}%`, right:'10px', transform:`rotate(${-5 + (a.numero % 3) * 4}deg)`}}/>
+      })}
     </div>
   </div>)
 
