@@ -233,7 +233,11 @@
   table-layout: fixed;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  flex: 1;
 }
+/* Tables and wrappers stretch to fill the page height */
+.sb-page .sb-att-wrap { flex: 1; display: flex; flex-direction: column; }
+.sb-page .sb-att-wrap .sb-t { flex: 1; }
 .sb-t th, .sb-t td {
   border: 1px solid rgba(0,0,0,0.2);
   padding: 3px 5px;
@@ -354,18 +358,28 @@
    ============================================ */
 /* Rules list (used inside sb-gebote) */
 .sb-rules, ol.sb-rules {
-  font-size: 0.5rem;
-  line-height: 1.25;
-  padding-left: 1rem;
+  font-size: 0.72rem;
+  line-height: 1.6;
+  padding-left: 1.2rem;
   margin: 0;
+  list-style-position: outside;
 }
-.sb-rules li { margin-bottom: 0.1rem; }
+.sb-rules li { margin-bottom: 0; }
+
+/* Make gebote ol stretch and distribute items evenly */
+.sb-gebote ol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  padding-left: 1.2rem;
+}
 
 /* Gebote container — fills the page */
 .sb-gebote {
   flex: 1;
-  font-size: 0.58rem;
-  line-height: 1.35;
+  font-size: 0.7rem;
+  line-height: 1.6;
   display: flex;
   flex-direction: column;
 }
