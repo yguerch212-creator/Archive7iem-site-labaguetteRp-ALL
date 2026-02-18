@@ -26,7 +26,7 @@ export default function VisitesMedicales() {
   const [message, setMessage] = useState(null)
   const [filterAptitude, setFilterAptitude] = useState('')
   const [search, setSearch] = useState('')
-  const [form, setForm] = useState({ ...defaultForm })
+  const [form, setForm] = useState({ ...defaultForm, medecin: user?.username || '' })
 
   const canCreate = user?.isAdmin || user?.isRecenseur || user?.unite_code === '916S'
   const [effectifInfo, setEffectifInfo] = useState(null)
@@ -52,7 +52,7 @@ export default function VisitesMedicales() {
     try {
       await api.post('/medical', form)
       setShowForm(false)
-      setForm({ ...defaultForm, date_visite: new Date().toISOString().slice(0, 10) })
+      setForm({ ...defaultForm, date_visite: new Date().toISOString().slice(0, 10), medecin: user?.username || '' })
       setMessage({ type: 'success', text: 'Visite médicale enregistrée ✓' })
       setTimeout(() => setMessage(null), 3000)
       load()
@@ -124,7 +124,7 @@ export default function VisitesMedicales() {
             <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
               <div className="form-group" style={{ flex: 1 }}>
                 <label className="form-label">Médecin</label>
-                <input type="text" className="form-input" value={form.medecin} onChange={e => setForm(p => ({...p, medecin: e.target.value}))} placeholder="Nom du médecin RP" />
+                <input type="text" className="form-input" value={form.medecin} readOnly style={{ opacity: 0.7 }} />
               </div>
               <div className="form-group" style={{ flex: 1 }}>
                 <label className="form-label">Restrictions</label>

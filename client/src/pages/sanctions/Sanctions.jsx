@@ -72,6 +72,9 @@ export default function Sanctions() {
         <button className={tab === 'accreditations' ? 'active' : ''} onClick={() => setTab('accreditations')}>
           🏛️ Accréditations
         </button>
+        <Link to="/sanctions/avis-recherche" className={`sanctions-tab-link`} style={{ padding: '8px 16px', textDecoration: 'none', fontWeight: 600, fontSize: '0.85rem', color: 'var(--military-green)', border: '1px solid var(--border-color)', borderRadius: 4, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          🔍 Avis de recherche
+        </Link>
       </div>
 
       {tab === 'affaires' && (

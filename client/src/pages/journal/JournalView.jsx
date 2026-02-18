@@ -48,7 +48,7 @@ export default function JournalView() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap', gap: 8 }}>
           <BackButton label="← Journal" />
           <div style={{ display: 'flex', gap: 6 }}>
-            {canEdit && <button className="btn btn-secondary btn-small" className="layout-desktop-only" onClick={() => navigate(`/journal/${id}/edit`)}>✏️ Modifier</button>}
+            {canEdit && <button className="btn btn-secondary btn-small layout-desktop-only" onClick={() => navigate(`/journal/${id}/edit`)}>✏️ Modifier</button>}
             {canDelete && <button className="btn btn-danger btn-small" onClick={deleteArticle}>🗑️</button>}
             <button className="btn btn-secondary btn-small" onClick={() => exportToPdf('journal-article', `Journal_${article.titre}`)}>📥 PDF</button>
           </div>
@@ -66,7 +66,7 @@ export default function JournalView() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap', gap: 8 }}>
         <BackButton label="← Journal" />
         <div style={{ display: 'flex', gap: 6 }}>
-          {canEdit && <button className="btn btn-secondary btn-small" className="layout-desktop-only" onClick={() => navigate(`/journal/${id}/edit`)}>✏️ Modifier</button>}
+          {canEdit && <button className="btn btn-secondary btn-small layout-desktop-only" onClick={() => navigate(`/journal/${id}/edit`)}>✏️ Modifier</button>}
           {canDelete && <button className="btn btn-danger btn-small" onClick={deleteArticle}>🗑️</button>}
         </div>
       </div>

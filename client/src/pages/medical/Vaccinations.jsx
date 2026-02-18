@@ -12,7 +12,8 @@ export default function Vaccinations() {
   const [showForm, setShowForm] = useState(false)
   const [message, setMessage] = useState(null)
   const [search, setSearch] = useState('')
-  const [form, setForm] = useState({ effectif_id: '', effectif_nom: '', effectif_nom_libre: '', type_vaccin: 'Typhus', date_vaccination: '', date_rappel: '', medecin_nom: '', lot: '', notes: '' })
+  const autoLot = () => `VAC-${new Date().getFullYear()}-${String(Math.floor(Math.random()*9000)+1000)}`
+  const [form, setForm] = useState({ effectif_id: '', effectif_nom: '', effectif_nom_libre: '', type_vaccin: 'Typhus', date_vaccination: '', date_rappel: '', medecin_nom: user?.username || '', lot: autoLot(), notes: '' })
 
   const canCreate = user?.isAdmin || user?.isRecenseur || user?.unite_code === '916S'
 
@@ -27,7 +28,7 @@ export default function Vaccinations() {
     try {
       await api.post('/medical-soldbuch/vaccinations', form)
       setShowForm(false)
-      setForm({ effectif_id: '', effectif_nom: '', type_vaccin: 'Typhus', date_vaccination: '', date_rappel: '', medecin_nom: '', lot: '', notes: '' })
+      setForm({ effectif_id: '', effectif_nom: '', type_vaccin: 'Typhus', date_vaccination: '', date_rappel: '', medecin_nom: user?.username || '', lot: autoLot(), notes: '' })
       setMessage({ type: 'success', text: 'Vaccination enregistrée ✓' })
       setTimeout(() => setMessage(null), 3000)
       load()
@@ -82,8 +83,8 @@ export default function Vaccinations() {
               <div className="form-group" style={{ flex: 1 }}><label className="form-label">Rappel</label><input type="date" className="form-input" value={form.date_rappel} onChange={e => setForm(p => ({ ...p, date_rappel: e.target.value }))} /></div>
             </div>
             <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
-              <div className="form-group" style={{ flex: 1 }}><label className="form-label">Médecin</label><input type="text" className="form-input" value={form.medecin_nom} onChange={e => setForm(p => ({ ...p, medecin_nom: e.target.value }))} placeholder="Dr. Braun" /></div>
-              <div className="form-group" style={{ flex: 1 }}><label className="form-label">N° de lot</label><input type="text" className="form-input" value={form.lot} onChange={e => setForm(p => ({ ...p, lot: e.target.value }))} /></div>
+              <div className="form-group" style={{ flex: 1 }}><label className="form-label">Médecin</label><input type="text" className="form-input" value={form.medecin_nom} readOnly style={{ opacity: 0.7 }} /></div>
+              <div className="form-group" style={{ flex: 1 }}><label className="form-label">N° de lot</label><input type="text" className="form-input" value={form.lot} readOnly style={{ opacity: 0.7 }} /></div>
             </div>
             <div className="form-group"><label className="form-label">Notes</label><textarea className="form-input" rows={2} value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} /></div>
             <button type="submit" className="btn btn-primary">✓ Enregistrer</button>

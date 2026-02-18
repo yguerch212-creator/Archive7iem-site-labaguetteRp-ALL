@@ -10,7 +10,7 @@ export default function Hospitalisations() {
   const [showForm, setShowForm] = useState(false)
   const [message, setMessage] = useState(null)
   const [search, setSearch] = useState('')
-  const [form, setForm] = useState({ effectif_id: '', effectif_nom: '', effectif_nom_libre: '', date_entree: '', date_sortie: '', etablissement: '', motif: '', diagnostic: '', traitement: '', medecin_nom: '', notes: '' })
+  const [form, setForm] = useState({ effectif_id: '', effectif_nom: '', effectif_nom_libre: '', date_entree: '', date_sortie: '', etablissement: '', motif: '', diagnostic: '', traitement: '', medecin_nom: user?.username || '', notes: '' })
 
   const canCreate = user?.isAdmin || user?.isRecenseur || user?.unite_code === '916S'
 
@@ -82,7 +82,7 @@ export default function Hospitalisations() {
             <div className="form-group"><label className="form-label">Motif *</label><input type="text" className="form-input" value={form.motif} onChange={e => setForm(p => ({ ...p, motif: e.target.value }))} required placeholder="Blessure par balle, maladie, accident..." /></div>
             <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
               <div className="form-group" style={{ flex: 1 }}><label className="form-label">Diagnostic</label><input type="text" className="form-input" value={form.diagnostic} onChange={e => setForm(p => ({ ...p, diagnostic: e.target.value }))} placeholder="Fracture tibia gauche..." /></div>
-              <div className="form-group" style={{ flex: 1 }}><label className="form-label">Médecin</label><input type="text" className="form-input" value={form.medecin_nom} onChange={e => setForm(p => ({ ...p, medecin_nom: e.target.value }))} placeholder="Dr. Braun" /></div>
+              <div className="form-group" style={{ flex: 1 }}><label className="form-label">Médecin</label><input type="text" className="form-input" value={form.medecin_nom} readOnly style={{ opacity: 0.7 }} /></div>
             </div>
             <div className="form-group"><label className="form-label">Traitement</label><textarea className="form-input" rows={2} value={form.traitement} onChange={e => setForm(p => ({ ...p, traitement: e.target.value }))} placeholder="Chirurgie, repos, médicaments..." /></div>
             <div className="form-group"><label className="form-label">Notes</label><textarea className="form-input" rows={2} value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} /></div>

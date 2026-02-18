@@ -372,7 +372,7 @@ export default function Organigramme() {
           <div style={{ width: 2, height: 16, background: '#4b5320' }}/>
 
           {/* Régiments — tous horizontal */}
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
             {['916', '254', '916S', '001', '919', '130', '009'].map(code => {
               const uc = UNIT_COLORS[code]
               const is916 = code === '916'
@@ -381,7 +381,7 @@ export default function Organigramme() {
                 <div key={code} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <div style={{ width: 2, height: 10, background: '#4b5320' }}/>
                   <div
-                    style={{ background: uc.bg, color: textColor, padding: '10px 14px', borderRadius: 6, textAlign: 'center', minWidth: 130, maxWidth: 160, cursor: 'pointer', transition: 'transform .15s, box-shadow .15s', border: is916 ? '2px solid #c9a227' : '1px solid rgba(255,255,255,0.15)', boxShadow: is916 ? '0 0 10px rgba(201,162,39,0.3)' : '0 2px 6px rgba(0,0,0,0.2)' }}
+                    style={{ background: uc.bg, color: textColor, padding: '8px 10px', borderRadius: 6, textAlign: 'center', minWidth: 105, maxWidth: 140, cursor: 'pointer', transition: 'transform .15s, box-shadow .15s', border: is916 ? '2px solid #c9a227' : '1px solid rgba(255,255,255,0.15)', boxShadow: is916 ? '0 0 10px rgba(201,162,39,0.3)' : '0 2px 6px rgba(0,0,0,0.2)' }}
                     onClick={() => setGradePopup(code)}
                     onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)' }}
                     onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = is916 ? '0 0 10px rgba(201,162,39,0.3)' : '0 2px 6px rgba(0,0,0,0.2)' }}

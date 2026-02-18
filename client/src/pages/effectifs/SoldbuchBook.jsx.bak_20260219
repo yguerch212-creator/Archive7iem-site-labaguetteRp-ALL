@@ -112,7 +112,6 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
   const isAdmin = user?.isAdmin
   const canSignSoldat = isOwner && !e.signature_soldat
   const canSignReferent = (isOfficier || user?.isRecenseur) && !e.signature_referent
-  const canSignAttestation = isOfficier || user?.isRecenseur
   const canStamp = (isOfficier || isAdmin || user?.isRecenseur) && !e.stamp_path
   const canEditDirect = isOfficier || isAdmin || user?.isRecenseur  // Edit without validation
   const canEditPending = isOwner && !canEditDirect  // Soldier: needs validation
@@ -270,27 +269,25 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       <div className="sb-spacer"/>
     </div>
     <div className="sb-page sb-page-r">
-      <h3 className="sb-center" style={{letterSpacing:3,marginBottom:0}}>Soldbuch</h3>
-      <p className="sb-center sb-xs" style={{marginTop:2,marginBottom:8}}>zugleich Personalausweis</p>
-      <p className="sb-center sb-sm" style={{marginBottom:2}}>Nr. <Ink>{e.id}</Ink></p>
-      <p className="sb-center sb-label" style={{marginBottom:0}}>für</p>
-      <p className="sb-center sb-page1-grade"><Ink>{e.grade_nom||'\u00A0'}</Ink></p>
-      <p className="sb-center sb-xs" style={{marginTop:0}}>(Dienstgrad)</p>
-      <div className="sb-grade-box">
-        <table className="sb-t sb-t-inner"><tbody>
-          <tr><td className="sb-lbl-cell" style={{width:'15%'}}>ab</td><td className="sb-val-cell"><Ink small>{e.date_entree_ig||'\u00A0'}</Ink></td><td className="sb-val-cell"><Ink small>{e.grade_nom||'\u00A0'}</Ink></td></tr>
-          <tr><td className="sb-lbl-cell">ab</td><td className="sb-val-cell">{'\u00A0'}</td><td className="sb-val-cell">{'\u00A0'}</td></tr>
-          <tr><td className="sb-lbl-cell">ab</td><td className="sb-val-cell">{'\u00A0'}</td><td className="sb-val-cell">{'\u00A0'}</td></tr>
-        </tbody></table>
-        <div className="sb-grade-box-labels"><span>(Datum)</span><span>(neuer Dienstgrad)</span></div>
-      </div>
-      <p className="sb-center sb-page1-name"><Ink>{`${e.prenom||''} ${e.nom||''}`}</Ink></p>
-      <p className="sb-center sb-xs" style={{marginTop:0}}>(Vor- und Zuname)</p>
+      <h3 className="sb-center" style={{letterSpacing:3}}>Soldbuch</h3>
+      <p className="sb-center sb-sm">Livret de solde et pièce d'identité</p>
+      <table className="sb-t"><tbody><tr><td className="sb-lbl-cell">N°</td><td className="sb-val-cell sb-center"><Ink>{e.id}</Ink></td></tr></tbody></table>
+      <p className="sb-center sb-label">pour</p>
+      <table className="sb-t"><tbody><R l="le" v={e.grade_nom}/></tbody></table>
+      <p className="sb-center sb-xs">(Grade)</p>
+      <table className="sb-t">
+        <thead><tr><th>Date</th><th>Nouveau grade</th></tr></thead>
+        <tbody><tr><td><Ink small>{e.date_entree_ig}</Ink></td><td><Ink small>{e.grade_nom}</Ink></td></tr><ER cols={2} n={2}/></tbody>
+      </table>
+      <table className="sb-t"><tbody><R l="" v={`${e.prenom||''} ${e.nom||''}`}/></tbody></table>
+      <p className="sb-center sb-xs">(Prénom et nom)</p>
       <div className="sb-spacer"/>
-      <p className="sb-page1-field">Beschreibung und Nummer der<br/>Erkennungsmarke <Ink>{e.numero_service||'\u00A0'}</Ink></p>
-      <p className="sb-page1-field">Blutgruppe <Ink>{e.blutgruppe||'\u00A0'}</Ink></p>
-      <p className="sb-page1-field">Gasmaskengröße <Ink>{e.gasmaskengroesse||'\u00A0'}</Ink></p>
-      <p className="sb-page1-field">Wehrnummer <Ink>{genWehr(e)||'\u00A0'}</Ink></p>
+      <table className="sb-t"><tbody>
+        <R l="Plaque d'identité" v={e.numero_service}/>
+        <R l="Groupe sanguin" v={e.blutgruppe}/>
+        <R l="Masque à gaz" v={e.gasmaskengroesse}/>
+        <R l="Matricule" v={genWehr(e)}/>
+      </tbody></table>
       <PageNum n={1}/>
     </div>
   </div>)
@@ -327,29 +324,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
         <table className="sb-t">
           <thead><tr><th>N°</th><th>Modification</th><th>Page</th><th>Date</th><th>Signature</th></tr></thead>
           <tbody>
-            {attestations.map((a)=>{
-              const barreStyle = a.barre ? { textDecoration:'line-through', opacity:0.5 } : {}
-              return <tr key={a.id} style={barreStyle} title={a.barre ? `Barré: ${a.motif_barre||''}` : ''}>
-                <td><Ink small>{a.numero}</Ink></td>
-                <td><Ink small>{a.modification}</Ink>{a.barre && <span style={{fontSize:'.5rem',color:'#8b0000',display:'block',textDecoration:'none',opacity:1}}>({a.motif_barre})</span>}</td>
-                <td><Ink small>{a.page||''}</Ink></td>
-                <td><Ink small>{fmtD(a.date_attestation)}</Ink></td>
-                <td>
-                  {a.signature_data?<>{NB}<img src={a.signature_data} alt="sig" className="sb-att-stamp"/></>
-                  :a.signe_par_nom?<Ink small>{a.signe_par_nom}</Ink>
-                  :(canSignAttestation && !a.barre?<span className="sb-sig-clickable" style={{cursor:'pointer',fontSize:'.55rem',color:'var(--military-green)'}} onClick={()=>setSigPopup({slot:'attestation',attestationId:a.id})}>✍️</span>:NB)}
-                  {!a.barre && canSignAttestation && <span style={{cursor:'pointer',fontSize:'.5rem',marginLeft:3,color:'#8b0000'}} title="Barrer" onClick={async()=>{
-                    const motif=prompt('Motif de la rature :')
-                    if(!motif) return
-                    try{await api.put(`/attestations/${a.id}/barrer`,{motif});onUpdate?.()}catch{}
-                  }}>✕</span>}
-                  {isAdmin && <span style={{cursor:'pointer',fontSize:'.5rem',marginLeft:3,color:'#e74c3c'}} title="Supprimer" onClick={async()=>{
-                    if(!confirm('Supprimer cette attestation ?')) return
-                    try{await api.delete(`/attestations/${a.id}`);onUpdate?.()}catch{}
-                  }}>🗑</span>}
-                </td>
-              </tr>
-            })}
+            {attestations.map((a)=><tr key={a.id}><td><Ink small>{a.numero}</Ink></td><td><Ink small>{a.modification}</Ink></td><td><Ink small>{a.page||''}</Ink></td><td><Ink small>{fmtD(a.date_attestation)}</Ink></td><td>{a.signature_data?<img src={a.signature_data} alt="sig" style={{maxHeight:16,maxWidth:40}}/>:a.signe_par_nom?<Ink small>{a.signe_par_nom}</Ink>:(canSignReferent?<span className="sb-sig-clickable" style={{cursor:'pointer',fontSize:'.55rem',color:'var(--military-green)'}} onClick={()=>setSigPopup({slot:'attestation',attestationId:a.id})}>✍️</span>:NB)}</td></tr>)}
             {Array.from({length:Math.max(0,18-attestations.length)},(_,i)=>{
               const rowN = attestations.length+i+1
               return <tr key={`att-e-${i}`}>
@@ -357,7 +332,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
                 <td><EC id={`att-${rowN}-mod`} placeholder="modification"/></td>
                 <td><EC id={`att-${rowN}-page`} placeholder="p."/></td>
                 <td><EC id={`att-${rowN}-date`} placeholder="date"/></td>
-                <td>{(cells[`att-${rowN}-mod`] && canSignAttestation) ? <span className="sb-sig-clickable" style={{cursor:'pointer',fontSize:'.55rem',color:'var(--military-green)'}} onClick={()=>{
+                <td>{(cells[`att-${rowN}-mod`] && canSignReferent) ? <span className="sb-sig-clickable" style={{cursor:'pointer',fontSize:'.55rem',color:'var(--military-green)'}} onClick={()=>{
                   // Flush any pending blur and capture current cell values
                   clearTimeout(blurTimer.current)
                   if(editingCell){const cid=editingCell;const v=editVal;saveCell(cid,v)}

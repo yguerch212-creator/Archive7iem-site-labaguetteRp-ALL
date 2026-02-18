@@ -149,5 +149,30 @@ async function createAutoAttestation(effectifId, modification, source, sourceId,
   )
 }
 
+// DELETE /api/attestations/:id — Admin only
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) return res.status(403).json({ success: false, message: 'Réservé aux administrateurs' })
+    await pool.execute('DELETE FROM soldbuch_attestations WHERE id = ?', [req.params.id])
+    res.json({ success: true })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
+// PUT /api/attestations/:id/barrer — Officier/Administratif: strike through with reason
+router.put('/:id/barrer', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isRecenseur) {
+      return res.status(403).json({ success: false, message: 'Réservé aux officiers et administratifs' })
+    }
+    const { motif } = req.body
+    if (!motif) return res.status(400).json({ success: false, message: 'Motif requis' })
+    await pool.execute(
+      'UPDATE soldbuch_attestations SET barre = 1, motif_barre = ?, barre_par = ? WHERE id = ?',
+      [motif, req.user.effectif_id || req.user.id, req.params.id]
+    )
+    res.json({ success: true })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
 module.exports = router
 module.exports.createAutoAttestation = createAutoAttestation

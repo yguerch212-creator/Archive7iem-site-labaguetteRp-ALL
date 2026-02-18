@@ -40,6 +40,7 @@ import Telegrammes from './pages/telegrammes/Telegrammes'
 import Sanctions from './pages/sanctions/Sanctions'
 import AffaireView from './pages/sanctions/AffaireView'
 import AffaireLayout from './pages/sanctions/AffaireLayout'
+import AvisRecherche from './pages/sanctions/AvisRecherche'
 import DossierLayout from './pages/dossiers/DossierLayout'
 import AdminStats from './pages/admin/AdminStats'
 import Moderation from './pages/admin/Moderation'
@@ -110,6 +111,7 @@ function AppRouter() {
       <Route path="/dossiers/:id/layout" element={<ProtectedRoute><DossierLayout /></ProtectedRoute>} />
       <Route path="/telegrammes" element={<ProtectedRoute><Telegrammes /></ProtectedRoute>} />
       <Route path="/sanctions" element={<ProtectedRoute><Sanctions /></ProtectedRoute>} />
+      <Route path="/sanctions/avis-recherche" element={<ProtectedRoute><AvisRecherche /></ProtectedRoute>} />
       <Route path="/sanctions/:id" element={<ProtectedRoute><AffaireView /></ProtectedRoute>} />
       <Route path="/sanctions/:id/layout" element={<ProtectedRoute><AffaireLayout /></ProtectedRoute>} />
       

@@ -17,7 +17,7 @@ export default function Blessures() {
   const [showForm, setShowForm] = useState(false)
   const [message, setMessage] = useState(null)
   const [search, setSearch] = useState('')
-  const [form, setForm] = useState({ effectif_id: '', effectif_nom: '', effectif_nom_libre: '', date_blessure: '', type_blessure: '', localisation: '', circonstances: '', gravite: 'legere', sequelles: '', medecin_nom: '', notes: '' })
+  const [form, setForm] = useState({ effectif_id: '', effectif_nom: '', effectif_nom_libre: '', date_blessure: '', type_blessure: '', localisation: '', circonstances: '', gravite: 'legere', sequelles: '', medecin_nom: user?.username || '', notes: '' })
 
   const canCreate = user?.isAdmin || user?.isRecenseur || user?.unite_code === '916S'
 
@@ -93,7 +93,7 @@ export default function Blessures() {
             <div className="form-group"><label className="form-label">Circonstances</label><textarea className="form-input" rows={2} value={form.circonstances} onChange={e => setForm(p => ({ ...p, circonstances: e.target.value }))} placeholder="Combat à Carentan, entraînement au tir..." /></div>
             <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
               <div className="form-group" style={{ flex: 1 }}><label className="form-label">Séquelles</label><input type="text" className="form-input" value={form.sequelles} onChange={e => setForm(p => ({ ...p, sequelles: e.target.value }))} placeholder="Aucune, mobilité réduite..." /></div>
-              <div className="form-group" style={{ flex: 1 }}><label className="form-label">Médecin</label><input type="text" className="form-input" value={form.medecin_nom} onChange={e => setForm(p => ({ ...p, medecin_nom: e.target.value }))} placeholder="Dr. Braun" /></div>
+              <div className="form-group" style={{ flex: 1 }}><label className="form-label">Médecin</label><input type="text" className="form-input" value={form.medecin_nom} readOnly style={{ opacity: 0.7 }} /></div>
             </div>
             <div className="form-group"><label className="form-label">Notes</label><textarea className="form-input" rows={2} value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} /></div>
             <button type="submit" className="btn btn-primary">✓ Enregistrer</button>

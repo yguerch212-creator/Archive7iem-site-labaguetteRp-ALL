@@ -11,7 +11,6 @@ export default function Dashboard() {
   const isPrivileged = user?.isAdmin || user?.isRecenseur || user?.isOfficier
   const [unitDetail, setUnitDetail] = useState(null)
 
-  // Keep old UNIT_DETAILS for history popup compatibility
   const UNIT_DETAILS = {
     '914': { title: '914. Grenadier-Regiment', cmd: 'Oberstleutnant Ernst Heyna (†7.6.44), puis Major Böhmer', strength: '~3 000 hommes (3 bataillons)', sector: 'Secteur ouest — Isigny-sur-Mer / Grandcamp', history: 'Formé à partir des restes de la 321. Infanterie-Division. Vétérans du Front de l\'Est, notamment de Kursk.', composition: ['I. Bataillon', 'II. Bataillon', 'III. Bataillon', '13. Kp. (IG)', '14. Kp. (PaK)'], armament: 'Par bataillon : 60 MG 42, 3 sMG, 12 mortiers 8cm.', dday: 'Le 6 juin, fait face aux Rangers US à la Pointe du Hoc. Contre-attaque vers Omaha.' },
     '915': { title: '915. Grenadier-Regiment', cmd: 'Oberstleutnant Karl Meyer (†7.6.44)', strength: '~3 000 hommes', sector: 'Réserve — Bayeux', history: 'Formé à partir de la 268. ID. Vétérans de Moscou, Rzhev, Koursk.', composition: ['I. Bataillon', 'II. Bataillon', 'III. Bataillon', '13. Kp. (IG)', '14. Kp. (PaK)'], armament: 'Configuration standard Type 44.', dday: 'Contre-attaque vers Colleville le 6 juin. Meyer tué le 7 juin.' },
@@ -26,7 +25,6 @@ export default function Dashboard() {
     'verw': { title: 'Verwaltungstruppen 352', cmd: 'Intendant', strength: '~600 hommes', sector: 'Logistique', history: 'Ravitaillement, transport, boulangerie, boucherie.', composition: ['Ravitaillement', 'Boulangerie', 'Transport', 'Atelier'], armament: 'Véhicules, cuisines roulantes.', dday: 'Maintient la logistique sous bombardements.' },
   }
 
-  /* ─── Historical unit popup (kept for composition section) ─── */
   const renderUnitPopup = () => {
     if (!unitDetail || !UNIT_DETAILS[unitDetail]) return null
     const u = UNIT_DETAILS[unitDetail]
@@ -42,40 +40,80 @@ export default function Dashboard() {
             <button className="btn btn-secondary" onClick={() => setUnitDetail(null)} style={{ fontSize: '0.8rem' }}>✕</button>
           </div>
           <div style={{ display: 'flex', gap: 'var(--space-lg)', flexWrap: 'wrap', marginBottom: 'var(--space-lg)' }}>
-            <div style={{ flex: 1, minWidth: 140 }}>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Commandant</div>
-              <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{u.cmd}</div>
+            {[{l:'Commandant',v:u.cmd},{l:'Effectif',v:u.strength},{l:'Secteur',v:u.sector}].map((x,i) => (
+              <div key={i} style={{ flex: 1, minWidth: 140 }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>{x.l}</div>
+                <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{x.v}</div>
+              </div>
+            ))}
+          </div>
+          {[{t:'📖 Historique',c:<p style={{fontSize:'0.82rem',lineHeight:1.7,margin:0}}>{u.history}</p>},
+            {t:'🏗️ Composition',c:<ul style={{fontSize:'0.8rem',lineHeight:1.7,margin:0,paddingLeft:18}}>{(Array.isArray(u.composition)?u.composition:[u.composition]).map((c,i)=><li key={i}>{c}</li>)}</ul>},
+            {t:'🔫 Armement',c:<p style={{fontSize:'0.82rem',lineHeight:1.7,margin:0}}>{u.armament}</p>},
+            {t:'⚔️ Jour-J — 6 juin 1944',c:<p style={{fontSize:'0.82rem',lineHeight:1.7,margin:0}}>{u.dday}</p>}
+          ].map((s,i) => (
+            <div key={i} style={{ marginBottom: 'var(--space-md)', ...(i===3?{background:'rgba(139,0,0,0.06)',borderLeft:'3px solid #8b0000',padding:'10px 14px',borderRadius:4}:{}) }}>
+              <h4 style={{ margin: '0 0 var(--space-xs)', color: i===3?'#8b0000':'var(--military-green)', fontSize: '0.9rem' }}>{s.t}</h4>
+              {s.c}
             </div>
-            <div style={{ flex: 1, minWidth: 140 }}>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Effectif</div>
-              <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{u.strength}</div>
-            </div>
-            <div style={{ flex: 1, minWidth: 140 }}>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Secteur</div>
-              <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{u.sector}</div>
-            </div>
-          </div>
-          <div style={{ marginBottom: 'var(--space-md)' }}>
-            <h4 style={{ margin: '0 0 var(--space-xs)', color: 'var(--military-green)', fontSize: '0.9rem' }}>📖 Historique</h4>
-            <p style={{ fontSize: '0.82rem', lineHeight: 1.7, margin: 0 }}>{u.history}</p>
-          </div>
-          <div style={{ marginBottom: 'var(--space-md)' }}>
-            <h4 style={{ margin: '0 0 var(--space-xs)', color: 'var(--military-green)', fontSize: '0.9rem' }}>🏗️ Composition</h4>
-            <ul style={{ fontSize: '0.8rem', lineHeight: 1.7, margin: 0, paddingLeft: 18 }}>
-              {(Array.isArray(u.composition) ? u.composition : [u.composition]).map((c, i) => <li key={i}>{c}</li>)}
-            </ul>
-          </div>
-          <div style={{ marginBottom: 'var(--space-md)' }}>
-            <h4 style={{ margin: '0 0 var(--space-xs)', color: 'var(--military-green)', fontSize: '0.9rem' }}>🔫 Armement</h4>
-            <p style={{ fontSize: '0.82rem', lineHeight: 1.7, margin: 0 }}>{u.armament}</p>
-          </div>
-          <div style={{ background: 'rgba(139,0,0,0.06)', borderLeft: '3px solid #8b0000', padding: '10px 14px', borderRadius: 4 }}>
-            <h4 style={{ margin: '0 0 var(--space-xs)', color: '#8b0000', fontSize: '0.9rem' }}>⚔️ Jour-J — 6 juin 1944</h4>
-            <p style={{ fontSize: '0.82rem', lineHeight: 1.7, margin: 0 }}>{u.dday}</p>
-          </div>
+          ))}
         </div>
       </div>
     )
+  }
+
+  useEffect(() => {
+    if (user?.isGuest) return
+    apiClient.get('/stats').then(r => setStats(s => ({ ...s, ...r.data }))).catch(() => {})
+    if (isPrivileged) {
+      apiClient.get('/stats/pending').then(r => setPending(r.data)).catch(() => {})
+    }
+    // Notifications
+    if (user?.effectif_id) {
+      apiClient.get('/telegrammes', { params: { tab: 'recu' } }).then(r => {
+        const unread = r.data.unread || 0
+        setNotifs(n => ({ ...n, telegrammes: unread, total: unread + (isPrivileged ? (pending?.total || 0) : 0) }))
+      }).catch(() => {})
+    }
+  }, [])
+
+  // Update total notifs when pending changes
+  useEffect(() => {
+    setNotifs(n => ({ ...n, total: n.telegrammes + (isPrivileged ? pending.total : 0) }))
+  }, [pending.total])
+
+  const navCards = [
+    { icon: '📋', title: 'Effectifs', desc: 'Fiches & soldbücher', to: '/effectifs' },
+    { icon: '📝', title: 'Rapports', desc: 'Rapports officiels', to: '/rapports' },
+    { icon: '⏱️', title: 'PDS', desc: 'Prise De Service', to: '/pds' },
+    { icon: '🚫', title: 'Interdits de front', desc: 'Sanctions & restrictions', to: '/interdits' },
+    { icon: '🏥', title: 'Médical', desc: 'Visites médicales', to: '/medical' },
+    { icon: '📁', title: 'Dossiers', desc: 'Dossiers & enquêtes', to: '/dossiers' },
+    { icon: '⚖️', title: 'Justice Militaire', desc: 'Affaires, enquêtes & tribunal', to: '/sanctions' },
+    { icon: '⚡', title: 'Télégrammes', desc: 'Messages entre unités', to: '/telegrammes' },
+    { icon: '📚', title: 'Documentation', desc: 'Liens & règlements', to: '/documentation' },
+    { icon: '📜', title: 'Archives', desc: 'Historique & logs RP', to: '/archives' },
+    { icon: '📚', title: 'Bibliothèque', desc: 'Tampons & signatures', to: '/bibliotheque' },
+    { icon: '🔎', title: 'Recherche', desc: 'Recherche globale', to: '/search' },
+    { icon: '📅', title: 'Calendrier', desc: 'Événements RP', to: '/calendrier' },
+    { icon: '📜', title: 'Ordres', desc: 'Ordres & directives', to: '/ordres' },
+    { icon: '📸', title: 'Galerie', desc: 'Photos RP', to: '/galerie' },
+    { icon: '🗺️', title: 'Organigramme', desc: 'Organisation du Korps', to: '/organigramme' },
+    { icon: '📰', title: 'Journal', desc: 'Wacht am Korps', to: '/journal' },
+  ]
+
+  if (user?.isAdmin || user?.isOfficier) {
+    navCards.push({ icon: '🎖️', title: 'Commandement', desc: 'Poste de commandement', to: '/commandement' })
+  }
+
+  if (user?.isAdmin || user?.isOfficier || user?.isRecenseur) {
+    navCards.push({ icon: '🔔', title: 'Validation', desc: 'Modération & validation', to: '/admin/moderation' })
+  }
+  if (user?.isAdmin || user?.isOfficier || user?.isRecenseur) {
+    navCards.push({ icon: '📊', title: 'Statistiques', desc: 'Vue d\'ensemble', to: '/admin/stats' })
+  }
+  if (user?.isAdmin) {
+    navCards.push({ icon: '⚙️', title: 'Administration', desc: 'Utilisateurs & permissions', to: '/admin/users' })
   }
 
   return (
@@ -109,6 +147,78 @@ export default function Dashboard() {
         </p>
       </div>
 
+      {/* Histoire de la 352. Infanterie-Division */}
+      <div className="paper-card" style={{ marginBottom: 'var(--space-xl)' }}>
+        <details>
+          <summary style={{ cursor: 'pointer', fontWeight: 700, fontSize: '1.1rem', textAlign: 'center', listStyle: 'none' }}>
+            📜 Histoire — 352. Infanterie-Division
+          </summary>
+          <p style={{ fontSize: '0.82rem', lineHeight: 1.7, marginTop: 'var(--space-md)' }}>
+            La <strong>352. Infanterie-Division</strong> est formée le <strong>5 novembre 1943</strong> à Saint-Lô (Normandie), sous le commandement du <strong>Generalleutnant Dietrich Kraiss</strong>. Elle intègre des vétérans du Front de l'Est (321. et 268. ID) et des recrues de 17-18 ans.
+            Affectée au <strong>LXXXIV. Armeekorps</strong> (7. Armee), elle défend le secteur Bayeux–Isigny, incluant <strong>Omaha Beach</strong>.
+          </p>
+          <p style={{ fontSize: '0.82rem', lineHeight: 1.7 }}>
+            Le <strong>6 juin 1944</strong>, le 916. Grenadier-Regiment inflige ~2 400 pertes aux Américains à Omaha Beach. La division est progressivement détruite lors de la bataille de Normandie et encerclée dans la <strong>poche de Falaise</strong> (août 1944). Reconstituée comme <strong>352. Volksgrenadier-Division</strong>, elle participe à l'offensive des Ardennes avant de se rendre en avril 1945.
+          </p>
+
+        <details style={{ marginTop: 'var(--space-sm)' }}>
+          <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', color: 'var(--military-green)' }}>
+            🏛️ Organigramme historique IRL
+          </summary>
+          <div style={{ marginTop: 'var(--space-md)', textAlign: 'center' }}>
+            <div style={{ display: 'inline-block', padding: '8px 20px', background: 'rgba(75,83,32,0.15)', border: '2px solid var(--military-green)', borderRadius: 6, fontWeight: 700, fontSize: '0.9rem', marginBottom: 8 }}>7. Armee — GFM Erwin Rommel</div>
+            <div style={{ fontSize: '1.2rem' }}>↓</div>
+            <div style={{ display: 'inline-block', padding: '6px 16px', background: 'rgba(75,83,32,0.1)', border: '1.5px solid var(--military-green)', borderRadius: 5, fontWeight: 600, fontSize: '0.82rem', marginBottom: 8 }}>LXXXIV. Armeekorps — Gen. Erich Marcks (†12.6.44)</div>
+            <div style={{ fontSize: '1.2rem' }}>↓</div>
+            <div style={{ display: 'inline-block', padding: '8px 20px', background: 'rgba(139,0,0,0.08)', border: '2px solid #8b0000', borderRadius: 6, fontWeight: 700, fontSize: '0.95rem', color: '#8b0000', marginBottom: 12 }}>352. Infanterie-Division — GenLt. Dietrich Kraiss (†6.8.44)</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 8 }}>
+              {[
+                { id: '914', name: '914. GR', icon: '⚔️' },{ id: '915', name: '915. GR', icon: '⚔️' },{ id: '916', name: '916. GR ★', icon: '⭐' },
+                { id: 'fus', name: 'Füs.Btl 352', icon: '🏃' },{ id: 'art', name: 'Art.Rgt 352', icon: '💥' },{ id: 'pzjg', name: 'PzJg.Abt 352', icon: '🛡️' },
+                { id: 'pi', name: 'Pi.Btl 352', icon: '⚒️' },{ id: 'na', name: 'Na.Abt 352', icon: '📡' },{ id: 'feld', name: 'Feldgend.', icon: '🔰' },
+                { id: 'san', name: 'San.Kp', icon: '🏥' },{ id: 'verw', name: 'Verw.Tr.', icon: '📦' },
+              ].map((r, i) => (
+                <div key={i} style={{ background: 'rgba(75,83,32,0.12)', border: '1px solid rgba(75,83,32,0.3)', borderRadius: 4, padding: '3px 7px', textAlign: 'center', minWidth: 65, fontSize: '0.6rem', cursor: 'pointer' }}
+                  onClick={() => setUnitDetail(r.id)}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(75,83,32,0.25)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(75,83,32,0.12)'}>
+                  <div>{r.icon}</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.62rem' }}>{r.name}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </details>
+
+        <details style={{ marginTop: 'var(--space-sm)' }}>
+          <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', color: 'var(--military-green)' }}>
+            ⚔️ Batailles majeures
+          </summary>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', marginTop: 'var(--space-md)' }}>
+            {[
+              { date: '6 juin 1944', name: 'Omaha Beach — Jour-J', de: '~1 200', al: '~2 400', desc: 'Défense acharnée du secteur est.', res: '⚔️ Défense tactique' },
+              { date: 'Juin 1944', name: 'Bataille de Saint-Lô', de: '~4 000', al: '~5 000', desc: 'Combats urbains intenses. La ville tombe le 18 juillet.', res: '❌ Défaite stratégique' },
+              { date: '25 juil. 1944', name: 'Opération Cobra', de: '~5 000+', al: '~1 800', desc: 'Percée américaine massive. La 352. ID est disloquée.', res: '❌ Percée alliée' },
+              { date: 'Août 1944', name: 'Poche de Falaise', de: '~10 000 cap.', al: '~1 500', desc: 'Encerclement et destruction quasi-totale.', res: '💀 Destruction' },
+              { date: 'Sept. 1944', name: 'Market Garden', de: '~3 300', al: '~17 200', desc: 'Éléments réorganisés participent à la contre-attaque.', res: '✅ Victoire défensive' },
+              { date: 'Déc. 1944', name: 'Offensive des Ardennes', de: '~80 000', al: '~89 000', desc: 'Participation comme 352. VGD. Gains puis repli.', res: '❌ Échec offensif' },
+            ].map((b, i) => (
+              <div key={i} style={{ background: 'rgba(75,83,32,0.04)', border: '1px solid rgba(75,83,32,0.15)', borderRadius: 4, padding: '8px 12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <strong style={{ fontSize: '0.82rem' }}>{b.name}</strong>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{b.date}</span>
+                </div>
+                <p style={{ margin: '0 0 4px', fontSize: '0.78rem', lineHeight: 1.5 }}>{b.desc}</p>
+                <div style={{ display: 'flex', gap: 12, fontSize: '0.7rem' }}>
+                  <span>🇩🇪 {b.de}</span><span>🇺🇸 {b.al}</span><span style={{ marginLeft: 'auto', fontWeight: 600 }}>{b.res}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </details>
+        </details>
+      </div>
+
       {/* Validation queue (privileged only) */}
       {isPrivileged && pending.total > 0 && (
         <div className="paper-card" style={{ marginBottom: 'var(--space-xl)', borderLeft: '3px solid var(--warning)' }}>
@@ -127,7 +237,7 @@ export default function Dashboard() {
               <Link to="/admin/moderation" className="btn btn-sm btn-secondary">📸 {pending.media} média{pending.media > 1 ? 's' : ''} à modérer</Link>
             )}
             {pending.medical > 0 && (
-              <Link to="/medical/visites" className="btn btn-sm btn-secondary">🏥 {pending.medical} visite{pending.medical > 1 ? 's' : ''} à valider</Link>
+              <Link to="/medical" className="btn btn-sm btn-secondary">🏥 {pending.medical} visite{pending.medical > 1 ? 's' : ''} à valider</Link>
             )}
             {pending.rapports > 0 && (
               <Link to="/rapports" className="btn btn-sm btn-secondary">📝 {pending.rapports} rapport{pending.rapports > 1 ? 's' : ''} à valider</Link>
@@ -135,146 +245,6 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-
-      {/* Section Lore / Histoire */}
-      <div className="paper-card" style={{ marginBottom: 'var(--space-xl)', borderLeft: '3px solid var(--military-green)' }}>
-        <details>
-        <summary style={{ cursor: 'pointer', fontWeight: 700, fontSize: '1.1rem', listStyle: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ transition: 'transform .2s', display: 'inline-block' }}>▶</span> 📜 Histoire du 916. Grenadier-Regiment
-        </summary>
-        <p style={{ fontSize: '0.85rem', lineHeight: 1.7 }}>
-          Le <strong>916. Grenadier-Regiment</strong> est l'un des trois régiments d'infanterie de la <strong>352. Infanterie-Division</strong>, 
-          formée le 14 novembre 1943 à <strong>Saint-Lô, Normandie</strong>, sous le commandement de l'<strong>Oberst Ernst Goth</strong>. 
-          La division est rattachée au <strong>LXXXIV. Armeekorps</strong> (General der Artillerie Erich Marcks), 
-          lui-même subordonné à la <strong>7. Armee</strong> (Generaloberst Friedrich Dollmann), chargée de la défense de la Normandie et de la Bretagne.
-        </p>
-        <p style={{ fontSize: '0.85rem', lineHeight: 1.7 }}>
-          Les cadres du régiment proviennent principalement des survivants du <strong>Grenadier-Regiment 546</strong> 
-          (389. Infanterie-Division), vétérans endurcis du Front de l'Est — notamment de <strong>Stalingrad</strong> et de la 
-          <strong> bataille de Koursk</strong>. Les effectifs sont complétés par de jeunes conscrits de la classe 1926, 
-          des volontaires Volksdeutsch (Alsaciens, Polonais, Tchèques) et environ 1 500 auxiliaires de l'Est (Hiwis).
-        </p>
-        <p style={{ fontSize: '0.85rem', lineHeight: 1.7 }}>
-          En juin 1944, la division atteint <strong>12 734 hommes</strong>. Le 916. GR tient le secteur est d'<strong>Omaha Beach</strong> 
-          lors du <strong>Jour-J (6 juin 1944)</strong>, opposant une résistance féroce aux 16th et 116th Regimental Combat Teams 
-          américains (1st et 29th Infantry Divisions). Les positions préparées, mitrailleuses MG 42, mortiers et artillerie 
-          infligent des pertes considérables — contribuant aux quelque <strong>2 400 victimes américaines</strong> à Omaha ce jour-là.
-        </p>
-        <p style={{ fontSize: '0.85rem', lineHeight: 1.7 }}>
-          Submergé par les bombardements navals et les renforts, le régiment se replie vers l'intérieur. 
-          Les combats acharnés autour de <strong>Saint-Lô</strong> et lors de l'<strong>Opération Cobra</strong> (juillet 1944) 
-          entraînent la destruction quasi-totale de la formation. La <strong>Poche de Falaise</strong> (août 1944) 
-          achève ce qui reste de la 352. ID.
-        </p>
-        <p style={{ fontSize: '0.85rem', lineHeight: 1.7 }}>
-          Les survivants sont réorganisés en <strong>352. Volksgrenadier-Division</strong> pour participer à 
-          l'<strong>Offensive des Ardennes</strong> (Bataille des Bulge, décembre 1944), avant la capitulation finale en 1945.
-        </p>
-        {/* ─── Organigramme historique IRL ─── */}
-        <details style={{ marginTop: 'var(--space-lg)' }}>
-          <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', color: 'var(--military-green)' }}>
-            📋 Composition historique — 352. Infanterie-Division (IRL)
-          </summary>
-          <div style={{ marginTop: 'var(--space-md)', overflowX: 'auto' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
-              {/* 7. Armee */}
-              <div style={{ background: '#1a1a1a', color: '#f5f0e1', padding: '6px 16px', borderRadius: 4, fontWeight: 700, fontSize: '0.75rem', textAlign: 'center' }}>
-                7. Armee<br/><span style={{ fontSize: '0.6rem', fontWeight: 400 }}>Generaloberst Friedrich Dollmann</span>
-              </div>
-              <div style={{ width: 2, height: 10, background: '#555' }}/>
-              {/* LXXXIV. AK */}
-              <div style={{ background: '#4a3728', color: '#f5f0e1', padding: '6px 16px', borderRadius: 4, fontWeight: 700, fontSize: '0.75rem', textAlign: 'center' }}>
-                LXXXIV. Armeekorps<br/><span style={{ fontSize: '0.6rem', fontWeight: 400 }}>General der Artillerie Erich Marcks</span>
-              </div>
-              <div style={{ width: 2, height: 10, background: '#4b5320' }}/>
-              {/* 352. ID */}
-              <div style={{ background: '#4b5320', color: '#f5f0e1', padding: '8px 20px', borderRadius: 4, fontWeight: 700, fontSize: '0.8rem', textAlign: 'center', minWidth: 260 }}>
-                352. Infanterie-Division<br/><span style={{ fontSize: '0.65rem', fontWeight: 400 }}>Generalleutnant Dietrich Kraiß — ~12 734 hommes</span>
-              </div>
-              <div style={{ width: 2, height: 12, background: '#4b5320' }}/>
-              {/* 3 regiments */}
-              <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start', justifyContent: 'center', position: 'relative' }}>
-                <div style={{ position: 'absolute', top: 0, left: '16.6%', right: '16.6%', height: 2, background: '#4b5320' }}/>
-                {[
-                  { id: '914', name: '914. GR', sub: 'Obl. Ernst Heyna', loc: 'Isigny-sur-Mer', color: '#5a6630' },
-                  { id: '915', name: '915. GR', sub: 'Obl. Karl Meyer', loc: 'Rés. Bayeux', color: '#5a6630' },
-                  { id: '916', name: '916. GR ★', sub: 'Obst. Ernst Goth', loc: 'Omaha Beach', color: '#3a4218' },
-                ].map((r, i) => (
-                  <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, minWidth: 120, cursor: 'pointer' }} onClick={() => setUnitDetail(r.id)}>
-                    <div style={{ width: 2, height: 12, background: '#4b5320' }}/>
-                    <div style={{ background: r.color, color: '#f5f0e1', padding: '6px 10px', borderRadius: 4, textAlign: 'center', fontSize: '0.7rem', width: '90%', border: r.name.includes('★') ? '2px solid #c9a227' : 'none' }}>
-                      <div style={{ fontWeight: 700 }}>{r.name}</div>
-                      <div style={{ fontSize: '0.58rem', opacity: 0.8 }}>{r.sub}</div>
-                      <div style={{ fontSize: '0.55rem', opacity: 0.7 }}>{r.loc}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {/* Support units */}
-              <div style={{ width: 2, height: 10, background: '#4b5320' }}/>
-              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 650 }}>
-                {[
-                  { id: 'fus', name: 'Füs.Btl 352', icon: '🏃' },
-                  { id: 'art', name: 'Art.Rgt 352', icon: '💥' },
-                  { id: 'pzjg', name: 'PzJg.Abt 352', icon: '🛡️' },
-                  { id: 'pi', name: 'Pi.Btl 352', icon: '⚒️' },
-                  { id: 'na', name: 'Na.Abt 352', icon: '📡' },
-                  { id: 'feld', name: 'Feldgend.', icon: '🔰' },
-                  { id: 'san', name: 'San.Kp', icon: '🏥' },
-                  { id: 'verw', name: 'Verw.Tr.', icon: '📦' },
-                ].map((u, i) => (
-                  <div key={i} style={{ background: 'rgba(75,83,32,0.12)', border: '1px solid rgba(75,83,32,0.3)', borderRadius: 4, padding: '3px 7px', textAlign: 'center', minWidth: 65, fontSize: '0.6rem', cursor: 'pointer' }} onClick={() => setUnitDetail(u.id)}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(75,83,32,0.25)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(75,83,32,0.12)'}>
-                    <div>{u.icon}</div>
-                    <div style={{ fontWeight: 700, fontSize: '0.62rem' }}>{u.name}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </details>
-
-        <details style={{ marginTop: 'var(--space-sm)' }}>
-          <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', color: 'var(--military-green)' }}>
-            ⚔️ Batailles majeures
-          </summary>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', marginTop: 'var(--space-md)' }}>
-            {[
-              { date: '6 juin 1944', name: 'Omaha Beach — Jour-J', result: 'defense', de: '~1 200', al: '~2 400', desc: 'Défense acharnée du secteur est. Retardement de plusieurs heures avant le repli.', resLabel: '⚔️ Défense tactique' },
-              { date: 'Juin 1944', name: 'Bataille de Saint-Lô', result: 'defeat', de: '~4 000', al: '~5 000', desc: 'Combats urbains intenses. La ville tombe le 18 juillet après des semaines de résistance.', resLabel: '❌ Défaite stratégique' },
-              { date: '25 juil. 1944', name: 'Opération Cobra', result: 'defeat', de: '~5 000+', al: '~1 800', desc: 'Percée américaine massive. Bombardement de saturation. La 352. ID est disloquée.', resLabel: '❌ Percée alliée' },
-              { date: 'Août 1944', name: 'Poche de Falaise', result: 'defeat', de: '~10 000 cap.', al: '~1 500', desc: 'Encerclement. Destruction quasi-totale de la division. Quelques survivants s\'échappent.', resLabel: '💀 Destruction' },
-              { date: 'Sept. 1944', name: 'Market Garden (Hollande)', result: 'victory', de: '~3 300', al: '~17 200', desc: 'Éléments réorganisés participent à la contre-attaque. Échec de l\'opération alliée.', resLabel: '✅ Victoire défensive' },
-              { date: 'Déc. 1944', name: 'Offensive des Ardennes', result: 'defeat', de: '~80 000', al: '~89 000', desc: 'Participation comme 352. VGD. Gains initiaux puis repli devant la contre-offensive.', resLabel: '❌ Échec offensif' },
-            ].map((b, i) => {
-              const colors = { victory: { bg: 'rgba(75,83,32,0.12)', border: '#4b5320' }, defeat: { bg: 'rgba(139,0,0,0.06)', border: '#8b0000' }, defense: { bg: 'rgba(180,150,50,0.08)', border: '#b49632' } }
-              const c = colors[b.result] || colors.defense
-              return (
-                <div key={i} style={{ display: 'flex', gap: 'var(--space-md)', padding: '10px 12px', background: c.bg, borderLeft: `3px solid ${c.border}`, borderRadius: 4, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                  <div style={{ minWidth: 90 }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.8rem' }}>{b.date}</div>
-                    <div style={{ fontSize: '0.65rem', color: c.border, fontWeight: 600, marginTop: 2 }}>{b.resLabel}</div>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 200 }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 2 }}>{b.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 4 }}>{b.desc}</div>
-                    <div style={{ display: 'flex', gap: 'var(--space-md)', fontSize: '0.7rem' }}>
-                      <span>🇩🇪 Pertes : <strong>{b.de}</strong></span>
-                      <span>🇺🇸🇬🇧 Pertes : <strong>{b.al}</strong></span>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </details>
-        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 'var(--space-md)', fontStyle: 'italic' }}>
-          Sources : 352-inf-div.org, Grokipedia, Lexikon der Wehrmacht. 
-          Notre serveur RP portraie la 5. Kompanie, II. Bataillon du 916. Grenadier-Regiment.
-        </p>
-        </details>
-      </div>
 
       {/* Effectifs par unité */}
       {stats.parUnite && stats.parUnite.length > 0 && (

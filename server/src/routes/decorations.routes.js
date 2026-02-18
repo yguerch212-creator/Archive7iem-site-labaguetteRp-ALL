@@ -63,6 +63,11 @@ router.post('/effectif/:id', auth, async (req, res) => {
 // DELETE /api/decorations/effectif-decoration/:id (recenseur+)
 router.delete('/effectif-decoration/:id', auth, recenseur, async (req, res) => {
   try {
+    // Also remove any auto-attestation linked to this medal
+    await pool.execute(
+      "DELETE FROM soldbuch_attestations WHERE source = 'medal' AND source_id = ?",
+      [req.params.id]
+    )
     await pool.execute('DELETE FROM effectif_decorations WHERE id = ?', [req.params.id])
     res.json({ success: true })
   } catch (err) {

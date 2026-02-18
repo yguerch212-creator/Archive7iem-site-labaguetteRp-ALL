@@ -161,6 +161,22 @@ h4.sb-center { font-size:.62rem; margin:.12rem 0; font-weight:700; }
 /* Attestation table scroll if overflow */
 .sb-att-wrap { max-height: 400px; overflow-y: auto; }
 .sb-att-wrap table { margin-bottom: 0; }
+.sb-att-wrap td { vertical-align: middle; position: relative; overflow: visible; }
+
+/* Attestation stamp+signature: stamp overflows like a real Dienststempel */
+.sb-att-stamp { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-8deg); opacity: 0.7; pointer-events: none; z-index: 2; height: 55px; width: auto; }
+/* Pure signature stays contained */
+.sb-att-sig { max-height: 22px; max-width: 55px; object-fit: contain; display: block; }
 /* Pending edit indicator */
 .sb-pending { background: rgba(243,156,18,0.15); }
+
+/* PAGE 1 — Real Soldbuch style */
+.sb-page1-grade { font-size: 1.1rem; margin: 4px 0 0 0; }
+.sb-page1-name { font-size: 1rem; margin: 10px 0 0 0; }
+.sb-grade-box { border: 1.5px solid var(--text-main, #333); padding: 4px 6px; margin: 6px 0; }
+.sb-grade-box .sb-t-inner { border: none; margin: 0; }
+.sb-grade-box .sb-t-inner td { border: none; border-bottom: 1px dotted #999; padding: 2px 4px; }
+.sb-grade-box .sb-t-inner tr:last-child td { border-bottom: none; }
+.sb-grade-box-labels { display: flex; justify-content: space-around; font-size: .55rem; color: var(--text-muted, #777); margin-top: 2px; }
+.sb-page1-field { font-size: .7rem; margin: 3px 0; line-height: 1.4; }
 
