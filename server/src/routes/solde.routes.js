@@ -115,4 +115,29 @@ router.get('/grille/all', optionalAuth, async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
 
+// === CRON AUTO-PAYDAY : Tous les vendredis à 20h (UTC+1 = 19h UTC) ===
+const cron = require('node-cron')
+cron.schedule('0 19 * * 5', async () => {
+  console.log('[SOLDE] Auto-payday déclenché (vendredi 20h)')
+  try {
+    const effectifs = await query('SELECT id, grade_id FROM effectifs WHERE actif = 1')
+    const grades = await query('SELECT id, rang FROM grades')
+    const gradeMap = {}
+    grades.forEach(g => { gradeMap[g.id] = g.rang })
+    let count = 0
+    for (const eff of effectifs) {
+      const rang = gradeMap[eff.grade_id] || 5
+      const keys = Object.keys(SOLDE_PAR_RANG).map(Number).sort((a, b) => a - b)
+      let solde = 15
+      for (const k of keys) { if (rang >= k) solde = SOLDE_PAR_RANG[k] }
+      await pool.execute(
+        'INSERT INTO solde_effectifs (effectif_id, montant, motif, type_operation, created_by) VALUES (?, ?, ?, ?, ?)',
+        [eff.id, solde, 'Wehrsold — Solde hebdomadaire (auto)', 'credit', 1]
+      )
+      count++
+    }
+    console.log(`[SOLDE] Solde versée à ${count} effectifs`)
+  } catch (err) { console.error('[SOLDE] Erreur auto-payday:', err.message) }
+}, { timezone: 'Europe/Paris' })
+
 module.exports = router
