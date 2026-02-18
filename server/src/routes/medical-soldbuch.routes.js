@@ -41,7 +41,9 @@ router.post('/hospitalisations', auth, async (req, res) => {
 })
 
 router.delete('/hospitalisations/:id', auth, async (req, res) => {
-  try { await pool.execute('DELETE FROM hospitalisations WHERE id = ?', [req.params.id]); res.json({ success: true }) }
+  try {
+    if (!req.user.isAdmin && !req.user.isSanitaets && !req.user.isRecenseur) return res.status(403).json({ success: false, message: 'Non autorisé' })
+    await pool.execute('DELETE FROM hospitalisations WHERE id = ?', [req.params.id]); res.json({ success: true }) }
   catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
 
@@ -75,7 +77,9 @@ router.post('/vaccinations', auth, async (req, res) => {
 })
 
 router.delete('/vaccinations/:id', auth, async (req, res) => {
-  try { await pool.execute('DELETE FROM vaccinations WHERE id = ?', [req.params.id]); res.json({ success: true }) }
+  try {
+    if (!req.user.isAdmin && !req.user.isSanitaets && !req.user.isRecenseur) return res.status(403).json({ success: false, message: 'Non autorisé' })
+    await pool.execute('DELETE FROM vaccinations WHERE id = ?', [req.params.id]); res.json({ success: true }) }
   catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
 
@@ -109,7 +113,9 @@ router.post('/blessures', auth, async (req, res) => {
 })
 
 router.delete('/blessures/:id', auth, async (req, res) => {
-  try { await pool.execute('DELETE FROM blessures WHERE id = ?', [req.params.id]); res.json({ success: true }) }
+  try {
+    if (!req.user.isAdmin && !req.user.isSanitaets && !req.user.isRecenseur) return res.status(403).json({ success: false, message: 'Non autorisé' })
+    await pool.execute('DELETE FROM blessures WHERE id = ?', [req.params.id]); res.json({ success: true }) }
   catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
 

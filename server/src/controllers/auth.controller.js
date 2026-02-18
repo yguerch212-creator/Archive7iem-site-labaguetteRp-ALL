@@ -18,8 +18,8 @@ async function login(req, res) {
       FROM users u
       LEFT JOIN unites un ON u.unite_id = un.id
       LEFT JOIN grades g ON g.id = u.grade_id
-      WHERE u.username = ? OR u.nom = ?
-    `, [username, username])
+      WHERE u.username = ?
+    `, [username])
 
     if (!user) {
       logActivity(req, 'login_failed', 'user', null, `Tentative: ${username}`)

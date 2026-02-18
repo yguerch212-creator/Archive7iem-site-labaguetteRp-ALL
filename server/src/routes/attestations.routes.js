@@ -22,7 +22,7 @@ router.get('/:effectifId', optionalAuth, async (req, res) => {
 // POST /api/attestations/:effectif_id — Manual attestation (officier/admin/administratif)
 router.post('/:effectifId', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isRecenseur) {
+    if (!req.user.isOfficier && !req.user.isRecenseur) {
       return res.status(403).json({ success: false, message: 'Réservé aux officiers et administratifs' })
     }
     const { modification, page, date_attestation } = req.body
@@ -44,8 +44,8 @@ router.post('/:effectifId', auth, async (req, res) => {
 // Sign an attestation
 router.put('/:attestationId/sign', auth, async (req, res) => {
   try {
-    if (!req.user.isOfficier && !req.user.isRecenseur && !req.user.isAdmin) {
-      return res.status(403).json({ success: false, message: 'Non autorisé' })
+    if (!req.user.isOfficier && !req.user.isRecenseur) {
+      return res.status(403).json({ success: false, message: 'Seuls les officiers et administratifs peuvent signer' })
     }
     const { signature_data } = req.body
     await pool.execute(
@@ -161,7 +161,7 @@ router.delete('/:id', auth, async (req, res) => {
 // PUT /api/attestations/:id/barrer — Officier/Administratif: strike through with reason
 router.put('/:id/barrer', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isRecenseur) {
+    if (!req.user.isOfficier && !req.user.isRecenseur) {
       return res.status(403).json({ success: false, message: 'Réservé aux officiers et administratifs' })
     }
     const { motif } = req.body

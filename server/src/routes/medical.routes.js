@@ -133,9 +133,10 @@ router.delete('/:id', auth, async (req, res) => {
 
 // PUT /api/medical/:id/valider — validate visite (officier sanitäts or admin)
 router.put('/:id/valider', auth, async (req, res) => {
-  // Only admin, officier, or sanitäts can validate
-  if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isSanitaets) {
-    return res.status(403).json({ success: false, message: 'Officier Sanitäts requis' })
+  // Only officier Sanitäts or admin can validate
+  const canValidateMedical = (req.user.isSanitaets && req.user.isOfficier) || req.user.isAdmin
+  if (!canValidateMedical) {
+    return res.status(403).json({ success: false, message: 'Seul un officier Sanitäts peut valider' })
   }
   const { signature_data } = req.body
   try {

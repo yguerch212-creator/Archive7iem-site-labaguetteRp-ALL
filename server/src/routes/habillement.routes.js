@@ -45,8 +45,8 @@ router.post('/demandes', auth, async (req, res) => {
 // PUT /api/habillement/demandes/:id/validate — Approuver ou refuser
 router.put('/demandes/:id/validate', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isRecenseur)
-      return res.status(403).json({ success: false, message: 'Non autorisé' })
+    if (!req.user.isOfficier)
+      return res.status(403).json({ success: false, message: 'Seuls les officiers peuvent valider les demandes d\'habillement' })
     const { statut, reponse } = req.body
     if (!['approuve', 'refuse'].includes(statut))
       return res.status(400).json({ success: false, message: 'Statut invalide' })

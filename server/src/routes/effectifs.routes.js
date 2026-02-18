@@ -222,7 +222,7 @@ router.put('/:id', auth, recenseur, async (req, res) => {
         const { createAutoAttestation } = require('./attestations.routes')
         const newGrade = await queryOne('SELECT nom_complet FROM grades WHERE id = ?', [f.grade_id])
         await createAutoAttestation(parseInt(req.params.id), `Promotion : ${newGrade?.nom_complet || 'nouveau grade'}`, 'promotion', null, req.user.id, '1')
-      } catch {}
+      } catch(e) { console.error("Auto-op error:", e.message) }
     }
     res.json({ success: true })
   } catch (err) {

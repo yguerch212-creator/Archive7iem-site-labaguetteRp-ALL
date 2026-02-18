@@ -53,7 +53,7 @@ router.post('/effectif/:id', auth, async (req, res) => {
       const { createAutoAttestation } = require('./attestations.routes')
       const decoName = nom_custom || (decoration_id ? (await queryOne('SELECT nom FROM decorations WHERE id = ?', [decoration_id]))?.nom : 'Décoration')
       await createAutoAttestation(parseInt(req.params.id), `Décoration : ${decoName}`, 'medal', result.insertId, req.user.id, '22')
-    } catch {}
+    } catch(e) { console.error("Auto-op error:", e.message) }
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })

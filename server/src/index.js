@@ -53,7 +53,14 @@ const generalLimiter = rateLimit({ windowMs: 1 * 60 * 1000, max: 300, validate: 
 
 // Middlewares
 app.use(helmet({ crossOriginResourcePolicy: false }))
-app.use(cors({ origin: true, credentials: true }))
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://localhost:5173,http://76.13.43.180,https://archives-7earmekorps.com').split(',')
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) cb(null, true)
+    else cb(new Error('Not allowed by CORS'))
+  },
+  credentials: true
+}))
 app.use(generalLimiter)
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
@@ -220,8 +227,8 @@ app.get('/api/stats/archives', async (req, res) => {
       UNION ALL
       (SELECT 'documentation', CAST(d.id AS CHAR), d.titre, CONCAT(u.prenom,' ',u.nom), NULL, d.created_at FROM documentation d LEFT JOIN users u ON u.id = d.created_by WHERE d.statut = 'approuve' AND d.is_repertoire = 0)
       ORDER BY created_at DESC
-      LIMIT ${parseInt(limit)}
-    `)
+      LIMIT ?
+    `, [parseInt(limit) || 30])
 
     res.json({ success: true, data: rows })
   } catch (err) {

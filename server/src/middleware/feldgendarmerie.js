@@ -5,9 +5,7 @@ module.exports = function feldgendarmerie(req, res, next) {
     return res.status(403).json({ success: false, message: 'Accès refusé' })
   }
   
-  const { isAdmin, isOfficier, unite_id } = req.user
-  // Unite ID 2 = 254. Feldgendarmerie — check by querying unite code instead
-  const isFeldgendarmerie = req.user.unite_code === '254' || req.user.unite_nom?.includes('Feldgendarmerie')
+  const { isAdmin, isOfficier, isFeldgendarmerie } = req.user
   
   if (isAdmin || isOfficier || isFeldgendarmerie) {
     return next()

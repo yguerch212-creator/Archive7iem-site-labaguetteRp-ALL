@@ -149,7 +149,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       if (value) newCells[cellId] = value; else delete newCells[cellId]
       setCells(newCells)
       setEditingCell(null)
-      try { await api.put(`/soldbuch/${e.id}/book-cells`, { cellId, value }) } catch {}
+      try { await api.put(`/soldbuch/${e.id}/book-cells`, { cellId, value }) } catch(err) { console.error('Save cell error:', err) }
     } else if (canEditPending) {
       // Submit for validation
       setEditingCell(null)
@@ -478,13 +478,23 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
           Object.entries(preset.equip).forEach(([type,val])=>{nc[`w8a-${type}-marque`]=val})
           // Habillement (page 6) — distribute tenue items across proper columns
           const habItems = { calot: [], veste: [], pantalon: [], manteau: [] }
+          const equipFallback = []
           preset.tenue.forEach(item => {
             const lo = item.toLowerCase()
             if (lo.includes('mütze') || lo.includes('helm') || lo.includes('schirm') || lo.includes('calot') || lo.includes('tarnnetz')) habItems.calot.push(item)
-            else if (lo.includes('bluse') || lo.includes('jacke') || lo.includes('splitter')) habItems.veste.push(item)
-            else if (lo.includes('hose') || lo.includes('reit')) habItems.pantalon.push(item)
+            else if (lo.includes('bluse') || lo.includes('jacke') || lo.includes('splitter') || lo.includes('armbinde')) habItems.veste.push(item)
+            else if (lo.includes('hose') || lo.includes('reit') || lo.includes('gamasche')) habItems.pantalon.push(item)
             else if (lo.includes('mantel') || lo.includes('zelt') || lo.includes('tarn')) habItems.manteau.push(item)
-            else habItems.calot.push(item) // fallback — misc gear
+            else equipFallback.push(item) // equipment items → page 7 cells, NOT calot
+          })
+          equipFallback.forEach(item => {
+            const lo = item.toLowerCase()
+            if (lo.includes('stiefel') || lo.includes('schuhe')) nc['eq-botte-1'] = item
+            else if (lo.includes('koppel') || lo.includes('riemen')) nc['eq-ceint-1'] = item
+            else if (lo.includes('beutel') || lo.includes('tornister') || lo.includes('gepäck') || lo.includes('tasche') || lo.includes('affe')) nc['eq-sac-1'] = item
+            else if (lo.includes('flasche')) nc['eq-gourde-1'] = item
+            else if (lo.includes('geschirr')) nc['eq-gamelle-1'] = item
+            else if (lo.includes('marke') || lo.includes('päckchen') || lo.includes('soldbuch')) nc['eq-divers-'+(Object.keys(nc).filter(k=>k.startsWith('eq-divers')).length+1)] = item
           })
           // Fill rows: each row = one item across the 4 columns
           const maxRows = Math.max(habItems.calot.length, habItems.veste.length, habItems.pantalon.length, habItems.manteau.length, 1)

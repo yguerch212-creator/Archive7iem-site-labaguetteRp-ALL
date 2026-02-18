@@ -6,7 +6,7 @@ const auth = require('../middleware/auth')
 const admin = require('../middleware/admin')
 
 // GET /api/admin/groups — List all groups
-router.get('/groups', auth, async (req, res) => {
+router.get('/groups', auth, admin, async (req, res) => {
   try {
     const rows = await query('SELECT id, name FROM `groups` ORDER BY name')
     res.json({ success: true, data: rows })
@@ -143,22 +143,15 @@ router.put('/users/:id/toggle-active', auth, admin, async (req, res) => {
   }
 })
 
-// GET /api/admin/groups — List all groups
-router.get('/groups', auth, admin, async (req, res) => {
-  try {
-    const groups = await query('SELECT * FROM `groups` ORDER BY name')
-    res.json({ success: true, data: groups })
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
-  }
-})
+// (duplicate /groups route removed — defined at top of file)
 
 // GET /api/admin/logs — Activity logs (admin only)
 router.get('/logs', auth, admin, async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 50, 200)
     const rows = await query(
-      `SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT ${parseInt(limit)}`
+      'SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT ?',
+      [parseInt(limit) || 50]
     )
     res.json({ success: true, data: rows })
   } catch (err) {

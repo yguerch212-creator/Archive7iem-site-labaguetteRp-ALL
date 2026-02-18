@@ -253,6 +253,9 @@ export default function DossierLayout() {
 
   const sel = selectedBlock ? currentBlocks.find(b => b.id === selectedBlock) : null
 
+  const isMobile = window.innerWidth < 768
+  if (isMobile) return <MobileLayoutWarning />
+
   return (
     <div className="dossier-detail-page">
       {/* Header */}

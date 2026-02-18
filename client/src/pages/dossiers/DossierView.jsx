@@ -51,7 +51,7 @@ export default function DossierView() {
 
   const deleteEntry = async (entryId) => {
     if (!confirm('Supprimer cette entrée ?')) return
-    try { await api.delete(`/dossiers/entrees/${entryId}`); load() } catch {}
+    try { await api.delete(`/dossiers/entrees/${entryId}`); load() } catch(err) { alert(err.response?.data?.message || 'Erreur suppression') }
   }
 
   const formatDate = (d) => {

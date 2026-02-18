@@ -132,7 +132,7 @@ export default function PDS() {
 
   const traiterPermission = async (id, statut) => {
     const notes = statut === 'Refusee' ? prompt('Motif du refus :') : null
-    try { await api.put(`/pds/permissions/${id}/traiter`, { statut, notes }); loadPermissions() } catch {}
+    try { await api.put(`/pds/permissions/${id}/traiter`, { statut, notes }); loadPermissions() } catch(err) { alert(err.response?.data?.message || 'Erreur traitement') }
   }
 
   const unites = [...new Set(allData.map(d => d.unite_code))].sort()
