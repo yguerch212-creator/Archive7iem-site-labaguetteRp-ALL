@@ -2,6 +2,7 @@ const router = require('express').Router()
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
 const { optionalAuth } = require('../middleware/auth')
+const { createAutoAttestation } = require('./attestations.routes')
 
 // GET /api/habillement/demandes — List demandes (own for soldiers, all for officers)
 router.get('/demandes', auth, async (req, res) => {
@@ -49,10 +50,30 @@ router.put('/demandes/:id/validate', auth, async (req, res) => {
     const { statut, reponse } = req.body
     if (!['approuve', 'refuse'].includes(statut))
       return res.status(400).json({ success: false, message: 'Statut invalide' })
+    // Get the demande first to know effectif_id
+    const demande = await queryOne('SELECT * FROM demandes_habillement WHERE id = ?', [req.params.id])
+    if (!demande) return res.status(404).json({ success: false, message: 'Demande introuvable' })
+    if (demande.statut !== 'en_attente') return res.status(400).json({ success: false, message: 'Demande déjà traitée' })
+
     await pool.execute(
       'UPDATE demandes_habillement SET statut = ?, reponse = ?, traite_par = ? WHERE id = ?',
       [statut, reponse || null, req.user.effectif_id || null, req.params.id]
     )
+
+    // If approved, create attestation in Soldbuch
+    if (statut === 'approuve' && demande.effectif_id) {
+      try {
+        await createAutoAttestation(
+          demande.effectif_id,
+          `Habillement approuvé : ${demande.description}`,
+          'habillement',
+          demande.id,
+          req.user.id,
+          '6' // page 6 = habillement
+        )
+      } catch (e) { /* non-blocking */ }
+    }
+
     res.json({ success: true })
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })

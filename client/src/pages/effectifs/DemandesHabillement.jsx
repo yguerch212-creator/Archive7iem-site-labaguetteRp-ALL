@@ -26,13 +26,14 @@ export default function DemandesHabillement() {
 
   const validate = async (id, statut) => {
     try {
-      await api.put(`/habillement/demandes/${id}/validate`, { statut, reponse })
+      const res = await api.put(`/habillement/demandes/${id}/validate`, { statut, reponse })
+      if (res.data?.success === false) throw new Error(res.data.message || 'Erreur')
       setMessage({ type: 'success', text: statut === 'approuve' ? 'Demande approuvée' : 'Demande refusée' })
       setSelected(null)
       setReponse('')
-      load()
+      await load()
     } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur' })
+      setMessage({ type: 'error', text: err.response?.data?.message || err.message || 'Erreur' })
     }
   }
 

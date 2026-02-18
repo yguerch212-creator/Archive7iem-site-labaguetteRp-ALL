@@ -264,8 +264,14 @@ app.get('/api/stats/pending', auth, async (req, res) => {
       const incidents = await queryOne("SELECT COUNT(*) as c FROM rapports WHERE type = 'incident' AND published = 1 AND affaire_id IS NULL")
       incidentsCount = incidents?.c || 0
     }
+    // Habillement en attente
+    let habillementCount = 0
+    if (req.user.isOfficier || req.user.isAdmin) {
+      const hab = await queryOne("SELECT COUNT(*) as c FROM demandes_habillement WHERE statut = 'en_attente'")
+      habillementCount = hab?.c || 0
+    }
     // interdits ne comptent PAS dans le total (accès rapide seulement)
-    res.json({ docs: docsCount, permissions: permsCount, interdits: interditsCount, media: mediaCount, medical: medicalCount, rapports: rapportsCount, incidents: incidentsCount, total: docsCount + permsCount + mediaCount + medicalCount + rapportsCount + incidentsCount })
+    res.json({ docs: docsCount, permissions: permsCount, interdits: interditsCount, media: mediaCount, medical: medicalCount, rapports: rapportsCount, incidents: incidentsCount, habillement: habillementCount, total: docsCount + permsCount + mediaCount + medicalCount + rapportsCount + incidentsCount + habillementCount })
   } catch (err) {
     res.json({ docs: 0, permissions: 0, total: 0 })
   }

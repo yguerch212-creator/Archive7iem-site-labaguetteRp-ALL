@@ -245,6 +245,9 @@ export default function Dashboard() {
             {pending.rapports > 0 && (
               <Link to="/rapports" className="btn btn-sm btn-secondary">📝 {pending.rapports} rapport{pending.rapports > 1 ? 's' : ''} à valider</Link>
             )}
+            {pending.habillement > 0 && (
+              <Link to="/habillement" className="btn btn-sm btn-secondary">👔 {pending.habillement} demande{pending.habillement > 1 ? 's' : ''} d'habillement</Link>
+            )}
           </div>
         </div>
       )}

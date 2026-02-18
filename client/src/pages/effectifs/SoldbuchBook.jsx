@@ -476,25 +476,47 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
           const nc = {...cells}
           // Armes et matériel (page 8a)
           Object.entries(preset.equip).forEach(([type,val])=>{nc[`w8a-${type}-marque`]=val})
-          // Habillement (page 6) — tenue items go into tenue-N cells
-          preset.tenue.forEach((item,i)=>{nc[`tenue-${i+1}`]=item})
+          // Habillement (page 6) — distribute tenue items across proper columns
+          const habItems = { calot: [], veste: [], pantalon: [], manteau: [] }
+          preset.tenue.forEach(item => {
+            const lo = item.toLowerCase()
+            if (lo.includes('mütze') || lo.includes('helm') || lo.includes('schirm') || lo.includes('calot') || lo.includes('tarnnetz')) habItems.calot.push(item)
+            else if (lo.includes('bluse') || lo.includes('jacke') || lo.includes('splitter')) habItems.veste.push(item)
+            else if (lo.includes('hose') || lo.includes('reit')) habItems.pantalon.push(item)
+            else if (lo.includes('mantel') || lo.includes('zelt') || lo.includes('tarn')) habItems.manteau.push(item)
+            else habItems.calot.push(item) // fallback — misc gear
+          })
+          // Fill rows: each row = one item across the 4 columns
+          const maxRows = Math.max(habItems.calot.length, habItems.veste.length, habItems.pantalon.length, habItems.manteau.length, 1)
+          for (let i = 0; i < maxRows; i++) {
+            if (habItems.calot[i]) nc[`tenue-${i+1}`] = habItems.calot[i]
+            if (habItems.veste[i]) nc[`hab-veste-${i+1}`] = habItems.veste[i]
+            if (habItems.pantalon[i]) nc[`hab-pant-${i+1}`] = habItems.pantalon[i]
+            if (habItems.manteau[i]) nc[`hab-mant-${i+1}`] = habItems.manteau[i]
+          }
           // Équipement (page 7) — map known items
           const eqMap = {}
           preset.tenue.forEach(item => {
             const lo = item.toLowerCase()
             if (lo.includes('stiefel') || lo.includes('schuhe') || lo.includes('gamasche')) eqMap['botte'] = item
-            else if (lo.includes('helm')) eqMap['casque'] = item
-            else if (lo.includes('brotbeutel') || lo.includes('tornister') || lo.includes('gepäck') || lo.includes('tasche')) eqMap['sac'] = item
+            else if (lo.includes('brotbeutel') || lo.includes('tornister') || lo.includes('gepäck') || lo.includes('tasche') || lo.includes('affe')) eqMap['sac'] = item
             else if (lo.includes('koppel') || lo.includes('riemen')) eqMap['ceint'] = item
-            else if (lo.includes('flasche') || lo.includes('flasche')) eqMap['gourde'] = item
+            else if (lo.includes('flasche')) eqMap['gourde'] = item
+            else if (lo.includes('geschirr')) eqMap['gamelle'] = item
           })
           Object.entries(eqMap).forEach(([k,v])=>{nc[`eq-${k}-1`]=v})
           setCells(nc)
-          // Save all to backend
-          const saves = []
-          Object.entries(preset.equip).forEach(([type,val])=>{saves.push(api.put(`/soldbuch/${e.id}/book-cells`,{cellId:`w8a-${type}-marque`,value:val}).catch(()=>{}))})
-          preset.tenue.forEach((item,i)=>{saves.push(api.put(`/soldbuch/${e.id}/book-cells`,{cellId:`tenue-${i+1}`,value:item}).catch(()=>{}))})
-          Object.entries(eqMap).forEach(([k,v])=>{saves.push(api.put(`/soldbuch/${e.id}/book-cells`,{cellId:`eq-${k}-1`,value:v}).catch(()=>{}))})
+          // Save all to backend — deduplicate cellIds
+          const saveMap = {}
+          Object.entries(preset.equip).forEach(([type,val])=>{saveMap[`w8a-${type}-marque`]=val})
+          for (let i = 0; i < maxRows; i++) {
+            if (habItems.calot[i]) saveMap[`tenue-${i+1}`] = habItems.calot[i]
+            if (habItems.veste[i]) saveMap[`hab-veste-${i+1}`] = habItems.veste[i]
+            if (habItems.pantalon[i]) saveMap[`hab-pant-${i+1}`] = habItems.pantalon[i]
+            if (habItems.manteau[i]) saveMap[`hab-mant-${i+1}`] = habItems.manteau[i]
+          }
+          Object.entries(eqMap).forEach(([k,v])=>{saveMap[`eq-${k}-1`]=v})
+          const saves = Object.entries(saveMap).map(([cellId,value])=>api.put(`/soldbuch/${e.id}/book-cells`,{cellId,value}).catch(()=>{}))
           ev.target.value=''
         }}>
           <option value="">⚙️ Remplir par spécialité...</option>
