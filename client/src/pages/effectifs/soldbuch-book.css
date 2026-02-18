@@ -83,22 +83,28 @@
   margin: 120px auto;
 }
 
-/* Landscape content within a portrait page — like real Soldbuch 
-   The inner wrapper rotates 90° CW so tables use page height as width */
+/* Landscape content within a portrait page — like real Soldbuch.
+   Rotated -90° (CCW): tilt book CW to read normally.
+   Uses page height as content width. */
 .sb-land {
-  flex: 1;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 490px;   /* ≈ page content height */
+  height: 310px;  /* ≈ page content width */
+  transform: translate(-50%, -50%) rotate(-90deg);
   display: flex;
   flex-direction: column;
-  transform: rotate(90deg);
-  transform-origin: center center;
-  width: 500px;
-  margin-left: -80px; /* center the rotated content: (500-340)/2 */
-  margin-top: 80px;
-  margin-bottom: 80px;
+  padding: 0.4rem;
+  box-sizing: border-box;
+  overflow: hidden;
 }
-.sb-land .sb-t { font-size: 0.48rem; }
-.sb-land .sb-t th { font-size: 0.4rem; }
+.sb-page:has(.sb-land) { position: relative; overflow: visible; }
+.sb-land .sb-t { font-size: 0.48rem; table-layout: auto; width: 100%; }
+.sb-land .sb-t th { font-size: 0.42rem; }
+.sb-land .sb-t td { font-size: 0.44rem; }
 .sb-land .sb-ec, .sb-land .sb-ec input { font-size: 0.42rem; }
+.sb-land h4 { font-size: 0.72rem; margin: 0 0 0.2rem; }
 
 /* ---- PAGE ---- */
 .sb-page {
