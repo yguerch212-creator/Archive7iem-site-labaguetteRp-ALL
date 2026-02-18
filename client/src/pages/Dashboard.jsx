@@ -105,9 +105,7 @@ export default function Dashboard() {
   if (user?.isAdmin || user?.isOfficier) {
     navCards.push({ icon: '🎖️', title: 'Commandement', desc: 'Poste de commandement', to: '/commandement' })
   }
-  if (user?.isAdmin || user?.isOfficier || user?.isRecenseur) {
-    navCards.push({ icon: '👔', title: 'Habillement', desc: 'Demandes d\'habillement', to: '/habillement' })
-  }
+  // Habillement intégré dans la carte Validation — pas de carte séparée
 
   if (user?.isAdmin || user?.isOfficier || user?.isRecenseur) {
     navCards.push({ icon: '🔔', title: 'Validation', desc: 'Modération & validation', to: '/admin/moderation' })
