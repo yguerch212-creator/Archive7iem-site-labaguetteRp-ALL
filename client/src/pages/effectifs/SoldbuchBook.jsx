@@ -121,7 +121,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
   const[habDesc,setHabDesc]=useState('')
   const[habMotif,setHabMotif]=useState('')
   const[habMsg,setHabMsg]=useState('')
-  const[rotation,setRotation]=useState(0) // 0, 90, 180, 270
+  const[landscape,setLandscape]=useState(false)
   const fmtD=(d)=>{if(!d)return'—';try{return new Date(d).toLocaleDateString('fr-FR')}catch{return d}}
   const e=effectif, theme=getTheme(e.unite_code), isLw=theme==='luftwaffe'
   const branch={luftwaffe:'Luftwaffe',marine:'Kriegsmarine'}[theme]||null
@@ -773,16 +773,14 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
   </div>)
 
   return(
-    <div className={`sb-wrapper sb-theme-${theme}`}>
-      <div className="sb-rotate-container" style={rotation?{transform:`rotate(${rotation}deg)`,transformOrigin:'center center',transition:'transform 0.4s ease'}:{}}>
-        {S[spread]}
-      </div>
+    <div className={`sb-wrapper sb-theme-${theme}${landscape?' sb-landscape':''}`}>
+      {S[spread]}
       <div className="sb-nav">
         <button onClick={()=>setIsOpen(false)}>📕 Couverture</button>
         <button onClick={()=>setSpread(s=>Math.max(0,s-1))} disabled={spread===0}>◀</button>
         <span className="sb-nav-info">{spread===0?'Règl./P.1':`P.${spread*2}–${spread*2+1}`} ({spread+1}/{TOTAL})</span>
         <button onClick={()=>setSpread(s=>Math.min(TOTAL-1,s+1))} disabled={spread>=TOTAL-1}>▶</button>
-        <button onClick={()=>setRotation(r=>(r+90)%360)} title="Tourner le document">🔄</button>
+        <button onClick={()=>setLandscape(l=>!l)} title={landscape?'Mode portrait':'Mode paysage (tableaux larges)'}>{landscape?'📐 Portrait':'📐 Paysage'}</button>
       </div>
 
       {/* Habillement Request Popup */}
