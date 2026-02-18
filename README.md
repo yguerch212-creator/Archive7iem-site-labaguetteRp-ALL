@@ -158,6 +158,45 @@ pm2 start server/src/index.js --name archives7e
 
 ---
 
+## 🔗 Accès & Partage
+
+### Liens de partage (visiteurs)
+
+Chaque page dispose d'un bouton **🔗 Partager** qui génère un lien en lecture seule. Les visiteurs peuvent consulter le contenu sans créer de compte — idéal pour partager un rapport, un Soldbuch ou un dossier avec quelqu'un qui n'est pas inscrit.
+
+### Système de rôles
+
+| Groupe | Permissions |
+|--------|------------|
+| Administration | Accès total, gestion utilisateurs et système |
+| État-Major | Équivalent administrateur |
+| Officier | Validation rapports/docs, gestion effectifs, signatures |
+| Sous-officier | Création rapports/docs (validation par officier requise) |
+| Administratif | Gestion administrative, signatures, recensement |
+| Feldgendarmerie | Sanctions, affaires judiciaires, interdits de front |
+| Sanitäts | Visites médicales, hospitalisations, vaccinations |
+
+### Comptes par défaut
+
+| Utilisateur | Mot de passe | Rôle |
+|-------------|-------------|------|
+| `admin` | `Admin7e2025!` | Administrateur |
+
+> ⚠️ Changez les mots de passe dès la première connexion.
+
+---
+
+## 📦 Migration vers un autre serveur
+
+Un guide complet pas-à-pas est disponible dans [`docs/MIGRATION_COMPLETE.md`](docs/MIGRATION_COMPLETE.md) :
+- Prérequis serveur
+- Installation Docker, Node.js, Nginx
+- Configuration `.env` et base de données
+- Import des données et uploads
+- HTTPS et sauvegardes automatiques
+
+---
+
 ## 🔐 Sécurité
 
 - Mots de passe hashés avec **bcrypt** (salt 10)
