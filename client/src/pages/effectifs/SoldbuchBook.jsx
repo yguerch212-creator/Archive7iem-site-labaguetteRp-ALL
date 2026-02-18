@@ -492,6 +492,12 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
           const preset = EQUIP_PRESETS[ev.target.value]
           if(!preset) return
           const nc = {...cells}
+          // Clear old preset data first
+          for (let i = 1; i <= 8; i++) {
+            nc[`tenue-${i}`] = ''; nc[`hab-veste-${i}`] = ''; nc[`hab-pant-${i}`] = ''; nc[`hab-mant-${i}`] = ''
+            nc[`eq-botte-${i}`] = ''; nc[`eq-casque-${i}`] = ''; nc[`eq-sac-${i}`] = ''; nc[`eq-ceint-${i}`] = ''; nc[`eq-gourde-${i}`] = ''; nc[`eq-date-${i}`] = ''
+          }
+          Object.keys(nc).filter(k => k.startsWith('w8a-') && k.endsWith('-marque')).forEach(k => { nc[k] = '' })
           // Armes et matériel (page 8a)
           Object.entries(preset.equip).forEach(([type,val])=>{nc[`w8a-${type}-marque`]=val})
           // Habillement (page 6) — distribute tenue items across proper columns
@@ -534,8 +540,11 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
           })
           Object.entries(eqMap).forEach(([k,v])=>{nc[`eq-${k}-1`]=v})
           setCells(nc)
-          // Save all to backend — deduplicate cellIds
+          // Save all to backend — include cleared cells
           const saveMap = {}
+          for (let i = 1; i <= 8; i++) {
+            saveMap[`tenue-${i}`] = nc[`tenue-${i}`] || ''; saveMap[`hab-veste-${i}`] = nc[`hab-veste-${i}`] || ''; saveMap[`hab-pant-${i}`] = nc[`hab-pant-${i}`] || ''; saveMap[`hab-mant-${i}`] = nc[`hab-mant-${i}`] || ''
+          }
           Object.entries(preset.equip).forEach(([type,val])=>{saveMap[`w8a-${type}-marque`]=val})
           for (let i = 0; i < maxRows; i++) {
             if (habItems.calot[i]) saveMap[`tenue-${i+1}`] = habItems.calot[i]
