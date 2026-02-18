@@ -9,16 +9,16 @@ router.get('/demandes', auth, async (req, res) => {
     let sql, params
     if (req.user.isAdmin || req.user.isOfficier || req.user.isRecenseur) {
       sql = `SELECT d.*, CONCAT(e.prenom,' ',e.nom) as effectif_nom,
-             CONCAT(v.prenom,' ',v.nom) as valide_par_nom
+             CONCAT(v.prenom,' ',v.nom) as traite_par_nom
              FROM demandes_habillement d
              LEFT JOIN effectifs e ON e.id = d.effectif_id
-             LEFT JOIN effectifs v ON v.id = d.valide_par
+             LEFT JOIN effectifs v ON v.id = d.traite_par
              ORDER BY d.created_at DESC LIMIT 200`
       params = []
     } else {
-      sql = `SELECT d.*, CONCAT(v.prenom,' ',v.nom) as valide_par_nom
+      sql = `SELECT d.*, CONCAT(v.prenom,' ',v.nom) as traite_par_nom
              FROM demandes_habillement d
-             LEFT JOIN effectifs v ON v.id = d.valide_par
+             LEFT JOIN effectifs v ON v.id = d.traite_par
              WHERE d.effectif_id = ? ORDER BY d.created_at DESC`
       params = [req.user.effectif_id]
     }
@@ -46,12 +46,12 @@ router.put('/demandes/:id/validate', auth, async (req, res) => {
   try {
     if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isRecenseur)
       return res.status(403).json({ success: false, message: 'Non autorisé' })
-    const { statut, reponse_motif } = req.body
+    const { statut, reponse } = req.body
     if (!['approuve', 'refuse'].includes(statut))
       return res.status(400).json({ success: false, message: 'Statut invalide' })
     await pool.execute(
-      'UPDATE demandes_habillement SET statut = ?, reponse_motif = ?, valide_par = ?, valide_at = NOW() WHERE id = ?',
-      [statut, reponse_motif || null, req.user.effectif_id || null, req.params.id]
+      'UPDATE demandes_habillement SET statut = ?, reponse = ?, traite_par = ? WHERE id = ?',
+      [statut, reponse || null, req.user.effectif_id || null, req.params.id]
     )
     res.json({ success: true })
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }

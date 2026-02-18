@@ -64,6 +64,26 @@ const EQUIP_PRESETS = {
   'Offizier': {
     equip: { 'Pistolet': 'Walther P38', 'Jumelles': 'Dienstglas 6x30', 'Boussole': 'Marschkompass' },
     tenue: ['Schirmmütze', 'Feldbluse Offizier', 'Reithose + Schaftstiefel', 'Koppelschloss Offizier', 'Kartentasche', 'Fernglastasche']
+  },
+  'Scharfschütze': {
+    equip: { 'Fusil': 'Karabiner 98k + ZF 41 (4x)', 'Pistolet': 'P38', 'Pelle': 'Klappspaten', 'Masque à gaz': 'GM30' },
+    tenue: ['Stahlhelm M35 + Tarnnetz', 'Feldbluse M43 + Splittermuster', 'Feldhose M43', 'Marschstiefel', 'Koppel + Y-Riemen', 'Brotbeutel', 'Feldflasche', 'Zeltbahn']
+  },
+  'Artilleur': {
+    equip: { 'Pistolet': 'P38', 'Jumelles': 'Scherenfernrohr', 'Masque à gaz': 'GM30' },
+    tenue: ['Stahlhelm M35', 'Feldbluse M43 (Artillerie)', 'Feldhose M43', 'Marschstiefel', 'Koppel', 'Entfernungsmesser', 'Zeltbahn']
+  },
+  'Flammenwerfer': {
+    equip: { 'Flammenwerfer': 'Flammenwerfer 41', 'Pistolet': 'P38', 'Masque à gaz': 'GM30' },
+    tenue: ['Stahlhelm M42', 'Feldbluse M43', 'Feldhose M43', 'Marschstiefel', 'Koppel', 'Zeltbahn']
+  },
+  'Feldgendarme': {
+    equip: { 'Fusil': 'MP 40', 'Pistolet': 'P38', 'Pelle': 'Klappspaten', 'Masque à gaz': 'GM30' },
+    tenue: ['Stahlhelm M35 + Feldgend. Ringkragen', 'Feldbluse M43', 'Feldhose M43', 'Marschstiefel', 'Koppel + Y-Riemen', 'Signallampe', 'Pfeife', 'Handschellen', 'Zeltbahn']
+  },
+  'Équipement de base': {
+    equip: { 'Fusil': 'Karabiner 98k', 'Baïonnette': 'SG 84/98', 'Pelle': 'Klappspaten', 'Masque à gaz': 'GM30' },
+    tenue: ['Stahlhelm M35', 'Feldbluse M43', 'Feldhose M43', 'Marschstiefel', 'Koppel + Y-Riemen', 'Brotbeutel', 'Feldflasche', 'Kochgeschirr', 'Zeltbahn', 'Tornister/Affe', 'Erkennungsmarke + Schnur', 'Verbandpäckchen', 'Soldbuch']
   }
 }
 

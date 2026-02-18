@@ -41,6 +41,7 @@ import Sanctions from './pages/sanctions/Sanctions'
 import AffaireView from './pages/sanctions/AffaireView'
 import AffaireLayout from './pages/sanctions/AffaireLayout'
 import AvisRecherche from './pages/sanctions/AvisRecherche'
+import DemandesHabillement from './pages/effectifs/DemandesHabillement'
 import DossierLayout from './pages/dossiers/DossierLayout'
 import AdminStats from './pages/admin/AdminStats'
 import Moderation from './pages/admin/Moderation'
@@ -126,6 +127,7 @@ function AppRouter() {
       <Route path="/journal/:id" element={<ProtectedRoute><JournalView /></ProtectedRoute>} />
       <Route path="/journal/:id/edit" element={<ProtectedRoute><JournalEdit /></ProtectedRoute>} />
       <Route path="/organigramme" element={<ProtectedRoute><Organigramme /></ProtectedRoute>} />
+      <Route path="/habillement" element={<ProtectedRoute><DemandesHabillement /></ProtectedRoute>} />
       
       {/* Search */}
       <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
