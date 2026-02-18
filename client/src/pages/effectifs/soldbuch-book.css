@@ -91,18 +91,21 @@
    sb-land uses the full page height as its width (rotated).
    After -90deg rotation around center, visual: 280px wide × 480px tall.
 */
+/* sb-land: the element's WIDTH = page content HEIGHT (becomes visual height after -90deg).
+   Table inside gets WIDTH = this value → full reading width when tilting book.
+   Element's HEIGHT = page content WIDTH (becomes visual width after -90deg). 
+   Page content: 334px wide × 488px tall. Title takes ~20px. */
 .sb-land {
   position: absolute;
-  top: calc(50% + 12px); /* centered, shifted down for title */
+  top: calc(50% + 10px);
   left: 50%;
-  width: 480px;   /* TABLE width — becomes visual height after rotation. Tilt book CW to read. */
-  height: 310px;  /* TABLE height — becomes visual width after rotation. Fits in page width. */
+  width: 468px;   /* page content height minus title */
+  height: 330px;  /* page content width */
   transform: translate(-50%, -50%) rotate(-90deg);
-  padding: 0.3rem;
+  padding: 0.2rem;
   box-sizing: border-box;
-  overflow: hidden;
 }
-/* Override page overflow for landscape pages */
+/* After -90deg: visual = 330w × 468h. Page = 334w × 488h. Fits. */
 .sb-page.sb-has-land { position: relative; overflow: visible !important; }
 
 .sb-land .sb-t { font-size: 0.48rem; }
@@ -121,7 +124,7 @@
   line-height: 1.45;
   min-height: 520px;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
 }
@@ -214,8 +217,8 @@
   min-height: 1.1em;
 }
 
-.sb-lbl-cell { font-weight: 700; font-size: 0.5rem; white-space: nowrap; width: 30%; }
-.sb-val-cell { font-size: 0.5rem; }
+.sb-lbl-cell { font-weight: 700; font-size: 0.45rem; white-space: nowrap; width: 28%; }
+.sb-val-cell { font-size: 0.45rem; }
 
 /* ============================================
    TABLES — auto layout, compact sizing
