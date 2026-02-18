@@ -85,25 +85,30 @@
 
 /* Landscape content within a portrait page — like real Soldbuch.
    Title stays portrait at top. Table rotated -90° (CCW) below it.
-   Tilt book CW to read the table normally. */
+   Tilt book CW to read the table normally.
+   
+   Page is ~340px wide × ~500px tall (after padding).
+   sb-land uses the full page height as its width (rotated).
+   After -90deg rotation around center, visual: 280px wide × 480px tall.
+*/
 .sb-land {
   position: absolute;
-  top: 24px;  /* below the title */
-  left: 50%;
-  width: 470px;   /* ≈ page height minus title/padding */
-  height: 300px;  /* ≈ page width minus padding */
-  transform: translateX(-50%) rotate(-90deg);
-  display: flex;
-  flex-direction: column;
+  top: 28px;   /* below title */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: rotate(-90deg);
+  transform-origin: center center;
   padding: 0.3rem;
   box-sizing: border-box;
-  overflow: hidden;
 }
-.sb-page:has(.sb-land) { position: relative; overflow: visible; }
-.sb-land .sb-t { font-size: 0.48rem; table-layout: auto; width: 100%; }
-.sb-land .sb-t th { font-size: 0.42rem; white-space: nowrap; }
-.sb-land .sb-t td { font-size: 0.44rem; }
+/* Override page overflow for landscape pages */
+.sb-page.sb-has-land { position: relative; overflow: visible !important; }
+
+.sb-land .sb-t { font-size: 0.48rem; }
 .sb-land .sb-ec, .sb-land .sb-ec input { font-size: 0.42rem; }
+.sb-land .sb-att-wrap { overflow: visible; }
+.sb-land .sb-label { font-size: 0.42rem; }
 
 /* ---- PAGE ---- */
 .sb-page {
@@ -220,7 +225,7 @@
   border-collapse: collapse;
   font-size: 0.5rem;
   margin: 0.15rem 0;
-  table-layout: auto;
+  table-layout: fixed;
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
@@ -230,12 +235,16 @@
   text-align: left;
   vertical-align: top;
   word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .sb-t th {
   font-weight: 700;
   font-size: 0.42rem;
   background: rgba(0,0,0,0.04);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .sb-t-grid { /* grid tables with equal columns */ }
 .sb-t-inner { border: none; }
