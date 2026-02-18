@@ -187,7 +187,7 @@
 .sb-t {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   margin: 0.2rem 0;
   table-layout: fixed;
   word-wrap: break-word;
@@ -195,22 +195,25 @@
 }
 .sb-t th, .sb-t td {
   border: 1px solid rgba(0,0,0,0.2);
-  padding: 2px 3px;
+  padding: 1px 2px;
   text-align: left;
   vertical-align: top;
   overflow: hidden;
   text-overflow: ellipsis;
+  word-break: break-all;
 }
 .sb-t th {
   font-weight: 700;
-  font-size: 0.52rem;
+  font-size: 0.45rem;
   background: rgba(0,0,0,0.04);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .sb-t-grid { /* grid tables with equal columns */ }
 .sb-t-inner { border: none; }
-.sb-t-inner td, .sb-t-inner th { border-bottom: 1px dotted rgba(0,0,0,0.25); border-left: none; border-right: none; border-top: none; }
-.sb-teeth td { font-size: 0.55rem; text-align: center; letter-spacing: 2px; font-weight: 600; }
+.sb-t-inner td, .sb-t-inner th { border-bottom: 1px dotted rgba(0,0,0,0.25); border-left: none; border-right: none; border-top: none; word-break: normal; }
+.sb-teeth td { font-size: 0.5rem; text-align: center; letter-spacing: 1px; font-weight: 600; }
 
 /* ============================================
    PHOTO
@@ -267,8 +270,11 @@
 .sb-ec {
   cursor: pointer;
   min-height: 1em;
-  padding: 1px 2px;
+  padding: 0 1px;
   transition: background 0.15s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.5rem;
 }
 .sb-ec:hover { background: rgba(26, 58, 106, 0.06); }
 .sb-ec input {
@@ -278,17 +284,22 @@
   border-bottom: 1px solid #1a3a6a;
   background: rgba(26, 58, 106, 0.04);
   font-family: inherit;
-  font-size: inherit;
+  font-size: 0.5rem;
   color: #1a3a6a;
-  padding: 1px 2px;
+  padding: 0 1px;
   outline: none;
   box-sizing: border-box;
 }
 /* Constrain ALL inputs/selects inside pages */
-.sb-page input, .sb-page select, .sb-page textarea {
+.sb-page input, .sb-page select, .sb-page textarea, .sb-page button {
   max-width: 100%;
   box-sizing: border-box;
-  font-size: 0.55rem;
+  font-size: 0.5rem;
+}
+/* Inline flex spans (edit mode with buttons) must not overflow */
+.sb-page span[style*="inline-flex"] {
+  max-width: 100%;
+  overflow: hidden;
 }
 
 /* ============================================

@@ -302,20 +302,20 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       </div>
       <div style={{textAlign:'center',marginBottom:'0.5rem',fontWeight:600}}>pour</div>
       <div className="sb-field"><span className="sb-field-label">le</span><span className="sb-field-value"><Ink>{e.grade_nom||'\u00A0'}</Ink></span></div>
-      <div style={{textAlign:'center',fontSize:'0.65rem',opacity:0.5,marginBottom:'0.5rem'}}>(rang)</div>
+      {!e.grade_nom&&<div style={{textAlign:'center',fontSize:'0.65rem',opacity:0.5,marginBottom:'0.5rem'}}>(rang)</div>}
       <div className="sb-box">
-        <div className="sb-promo-row">
+        {!e.date_entree_ig&&<div className="sb-promo-row">
           <span className="sb-promo-label" style={{minWidth:'auto'}}>{'\u00A0'}</span>
           <span className="sb-promo-date" style={{textAlign:'center',fontSize:'0.65rem',opacity:0.5,borderBottom:'none'}}>(Date)</span>
           <span className="sb-promo-grade" style={{textAlign:'center',fontSize:'0.65rem',opacity:0.5,borderBottom:'none'}}>(nouveau grade)</span>
-        </div>
+        </div>}
         <div className="sb-promo-row"><span className="sb-promo-label">le</span><span className="sb-promo-date"><Ink small>{e.date_entree_ig||''}</Ink></span><span className="sb-promo-grade"><Ink small>{e.grade_nom||''}</Ink></span></div>
         <div className="sb-promo-row"><span className="sb-promo-label">le</span><span className="sb-promo-date"></span><span className="sb-promo-grade"></span></div>
         <div className="sb-promo-row"><span className="sb-promo-label">le</span><span className="sb-promo-date"></span><span className="sb-promo-grade"></span></div>
       </div>
       <div style={{marginTop:'1.5rem'}}>
         <div className="sb-field"><span className="sb-field-value" style={{textAlign:'center',fontWeight:600,fontSize:'0.95rem'}}><Ink>{`${e.prenom||''} ${e.nom||''}`}</Ink></span></div>
-        <div style={{textAlign:'center',fontSize:'0.65rem',opacity:0.5}}>(Prénom et nom)</div>
+        {!(e.prenom||e.nom)&&<div style={{textAlign:'center',fontSize:'0.65rem',opacity:0.5}}>(Prénom et nom)</div>}
       </div>
       <div className="sb-spacer"/>
       <div className="sb-field"><span className="sb-field-label">Plaque d'identité</span><span className="sb-field-value"><Ink>{e.numero_service||'\u00A0'}</Ink></span></div>
