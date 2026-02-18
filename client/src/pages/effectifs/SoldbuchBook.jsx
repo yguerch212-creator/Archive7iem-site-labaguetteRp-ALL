@@ -353,6 +353,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       <PageNum n={2}/>
     </div>
     <div className="sb-page sb-page-r">
+      <div className="sb-land">
       <h4 className="sb-center">Attestations</h4>
       <p className="sb-center sb-xs">Modifications aux pages 1 et 2</p>
       <div className="sb-att-wrap">
@@ -401,6 +402,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
         </table>
       </div>
       <PageNum n={3}/>
+      </div>{/* sb-land */}
     </div>
   </div>)
 
@@ -451,20 +453,24 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
   /* 3: Page 6 | Page 7 */
   S.push(<div className="sb-spread" key="s3">
     <div className="sb-page sb-page-l">
+      <div className="sb-land">
       <h4 className="sb-center">Habillement</h4>
       <table className="sb-t sb-t-grid">
         <thead><tr><th>N°</th><th>Calot</th><th>Veste</th><th>Pantalon</th><th>Manteau</th></tr></thead>
         <tbody>{Array.from({length:12},(_,i)=><tr key={i}><td>{i+1}</td><td><EC id={`tenue-${i+1}`} placeholder="—"/></td><td><EC id={`hab-veste-${i+1}`} placeholder="—"/></td><td><EC id={`hab-pant-${i+1}`} placeholder="—"/></td><td><EC id={`hab-mant-${i+1}`} placeholder="—"/></td></tr>)}</tbody>
       </table>
       <PageNum n={6}/>
+      </div>
     </div>
     <div className="sb-page sb-page-r">
+      <div className="sb-land">
       <h4 className="sb-center">Équipement</h4>
       <table className="sb-t sb-t-grid">
         <thead><tr><th>Bottes</th><th>Casque</th><th>Sac</th><th>Ceint.</th><th>Gourde</th><th>Date</th></tr></thead>
         <tbody>{Array.from({length:12},(_,i)=><tr key={i}><td><EC id={`eq-botte-${i+1}`} placeholder="—"/></td><td><EC id={`eq-casque-${i+1}`} placeholder="—"/></td><td><EC id={`eq-sac-${i+1}`} placeholder="—"/></td><td><EC id={`eq-ceint-${i+1}`} placeholder="—"/></td><td><EC id={`eq-gourde-${i+1}`} placeholder="—"/></td><td><EC id={`eq-date-${i+1}`} placeholder="—"/></td></tr>)}</tbody>
       </table>
       <PageNum n={7}/>
+      </div>
     </div>
   </div>)
 
@@ -480,6 +486,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       <PageNum n={8}/>
     </div>
     <div className="sb-page sb-page-r">
+      <div className="sb-land">
       <h4 className="sb-center">Armes et matériel</h4>
       {canEdit && <div style={{marginBottom:6,textAlign:'center'}}>
         <select className="form-input" style={{fontSize:'.6rem',padding:'2px 4px',width:'auto',display:'inline'}} onChange={ev=>{
@@ -550,6 +557,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
         <tbody>{W8A.map(w=><tr key={w}><td><strong style={{fontSize:'.38rem'}}>{w}</strong></td><td><EC id={`w8a-${w}-marque`} placeholder="marque"/></td><td><EC id={`w8a-${w}-serie`} placeholder="N°" serial/></td><td><EC id={`w8a-${w}-date`} placeholder="date"/></td><td>{NB}</td></tr>)}</tbody>
       </table>
       <PageNum n="8a"/>
+      </div>{/* sb-land */}
     </div>
   </div>)
 
@@ -612,6 +620,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
   /* 7: Page 12 | Page 13 */
   S.push(<div className="sb-spread" key="s7">
     <div className="sb-page sb-page-l">
+      <div className="sb-land">
       <h4 className="sb-center">Hospitalisations</h4>
       <table className="sb-t">
         <thead><tr><th>Hôpital</th><th>Entrée</th><th>Sortie</th><th>Motif</th></tr></thead>
@@ -621,8 +630,10 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
         </tbody>
       </table>
       <PageNum n={12}/>
+      </div>
     </div>
     <div className="sb-page sb-page-r">
+      <div className="sb-land">
       <h4 className="sb-center">Blessures</h4>
       <table className="sb-t">
         <thead><tr><th>Date</th><th>Nature</th><th>Localisation</th><th>Gravité</th></tr></thead>
@@ -632,6 +643,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
         </tbody>
       </table>
       <PageNum n={13}/>
+      </div>
     </div>
   </div>)
 
@@ -668,28 +680,28 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       <PageNum n={16}/>
     </div>
     <div className="sb-page sb-page-r">
+      <div className="sb-land">
       <h4 className="sb-center">Suite de la page 4</h4>
       <p className="sb-label">B. Envoyé par :</p>
       <table className="sb-t">
-        <colgroup><col style={{width:'8%'}}/><col/><col style={{width:'14%'}}/><col style={{width:'18%'}}/></colgroup>
         <thead><tr><th>{NB}</th><th>Unité</th><th>Cie</th><th>Registre</th></tr></thead>
         <tbody><ER cols={4} n={3}/></tbody>
       </table>
       <p className="sb-label">Unité de campagne :</p>
       <table className="sb-t">
-        <colgroup><col style={{width:'8%'}}/><col/><col style={{width:'14%'}}/><col style={{width:'18%'}}/></colgroup>
         <thead><tr><th>{NB}</th><th>Unité</th><th>Cie</th><th>Registre</th></tr></thead>
         <tbody><ER cols={4} n={3}/></tbody>
       </table>
       <table className="sb-t"><thead><tr><th>Unité actuelle</th><th style={{width:'30%'}}>Garnison</th></tr></thead><tbody><ER cols={2} n={2}/></tbody></table>
-      <div className="sb-spacer"/>
       <PageNum n={17}/>
+      </div>
     </div>
   </div>)
 
   /* 10: Page 18 | Page 19 — Solde (dynamique) */
   S.push(<div className="sb-spread" key="s10">
     <div className="sb-page sb-page-l">
+      <div className="sb-land">
       <h4 className="sb-center">Solde (Wehrsold)</h4>
       <table className="sb-t">
         <thead><tr><th>Date</th><th>Motif</th><th style={{textAlign:'right'}}>RM</th></tr></thead>
@@ -700,6 +712,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
         </tbody>
       </table>
       <PageNum n={18}/>
+      </div>
     </div>
     <div className="sb-page sb-page-r">
       <div className="paper-card" style={{textAlign:'center',margin:'8px 0',padding:6,background:'rgba(75,83,32,0.06)',border:'1px solid var(--border)'}}>
@@ -716,12 +729,14 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
   /* 11: Page 20 | Page 21 */
   S.push(<div className="sb-spread" key="s11">
     <div className="sb-page sb-page-l">
+      <div className="sb-land">
       <p className="sb-xs">B. Montants versés par trésorerie étrangère.</p>
       <table className="sb-t">
         <thead><tr><th>Le</th><th>Période</th><th>Détails</th><th>RM</th><th>Rpf</th></tr></thead>
         <tbody><ER cols={5} n={16}/></tbody>
       </table>
       <PageNum n={20}/>
+      </div>
     </div>
     <div className="sb-page sb-page-r">
       <h4 className="sb-center">Indemnité d'habillement</h4>
@@ -735,6 +750,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
   /* 12: Page 22 | Page 23 */
   S.push(<div className="sb-spread" key="s12">
     <div className="sb-page sb-page-l">
+      <div className="sb-land">
       <h4 className="sb-center">Décorations</h4>
       <table className="sb-t">
         <thead><tr><th>Date</th><th>Décoration</th><th>Brevet</th><th>Confirmation</th></tr></thead>
@@ -744,6 +760,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
         </tbody>
       </table>
       <PageNum n={22}/>
+      </div>
     </div>
     <div className="sb-page sb-page-r">
       <h4 className="sb-center">Permissions (+5 jours)</h4>

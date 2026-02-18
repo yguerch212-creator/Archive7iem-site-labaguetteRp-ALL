@@ -73,7 +73,7 @@
   max-width: 96%;
   box-shadow: 0 4px 20px rgba(0,0,0,0.3);
   border-radius: 4px;
-  overflow: hidden;
+  overflow: visible;
   margin: 0 auto;
 }
 /* Rotated view — turn the whole spread 90° like turning a real Soldbuch */
@@ -82,6 +82,23 @@
   transform-origin: center center;
   margin: 120px auto;
 }
+
+/* Landscape content within a portrait page — like real Soldbuch 
+   The inner wrapper rotates 90° CW so tables use page height as width */
+.sb-land {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  transform: rotate(90deg);
+  transform-origin: center center;
+  width: 500px;
+  margin-left: -80px; /* center the rotated content: (500-340)/2 */
+  margin-top: 80px;
+  margin-bottom: 80px;
+}
+.sb-land .sb-t { font-size: 0.48rem; }
+.sb-land .sb-t th { font-size: 0.4rem; }
+.sb-land .sb-ec, .sb-land .sb-ec input { font-size: 0.42rem; }
 
 /* ---- PAGE ---- */
 .sb-page {
@@ -208,7 +225,6 @@
   text-align: left;
   vertical-align: top;
   word-break: break-word;
-  max-width: 0; /* forces columns to share space proportionally */
 }
 .sb-t th {
   font-weight: 700;
