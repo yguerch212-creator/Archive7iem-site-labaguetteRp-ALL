@@ -91,22 +91,31 @@
    sb-land uses the full page height as its width (rotated).
    After -90deg rotation around center, visual: 280px wide × 480px tall.
 */
-/* sb-land: the element's WIDTH = page content HEIGHT (becomes visual height after -90deg).
-   Table inside gets WIDTH = this value → full reading width when tilting book.
-   Element's HEIGHT = page content WIDTH (becomes visual width after -90deg). 
-   Page content: 334px wide × 488px tall. Title takes ~20px. */
+/* sb-land: Landscape table container inside a portrait page.
+   Page content area: ~334px wide × ~488px tall.
+   Title at top: ~22px. Remaining: ~466px tall.
+   
+   Element width = 466px (= page remaining height → becomes TABLE width)
+   Element height = 330px (= page width - 4px → becomes TABLE height)
+   
+   After rotate(-90deg): visual 330w × 466h. Fits in 334×466 page area.
+   Centered with calc() so element center = page center. */
 .sb-land {
   position: absolute;
-  top: calc(50% + 10px);
-  left: 50%;
-  width: 468px;   /* page content height minus title */
-  height: 330px;  /* page content width */
-  transform: translate(-50%, -50%) rotate(-90deg);
+  width: 466px;
+  height: 330px;
+  left: calc(50% - 233px);   /* center: 50% - width/2 */
+  top: calc(50% - 155px);    /* center shifted 10px down for title: 50% - height/2 + 10 */
+  transform: rotate(-90deg);
+  transform-origin: center center;
   padding: 0.2rem;
   box-sizing: border-box;
+  overflow: hidden;
 }
-/* After -90deg: visual = 330w × 468h. Page = 334w × 488h. Fits. */
+/* Landscape pages need overflow visible so the rotated box isn't clipped by the page */
 .sb-page.sb-has-land { position: relative; overflow: visible !important; }
+/* But the spread clips everything at the book edge */
+.sb-spread { overflow: hidden; }
 
 .sb-land .sb-t { font-size: 0.48rem; }
 .sb-land .sb-ec, .sb-land .sb-ec input { font-size: 0.42rem; }
@@ -124,7 +133,7 @@
   line-height: 1.45;
   min-height: 520px;
   box-sizing: border-box;
-  overflow: visible;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
