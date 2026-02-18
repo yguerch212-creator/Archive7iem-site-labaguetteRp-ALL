@@ -129,11 +129,11 @@
   max-width: 50%;
   padding: 1rem 0.8rem;
   position: relative;
-  font-size: 0.72rem;
-  line-height: 1.45;
+  font-size: 0.55rem;
+  line-height: 1.4;
   min-height: 520px;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: hidden !important;
   display: flex;
   flex-direction: column;
 }
@@ -168,8 +168,8 @@
 .sb-label { opacity: 0.5; font-style: italic; font-size: 0.58rem; margin: 0.3rem 0 0.15rem; }
 
 /* Page headings inside pages */
-.sb-page h3 { font-size: 0.85rem; font-weight: 700; margin: 0 0 0.4rem; }
-.sb-page h4, h4.sb-center { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.5px; margin: 0.4rem 0 0.3rem; }
+.sb-page h3 { font-size: 0.6rem; font-weight: 700; margin: 0 0 0.3rem; }
+.sb-page h4, h4.sb-center { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.5px; margin: 0.3rem 0 0.2rem; }
 
 /* ============================================
    PAGE 1 — Identity (v1 field style)
@@ -226,8 +226,8 @@
   min-height: 1.1em;
 }
 
-.sb-lbl-cell { font-weight: 700; font-size: 0.45rem; white-space: nowrap; width: 28%; }
-.sb-val-cell { font-size: 0.45rem; }
+.sb-lbl-cell { font-weight: 700; font-size: 0.36rem; white-space: nowrap; width: 28%; }
+.sb-val-cell { font-size: 0.36rem; }
 
 /* ============================================
    TABLES — auto layout, compact sizing
@@ -235,7 +235,7 @@
 .sb-t {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.5rem;
+  font-size: 0.38rem;
   margin: 0.15rem 0;
   table-layout: fixed;
   word-wrap: break-word;
@@ -252,7 +252,7 @@
 }
 .sb-t th {
   font-weight: 700;
-  font-size: 0.42rem;
+  font-size: 0.34rem;
   background: rgba(0,0,0,0.04);
   white-space: nowrap;
   overflow: hidden;
@@ -320,7 +320,7 @@
   min-height: 1em;
   padding: 0 1px;
   transition: background 0.15s;
-  font-size: 0.45rem;
+  font-size: 0.36rem;
   word-break: break-word;
 }
 .sb-ec:hover { background: rgba(26, 58, 106, 0.06); }
@@ -331,7 +331,7 @@
   border-bottom: 1px solid #1a3a6a;
   background: rgba(26, 58, 106, 0.04);
   font-family: inherit;
-  font-size: 0.45rem;
+  font-size: 0.36rem;
   color: #1a3a6a;
   padding: 0 1px;
   outline: none;
