@@ -382,7 +382,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
                 </td>
               </tr>
             })}
-            {Array.from({length:Math.max(0,18-attestations.length)},(_,i)=>{
+            {Array.from({length:Math.max(0,12-attestations.length)},(_,i)=>{
               const rowN = attestations.length+i+1
               return <tr key={`att-e-${i}`}>
                 <td style={{fontSize:'.6rem',color:'var(--text-muted)'}}>{rowN}</td>
@@ -456,7 +456,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       <div className="sb-land">
       <table className="sb-t sb-t-grid">
         <thead><tr><th>N°</th><th>Calot</th><th>Veste</th><th>Pantalon</th><th>Manteau</th></tr></thead>
-        <tbody>{Array.from({length:12},(_,i)=><tr key={i}><td>{i+1}</td><td><EC id={`tenue-${i+1}`} placeholder="—"/></td><td><EC id={`hab-veste-${i+1}`} placeholder="—"/></td><td><EC id={`hab-pant-${i+1}`} placeholder="—"/></td><td><EC id={`hab-mant-${i+1}`} placeholder="—"/></td></tr>)}</tbody>
+        <tbody>{Array.from({length:8},(_,i)=><tr key={i}><td>{i+1}</td><td><EC id={`tenue-${i+1}`} placeholder="—"/></td><td><EC id={`hab-veste-${i+1}`} placeholder="—"/></td><td><EC id={`hab-pant-${i+1}`} placeholder="—"/></td><td><EC id={`hab-mant-${i+1}`} placeholder="—"/></td></tr>)}</tbody>
       </table>
       <PageNum n={6}/>
       </div>
@@ -466,7 +466,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       <div className="sb-land">
       <table className="sb-t sb-t-grid">
         <thead><tr><th>Bottes</th><th>Casque</th><th>Sac</th><th>Ceint.</th><th>Gourde</th><th>Date</th></tr></thead>
-        <tbody>{Array.from({length:12},(_,i)=><tr key={i}><td><EC id={`eq-botte-${i+1}`} placeholder="—"/></td><td><EC id={`eq-casque-${i+1}`} placeholder="—"/></td><td><EC id={`eq-sac-${i+1}`} placeholder="—"/></td><td><EC id={`eq-ceint-${i+1}`} placeholder="—"/></td><td><EC id={`eq-gourde-${i+1}`} placeholder="—"/></td><td><EC id={`eq-date-${i+1}`} placeholder="—"/></td></tr>)}</tbody>
+        <tbody>{Array.from({length:8},(_,i)=><tr key={i}><td><EC id={`eq-botte-${i+1}`} placeholder="—"/></td><td><EC id={`eq-casque-${i+1}`} placeholder="—"/></td><td><EC id={`eq-sac-${i+1}`} placeholder="—"/></td><td><EC id={`eq-ceint-${i+1}`} placeholder="—"/></td><td><EC id={`eq-gourde-${i+1}`} placeholder="—"/></td><td><EC id={`eq-date-${i+1}`} placeholder="—"/></td></tr>)}</tbody>
       </table>
       <PageNum n={7}/>
       </div>
@@ -624,8 +624,8 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       <table className="sb-t">
         <thead><tr><th>Hôpital</th><th>Entrée</th><th>Sortie</th><th>Motif</th></tr></thead>
         <tbody>
-          {hospitalisations.slice(0,16).map((h,i)=><tr key={i}><td><Ink small>{h.etablissement}</Ink></td><td><Ink small>{fmtD(h.date_entree)}</Ink></td><td><Ink small>{fmtD(h.date_sortie)}</Ink></td><td><Ink small>{h.motif}</Ink></td></tr>)}
-          <ER cols={4} n={Math.max(0,16-hospitalisations.length)}/>
+          {hospitalisations.slice(0,10).map((h,i)=><tr key={i}><td><Ink small>{h.etablissement}</Ink></td><td><Ink small>{fmtD(h.date_entree)}</Ink></td><td><Ink small>{fmtD(h.date_sortie)}</Ink></td><td><Ink small>{h.motif}</Ink></td></tr>)}
+          <ER cols={4} n={Math.max(0,10-hospitalisations.length)}/>
         </tbody>
       </table>
       <PageNum n={12}/>
@@ -637,8 +637,8 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       <table className="sb-t">
         <thead><tr><th>Date</th><th>Nature</th><th>Localisation</th><th>Gravité</th></tr></thead>
         <tbody>
-          {blessures.slice(0,16).map((b,i)=><tr key={i}><td><Ink small>{fmtD(b.date_blessure)}</Ink></td><td><Ink small>{b.type_blessure}</Ink></td><td><Ink small>{b.localisation}</Ink></td><td><Ink small>{b.gravite}</Ink></td></tr>)}
-          <ER cols={4} n={Math.max(0,16-blessures.length)}/>
+          {blessures.slice(0,10).map((b,i)=><tr key={i}><td><Ink small>{fmtD(b.date_blessure)}</Ink></td><td><Ink small>{b.type_blessure}</Ink></td><td><Ink small>{b.localisation}</Ink></td><td><Ink small>{b.gravite}</Ink></td></tr>)}
+          <ER cols={4} n={Math.max(0,10-blessures.length)}/>
         </tbody>
       </table>
       <PageNum n={13}/>
@@ -705,9 +705,9 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       <table className="sb-t">
         <thead><tr><th>Date</th><th>Motif</th><th style={{textAlign:'right'}}>RM</th></tr></thead>
         <tbody>
-          {(soldeData||[]).slice(0,14).map((s,i)=><tr key={i}><td><Ink small>{fmtD(s.date_operation)}</Ink></td><td><Ink small>{s.motif}</Ink></td><td style={{textAlign:'right',color:s.type_operation==='debit'?'#8b0000':'inherit'}}><Ink small>{s.type_operation==='debit'?'-':''}{parseFloat(s.montant).toFixed(2)}</Ink></td></tr>)}
-          {(!soldeData||soldeData.length===0)&&<ER cols={3} n={14}/>}
-          {soldeData&&soldeData.length>0&&soldeData.length<14&&<ER cols={3} n={14-Math.min(soldeData.length,14)}/>}
+          {(soldeData||[]).slice(0,10).map((s,i)=><tr key={i}><td><Ink small>{fmtD(s.date_operation)}</Ink></td><td><Ink small>{s.motif}</Ink></td><td style={{textAlign:'right',color:s.type_operation==='debit'?'#8b0000':'inherit'}}><Ink small>{s.type_operation==='debit'?'-':''}{parseFloat(s.montant).toFixed(2)}</Ink></td></tr>)}
+          {(!soldeData||soldeData.length===0)&&<ER cols={3} n={10}/>}
+          {soldeData&&soldeData.length>0&&soldeData.length<14&&<ER cols={3} n={10-Math.min(soldeData.length,14)}/>}
         </tbody>
       </table>
       <PageNum n={18}/>
@@ -732,7 +732,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       <div className="sb-land">
       <table className="sb-t">
         <thead><tr><th>Le</th><th>Période</th><th>Détails</th><th>RM</th><th>Rpf</th></tr></thead>
-        <tbody><ER cols={5} n={16}/></tbody>
+        <tbody><ER cols={5} n={10}/></tbody>
       </table>
       <PageNum n={20}/>
       </div>

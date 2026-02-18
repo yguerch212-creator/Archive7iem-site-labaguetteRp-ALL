@@ -73,7 +73,7 @@
   max-width: 96%;
   box-shadow: 0 4px 20px rgba(0,0,0,0.3);
   border-radius: 4px;
-  overflow: visible;
+  overflow: hidden;
   margin: 0 auto;
 }
 /* Rotated view — turn the whole spread 90° like turning a real Soldbuch */
@@ -226,8 +226,8 @@
   min-height: 1.1em;
 }
 
-.sb-lbl-cell { font-weight: 700; font-size: 0.36rem; white-space: nowrap; width: 28%; }
-.sb-val-cell { font-size: 0.36rem; }
+.sb-lbl-cell { font-weight: 700; font-size: 0.34rem; white-space: normal; word-break: break-word; }
+.sb-val-cell { font-size: 0.34rem; word-break: break-word; }
 
 /* ============================================
    TABLES — auto layout, compact sizing
