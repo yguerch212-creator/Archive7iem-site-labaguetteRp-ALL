@@ -117,10 +117,16 @@
 /* But the spread clips everything at the book edge */
 .sb-spread { overflow: hidden; }
 
-.sb-land .sb-t { font-size: 0.48rem; }
-.sb-land .sb-ec, .sb-land .sb-ec input { font-size: 0.42rem; }
-.sb-land .sb-att-wrap { overflow: visible; }
-.sb-land .sb-label { font-size: 0.42rem; }
+.sb-land .sb-t { font-size: 0.42rem; height: 100%; }
+.sb-land .sb-t td, .sb-land .sb-t th { padding: 2px 3px; }
+.sb-land .sb-ec, .sb-land .sb-ec input { font-size: 0.38rem; }
+.sb-land .sb-att-wrap { overflow: visible; height: 100%; }
+.sb-land .sb-att-wrap .sb-t { height: 100%; }
+.sb-land .sb-label { font-size: 0.38rem; }
+/* Multiple tables in one landscape page: stack and share space */
+.sb-land { display: flex; flex-direction: column; gap: 0.2rem; }
+.sb-land .sb-t:only-child { flex: 1; }
+.sb-land .sb-t { flex: 1; }
 
 /* ---- PAGE ---- */
 .sb-page {
