@@ -411,7 +411,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       </div>{/* sb-land */}
       {/* Stamp overlays — positioned near the signed row like a real stamp */}
       {attestations.filter(a=>a.signature_data && !a.barre).map((a)=>{
-        const rowPct = Math.min(90, 8 + (a.numero - 1) * 7.5)
+        const rowPct = Math.min(92, 12 + (a.numero - 1) * 7.5)
         return <img key={`stamp-${a.id}`} src={a.signature_data} alt="Tampon" className="sb-stamp-overlay"
           style={{top:`${rowPct}%`, right:'10px', transform:`rotate(${-5 + (a.numero % 3) * 4}deg)`}}/>
       })}
