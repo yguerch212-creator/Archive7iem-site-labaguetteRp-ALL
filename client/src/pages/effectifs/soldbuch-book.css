@@ -92,18 +92,23 @@
    After -90deg rotation around center, visual: 280px wide × 480px tall.
 */
 /* sb-land: Landscape table inside a portrait page.
-   Element fills page below title (inset). Same dimensions as page content.
-   rotate(-90deg) turns it. scaleX/Y compensate the dimension swap:
-   - scaleX(1.39) stretches 334px CSS width → ~464px visual (fills page height)
-   - scaleY(0.72) shrinks 466px CSS height → ~335px visual (fits page width)
-   NO overflow beyond page. Element stays within parent bounds. */
+   The page content area is ~334px wide × ~488px tall.
+   We rotate -90deg so the table reads sideways.
+   After rotation, the element's CSS width maps to visual height and vice versa.
+   We set width = page height, height = page width, then rotate around center. */
 .sb-land {
   position: absolute;
+  /* Center in the page content area (excluding top title ~22px) */
   top: 22px;
   left: 0;
   right: 0;
   bottom: 0;
-  transform: rotate(-90deg) scaleX(1.39) scaleY(0.72);
+  /* These are the pre-rotation dimensions:
+     width = page width (will become visual height after rotation)
+     height = available height (will become visual width after rotation) */
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
   transform-origin: center center;
   padding: 0.2rem;
   box-sizing: border-box;
@@ -112,15 +117,15 @@
   flex-direction: column;
   gap: 0.15rem;
 }
-.sb-page.sb-has-land { position: relative; }
+.sb-page.sb-has-land { position: relative; overflow: hidden; }
 .sb-spread { overflow: hidden; }
 
-.sb-land .sb-t { font-size: 0.42rem; flex: 1; }
-.sb-land .sb-t td, .sb-land .sb-t th { padding: 2px 3px; }
-.sb-land .sb-ec, .sb-land .sb-ec input { font-size: 0.38rem; }
+.sb-land .sb-t { font-size: 0.36rem; flex: 1; }
+.sb-land .sb-t td, .sb-land .sb-t th { padding: 1px 2px; font-size: 0.34rem; }
+.sb-land .sb-ec, .sb-land .sb-ec input { font-size: 0.34rem; }
 .sb-land .sb-att-wrap { overflow: hidden; flex: 1; }
 .sb-land .sb-att-wrap .sb-t { height: 100%; }
-.sb-land .sb-label { font-size: 0.38rem; }
+.sb-land .sb-label { font-size: 0.34rem; }
 
 /* ---- PAGE ---- */
 .sb-page {
@@ -133,11 +138,11 @@
   line-height: 1.4;
   min-height: 520px;
   box-sizing: border-box;
-  overflow: hidden !important;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
-/* Force ALL children to respect page width */
+/* Force ALL children to respect page dimensions */
 .sb-page > *, .sb-page div, .sb-page p {
   max-width: 100%;
   box-sizing: border-box;
@@ -145,6 +150,7 @@
 .sb-page table {
   width: 100%;
   box-sizing: border-box;
+  table-layout: fixed;
 }
 .sb-page-l {
   border-right: 1px solid rgba(0,0,0,0.15);
@@ -226,8 +232,8 @@
   min-height: 1.1em;
 }
 
-.sb-lbl-cell { font-weight: 700; font-size: 0.34rem; white-space: normal; word-break: break-word; }
-.sb-val-cell { font-size: 0.34rem; word-break: break-word; }
+.sb-lbl-cell { font-weight: 700; font-size: 0.32rem; white-space: normal; word-break: break-word; }
+.sb-val-cell { font-size: 0.32rem; word-break: break-word; }
 
 /* ============================================
    TABLES — auto layout, compact sizing
@@ -235,8 +241,8 @@
 .sb-t {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.38rem;
-  margin: 0.15rem 0;
+  font-size: 0.34rem;
+  margin: 0.1rem 0;
   table-layout: fixed;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -249,10 +255,12 @@
   word-break: break-word;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 0.34rem;
+  line-height: 1.2;
 }
 .sb-t th {
   font-weight: 700;
-  font-size: 0.34rem;
+  font-size: 0.32rem;
   background: rgba(0,0,0,0.04);
   white-space: nowrap;
   overflow: hidden;
