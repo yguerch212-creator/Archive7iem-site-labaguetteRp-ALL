@@ -217,7 +217,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
         const mod = sigPopup.mod || cells[`att-${row}-mod`] || ''
         const page = sigPopup.page || cells[`att-${row}-page`] || ''
         const date = sigPopup.date || cells[`att-${row}-date`] || ''
-        await api.post(`/attestations/manual/${e.id}`, {
+        await api.post(`/attestations/${e.id}`, {
           numero: row, modification: mod, page, date_attestation: date, signature_data: signatureData
         })
       } else {
