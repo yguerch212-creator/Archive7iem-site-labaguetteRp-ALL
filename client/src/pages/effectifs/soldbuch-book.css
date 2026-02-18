@@ -342,6 +342,213 @@ h4.sb-center {
   outline: none;
 }
 
+/* ---- PAGE 1 SPECIFIC ---- */
+.sb-sm { font-size: 0.65rem; }
+.sb-xs { font-size: 0.55rem; }
+.sb-u { text-decoration: underline; }
+.sb-label { opacity: 0.5; font-style: italic; font-size: 0.6rem; }
+.sb-line { border-bottom: 1px dotted rgba(0,0,0,0.3); min-height: 1.1em; display: inline-block; }
+.sb-lined { border-bottom: 1px dotted rgba(0,0,0,0.3); }
+
+.sb-page1-field {
+  display: flex;
+  gap: 0.3rem;
+  margin-bottom: 0.3rem;
+  align-items: baseline;
+}
+.sb-page1-field .sb-lbl-cell { font-weight: 700; min-width: 120px; font-size: 0.72rem; }
+.sb-page1-field .sb-val-cell { flex: 1; }
+
+.sb-page1-grade { font-size: 0.9rem; font-weight: 600; margin: 0.3rem 0; }
+.sb-page1-name { font-size: 1rem; font-weight: 700; margin: 0.6rem 0 0.3rem; }
+
+.sb-grade-box {
+  border: 1.5px solid rgba(0,0,0,0.35);
+  padding: 0.3rem 0.4rem;
+  margin: 0.4rem 0;
+}
+.sb-grade-box-labels {
+  display: flex;
+  justify-content: space-around;
+  font-size: 0.55rem;
+  opacity: 0.5;
+  font-style: italic;
+  margin-bottom: 0.2rem;
+}
+.sb-lbl-cell { font-weight: 700; font-size: 0.68rem; }
+.sb-val-cell { font-size: 0.72rem; }
+
+/* ---- PHOTO (identity) ---- */
+.sb-photo {
+  width: 80px;
+  height: 100px;
+  border: 1.5px solid rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin: 0.5rem auto;
+}
+.sb-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sb-photo-empty {
+  font-size: 0.55rem;
+  opacity: 0.3;
+  font-style: italic;
+}
+
+/* ---- SIGNATURES ---- */
+.sb-sig-area {
+  text-align: center;
+  margin-top: 0.4rem;
+}
+.sb-sig-box {
+  border-bottom: 1px solid rgba(0,0,0,0.35);
+  height: 35px;
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 150px;
+}
+.sb-sig-box.sb-sig-empty { opacity: 0.3; }
+.sb-sig-img { max-height: 32px; max-width: 140px; }
+.sb-sig-clickable {
+  cursor: pointer;
+  font-size: 0.6rem;
+  color: var(--military-green, #4b5320);
+  opacity: 0.7;
+}
+.sb-sig-clickable:hover { opacity: 1; }
+
+/* ---- STAMP ---- */
+.sb-stamp-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.4rem;
+}
+.sb-stamp-img {
+  max-height: 55px;
+  max-width: 55px;
+  opacity: 0.6;
+}
+.sb-stamp-clickable {
+  cursor: pointer;
+  font-size: 0.65rem;
+  opacity: 0.4;
+  border: 1px dashed rgba(0,0,0,0.2);
+  padding: 4px 8px;
+  border-radius: 3px;
+}
+.sb-stamp-clickable:hover { opacity: 0.7; }
+.sb-stamp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 8px;
+  margin: 0.5rem 0;
+}
+.sb-stamp-option {
+  cursor: pointer;
+  text-align: center;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 4px;
+  padding: 4px;
+  transition: background 0.2s;
+}
+.sb-stamp-option:hover { background: rgba(0,0,0,0.06); }
+.sb-stamp-option img { max-height: 50px; max-width: 100%; }
+
+/* ---- ATTESTATION STAMP (small in table) ---- */
+.sb-att-stamp { max-height: 18px; max-width: 40px; opacity: 0.7; vertical-align: middle; }
+.sb-att-wrap { display: flex; gap: 3px; align-items: center; }
+
+/* ---- TABLES ---- */
+.sb-t {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.65rem;
+  margin: 0.3rem 0;
+}
+.sb-t th, .sb-t td {
+  border: 1px solid rgba(0,0,0,0.22);
+  padding: 2px 4px;
+  text-align: left;
+  vertical-align: top;
+}
+.sb-t th {
+  font-weight: 700;
+  font-size: 0.58rem;
+  background: rgba(0,0,0,0.04);
+}
+.sb-t-grid { table-layout: fixed; }
+.sb-t-inner { border: none; }
+.sb-t-inner td, .sb-t-inner th { border: 1px solid rgba(0,0,0,0.15); }
+.sb-teeth td { font-size: 0.55rem; }
+
+/* ---- RULES / GEBOTE ---- */
+.sb-rules {
+  font-size: 0.55rem;
+  line-height: 1.35;
+}
+.sb-rules h3 { font-size: 0.68rem; text-align: center; margin-bottom: 0.3rem; }
+.sb-rules h4 { font-size: 0.58rem; text-align: center; margin-bottom: 0.5rem; font-weight: 400; }
+.sb-rules ol { padding-left: 1.2rem; margin: 0; }
+.sb-rules ol li { margin-bottom: 0.15rem; }
+
+/* ---- MEDICAL (vaccinations etc.) ---- */
+.sb-impf { font-size: 0.6rem; }
+
+/* ---- PERMISSIONS (Urlaub) ---- */
+.sb-urlaub { font-size: 0.6rem; }
+
+/* ---- MODAL (stamp picker, habillement popup) ---- */
+.sb-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sb-modal {
+  background: #f5f0e1;
+  border: 2px solid rgba(0,0,0,0.3);
+  border-radius: 6px;
+  padding: 1.5rem;
+  max-width: 400px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  font-family: 'Courier New', monospace;
+}
+
+/* ---- BACK COVER ---- */
+.sb-back-cover {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  opacity: 0.4;
+  font-style: italic;
+  min-height: 100%;
+}
+
+/* ---- PAGE DARK (gebote, etc.) ---- */
+/* Handled by theme-specific .sb-page:first-child rules above */
+.sb-page-dark { /* fallback */ }
+.sb-page-r { /* right page - default */ }
+
+/* ---- NAV INFO ---- */
+.sb-nav-info {
+  text-align: center;
+  font-size: 0.7rem;
+  opacity: 0.5;
+  margin-top: 0.3rem;
+}
+
 /* ---- NAVIGATION ---- */
 .sb-nav {
   display: flex;
