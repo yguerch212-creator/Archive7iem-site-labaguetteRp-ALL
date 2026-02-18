@@ -361,11 +361,11 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
                   {!a.barre && canSignAttestation && <span style={{cursor:'pointer',fontSize:'.5rem',marginLeft:3,color:'#8b0000'}} title="Barrer" onClick={async()=>{
                     const motif=prompt('Motif de la rature :')
                     if(!motif) return
-                    try{await api.put(`/attestations/${a.id}/barrer`,{motif});onUpdate?.()}catch{}
+                    try{await api.put(`/attestations/${a.id}/barrer`,{motif});if(onUpdate) await onUpdate()}catch(err){console.error('Barrer attestation error:',err);alert('Erreur: '+(err?.response?.data?.message||err.message))}
                   }}>✕</span>}
                   {isAdmin && <span style={{cursor:'pointer',fontSize:'.5rem',marginLeft:3,color:'#e74c3c'}} title="Supprimer" onClick={async()=>{
                     if(!confirm('Supprimer cette attestation ?')) return
-                    try{await api.delete(`/attestations/${a.id}`);onUpdate?.()}catch{}
+                    try{await api.delete(`/attestations/${a.id}`);if(onUpdate) await onUpdate()}catch(err){console.error('Delete attestation error:',err);alert('Erreur: '+(err?.response?.data?.message||err.message))}
                   }}>🗑</span>}
                 </td>
               </tr>

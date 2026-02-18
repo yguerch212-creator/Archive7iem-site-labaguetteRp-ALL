@@ -3,6 +3,20 @@ const { query, pool } = require('../config/db')
 const auth = require('../middleware/auth')
 const { optionalAuth } = require('../middleware/auth')
 const feldgendarmerie = require('../middleware/feldgendarmerie')
+const multer = require('multer')
+const path = require('path')
+const fs = require('fs')
+
+const uploadDir = path.join(__dirname, '../../uploads/avis-recherche')
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true })
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, `avis_${Date.now()}${path.extname(file.originalname)}`)
+})
+const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) cb(null, true)
+  else cb(new Error('Seules les images sont acceptées'))
+}})
 
 // GET /api/avis-recherche — List all
 router.get('/', optionalAuth, async (req, res) => {
@@ -40,14 +54,15 @@ router.get('/:id', optionalAuth, async (req, res) => {
 })
 
 // POST /api/avis-recherche — Create (feld + officier + admin)
-router.post('/', auth, feldgendarmerie, async (req, res) => {
+router.post('/', auth, feldgendarmerie, upload.single('photo'), async (req, res) => {
   try {
     const { nom, prenom, nationalite, signalement, derniere_localisation, motifs, recompense, photo_url, effectif_id } = req.body
     if (!nom) return res.status(400).json({ success: false, message: 'Nom requis' })
+    const finalPhoto = req.file ? `/uploads/avis-recherche/${req.file.filename}` : (photo_url || null)
     const [result] = await pool.execute(
       `INSERT INTO avis_recherche (nom, prenom, nationalite, signalement, derniere_localisation, motifs, recompense, photo_url, effectif_id, created_by)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [nom, prenom || null, nationalite || 'Allemande', signalement || null, derniere_localisation || null, motifs || null, recompense || null, photo_url || null, effectif_id || null, req.user.id]
+      [nom, prenom || null, nationalite || 'Allemande', signalement || null, derniere_localisation || null, motifs || null, recompense || null, finalPhoto, effectif_id || null, req.user.id]
     )
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {

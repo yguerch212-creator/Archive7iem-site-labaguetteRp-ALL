@@ -16,7 +16,7 @@ export default function AvisRecherche() {
   const [message, setMessage] = useState(null)
   const [form, setForm] = useState({
     nom: '', prenom: '', nationalite: 'Allemande', signalement: '', derniere_localisation: '',
-    motifs: '', recompense: '', photo_url: '', effectif_id: '', effectif_nom: ''
+    motifs: '', recompense: '', photo_url: '', photo_file: null, effectif_id: '', effectif_nom: ''
   })
 
   const canCreate = user?.isAdmin || user?.isOfficier || user?.groups?.includes('Feldgendarmerie')
@@ -32,10 +32,20 @@ export default function AvisRecherche() {
 
   const submit = async () => {
     try {
-      await api.post('/avis-recherche', form)
+      if (form.photo_file) {
+        const fd = new FormData()
+        for (const [k, v] of Object.entries(form)) {
+          if (k === 'photo_file') fd.append('photo', v)
+          else fd.append(k, v)
+        }
+        await api.post('/avis-recherche', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+      } else {
+        const { photo_file, ...payload } = form
+        await api.post('/avis-recherche', payload)
+      }
       setMessage({ type: 'success', text: 'Avis de recherche créé' })
       setShowForm(false)
-      setForm({ nom: '', prenom: '', nationalite: 'Allemande', signalement: '', derniere_localisation: '', motifs: '', recompense: '', photo_url: '', effectif_id: '', effectif_nom: '' })
+      setForm({ nom: '', prenom: '', nationalite: 'Allemande', signalement: '', derniere_localisation: '', motifs: '', recompense: '', photo_url: '', photo_file: null, effectif_id: '', effectif_nom: '' })
       load()
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur' })
@@ -196,8 +206,12 @@ export default function AvisRecherche() {
               <input type="text" className="form-input" value={form.recompense} onChange={e => setForm(p => ({ ...p, recompense: e.target.value }))} placeholder="30 000 Reichsmark" />
             </div>
             <div className="form-group" style={{ flex: 1, minWidth: 150 }}>
-              <label className="form-label">Photo (URL)</label>
-              <input type="text" className="form-input" value={form.photo_url} onChange={e => setForm(p => ({ ...p, photo_url: e.target.value }))} placeholder="URL ou laisser vide si effectif" />
+              <label className="form-label">Photo</label>
+              <input type="file" accept="image/*" className="form-input" onChange={e => {
+                const file = e.target.files?.[0]
+                if (file) setForm(p => ({ ...p, photo_file: file, photo_url: '' }))
+              }} />
+              <input type="text" className="form-input" style={{ marginTop: 4 }} value={form.photo_url} onChange={e => setForm(p => ({ ...p, photo_url: e.target.value, photo_file: null }))} placeholder="...ou coller une URL" disabled={!!form.photo_file} />
             </div>
           </div>
           <div className="form-group">
