@@ -93,14 +93,14 @@
 */
 .sb-land {
   position: absolute;
-  top: 28px;   /* below title */
-  left: 0;
-  right: 0;
-  bottom: 0;
-  transform: rotate(-90deg);
-  transform-origin: center center;
+  top: calc(50% + 12px); /* centered, shifted down for title */
+  left: 50%;
+  width: 480px;   /* TABLE width — becomes visual height after rotation. Tilt book CW to read. */
+  height: 310px;  /* TABLE height — becomes visual width after rotation. Fits in page width. */
+  transform: translate(-50%, -50%) rotate(-90deg);
   padding: 0.3rem;
   box-sizing: border-box;
+  overflow: hidden;
 }
 /* Override page overflow for landscape pages */
 .sb-page.sb-has-land { position: relative; overflow: visible !important; }
