@@ -367,7 +367,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
                 <td><Ink small>{a.page||''}</Ink></td>
                 <td><Ink small>{fmtD(a.date_attestation)}</Ink></td>
                 <td>
-                  {a.signature_data?<>{NB}<img src={a.signature_data} alt="sig" className="sb-att-stamp"/></>
+                  {a.signature_data?<Ink small>✓</Ink>
                   :a.signe_par_nom?<Ink small>{a.signe_par_nom}</Ink>
                   :(canSignAttestation && !a.barre?<span className="sb-sig-clickable" style={{cursor:'pointer',fontSize:'.55rem',color:'var(--military-green)'}} onClick={()=>setSigPopup({slot:'attestation',attestationId:a.id})}>✍️</span>:NB)}
                   {!a.barre && canSignAttestation && <span style={{cursor:'pointer',fontSize:'.5rem',marginLeft:3,color:'#8b0000'}} title="Barrer" onClick={async()=>{
@@ -409,6 +409,11 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       </div>
       <PageNum n={3}/>
       </div>{/* sb-land */}
+      {/* Stamp overlays — rendered on top of the page like real stamps */}
+      {attestations.filter(a=>a.signature_data && !a.barre).map((a,i)=>(
+        <img key={`stamp-${a.id}`} src={a.signature_data} alt="Tampon" className="sb-stamp-overlay"
+          style={{bottom:`${60+i*35}px`, right:`${20+i*15}px`, transform:`rotate(${-8+i*5}deg)`}}/>
+      ))}
     </div>
   </div>)
 
