@@ -91,42 +91,36 @@
    sb-land uses the full page height as its width (rotated).
    After -90deg rotation around center, visual: 280px wide × 480px tall.
 */
-/* sb-land: Landscape table container inside a portrait page.
-   Page content area: ~334px wide × ~488px tall.
-   Title at top: ~22px. Remaining: ~466px tall.
-   
-   Element width = 466px (= page remaining height → becomes TABLE width)
-   Element height = 330px (= page width - 4px → becomes TABLE height)
-   
-   After rotate(-90deg): visual 330w × 466h. Fits in 334×466 page area.
-   Centered with calc() so element center = page center. */
+/* sb-land: Landscape table inside a portrait page.
+   Element fills page below title (inset). Same dimensions as page content.
+   rotate(-90deg) turns it. scaleX/Y compensate the dimension swap:
+   - scaleX(1.39) stretches 334px CSS width → ~464px visual (fills page height)
+   - scaleY(0.72) shrinks 466px CSS height → ~335px visual (fits page width)
+   NO overflow beyond page. Element stays within parent bounds. */
 .sb-land {
   position: absolute;
-  width: 466px;
-  height: 330px;
-  left: calc(50% - 233px);   /* center: 50% - width/2 */
-  top: calc(50% - 155px);    /* center shifted 10px down for title: 50% - height/2 + 10 */
-  transform: rotate(-90deg);
+  top: 22px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: rotate(-90deg) scaleX(1.39) scaleY(0.72);
   transform-origin: center center;
   padding: 0.2rem;
   box-sizing: border-box;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }
-/* Landscape pages need overflow visible so the rotated box isn't clipped by the page */
-.sb-page.sb-has-land { position: relative; overflow: visible !important; }
-/* But the spread clips everything at the book edge */
+.sb-page.sb-has-land { position: relative; }
 .sb-spread { overflow: hidden; }
 
-.sb-land .sb-t { font-size: 0.42rem; height: 100%; }
+.sb-land .sb-t { font-size: 0.42rem; flex: 1; }
 .sb-land .sb-t td, .sb-land .sb-t th { padding: 2px 3px; }
 .sb-land .sb-ec, .sb-land .sb-ec input { font-size: 0.38rem; }
-.sb-land .sb-att-wrap { overflow: visible; height: 100%; }
+.sb-land .sb-att-wrap { overflow: hidden; flex: 1; }
 .sb-land .sb-att-wrap .sb-t { height: 100%; }
 .sb-land .sb-label { font-size: 0.38rem; }
-/* Multiple tables in one landscape page: stack and share space */
-.sb-land { display: flex; flex-direction: column; gap: 0.2rem; }
-.sb-land .sb-t:only-child { flex: 1; }
-.sb-land .sb-t { flex: 1; }
 
 /* ---- PAGE ---- */
 .sb-page {
