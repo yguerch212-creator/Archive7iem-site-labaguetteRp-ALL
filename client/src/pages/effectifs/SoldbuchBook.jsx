@@ -389,12 +389,19 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
                 <td><EC id={`att-${rowN}-mod`} placeholder="modification"/></td>
                 <td><EC id={`att-${rowN}-page`} placeholder="p."/></td>
                 <td><EC id={`att-${rowN}-date`} placeholder="date"/></td>
-                <td>{(cells[`att-${rowN}-mod`] && canSignAttestation) ? <span className="sb-sig-clickable" style={{cursor:'pointer',fontSize:'.55rem',color:'var(--military-green)'}} onClick={()=>{
-                  // Flush any pending blur and capture current cell values
-                  clearTimeout(blurTimer.current)
-                  if(editingCell){const cid=editingCell;const v=editVal;saveCell(cid,v)}
-                  setSigPopup({slot:'attestation-cell',cellRow:rowN,mod:cells[`att-${rowN}-mod`]||'',page:cells[`att-${rowN}-page`]||'',date:cells[`att-${rowN}-date`]||''})
-                }}>✍️ Signer</span> : NB}</td>
+                <td>{cells[`att-${rowN}-mod`] ? <>
+                  {canSignAttestation && <span className="sb-sig-clickable" style={{cursor:'pointer',fontSize:'.55rem',color:'var(--military-green)'}} onClick={()=>{
+                    clearTimeout(blurTimer.current)
+                    if(editingCell){const cid=editingCell;const v=editVal;saveCell(cid,v)}
+                    setSigPopup({slot:'attestation-cell',cellRow:rowN,mod:cells[`att-${rowN}-mod`]||'',page:cells[`att-${rowN}-page`]||'',date:cells[`att-${rowN}-date`]||''})
+                  }}>✍️</span>}
+                  {canSignAttestation && <span style={{cursor:'pointer',fontSize:'.5rem',marginLeft:3,color:'#8b0000'}} title="Barrer cette ligne" onClick={()=>{
+                    if(!confirm('Effacer cette ligne ?')) return
+                    const nc={...cells};nc[`att-${rowN}-mod`]='';nc[`att-${rowN}-page`]='';nc[`att-${rowN}-date`]=''
+                    setCells(nc)
+                    ;['mod','page','date'].forEach(f=>api.put(`/soldbuch/${e.id}/book-cells`,{cellId:`att-${rowN}-${f}`,value:''}).catch(()=>{}))
+                  }}>✕</span>}
+                </> : NB}</td>
               </tr>
             })}
           </tbody>
