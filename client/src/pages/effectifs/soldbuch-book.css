@@ -91,41 +91,25 @@
    sb-land uses the full page height as its width (rotated).
    After -90deg rotation around center, visual: 280px wide × 480px tall.
 */
-/* sb-land: Landscape table inside a portrait page.
-   The page content area is ~334px wide × ~488px tall.
-   We rotate -90deg so the table reads sideways.
-   After rotation, the element's CSS width maps to visual height and vice versa.
-   We set width = page height, height = page width, then rotate around center. */
+/* sb-land: Landscape table wrapper — no rotation for now, just contains the table */
 .sb-land {
-  position: absolute;
-  /* Center in the page content area (excluding top title ~22px) */
-  top: 22px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  /* These are the pre-rotation dimensions:
-     width = page width (will become visual height after rotation)
-     height = available height (will become visual width after rotation) */
   width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-  transform-origin: center center;
-  padding: 0.2rem;
   box-sizing: border-box;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+  flex: 1;
+  min-height: 0;
 }
-.sb-page.sb-has-land { position: relative; overflow: hidden; }
+.sb-page.sb-has-land { /* no special treatment */ }
 .sb-spread { overflow: hidden; }
 
-.sb-land .sb-t { font-size: 0.36rem; flex: 1; }
-.sb-land .sb-t td, .sb-land .sb-t th { padding: 1px 2px; font-size: 0.34rem; }
-.sb-land .sb-ec, .sb-land .sb-ec input { font-size: 0.34rem; }
-.sb-land .sb-att-wrap { overflow: hidden; flex: 1; }
-.sb-land .sb-att-wrap .sb-t { height: 100%; }
-.sb-land .sb-label { font-size: 0.34rem; }
+.sb-land .sb-t { font-size: 0.34rem; }
+.sb-land .sb-t td, .sb-land .sb-t th { padding: 1px 2px; font-size: 0.32rem; }
+.sb-land .sb-ec, .sb-land .sb-ec input { font-size: 0.32rem; }
+.sb-land .sb-att-wrap { overflow: auto; flex: 1; min-height: 0; }
+.sb-land .sb-att-wrap .sb-t { }
+.sb-land .sb-label { font-size: 0.32rem; }
 
 /* ---- PAGE ---- */
 .sb-page {
@@ -138,7 +122,8 @@
   line-height: 1.4;
   min-height: 520px;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
