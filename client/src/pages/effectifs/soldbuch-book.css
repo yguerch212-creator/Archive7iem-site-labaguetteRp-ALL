@@ -248,6 +248,7 @@
   text-overflow: ellipsis;
   font-size: 0.6rem;
   line-height: 1.3;
+  height: 0;
 }
 .sb-t th {
   font-weight: 700;
