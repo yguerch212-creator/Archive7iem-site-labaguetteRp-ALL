@@ -1,273 +1,447 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import BackButton from '../../components/BackButton'
-import EffectifAutocomplete from '../../components/EffectifAutocomplete'
 
-const NODE_W = 220
-const NODE_H = 70
+/* ─── Couleurs par unité ─── */
+const UNIT_COLORS = {
+  '916': { bg: '#4b5320', dot: '⚪', label: '916. Grenadier-Regiment' },
+  '254': { bg: '#c97000', dot: '🟠', label: '254. Feldgendarmerie' },
+  '916S': { bg: '#2c5ea0', dot: '🔵', label: '916S. Sanitäts-Abteilung' },
+  '001': { bg: '#1a1a2e', dot: '⚫', label: '001. Marine Pionier Bataillon' },
+  '919': { bg: '#6b4c2a', dot: '🟤', label: '919. Logistik-Abteilung' },
+  '130': { bg: '#6b2d8b', dot: '🟣', label: '130. Panzer Lehr' },
+  '009': { bg: '#b8a000', dot: '🟡', label: '009. Fallschirmjäger-Regiment' },
+}
+
+/* ─── Grades par régiment ─── */
+const GRADES = {
+  '916': [
+    { nom: 'Schütze', abbr: 'Schtz.', cat: 'HDR', role: 'Soldat de base, fantassin' },
+    { nom: 'Oberschütze', abbr: 'OSchtz.', cat: 'HDR', role: 'Soldat confirmé' },
+    { nom: 'Gefreiter', abbr: 'Gefr.', cat: 'HDR', role: 'Caporal, chef de binôme' },
+    { nom: 'Obergefreiter', abbr: 'OGefr.', cat: 'HDR', role: 'Caporal-chef' },
+    { nom: 'Stabsgefreiter', abbr: 'StGefr.', cat: 'HDR', role: 'Caporal-chef supérieur' },
+    { nom: 'Unteroffizier', abbr: 'Uffz.', cat: 'SO', role: 'Premier sous-officier, chef de groupe' },
+    { nom: 'Unterfeldwebel', abbr: 'UFw.', cat: 'SO', role: 'Adjoint au chef de section' },
+    { nom: 'Feldwebel', abbr: 'Fw.', cat: 'SO', role: 'Chef de section' },
+    { nom: 'Stabsfeldwebel', abbr: 'StFw.', cat: 'SO', role: 'Adjudant de compagnie' },
+    { nom: 'Oberfeldwebel', abbr: 'OFw.', cat: 'SO', role: 'Adjudant-chef, bras droit du Hauptmann' },
+    { nom: 'Leutnant', abbr: 'Lt.', cat: 'OFF', role: 'Chef de section (officier)' },
+    { nom: 'Oberleutnant', abbr: 'OLt.', cat: 'OFF', role: 'Chef de compagnie adjoint' },
+    { nom: 'Hauptmann', abbr: 'Hptm.', cat: 'OFF', role: 'Chef de compagnie' },
+    { nom: 'Major', abbr: 'Maj.', cat: 'OFF', role: 'Chef de bataillon' },
+    { nom: 'Oberstleutnant', abbr: 'OTL.', cat: 'OFF', role: 'Commandant adjoint du régiment' },
+    { nom: 'Oberst', abbr: 'Obst.', cat: 'OFF', role: 'Commandant du régiment' },
+  ],
+  '254': [
+    { nom: 'Schütze', abbr: 'Schtz.', cat: 'HDR', role: 'Recrue Feldgendarmerie' },
+    { nom: 'Feldgendarme', abbr: 'FGd.', cat: 'HDR', role: 'Gendarme de base' },
+    { nom: 'Feldobergendarme', abbr: 'FOGd.', cat: 'HDR', role: 'Gendarme confirmé' },
+    { nom: 'Oberschütze', abbr: 'OSchtz.', cat: 'HDR', role: 'Soldat confirmé' },
+    { nom: 'Gefreiter', abbr: 'Gefr.', cat: 'HDR', role: 'Caporal' },
+    { nom: 'Obergefreiter', abbr: 'OGefr.', cat: 'HDR', role: 'Caporal-chef' },
+    { nom: 'Stabsgefreiter', abbr: 'StGefr.', cat: 'HDR', role: 'Caporal-chef supérieur' },
+    { nom: 'Unteroffizier', abbr: 'Uffz.', cat: 'SO', role: 'Chef de groupe' },
+    { nom: 'Unterfeldwebel', abbr: 'UFw.', cat: 'SO', role: 'Adjoint' },
+    { nom: 'Feldwebel', abbr: 'Fw.', cat: 'SO', role: 'Chef de section' },
+    { nom: 'Oberfeldwebel', abbr: 'OFw.', cat: 'SO', role: 'Adjudant-chef' },
+    { nom: 'Stabsfeldwebel', abbr: 'StFw.', cat: 'SO', role: 'Adjudant de compagnie' },
+    { nom: 'Leutnant', abbr: 'Lt.', cat: 'OFF', role: 'Chef de section (officier)' },
+    { nom: 'Oberleutnant', abbr: 'OLt.', cat: 'OFF', role: 'Chef de compagnie adjoint' },
+    { nom: 'Hauptmann', abbr: 'Hptm.', cat: 'OFF', role: 'Chef de compagnie' },
+    { nom: 'Major', abbr: 'Maj.', cat: 'OFF', role: 'Chef de bataillon' },
+    { nom: 'Oberst', abbr: 'Obst.', cat: 'OFF', role: 'Commandant' },
+  ],
+  '916S': [
+    { nom: 'Sanitätssoldat', abbr: 'SanSdt.', cat: 'HDR', role: 'Infirmier de base' },
+    { nom: 'Sanitätsgefreiter', abbr: 'SanGefr.', cat: 'HDR', role: 'Infirmier confirmé' },
+    { nom: 'Sanitätsobergefreiter', abbr: 'SanOGefr.', cat: 'HDR', role: 'Caporal médical' },
+    { nom: 'Sanitätsunteroffizier', abbr: 'SanUffz.', cat: 'SO', role: 'Sous-officier médical' },
+    { nom: 'Sanitätsfeldwebel', abbr: 'SanFw.', cat: 'SO', role: 'Chef de section médicale' },
+    { nom: 'Stabsfeldwebel', abbr: 'StFw.', cat: 'SO', role: 'Adjudant médical' },
+    { nom: 'Assistenzarzt', abbr: 'AssArzt', cat: 'OFF', role: 'Médecin assistant' },
+    { nom: 'Oberarzt', abbr: 'OArzt', cat: 'OFF', role: 'Médecin-chef adjoint' },
+    { nom: 'Stabsarzt', abbr: 'StArzt', cat: 'OFF', role: 'Médecin-chef' },
+    { nom: 'Oberstabsarzt', abbr: 'OStArzt', cat: 'OFF', role: 'Médecin-chef divisionnaire' },
+  ],
+  '001': [
+    { nom: 'Matrose', abbr: 'Mtr.', cat: 'HDR', role: 'Matelot de base' },
+    { nom: 'Obermatrose', abbr: 'OMtr.', cat: 'HDR', role: 'Matelot confirmé' },
+    { nom: 'Bootsmann', abbr: 'Btsm.', cat: 'SO', role: 'Maître d\'équipage' },
+    { nom: 'Oberbootsmann', abbr: 'OBtsm.', cat: 'SO', role: 'Premier maître' },
+    { nom: 'Stabsfeldwebel', abbr: 'StFw.', cat: 'SO', role: 'Adjudant' },
+    { nom: 'Leutnant zur See', abbr: 'LtzS.', cat: 'OFF', role: 'Enseigne de vaisseau' },
+    { nom: 'Oberleutnant zur See', abbr: 'OLtzS.', cat: 'OFF', role: 'Lieutenant de vaisseau' },
+    { nom: 'Kapitänleutnant', abbr: 'KptLt.', cat: 'OFF', role: 'Capitaine de corvette' },
+    { nom: 'Korvettenkapitän', abbr: 'KKpt.', cat: 'OFF', role: 'Commandant' },
+  ],
+  '919': [
+    { nom: 'Schütze', abbr: 'Schtz.', cat: 'HDR', role: 'Soldat logistique' },
+    { nom: 'Versorgungssoldat', abbr: 'VSdt.', cat: 'HDR', role: 'Ravitailleur' },
+    { nom: 'Oberschütze', abbr: 'OSchtz.', cat: 'HDR', role: 'Soldat confirmé' },
+    { nom: 'Gefreiter', abbr: 'Gefr.', cat: 'HDR', role: 'Caporal' },
+    { nom: 'Obergefreiter', abbr: 'OGefr.', cat: 'HDR', role: 'Caporal-chef' },
+    { nom: 'Unteroffizier', abbr: 'Uffz.', cat: 'SO', role: 'Chef de groupe logistique' },
+    { nom: 'Oberfeldwebel', abbr: 'OFw.', cat: 'SO', role: 'Adjudant logistique' },
+    { nom: 'Feldwebel', abbr: 'Fw.', cat: 'SO', role: 'Chef de section' },
+    { nom: 'Stabsfeldwebel', abbr: 'StFw.', cat: 'SO', role: 'Adjudant de compagnie' },
+    { nom: 'Leutnant', abbr: 'Lt.', cat: 'OFF', role: 'Officier logistique' },
+    { nom: 'Oberleutnant', abbr: 'OLt.', cat: 'OFF', role: 'Chef adjoint' },
+    { nom: 'Hauptmann', abbr: 'Hptm.', cat: 'OFF', role: 'Chef de compagnie' },
+    { nom: 'Major', abbr: 'Maj.', cat: 'OFF', role: 'Chef de bataillon' },
+    { nom: 'Oberst', abbr: 'Obst.', cat: 'OFF', role: 'Commandant' },
+  ],
+  '130': [
+    { nom: 'Schütze', abbr: 'Schtz.', cat: 'HDR', role: 'Recrue blindée' },
+    { nom: 'Panzerschütze', abbr: 'PzSchtz.', cat: 'HDR', role: 'Tireur de char' },
+    { nom: 'Oberschütze', abbr: 'OSchtz.', cat: 'HDR', role: 'Soldat confirmé' },
+    { nom: 'Gefreiter', abbr: 'Gefr.', cat: 'HDR', role: 'Caporal blindé' },
+    { nom: 'Jäger', abbr: 'Jg.', cat: 'HDR', role: 'Chasseur' },
+    { nom: 'Oberjäger', abbr: 'OJg.', cat: 'SO', role: 'Chasseur confirmé' },
+    { nom: 'Unteroffizier', abbr: 'Uffz.', cat: 'SO', role: 'Chef de char' },
+    { nom: 'Oberfeldwebel', abbr: 'OFw.', cat: 'SO', role: 'Chef de section blindée' },
+    { nom: 'Feldwebel', abbr: 'Fw.', cat: 'SO', role: 'Chef de peloton' },
+    { nom: 'Stabsfeldwebel', abbr: 'StFw.', cat: 'SO', role: 'Adjudant' },
+    { nom: 'Leutnant', abbr: 'Lt.', cat: 'OFF', role: 'Chef de peloton (officier)' },
+    { nom: 'Oberleutnant', abbr: 'OLt.', cat: 'OFF', role: 'Chef de compagnie adjoint' },
+    { nom: 'Hauptmann', abbr: 'Hptm.', cat: 'OFF', role: 'Chef de compagnie' },
+    { nom: 'Major', abbr: 'Maj.', cat: 'OFF', role: 'Chef de bataillon' },
+    { nom: 'Oberst', abbr: 'Obst.', cat: 'OFF', role: 'Commandant' },
+  ],
+  '009': [
+    { nom: 'Schütze', abbr: 'Schtz.', cat: 'HDR', role: 'Recrue parachutiste' },
+    { nom: 'Fallschirmsoldat', abbr: 'FsSdt.', cat: 'HDR', role: 'Parachutiste de base' },
+    { nom: 'Oberschütze', abbr: 'OSchtz.', cat: 'HDR', role: 'Soldat confirmé' },
+    { nom: 'Gefreiter', abbr: 'Gefr.', cat: 'HDR', role: 'Caporal parachutiste' },
+    { nom: 'Jäger', abbr: 'Jg.', cat: 'HDR', role: 'Chasseur parachutiste' },
+    { nom: 'Oberjäger', abbr: 'OJg.', cat: 'SO', role: 'Chef de groupe' },
+    { nom: 'Unteroffizier', abbr: 'Uffz.', cat: 'SO', role: 'Sous-officier' },
+    { nom: 'Feldwebel', abbr: 'Fw.', cat: 'SO', role: 'Chef de section' },
+    { nom: 'Stabsfeldwebel', abbr: 'StFw.', cat: 'SO', role: 'Adjudant' },
+    { nom: 'Oberfeldwebel', abbr: 'OFw.', cat: 'SO', role: 'Adjudant-chef' },
+    { nom: 'Leutnant', abbr: 'Lt.', cat: 'OFF', role: 'Chef de section (officier)' },
+    { nom: 'Oberleutnant', abbr: 'OLt.', cat: 'OFF', role: 'Chef adjoint' },
+    { nom: 'Hauptmann', abbr: 'Hptm.', cat: 'OFF', role: 'Chef de compagnie' },
+    { nom: 'Major', abbr: 'Maj.', cat: 'OFF', role: 'Chef de bataillon' },
+    { nom: 'Oberst', abbr: 'Obst.', cat: 'OFF', role: 'Commandant' },
+  ],
+}
+
+/* ─── Spécialités du 916 (règlement serveur) ─── */
+const SPECIALTIES = {
+  'grenadier': {
+    name: 'Grenadier / PanzerGrenadier', icon: '💣',
+    desc: 'Fantassin équipé de grenades et lance-grenades. Spécialiste des assauts rapprochés.',
+    rules: ['Maximum 5 grenades, ravitaillement via QTM ou retour base', 'Interdit d\'utiliser les lance-grenades dans les bâtiments', 'Tir de l\'extérieur vers l\'intérieur autorisé']
+  },
+  'mg': {
+    name: 'Maschinengewehr / MG', icon: '🔫',
+    desc: 'Tireur de mitrailleuse lourde. Appui feu et suppression.',
+    rules: ['Salves de 5s toutes les 3s', 'Tir debout/accroupi uniquement avec support']
+  },
+  'sniper': {
+    name: 'Scharfschütze / Sniper', icon: '🎯',
+    desc: 'Tireur d\'élite. Reconnaissance et élimination de cibles prioritaires.',
+    rules: ['Cibles prioritaires : SO, Officiers, SS, FSM, 101st, 15th, Sniper, Tankiste, Canonnier, Funker, Artilleur', 'Interdit de rentrer sur un point de capture sans régulière', 'Peut être accompagné d\'un spoteur (29th ou 916.)', 'Reconnaissance max 1 AP à l\'avance', 'Call radio obligatoire avant d\'abattre une cible prioritaire']
+  },
+  'artilleur': {
+    name: 'Artilleur / Artillerist', icon: '💥',
+    desc: 'Opérateur de canon d\'artillerie 105mm. Frappes indirectes à longue portée.',
+    rules: ['Canon 105mm uniquement, mode artillerie uniquement', '1 salve toutes les 5 min', 'Munitions WP interdites', 'Interdit en attaque/défense de base', 'Peut quitter la base seul']
+  },
+  'canonnier': {
+    name: 'Canonnier / Kanoneer', icon: '🎯',
+    desc: 'Opérateur de canon 50mm. Tir direct uniquement.',
+    rules: ['Canon 50mm (75mm si ennemi P3/P4)', 'Tir direct uniquement', '1 tir HE toutes les 40s']
+  },
+  'panzerjager': {
+    name: 'PanzerJäger / Anti-Tank', icon: '🛡️',
+    desc: 'Chasseur de chars équipé de Panzerfaust.',
+    rules: ['Tir uniquement sur véhicules', 'Hors AP/VP : 2 accompagnants minimum', 'Max 4 roquettes', 'Tir accroupi, extérieur uniquement', '1 tir / 15s', 'Grenade AT collante interdite contre infanterie']
+  },
+  'sapeur': {
+    name: 'Sapeur / Pionnier', icon: '⚒️',
+    desc: 'Ingénieur militaire. Mines et fortifications avancées.',
+    rules: ['Max 4 mines, extérieur uniquement', 'Panneau "miné" visible obligatoire', 'Fortif. extérieures illimitées', 'Aucun accès bloqué', 'Mines hors service avant changement de job', 'Max ~30m de l\'AP']
+  },
+  'flammerwerfer': {
+    name: 'Flammenwerfer / Flamethrower', icon: '🔥',
+    desc: 'Lance-flammes. Nettoyage de positions.',
+    rules: ['Giclée 3s / 5s', 'Interdit en intérieur', 'Ext. vers int. autorisé']
+  },
+  'funker': {
+    name: 'Funker / Radioman', icon: '📡',
+    desc: 'Opérateur radio. Transmissions entre unités.',
+    rules: ['Balayage radio interdit', 'Peut créer un poste radio (nommé)', 'Poste installé = radio textuelle pour les proches']
+  },
+  'qtm': {
+    name: 'QTM / Kraftfahrer', icon: '🚛',
+    desc: 'Quartier-maître. Ravitaillement et transport.',
+    rules: ['Peut quitter la base seul', 'Poste de réparation avancé 1 AP avant (crédible)', 'Réparation : min 1 minute sur place']
+  },
+}
+
+/* ─── Commandants RP par défaut ─── */
+const DEFAULT_COMMANDERS = {
+  '7ak': { kommandeur: 'Maréchal Jean Devin' },
+  '84ak': { kommandeur: 'Maréchal Jean Devin (intérim)', generalstab: 'Maréchal Jean Devin' },
+  '916': { kommandeur: 'OLtn. Manfred Wurst', adjoint: 'Ltn. Miller Hermantraut' },
+  '254': { kommandeur: 'Hptm. Jean Muller', adjoint: 'OLtn. Kreger Hoenstadt' },
+  '916S': { kommandeur: 'OStArzt Ernest Der Erlkönig', adjoint: 'OArzt Bert Elséeune' },
+  '001': { kommandeur: 'KptLt. Alarak Vander', adjoint: 'OLtzS. Karl Witteman' },
+  '919': { kommandeur: 'OLtn. Krauss Von Strauss', adjoint: '' },
+  '130': { kommandeur: 'Maj. Ernest Honigsberg', adjoint: 'Ltn. Ernest Von Richtofen' },
+  '009': { kommandeur: 'Hptm. Markus Urkane', adjoint: '' },
+}
 
 export default function Organigramme() {
   const { user } = useAuth()
-  const [nodes, setNodes] = useState([])
-  const [unites, setUnites] = useState([])
-  const [showAdd, setShowAdd] = useState(false)
-  const [editNode, setEditNode] = useState(null)
-  const [form, setForm] = useState({ effectif_id: '', titre_poste: '', unite_id: '' })
-  const [searchText, setSearchText] = useState('')
+  const [data, setData] = useState(null)
+  const [gradePopup, setGradePopup] = useState(null)
+  const [spePopup, setSpePopup] = useState(null)
+  const [editPopup, setEditPopup] = useState(null)
+  const [editVal, setEditVal] = useState('')
   const [msg, setMsg] = useState('')
-  const [linking, setLinking] = useState(null)
-  const [dragging, setDragging] = useState(null)
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
-  const canvasRef = useRef()
 
-  const canEdit = user?.isAdmin || user?.isEtatMajor
+  const canEdit = user?.isAdmin || user?.isEtatMajor || user?.isOfficier || user?.isRecenseur
 
-  useEffect(() => {
-    load()
-    api.get('/unites').then(r => setUnites(r.data.data || r.data)).catch(() => {})
-  }, [])
+  useEffect(() => { load() }, [])
 
-  const load = () => api.get('/organigramme').then(r => {
-    let data = r.data.data || []
-    if (data.length > 0 && data.every(n => !n.pos_x && !n.pos_y)) {
-      data = autoLayout(data)
-    }
-    setNodes(data)
-  }).catch(() => {})
-
-  const autoLayout = (data) => {
-    const roots = data.filter(n => !n.parent_id)
-    const children = (pid) => data.filter(n => n.parent_id === pid)
-    let x = 50
-    const layout = (node, depth) => {
-      const kids = children(node.id)
-      if (kids.length === 0) {
-        node.pos_x = x
-        node.pos_y = depth * 120 + 30
-        x += NODE_W + 40
-      } else {
-        kids.forEach(k => layout(k, depth + 1))
-        const firstX = kids[0].pos_x
-        const lastX = kids[kids.length - 1].pos_x
-        node.pos_x = (firstX + lastX) / 2
-        node.pos_y = depth * 120 + 30
-      }
-    }
-    roots.forEach(r => layout(r, 0))
-    return data
-  }
-
-  const savePositions = useCallback(() => {
-    const payload = nodes.map(n => ({ id: n.id, parent_id: n.parent_id, ordre: n.ordre || 0, pos_x: n.pos_x || 0, pos_y: n.pos_y || 0 }))
-    api.put('/organigramme/bulk/save', { nodes: payload }).catch(() => {})
-  }, [nodes])
-
-  const resetForm = () => { setForm({ effectif_id: '', titre_poste: '', unite_id: '' }); setSearchText(''); setShowAdd(false); setEditNode(null) }
-
-  const submit = async () => {
-    if (!form.effectif_id && !form.titre_poste) { setMsg('Effectif ou titre requis'); return }
+  const load = async () => {
     try {
-      if (editNode) {
-        await api.put(`/organigramme/${editNode.id}`, { ...form, parent_id: editNode.parent_id, ordre: editNode.ordre, pos_x: editNode.pos_x, pos_y: editNode.pos_y })
-      } else {
-        const maxX = nodes.reduce((m, n) => Math.max(m, n.pos_x || 0), 0)
-        await api.post('/organigramme', { ...form, parent_id: null, pos_x: maxX + NODE_W + 60, pos_y: 50 })
-      }
-      resetForm(); load()
-      setMsg(editNode ? '✅ Modifié' : '✅ Ajouté'); setTimeout(() => setMsg(''), 2000)
-    } catch (err) { setMsg(err.response?.data?.message || 'Erreur') }
+      const res = await api.get('/organigramme/layout')
+      const raw = res.data?.data?.layout || res.data?.layout || '{}'
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+      // Merge defaults for any missing commanders
+      const merged = { ...parsed }
+      Object.entries(DEFAULT_COMMANDERS).forEach(([key, vals]) => {
+        if (!merged[key]) merged[key] = {}
+        Object.entries(vals).forEach(([f, v]) => {
+          if (!merged[key][f]) merged[key][f] = v
+        })
+      })
+      setData(merged)
+    } catch { setData({ ...DEFAULT_COMMANDERS }) }
   }
 
-  const remove = async (id) => {
-    if (!confirm('Supprimer ce poste ?')) return
-    try { await api.delete(`/organigramme/${id}`); load() } catch { setMsg('Erreur') }
+  const saveData = async (newData) => {
+    setData(newData)
+    try { await api.put('/organigramme/layout', { layout: JSON.stringify(newData) }) } catch {}
   }
 
-  // Drag
-  const onNodeMouseDown = (e, node) => {
-    if (!canEdit) return
-    if (linking) {
-      if (linking !== node.id) {
-        setNodes(prev => prev.map(n => n.id === node.id ? { ...n, parent_id: linking } : n))
-        api.put(`/organigramme/${node.id}`, { ...node, parent_id: linking, pos_x: node.pos_x, pos_y: node.pos_y }).catch(() => {})
-      }
-      setLinking(null)
-      return
-    }
-    e.stopPropagation()
-    const rect = canvasRef.current.getBoundingClientRect()
-    const scrollLeft = canvasRef.current.scrollLeft
-    const scrollTop = canvasRef.current.scrollTop
-    setDragging(node.id)
-    setDragOffset({ x: e.clientX - rect.left + scrollLeft - (node.pos_x || 0), y: e.clientY - rect.top + scrollTop - (node.pos_y || 0) })
+  const getField = (key, field) => data?.[key]?.[field] || ''
+
+  const openEdit = (key, field, label) => {
+    setEditPopup({ key, field, label })
+    setEditVal(getField(key, field))
   }
 
-  const onCanvasMouseMove = (e) => {
-    if (!dragging) return
-    const rect = canvasRef.current.getBoundingClientRect()
-    const scrollLeft = canvasRef.current.scrollLeft
-    const scrollTop = canvasRef.current.scrollTop
-    const x = e.clientX - rect.left + scrollLeft - dragOffset.x
-    const y = e.clientY - rect.top + scrollTop - dragOffset.y
-    setNodes(prev => prev.map(n => n.id === dragging ? { ...n, pos_x: Math.max(0, x), pos_y: Math.max(0, y) } : n))
+  const saveEdit = () => {
+    if (!editPopup) return
+    const d = { ...data }
+    if (!d[editPopup.key]) d[editPopup.key] = {}
+    d[editPopup.key][editPopup.field] = editVal
+    saveData(d)
+    setEditPopup(null)
+    setMsg('✓ Mis à jour')
+    setTimeout(() => setMsg(''), 2000)
   }
 
-  const onCanvasMouseUp = () => {
-    if (dragging) { savePositions(); setDragging(null) }
+  const CmdText = ({ unitKey, field, placeholder }) => {
+    const val = getField(unitKey, field)
+    if (!canEdit) return <span style={{ fontSize: '0.7rem' }}>{val || <i style={{ opacity: 0.5 }}>{placeholder || '—'}</i>}</span>
+    return <span style={{ fontSize: '0.7rem', cursor: 'pointer', borderBottom: '1px dashed rgba(255,255,255,0.3)' }}
+      onClick={e => { e.stopPropagation(); openEdit(unitKey, field, `${UNIT_COLORS[unitKey]?.label || unitKey} — ${field}`) }}>
+      {val || <i style={{ opacity: 0.5 }}>{placeholder || '✏️'}</i>}
+    </span>
   }
 
-  const getLines = () => {
-    const lines = []
-    nodes.forEach(n => {
-      if (n.parent_id) {
-        const parent = nodes.find(p => p.id === n.parent_id)
-        if (parent) {
-          lines.push({
-            x1: (parent.pos_x || 0) + NODE_W / 2, y1: (parent.pos_y || 0) + NODE_H,
-            x2: (n.pos_x || 0) + NODE_W / 2, y2: (n.pos_y || 0),
-          })
-        }
-      }
-    })
-    return lines
-  }
+  const catColors = { HDR: '#5a6630', SO: '#b49632', OFF: '#8b0000' }
+  const catLabels = { HDR: 'Homme du rang', SO: 'Sous-officier', OFF: 'Officier' }
 
-  const canvasW = Math.max(1200, nodes.reduce((m, n) => Math.max(m, (n.pos_x || 0) + NODE_W + 100), 0))
-  const canvasH = Math.max(600, nodes.reduce((m, n) => Math.max(m, (n.pos_y || 0) + NODE_H + 100), 0))
+  if (!data) return <div className="container"><p>Chargement...</p></div>
 
   return (
-    <div className="container" style={{ paddingBottom: 'var(--space-xxl)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap', gap: 8 }}>
-        <BackButton label="← Tableau de bord" />
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          {linking && <span style={{ fontSize: '0.8rem', color: 'var(--warning)', fontWeight: 700 }}>🔗 Cliquez sur le bloc enfant</span>}
-          {linking && <button className="btn btn-secondary btn-sm" onClick={() => setLinking(null)}>✕</button>}
-          {canEdit && <button className="btn btn-primary btn-small" onClick={() => { setShowAdd(!showAdd); setEditNode(null) }}>{showAdd ? '✕ Fermer' : '+ Nouveau poste'}</button>}
-        </div>
-      </div>
+    <div className="container">
+      <BackButton label="← Tableau de bord" />
+      <h1 style={{ textAlign: 'center', margin: 'var(--space-lg) 0 var(--space-sm)' }}>🏛️ Organigramme du 7. Armeekorps</h1>
+      <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 var(--space-lg)' }}>Cliquer sur un régiment pour voir ses grades • Cliquer sur une spécialité pour voir les règles</p>
+      {msg && <div className="alert alert-success" style={{ marginBottom: 'var(--space-md)' }}>{msg}</div>}
 
-      <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-sm)', fontFamily: 'var(--font-title, Georgia, serif)' }}>🗺️ Organigramme</h1>
-      <p style={{ textAlign: 'center', marginBottom: 'var(--space-md)', fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>7. Armeekorps — Organisation et Commandement</p>
-
-      {msg && <div className="alert alert-success">{msg}</div>}
-
-      {(showAdd || editNode) && canEdit && (
-        <div className="paper-card" style={{ marginBottom: 'var(--space-md)' }}>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'end' }}>
-            <div style={{ flex: 1, minWidth: 160 }}>
-              <label style={{ fontSize: '0.72rem', fontWeight: 600 }}>Effectif</label>
-              <EffectifAutocomplete value={searchText} onChange={(text) => { setSearchText(text); if (!text) setForm(f => ({ ...f, effectif_id: '' })) }} onSelect={(eff) => { setForm(f => ({ ...f, effectif_id: eff.id })); setSearchText(`${eff.prenom} ${eff.nom}`) }} placeholder="Rechercher..." />
+      {/* ─── Edit popup ─── */}
+      {editPopup && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1001, display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+          onClick={e => { if (e.target === e.currentTarget) setEditPopup(null) }}>
+          <div className="paper-card" style={{ maxWidth: 400, width: '100%', padding: 'var(--space-lg)', background: '#f5f0e1' }}>
+            <h3 style={{ marginTop: 0 }}>✏️ {editPopup.label}</h3>
+            <input type="text" className="form-input" value={editVal} onChange={e => setEditVal(e.target.value)} autoFocus
+              onKeyDown={e => { if (e.key === 'Enter') saveEdit() }} />
+            <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'flex-end', marginTop: 'var(--space-sm)' }}>
+              <button className="btn btn-secondary" onClick={() => setEditPopup(null)}>Annuler</button>
+              <button className="btn btn-primary" onClick={saveEdit}>Enregistrer</button>
             </div>
-            <div style={{ minWidth: 140 }}>
-              <label style={{ fontSize: '0.72rem', fontWeight: 600 }}>Titre du poste</label>
-              <input className="form-input" value={form.titre_poste} onChange={e => setForm(f => ({ ...f, titre_poste: e.target.value }))} placeholder="Ex: Kommandeur" />
-            </div>
-            <div style={{ minWidth: 120 }}>
-              <label style={{ fontSize: '0.72rem', fontWeight: 600 }}>Unité</label>
-              <select className="form-input" value={form.unite_id} onChange={e => setForm(f => ({ ...f, unite_id: e.target.value }))}>
-                <option value="">—</option>
-                {unites.map(u => <option key={u.id} value={u.id}>{u.code}. {u.nom}</option>)}
-              </select>
-            </div>
-            <button className="btn btn-primary btn-sm" onClick={submit}>{editNode ? '✅ Modifier' : '➕ Ajouter'}</button>
-            <button className="btn btn-secondary btn-sm" onClick={resetForm}>Annuler</button>
           </div>
         </div>
       )}
 
-      {/* Canvas organigramme sur fond papier */}
-      <div className="paper-card" style={{ padding: 0, overflow: 'hidden', borderRadius: 8 }}>
-        <div ref={canvasRef}
-          onMouseMove={onCanvasMouseMove} onMouseUp={onCanvasMouseUp} onMouseLeave={onCanvasMouseUp}
-          style={{
-            position: 'relative', width: '100%', height: 'calc(100vh - 280px)', minHeight: 500,
-            overflow: 'auto',
-            cursor: dragging ? 'grabbing' : linking ? 'crosshair' : 'default',
-          }}>
-          
-          {/* Lignes de liaison */}
-          <svg style={{ position: 'absolute', top: 0, left: 0, width: canvasW, height: canvasH, pointerEvents: 'none' }}>
-            {getLines().map((l, i) => {
-              const midY = (l.y1 + l.y2) / 2
-              return <path key={i} d={`M ${l.x1} ${l.y1} C ${l.x1} ${midY}, ${l.x2} ${midY}, ${l.x2} ${l.y2}`}
-                fill="none" stroke="var(--border, #8b7d6b)" strokeWidth={2} opacity={0.7} />
-            })}
-          </svg>
+      {/* ─── Grade popup ─── */}
+      {gradePopup && GRADES[gradePopup] && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', padding: '30px 10px', overflowY: 'auto' }}
+          onClick={e => { if (e.target === e.currentTarget) setGradePopup(null) }}>
+          <div className="paper-card" style={{ maxWidth: 700, width: '100%', padding: 'var(--space-xl)', background: '#f5f0e1', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
+              <div>
+                <h2 style={{ margin: '0 0 4px', fontSize: '1.1rem' }}>{UNIT_COLORS[gradePopup]?.dot} {UNIT_COLORS[gradePopup]?.label}</h2>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Kommandeur : {getField(gradePopup, 'kommandeur') || '—'}
+                  {getField(gradePopup, 'adjoint') && <> • Adjoint : {getField(gradePopup, 'adjoint')}</>}
+                </div>
+              </div>
+              <button className="btn btn-secondary" onClick={() => setGradePopup(null)}>✕</button>
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+              <thead>
+                <tr style={{ borderBottom: `2px solid ${UNIT_COLORS[gradePopup]?.bg || '#555'}` }}>
+                  <th style={{ textAlign: 'left', padding: '6px 8px' }}>Grade</th>
+                  <th style={{ textAlign: 'left', padding: '6px 8px' }}>Abrév.</th>
+                  <th style={{ textAlign: 'center', padding: '6px 8px' }}>Catégorie</th>
+                  <th style={{ textAlign: 'left', padding: '6px 8px' }}>Rôle / Utilité</th>
+                </tr>
+              </thead>
+              <tbody>
+                {GRADES[gradePopup].map((g, i) => (
+                  <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', background: i % 2 ? 'rgba(0,0,0,0.02)' : 'transparent' }}>
+                    <td style={{ padding: '5px 8px', fontWeight: 600 }}>{g.nom}</td>
+                    <td style={{ padding: '5px 8px', fontFamily: 'monospace', fontSize: '0.75rem' }}>{g.abbr}</td>
+                    <td style={{ padding: '5px 8px', textAlign: 'center' }}>
+                      <span style={{ background: catColors[g.cat], color: '#fff', fontSize: '0.6rem', padding: '2px 6px', borderRadius: 3, fontWeight: 600 }}>{catLabels[g.cat]}</span>
+                    </td>
+                    <td style={{ padding: '5px 8px', color: 'var(--text-muted)', fontSize: '0.75rem' }}>{g.role}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
-          {/* Nodes */}
-          {nodes.map(node => {
-            const isRoot = !node.parent_id
-            return (
-              <div key={node.id}
-                onMouseDown={(e) => onNodeMouseDown(e, node)}
-                onDoubleClick={() => { if (canEdit) { setEditNode(node); setForm({ effectif_id: node.effectif_id || '', titre_poste: node.titre_poste || '', unite_id: node.unite_id || '' }); setSearchText(node.prenom ? `${node.prenom} ${node.nom}` : ''); setShowAdd(false) } }}
-                style={{
-                  position: 'absolute', left: node.pos_x || 0, top: node.pos_y || 0,
-                  width: NODE_W, minHeight: NODE_H,
-                  background: isRoot ? 'rgba(61,90,62,0.9)' : 'rgba(250,248,242,0.85)',
-                  backdropFilter: 'blur(2px)',
-                  color: isRoot ? '#fff' : 'var(--text, #2c2416)',
-                  border: `2px solid ${node.unite_couleur || 'var(--border, #c4b99a)'}`,
-                  borderRadius: 6, padding: '8px 12px',
-                  cursor: dragging === node.id ? 'grabbing' : canEdit ? 'grab' : 'default',
-                  boxShadow: dragging === node.id ? '0 8px 24px rgba(0,0,0,0.25)' : '0 1px 4px rgba(0,0,0,0.1)',
-                  zIndex: dragging === node.id ? 100 : 1,
-                  transition: dragging === node.id ? 'none' : 'box-shadow 0.2s',
-                  userSelect: 'none',
-                }}>
-                {node.titre_poste && (
-                  <div style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.7, marginBottom: 2 }}>
-                    {node.titre_poste}
-                  </div>
-                )}
-                {node.effectif_id ? (
-                  <div style={{ fontWeight: 600, fontSize: '0.82rem', lineHeight: 1.3, fontFamily: 'var(--font-body, Georgia, serif)' }}>
-                    {node.grade_nom ? `${node.grade_nom} ` : ''}{node.prenom} {node.nom}
-                  </div>
-                ) : (
-                  <div style={{ fontStyle: 'italic', fontSize: '0.78rem', opacity: 0.5 }}>Poste vacant</div>
-                )}
-                {node.unite_code && (
-                  <div style={{ fontSize: '0.6rem', opacity: 0.6, marginTop: 2 }}>
-                    {node.unite_code}. {node.unite_nom}
-                  </div>
-                )}
+      {/* ─── Specialty popup ─── */}
+      {spePopup && SPECIALTIES[spePopup] && (() => {
+        const s = SPECIALTIES[spePopup]
+        return (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', padding: '30px 10px', overflowY: 'auto' }}
+            onClick={e => { if (e.target === e.currentTarget) setSpePopup(null) }}>
+            <div className="paper-card" style={{ maxWidth: 600, width: '100%', padding: 'var(--space-xl)', background: '#f5f0e1', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
+                <h2 style={{ margin: 0, fontSize: '1.05rem' }}>{s.icon} {s.name}</h2>
+                <button className="btn btn-secondary" onClick={() => setSpePopup(null)}>✕</button>
+              </div>
+              <p style={{ fontSize: '0.85rem', lineHeight: 1.7, color: 'var(--text-muted)', marginBottom: 'var(--space-md)' }}>{s.desc}</p>
+              <div style={{ background: 'rgba(75,83,32,0.08)', borderLeft: '3px solid var(--military-green)', padding: '12px 16px', borderRadius: 4 }}>
+                <h4 style={{ margin: '0 0 var(--space-sm)', fontSize: '0.9rem', color: 'var(--military-green)' }}>📋 Règles en jeu</h4>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: '0.8rem', lineHeight: 1.8 }}>
+                  {s.rules.map((r, i) => <li key={i}>{r}</li>)}
+                </ul>
+              </div>
+              <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 'var(--space-md)', fontStyle: 'italic' }}>
+                Source : <a href="https://reglements.labaguetterp.fr/militaryrp/reglement-specialisations" target="_blank" rel="noopener noreferrer">Règlement Spécialisations — LaBaguetteRP</a>
+              </p>
+            </div>
+          </div>
+        )
+      })()}
 
-                {/* Boutons admin */}
-                {canEdit && (
-                  <div style={{ position: 'absolute', top: -8, right: -8, display: 'flex', gap: 2 }}>
-                    <button onClick={(e) => { e.stopPropagation(); setLinking(node.id) }}
-                      style={{ width: 20, height: 20, borderRadius: '50%', border: '1px solid var(--border, #c4b99a)', background: 'var(--bg-card, #faf8f2)', cursor: 'pointer', fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      title="Relier à un enfant">🔗</button>
-                    <button onClick={(e) => { e.stopPropagation(); remove(node.id) }}
-                      style={{ width: 20, height: 20, borderRadius: '50%', border: '1px solid var(--border, #c4b99a)', background: 'var(--bg-card, #faf8f2)', cursor: 'pointer', fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      title="Supprimer">🗑️</button>
-                    {node.parent_id && (
-                      <button onClick={(e) => { e.stopPropagation(); setNodes(prev => prev.map(n => n.id === node.id ? { ...n, parent_id: null } : n)); api.put(`/organigramme/${node.id}`, { ...node, parent_id: null }).catch(() => {}) }}
-                        style={{ width: 20, height: 20, borderRadius: '50%', border: '1px solid var(--border, #c4b99a)', background: 'var(--bg-card, #faf8f2)', cursor: 'pointer', fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        title="Détacher du parent">✂️</button>
+      {/* ─── Organigramme principal ─── */}
+      <div className="paper-card" style={{ overflowX: 'auto', padding: 'var(--space-xl)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0, minWidth: 600 }}>
+
+          {/* 7. Armeekorps */}
+          <div style={{ background: '#2c2c2c', color: '#f5f0e1', padding: '10px 24px', borderRadius: 6, fontWeight: 700, fontSize: '0.85rem', textAlign: 'center', minWidth: 300, border: '2px solid #c9a227', boxShadow: '0 3px 12px rgba(0,0,0,0.3)' }}>
+            🦅 7. Armeekorps<br/>
+            <span style={{ fontWeight: 400, fontSize: '0.72rem' }}>Kommandeur : </span><CmdText unitKey="7ak" field="kommandeur" placeholder="à définir"/>
+          </div>
+          <div style={{ width: 2, height: 16, background: '#555' }}/>
+
+          {/* LXXXIV. Armeekorps */}
+          <div style={{ background: '#4a3728', color: '#f5f0e1', padding: '10px 24px', borderRadius: 6, fontWeight: 700, fontSize: '0.85rem', textAlign: 'center', minWidth: 300, boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>
+            🏛️ LXXXIV. Armeekorps<br/>
+            <span style={{ fontWeight: 400, fontSize: '0.72rem' }}>Kommandeur : </span><CmdText unitKey="84ak" field="kommandeur" placeholder="à définir"/><br/>
+            <span style={{ fontWeight: 400, fontSize: '0.65rem', opacity: 0.7 }}>Generalstab : </span><CmdText unitKey="84ak" field="generalstab" placeholder="à définir"/>
+          </div>
+          <div style={{ width: 2, height: 16, background: '#4b5320' }}/>
+
+          {/* Régiments — tous horizontal */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {['916', '254', '916S', '001', '919', '130', '009'].map(code => {
+              const uc = UNIT_COLORS[code]
+              const is916 = code === '916'
+              const textColor = code === '009' ? '#222' : '#f5f0e1'
+              return (
+                <div key={code} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{ width: 2, height: 10, background: '#4b5320' }}/>
+                  <div
+                    style={{ background: uc.bg, color: textColor, padding: '10px 14px', borderRadius: 6, textAlign: 'center', minWidth: 130, maxWidth: 160, cursor: 'pointer', transition: 'transform .15s, box-shadow .15s', border: is916 ? '2px solid #c9a227' : '1px solid rgba(255,255,255,0.15)', boxShadow: is916 ? '0 0 10px rgba(201,162,39,0.3)' : '0 2px 6px rgba(0,0,0,0.2)' }}
+                    onClick={() => setGradePopup(code)}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)' }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = is916 ? '0 0 10px rgba(201,162,39,0.3)' : '0 2px 6px rgba(0,0,0,0.2)' }}
+                  >
+                    <div style={{ fontWeight: 700, fontSize: '0.78rem', marginBottom: 4 }}>{uc.dot} {code}.</div>
+                    <div style={{ fontSize: '0.62rem', opacity: 0.85, lineHeight: 1.3, marginBottom: 4 }}>{uc.label.replace(/^\d+S?\.\s*/, '')}</div>
+                    <div style={{ fontSize: '0.62rem', opacity: 0.9 }}>
+                      <CmdText unitKey={code} field="kommandeur" placeholder="Kommandeur ?"/>
+                    </div>
+                    {getField(code, 'adjoint') && (
+                      <div style={{ fontSize: '0.58rem', opacity: 0.7 }}>
+                        Adj. <CmdText unitKey={code} field="adjoint" placeholder=""/>
+                      </div>
                     )}
                   </div>
-                )}
-              </div>
-            )
-          })}
-
-          {nodes.length === 0 && (
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center', color: 'var(--text-muted)' }}>
-              <p style={{ fontSize: '3rem' }}>🗺️</p>
-              <p>Organigramme vide.{canEdit ? ' Ajoutez des postes avec le bouton ci-dessus.' : ''}</p>
-            </div>
-          )}
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
 
-      {canEdit && nodes.length > 0 && (
-        <div style={{ textAlign: 'center', marginTop: 'var(--space-sm)', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-          Glissez les blocs pour les déplacer · 🔗 Relier · ✂️ Détacher · Double-clic pour modifier
+      {/* ─── Spécialités du 916 ─── */}
+      <div className="paper-card" style={{ marginTop: 'var(--space-lg)' }}>
+        <h2 style={{ marginTop: 0, fontSize: '1rem' }}>🎖️ Spécialités — 916. Grenadier-Regiment</h2>
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 var(--space-md)' }}>Cliquer sur une spécialité pour voir à quoi elle sert et ses règles en jeu</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+          {Object.entries(SPECIALTIES).map(([key, s]) => (
+            <div key={key}
+              style={{ background: 'rgba(75,83,32,0.1)', border: '1px solid rgba(75,83,32,0.3)', borderRadius: 6, padding: '8px 12px', textAlign: 'center', minWidth: 85, cursor: 'pointer', transition: 'background .15s, transform .15s' }}
+              onClick={() => setSpePopup(key)}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(75,83,32,0.25)'; e.currentTarget.style.transform = 'scale(1.05)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(75,83,32,0.1)'; e.currentTarget.style.transform = 'scale(1)' }}
+            >
+              <div style={{ fontSize: '1.3rem' }}>{s.icon}</div>
+              <div style={{ fontWeight: 600, fontSize: '0.7rem', lineHeight: 1.3, marginTop: 2 }}>{s.name.split(' / ')[0]}</div>
+              <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginTop: 2 }}>{s.name.split(' / ')[1] || ''}</div>
+            </div>
+          ))}
         </div>
-      )}
+      </div>
+
+      {/* ─── Légende ─── */}
+      <div className="paper-card" style={{ marginTop: 'var(--space-lg)' }}>
+        <h3 style={{ marginTop: 0, fontSize: '0.9rem' }}>📋 Légende</h3>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
+          {Object.entries(UNIT_COLORS).map(([code, uc]) => (
+            <div key={code} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem' }}>
+              <div style={{ width: 14, height: 14, borderRadius: 3, background: uc.bg }}/>
+              <span>{uc.label}</span>
+            </div>
+          ))}
+        </div>
+        {canEdit && <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 'var(--space-sm)' }}>
+          ✏️ Officiers/Administratifs : cliquez sur les noms de commandants pour les modifier.
+        </p>}
+        <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 'var(--space-sm)', fontStyle: 'italic' }}>
+          Source spécialités : <a href="https://reglements.labaguetterp.fr/militaryrp/reglement-specialisations" target="_blank" rel="noopener noreferrer">Règlement LaBaguetteRP</a>
+        </p>
+      </div>
     </div>
   )
 }

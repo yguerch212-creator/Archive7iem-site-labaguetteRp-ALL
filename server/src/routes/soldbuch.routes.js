@@ -32,6 +32,19 @@ router.get('/:effectifId', optionalAuth, async (req, res) => {
     // Pending edits
     const pendingEdits = await query("SELECT * FROM soldbuch_pending_edits WHERE effectif_id = ? AND statut = 'pending'", [req.params.effectifId])
 
+    // If signature_soldat is a file path (not data URI), try to use signatures_effectifs instead
+    if (effectif.signature_soldat && !effectif.signature_soldat.startsWith('data:')) {
+      const sigRow = await queryOne('SELECT signature_data FROM signatures_effectifs WHERE effectif_id = ?', [req.params.effectifId])
+      if (sigRow && sigRow.signature_data) {
+        effectif.signature_soldat = sigRow.signature_data
+        // Also fix in DB for future
+        await pool.execute('UPDATE effectifs SET signature_soldat = ? WHERE id = ?', [sigRow.signature_data, req.params.effectifId]).catch(() => {})
+      } else {
+        // File path but no valid data — clear it so user can re-sign
+        effectif.signature_soldat = null
+      }
+    }
+
     res.json({
       success: true,
       data: {

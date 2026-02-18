@@ -50,7 +50,7 @@ async function login(req, res) {
     const recenseurCheck = await queryOne(`
       SELECT COUNT(*) as c FROM user_groups ug
       JOIN \`groups\` g ON g.id = ug.group_id
-      WHERE ug.user_id = ? AND g.name = 'Recenseur'
+      WHERE ug.user_id = ? AND g.name IN ('Recenseur', 'Administratif')
     `, [user.id])
     const isRecenseur = recenseurCheck.c > 0
 

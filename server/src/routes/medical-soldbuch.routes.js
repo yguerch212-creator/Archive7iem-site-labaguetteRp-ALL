@@ -155,13 +155,13 @@ router.get('/soins', optionalAuth, async (req, res) => {
 // POST /api/medical-soldbuch/soins — Quick log a soin (Sanitäts)
 router.post('/soins', auth, async (req, res) => {
   try {
-    const { medecin_id, patient_id, patient_nom_libre, type_soin, notes } = req.body
+    const { medecin_id, patient_id, patient_nom_libre, type_soin, contexte, notes } = req.body
     const medecinId = medecin_id || req.user.effectif_id
     if (!medecinId) return res.status(400).json({ success: false, message: 'Médecin requis' })
     const [result] = await pool.execute(
-      `INSERT INTO soins_front (medecin_id, patient_id, patient_nom_libre, date_soin, type_soin, notes, created_by)
-       VALUES (?, ?, ?, NOW(), ?, ?, ?)`,
-      [medecinId, patient_id || null, patient_nom_libre || null, type_soin || 'Soin au front', notes || null, req.user.id]
+      `INSERT INTO soins_front (medecin_id, patient_id, patient_nom_libre, date_soin, type_soin, contexte, notes, created_by)
+       VALUES (?, ?, ?, NOW(), ?, ?, ?, ?)`,
+      [medecinId, patient_id || null, patient_nom_libre || null, type_soin || 'Premiers soins (terrain)', contexte || 'Au combat', notes || null, req.user.id]
     )
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }

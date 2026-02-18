@@ -17,7 +17,7 @@ export async function exportToPdf(elementId, filename = 'document') {
   const canvas = await html2canvas(element, {
     scale: 2, // High quality
     useCORS: true,
-    backgroundColor: null, // Preserve existing background
+    backgroundColor: '#f5f0e1', // Parchment background
     logging: false,
     windowWidth: 900, // Force desktop width for consistent rendering
   })

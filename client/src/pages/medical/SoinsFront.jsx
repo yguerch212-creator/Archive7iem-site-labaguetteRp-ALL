@@ -4,7 +4,13 @@ import api from '../../api/client'
 import BackButton from '../../components/BackButton'
 import EffectifAutocomplete from '../../components/EffectifAutocomplete'
 
-const TYPES_SOIN = ['Soin au front', 'Stabilisation', 'Evacuation', 'Premiers secours', 'Bandage', 'Injection', 'Chirurgie de terrain', 'Autre']
+const TYPES_SOIN = [
+  'Premiers soins (terrain)',
+  'Soins en infirmerie',
+  'Évacuation'
+]
+
+const CONTEXTES = ['Au combat', 'Hors combat']
 
 export default function SoinsFront() {
   const { user } = useAuth()
@@ -12,7 +18,8 @@ export default function SoinsFront() {
   const [message, setMessage] = useState(null)
   const [patientText, setPatientText] = useState('')
   const [patientId, setPatientId] = useState(null)
-  const [typeSoin, setTypeSoin] = useState('Soin au front')
+  const [typeSoin, setTypeSoin] = useState('Premiers soins (terrain)')
+  const [contexte, setContexte] = useState('Au combat')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [todayCount, setTodayCount] = useState(0)
@@ -28,7 +35,6 @@ export default function SoinsFront() {
       const res = await api.get('/medical-soldbuch/soins', { params })
       const data = res.data.data || []
       setItems(data)
-      // Count today's soins
       const today = new Date().toISOString().slice(0, 10)
       setTodayCount(data.filter(s => s.date_soin?.startsWith(today)).length)
     } catch {}
@@ -41,6 +47,7 @@ export default function SoinsFront() {
         patient_id: patientId || null,
         patient_nom_libre: patientId ? null : (patientText || null),
         type_soin: typeSoin,
+        contexte,
         notes: notes || null
       })
       setPatientText('')
@@ -68,7 +75,7 @@ export default function SoinsFront() {
       <BackButton label="← Service médical" to="/medical" />
       <h1 style={{ textAlign: 'center', margin: 'var(--space-lg) 0' }}>⚕️ Soins au front</h1>
       <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: 'var(--space-lg)', fontSize: '0.85rem' }}>
-        Enregistrement rapide des soins effectués — Date & heure automatiques
+        Enregistrement rapide des soins — Date & heure automatiques
       </p>
 
       {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}
@@ -94,6 +101,12 @@ export default function SoinsFront() {
               />
               {patientText && !patientId && <p style={{ fontSize: '0.7rem', color: 'var(--warning)', margin: '2px 0 0' }}>⚠️ Sera lié si créé plus tard</p>}
             </div>
+            <div className="form-group" style={{ flex: 1, minWidth: 140 }}>
+              <label className="form-label">Contexte</label>
+              <select className="form-input" value={contexte} onChange={e => setContexte(e.target.value)}>
+                {CONTEXTES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
             <div className="form-group" style={{ flex: 1, minWidth: 150 }}>
               <label className="form-label">Type de soin</label>
               <select className="form-input" value={typeSoin} onChange={e => setTypeSoin(e.target.value)}>
@@ -101,7 +114,7 @@ export default function SoinsFront() {
               </select>
             </div>
             <div className="form-group" style={{ flex: 1, minWidth: 150 }}>
-              <label className="form-label">Notes rapides</label>
+              <label className="form-label">Note (optionnel)</label>
               <input type="text" className="form-input" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Optionnel..." />
             </div>
             <button className="btn btn-primary" onClick={quickLog} disabled={saving} style={{ height: 42, whiteSpace: 'nowrap' }}>
@@ -115,14 +128,15 @@ export default function SoinsFront() {
       <div className="paper-card">
         <h3 style={{ marginTop: 0 }}>Historique des soins</h3>
         <table className="table">
-          <thead><tr><th>Date/Heure</th><th>Médecin</th><th>Patient</th><th>Type</th><th>Notes</th></tr></thead>
+          <thead><tr><th>Date/Heure</th><th>Médecin</th><th>Patient</th><th>Contexte</th><th>Type</th><th>Notes</th></tr></thead>
           <tbody>
-            {items.length === 0 ? <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Aucun soin enregistré</td></tr> :
+            {items.length === 0 ? <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Aucun soin enregistré</td></tr> :
               items.slice(0, 100).map(s => (
                 <tr key={s.id}>
                   <td style={{ whiteSpace: 'nowrap', fontSize: '0.8rem' }}>{fmt(s.date_soin)}</td>
                   <td>{s.medecin_nom || '—'}</td>
-                  <td>{s.patient_nom || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Anonyme</span>}</td>
+                  <td>{s.patient_nom || s.patient_nom_libre || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Anonyme</span>}</td>
+                  <td>{s.contexte || '—'}</td>
                   <td>{s.type_soin}</td>
                   <td style={{ fontSize: '0.8rem' }}>{s.notes || '—'}</td>
                 </tr>

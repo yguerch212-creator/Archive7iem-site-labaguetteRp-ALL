@@ -31,7 +31,62 @@ const REGLES=[
 const W8A=['Fusil','Pistolet','Baïonnette','Boussole','Jumelles','Pioche','Pelle','Hachette']
 const W8B=['Cisaille','Kit nettoyage','Masque à gaz','Lunettes masque','Ouate/vaseline']
 
-export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[],vaccinations=[],blessures=[],permissions=[],bookCells:initCells={},attestations=[],pendingEdits=[],onUpdate}){
+// Presets équipement par spécialité (historique 352. ID / 916. GR)
+const EQUIP_PRESETS = {
+  'Grenadier': {
+    equip: { 'Fusil': 'Karabiner 98k', 'Baïonnette': 'SG 84/98', 'Pelle': 'Klappspaten', 'Masque à gaz': 'GM30' },
+    tenue: ['Stahlhelm M35', 'Feldbluse M43', 'Feldhose M43', 'Marschstiefel', 'Koppel + Y-Riemen', 'Brotbeutel', 'Feldflasche', 'Zeltbahn']
+  },
+  'Panzergrenadier': {
+    equip: { 'Fusil': 'MP 40', 'Pistolet': 'P38', 'Pelle': 'Klappspaten', 'Masque à gaz': 'GM30' },
+    tenue: ['Stahlhelm M42', 'Feldbluse M43', 'Feldhose M43', 'Schnürschuhe + Gamaschen', 'Koppel', 'Sturmgepäck', 'Zeltbahn']
+  },
+  'Pionnier': {
+    equip: { 'Fusil': 'Karabiner 98k', 'Pioche': 'Kreuzhacke', 'Pelle': 'Klappspaten', 'Cisaille': 'Drahtschere', 'Masque à gaz': 'GM30' },
+    tenue: ['Stahlhelm M35', 'Feldbluse M43 (Pionier)', 'Feldhose M43', 'Marschstiefel', 'Koppel + Y-Riemen', 'Pionier-Sturmgepäck', 'Zeltbahn']
+  },
+  'Panzerjäger': {
+    equip: { 'Fusil': 'Karabiner 98k', 'Pistolet': 'P38', 'Jumelles': 'Scherenfernrohr', 'Masque à gaz': 'GM30' },
+    tenue: ['Feldmütze M43', 'Feldbluse M43', 'Feldhose M43', 'Marschstiefel', 'Koppel', 'Zeltbahn']
+  },
+  'MG-Schütze': {
+    equip: { 'Fusil': 'MG 42', 'Pistolet': 'P08', 'Pelle': 'Klappspaten', 'Masque à gaz': 'GM30' },
+    tenue: ['Stahlhelm M42', 'Feldbluse M43', 'Feldhose M43', 'Marschstiefel', 'Koppel + Y-Riemen', 'MG-Zubehör Tasche', 'Zeltbahn']
+  },
+  'Sanitäter': {
+    equip: { 'Fusil': '—', 'Pistolet': 'P38', 'Masque à gaz': 'GM30' },
+    tenue: ['Stahlhelm M35 + Rotes Kreuz', 'Feldbluse M43 (Sanitäts)', 'Feldhose M43', 'Marschstiefel', 'Sanitätstasche', 'Verbandkasten', 'Armbinde Rotes Kreuz']
+  },
+  'Funker': {
+    equip: { 'Fusil': 'Karabiner 98k', 'Masque à gaz': 'GM30' },
+    tenue: ['Stahlhelm M35', 'Feldbluse M43', 'Feldhose M43', 'Marschstiefel', 'Tornister Funkgerät', 'Feldfernsprecher 33', 'Koppel']
+  },
+  'Offizier': {
+    equip: { 'Pistolet': 'Walther P38', 'Jumelles': 'Dienstglas 6x30', 'Boussole': 'Marschkompass' },
+    tenue: ['Schirmmütze', 'Feldbluse Offizier', 'Reithose + Schaftstiefel', 'Koppelschloss Offizier', 'Kartentasche', 'Fernglastasche']
+  }
+}
+
+// Unités de campagne historiques liées au 916. GR / 352. ID
+const CAMPAIGN_UNITS = [
+  '916. Grenadier-Regiment',
+  '915. Grenadier-Regiment', 
+  '914. Grenadier-Regiment',
+  'Füsilier-Bataillon 352',
+  'Artillerie-Regiment 352',
+  'Panzerjäger-Abteilung 352',
+  'Pionier-Bataillon 352',
+  'Nachrichten-Abteilung 352',
+  'Feldersatz-Bataillon 352',
+  'Grenadier-Ersatz Bataillon 396',
+  'Infanterie-Ersatz Bataillon 480',
+  'Grenadier-Regiment 546 (Ost)',
+  '268. Infanterie-Division (Ost)',
+  '321. Infanterie-Division (Ost)',
+  '716. Infanterie-Division'
+]
+
+export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[],vaccinations=[],blessures=[],permissions=[],bookCells:initCells={},attestations=[],pendingEdits=[],soldeData=[],soldeBalance=0,onUpdate}){
   const { user } = useAuth()
   const[isOpen,setIsOpen]=useState(false)
   const[spread,setSpread]=useState(0)
@@ -42,6 +97,10 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
   const[cells,setCells]=useState(initCells||{})
   const[editingCell,setEditingCell]=useState(null)
   const[editVal,setEditVal]=useState('')
+  const[habPopup,setHabPopup]=useState(false)
+  const[habDesc,setHabDesc]=useState('')
+  const[habMotif,setHabMotif]=useState('')
+  const[habMsg,setHabMsg]=useState('')
   const fmtD=(d)=>{if(!d)return'—';try{return new Date(d).toLocaleDateString('fr-FR')}catch{return d}}
   const e=effectif, theme=getTheme(e.unite_code), isLw=theme==='luftwaffe'
   const branch={luftwaffe:'Luftwaffe',marine:'Kriegsmarine'}[theme]||null
@@ -126,7 +185,22 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
     if (!sigPopup) return
     setSaving(true)
     try {
-      await api.put(`/soldbuch/${e.id}/sign`, { slot: sigPopup.slot, signature_data: signatureData })
+      if (sigPopup.slot === 'attestation' && sigPopup.attestationId) {
+        // Sign an existing attestation
+        await api.put(`/attestations/${sigPopup.attestationId}/sign`, { signature_data: signatureData })
+      } else if (sigPopup.slot === 'attestation-cell' && sigPopup.cellRow) {
+        // Save manual attestation row as a real attestation + sign it
+        const row = sigPopup.cellRow
+        // Read from sigPopup captured values (set at click time) to avoid race with blur timer
+        const mod = sigPopup.mod || cells[`att-${row}-mod`] || ''
+        const page = sigPopup.page || cells[`att-${row}-page`] || ''
+        const date = sigPopup.date || cells[`att-${row}-date`] || ''
+        await api.post(`/attestations/manual/${e.id}`, {
+          numero: row, modification: mod, page, date_attestation: date, signature_data: signatureData
+        })
+      } else {
+        await api.put(`/soldbuch/${e.id}/sign`, { slot: sigPopup.slot, signature_data: signatureData })
+      }
       setSigPopup(null)
       if (onUpdate) onUpdate()
     } catch (err) {
@@ -250,8 +324,22 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
         <table className="sb-t">
           <thead><tr><th>N°</th><th>Modification</th><th>Page</th><th>Date</th><th>Signature</th></tr></thead>
           <tbody>
-            {attestations.map((a)=><tr key={a.id}><td><Ink small>{a.numero}</Ink></td><td><Ink small>{a.modification}</Ink></td><td><Ink small>{a.page||''}</Ink></td><td><Ink small>{fmtD(a.date_attestation)}</Ink></td><td>{a.signature_data?<img src={a.signature_data} alt="sig" style={{maxHeight:16,maxWidth:40}}/>:<Ink small>{a.signe_par_nom||'—'}</Ink>}</td></tr>)}
-            {attestations.length < 18 && <ER cols={5} n={18 - attestations.length}/>}
+            {attestations.map((a)=><tr key={a.id}><td><Ink small>{a.numero}</Ink></td><td><Ink small>{a.modification}</Ink></td><td><Ink small>{a.page||''}</Ink></td><td><Ink small>{fmtD(a.date_attestation)}</Ink></td><td>{a.signature_data?<img src={a.signature_data} alt="sig" style={{maxHeight:16,maxWidth:40}}/>:a.signe_par_nom?<Ink small>{a.signe_par_nom}</Ink>:(canSignReferent?<span className="sb-sig-clickable" style={{cursor:'pointer',fontSize:'.55rem',color:'var(--military-green)'}} onClick={()=>setSigPopup({slot:'attestation',attestationId:a.id})}>✍️</span>:NB)}</td></tr>)}
+            {Array.from({length:Math.max(0,18-attestations.length)},(_,i)=>{
+              const rowN = attestations.length+i+1
+              return <tr key={`att-e-${i}`}>
+                <td style={{fontSize:'.6rem',color:'var(--text-muted)'}}>{rowN}</td>
+                <td><EC id={`att-${rowN}-mod`} placeholder="modification"/></td>
+                <td><EC id={`att-${rowN}-page`} placeholder="p."/></td>
+                <td><EC id={`att-${rowN}-date`} placeholder="date"/></td>
+                <td>{(cells[`att-${rowN}-mod`] && canSignReferent) ? <span className="sb-sig-clickable" style={{cursor:'pointer',fontSize:'.55rem',color:'var(--military-green)'}} onClick={()=>{
+                  // Flush any pending blur and capture current cell values
+                  clearTimeout(blurTimer.current)
+                  if(editingCell){const cid=editingCell;const v=editVal;saveCell(cid,v)}
+                  setSigPopup({slot:'attestation-cell',cellRow:rowN,mod:cells[`att-${rowN}-mod`]||'',page:cells[`att-${rowN}-page`]||'',date:cells[`att-${rowN}-date`]||''})
+                }}>✍️ Signer</span> : NB}</td>
+              </tr>
+            })}
           </tbody>
         </table>
       </div>
@@ -273,12 +361,16 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       <table className="sb-t">
         <colgroup><col style={{width:'8%'}}/><col/><col style={{width:'14%'}}/><col style={{width:'18%'}}/></colgroup>
         <thead><tr><th>{NB}</th><th>Unité de campagne</th><th>Cie</th><th>N° guerre</th></tr></thead>
-        <tbody>{[1,2,3].map(n=><tr key={n}><td>{n}</td><td><EC id={`p4-camp-${n}`}/></td><td><EC id={`p4-camp-cie-${n}`}/></td><td><EC id={`p4-camp-nr-${n}`} serial/></td></tr>)}</tbody>
+        <tbody>{[1,2,3].map(n=><tr key={n}><td>{n}</td><td>{canEdit && !cells[`p4-camp-${n}`] ? <select className="form-input" style={{fontSize:'.55rem',padding:'1px 2px',border:'none',background:'transparent'}} onChange={ev=>{if(!ev.target.value)return;const nc={...cells};nc[`p4-camp-${n}`]=ev.target.value;setCells(nc);api.put(`/soldbuch/${e.id}/book-cells`,{cellId:`p4-camp-${n}`,value:ev.target.value}).catch(()=>{})}}>
+          <option value="">Choisir...</option>
+          {CAMPAIGN_UNITS.map(u=><option key={u} value={u}>{u}</option>)}
+          <option value="__custom">Autre (saisie libre)</option>
+        </select> : <EC id={`p4-camp-${n}`}/>}</td><td><EC id={`p4-camp-cie-${n}`}/></td><td><EC id={`p4-camp-nr-${n}`} serial/></td></tr>)}</tbody>
       </table>
       <p className="sb-label">D.</p>
       <table className="sb-t">
         <thead><tr><th>Unité actuelle</th><th style={{width:'30%'}}>Garnison</th></tr></thead>
-        <tbody>{[1,2].map(n=><tr key={n}><td><EC id={`p4-unite-${n}`}/></td><td><EC id={`p4-garni-${n}`}/></td></tr>)}</tbody>
+        <tbody><tr><td><Ink small>{`${e.unite_code||''} ${e.unite_nom||''}`.trim()||NB}</Ink></td><td><EC id="p4-garni-1"/></td></tr><tr><td><EC id="p4-unite-2"/></td><td><EC id="p4-garni-2"/></td></tr></tbody>
       </table>
       <div className="sb-spacer"/>
       <p className="sb-sm">→ Suite page 17.</p>
@@ -304,8 +396,8 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
     <div className="sb-page sb-page-l">
       <h4 className="sb-center">Habillement</h4>
       <table className="sb-t sb-t-grid">
-        <thead><tr><th>N°</th><th>Unité</th><th>Calot</th><th>Veste</th><th>Pantalon</th><th>Manteau</th></tr></thead>
-        <tbody>{Array.from({length:12},(_,i)=><tr key={i}><td>{i+1}</td><td>{NB}</td><td>{NB}</td><td>{NB}</td><td>{NB}</td><td>{NB}</td></tr>)}</tbody>
+        <thead><tr><th>N°</th><th>Calot</th><th>Veste</th><th>Pantalon</th><th>Manteau</th></tr></thead>
+        <tbody>{Array.from({length:12},(_,i)=><tr key={i}><td>{i+1}</td><td><EC id={`tenue-${i+1}`} placeholder="—"/></td><td><EC id={`hab-veste-${i+1}`} placeholder="—"/></td><td><EC id={`hab-pant-${i+1}`} placeholder="—"/></td><td><EC id={`hab-mant-${i+1}`} placeholder="—"/></td></tr>)}</tbody>
       </table>
       <PageNum n={6}/>
     </div>
@@ -313,7 +405,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       <h4 className="sb-center">Équipement</h4>
       <table className="sb-t sb-t-grid">
         <thead><tr><th>Bottes</th><th>Casque</th><th>Sac</th><th>Ceint.</th><th>Gourde</th><th>Date</th></tr></thead>
-        <tbody><ER cols={6} n={12}/></tbody>
+        <tbody>{Array.from({length:12},(_,i)=><tr key={i}><td><EC id={`eq-botte-${i+1}`} placeholder="—"/></td><td><EC id={`eq-casque-${i+1}`} placeholder="—"/></td><td><EC id={`eq-sac-${i+1}`} placeholder="—"/></td><td><EC id={`eq-ceint-${i+1}`} placeholder="—"/></td><td><EC id={`eq-gourde-${i+1}`} placeholder="—"/></td><td><EC id={`eq-date-${i+1}`} placeholder="—"/></td></tr>)}</tbody>
       </table>
       <PageNum n={7}/>
     </div>
@@ -324,11 +416,46 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
     <div className="sb-page sb-page-l">
       <h4 className="sb-center">Remarques habillement</h4>
       <p className="sb-xs sb-center">(Échanges, demandes spéciales)</p>
-      <div className="sb-lined">{Array.from({length:20},(_,i)=><div key={i} className="sb-line"/>)}</div>
+      <div className="sb-lined">{Array.from({length:14},(_,i)=><div key={i} className="sb-line"/>)}</div>
+      {canEdit && <div style={{marginTop:6,textAlign:'center'}}>
+        <button className="btn btn-secondary" style={{fontSize:'.6rem',padding:'3px 8px'}} onClick={()=>{setHabPopup(true);setHabDesc('');setHabMotif('');setHabMsg('')}}>📝 Faire une demande d'habillement</button>
+      </div>}
       <PageNum n={8}/>
     </div>
     <div className="sb-page sb-page-r">
       <h4 className="sb-center">Armes et matériel</h4>
+      {canEdit && <div style={{marginBottom:6,textAlign:'center'}}>
+        <select className="form-input" style={{fontSize:'.6rem',padding:'2px 4px',width:'auto',display:'inline'}} onChange={ev=>{
+          const preset = EQUIP_PRESETS[ev.target.value]
+          if(!preset) return
+          const nc = {...cells}
+          // Armes et matériel (page 8a)
+          Object.entries(preset.equip).forEach(([type,val])=>{nc[`w8a-${type}-marque`]=val})
+          // Habillement (page 6) — tenue items go into tenue-N cells
+          preset.tenue.forEach((item,i)=>{nc[`tenue-${i+1}`]=item})
+          // Équipement (page 7) — map known items
+          const eqMap = {}
+          preset.tenue.forEach(item => {
+            const lo = item.toLowerCase()
+            if (lo.includes('stiefel') || lo.includes('schuhe') || lo.includes('gamasche')) eqMap['botte'] = item
+            else if (lo.includes('helm')) eqMap['casque'] = item
+            else if (lo.includes('brotbeutel') || lo.includes('tornister') || lo.includes('gepäck') || lo.includes('tasche')) eqMap['sac'] = item
+            else if (lo.includes('koppel') || lo.includes('riemen')) eqMap['ceint'] = item
+            else if (lo.includes('flasche') || lo.includes('flasche')) eqMap['gourde'] = item
+          })
+          Object.entries(eqMap).forEach(([k,v])=>{nc[`eq-${k}-1`]=v})
+          setCells(nc)
+          // Save all to backend
+          const saves = []
+          Object.entries(preset.equip).forEach(([type,val])=>{saves.push(api.put(`/soldbuch/${e.id}/book-cells`,{cellId:`w8a-${type}-marque`,value:val}).catch(()=>{}))})
+          preset.tenue.forEach((item,i)=>{saves.push(api.put(`/soldbuch/${e.id}/book-cells`,{cellId:`tenue-${i+1}`,value:item}).catch(()=>{}))})
+          Object.entries(eqMap).forEach(([k,v])=>{saves.push(api.put(`/soldbuch/${e.id}/book-cells`,{cellId:`eq-${k}-1`,value:v}).catch(()=>{}))})
+          ev.target.value=''
+        }}>
+          <option value="">⚙️ Remplir par spécialité...</option>
+          {Object.keys(EQUIP_PRESETS).map(k=><option key={k} value={k}>{k}</option>)}
+        </select>
+      </div>}
       <table className="sb-t">
         <thead><tr><th>Type</th><th>Marque</th><th>N° série</th><th>Reçu le</th><th>Sign.</th></tr></thead>
         <tbody>{W8A.map(w=><tr key={w}><td><strong style={{fontSize:'.38rem'}}>{w}</strong></td><td><EC id={`w8a-${w}-marque`} placeholder="marque"/></td><td><EC id={`w8a-${w}-serie`} placeholder="N°" serial/></td><td><EC id={`w8a-${w}-date`} placeholder="date"/></td><td>{NB}</td></tr>)}</tbody>
@@ -471,21 +598,28 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
     </div>
   </div>)
 
-  /* 10: Page 18 | Page 19 */
+  /* 10: Page 18 | Page 19 — Solde (dynamique) */
   S.push(<div className="sb-spread" key="s10">
     <div className="sb-page sb-page-l">
-      <h4 className="sb-center">Solde</h4>
-      <p className="sb-xs">A. Par la trésorerie compétente.</p>
+      <h4 className="sb-center">Solde (Wehrsold)</h4>
       <table className="sb-t">
-        <thead><tr><th>Valable dès</th><th>Groupe</th><th>Trésorerie</th></tr></thead>
-        <tbody><ER cols={3} n={10}/></tbody>
+        <thead><tr><th>Date</th><th>Motif</th><th style={{textAlign:'right'}}>RM</th></tr></thead>
+        <tbody>
+          {(soldeData||[]).slice(0,14).map((s,i)=><tr key={i}><td><Ink small>{fmtD(s.date_operation)}</Ink></td><td><Ink small>{s.motif}</Ink></td><td style={{textAlign:'right',color:s.type_operation==='debit'?'#8b0000':'inherit'}}><Ink small>{s.type_operation==='debit'?'-':''}{parseFloat(s.montant).toFixed(2)}</Ink></td></tr>)}
+          {(!soldeData||soldeData.length===0)&&<ER cols={3} n={14}/>}
+          {soldeData&&soldeData.length>0&&soldeData.length<14&&<ER cols={3} n={14-Math.min(soldeData.length,14)}/>}
+        </tbody>
       </table>
       <PageNum n={18}/>
     </div>
     <div className="sb-page sb-page-r">
-      <table className="sb-t"><thead><tr><th>Valable dès</th><th>Solde groupe</th><th>Trésorerie</th></tr></thead><tbody><ER cols={3} n={4}/></tbody></table>
+      <div className="paper-card" style={{textAlign:'center',margin:'8px 0',padding:6,background:'rgba(75,83,32,0.06)',border:'1px solid var(--border)'}}>
+        <div style={{fontSize:'.6rem',color:'var(--text-muted)'}}>Balance actuelle</div>
+        <div style={{fontSize:'1rem',fontWeight:700,color:'var(--military-green)'}}>{(soldeBalance||0).toFixed(2)} RM</div>
+      </div>
       <h4 className="sb-center" style={{marginTop:8}}>Solde de guerre</h4>
-      <div className="sb-lined">{Array.from({length:12},(_,i)=><div key={i} className="sb-line"/>)}</div>
+      <p className="sb-xs">Primes de combat, récompenses.</p>
+      <div className="sb-lined">{Array.from({length:10},(_,i)=><div key={i} className="sb-line"/>)}</div>
       <PageNum n={19}/>
     </div>
   </div>)
@@ -558,6 +692,41 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
         <span className="sb-nav-info">{spread===0?'Règl./P.1':`P.${spread*2}–${spread*2+1}`} ({spread+1}/{TOTAL})</span>
         <button onClick={()=>setSpread(s=>Math.min(TOTAL-1,s+1))} disabled={spread>=TOTAL-1}>▶</button>
       </div>
+
+      {/* Habillement Request Popup */}
+      {habPopup && <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.6)',zIndex:1001,display:'flex',justifyContent:'center',alignItems:'center',padding:10}} onClick={ev=>{if(ev.target===ev.currentTarget)setHabPopup(false)}}>
+        <div className="paper-card" style={{maxWidth:450,width:'100%',padding:'var(--space-xl)',background:'#f5f0e1',boxShadow:'0 4px 20px rgba(0,0,0,0.3)'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'var(--space-md)'}}>
+            <h3 style={{margin:0,fontSize:'1rem'}}>📝 Demande d'habillement</h3>
+            <button className="btn btn-secondary" onClick={()=>setHabPopup(false)} style={{fontSize:'.8rem'}}>✕</button>
+          </div>
+          <p style={{fontSize:'.8rem',color:'var(--text-muted)',margin:'0 0 var(--space-md)'}}>
+            Décrivez l'équipement ou vêtement souhaité. Un officier devra valider votre demande.
+          </p>
+          {habMsg && <div className={`alert ${habMsg.startsWith('✓')?'alert-success':'alert-danger'}`} style={{marginBottom:'var(--space-sm)',fontSize:'.8rem'}}>{habMsg}</div>}
+          <div className="form-group" style={{marginBottom:'var(--space-sm)'}}>
+            <label style={{fontSize:'.8rem',fontWeight:600}}>Description de la demande *</label>
+            <textarea className="form-input" rows={3} value={habDesc} onChange={ev=>setHabDesc(ev.target.value)} placeholder="Ex: Demande de nouvelle Feldbluse M43 (taille 2), la précédente est endommagée..." style={{fontSize:'.8rem',resize:'vertical'}}/>
+          </div>
+          <div className="form-group" style={{marginBottom:'var(--space-md)'}}>
+            <label style={{fontSize:'.8rem',fontWeight:600}}>Motif / justification</label>
+            <input type="text" className="form-input" value={habMotif} onChange={ev=>setHabMotif(ev.target.value)} placeholder="Ex: Usure au combat, promotion, changement d'affectation..." style={{fontSize:'.8rem'}}/>
+          </div>
+          <div style={{display:'flex',gap:'var(--space-sm)',justifyContent:'flex-end'}}>
+            <button className="btn btn-secondary" onClick={()=>setHabPopup(false)}>Annuler</button>
+            <button className="btn btn-primary" disabled={!habDesc.trim()||saving} onClick={async()=>{
+              setSaving(true)
+              try{
+                await api.post('/habillement/demandes',{description:habDesc.trim(),motif:habMotif.trim()})
+                setHabMsg('✓ Demande envoyée pour validation !')
+                setHabDesc('');setHabMotif('')
+                setTimeout(()=>{setHabPopup(false);setHabMsg('')},1500)
+              }catch(err){setHabMsg(err.response?.data?.message||'Erreur lors de l\'envoi')}
+              setSaving(false)
+            }}>{saving?'Envoi...':'Envoyer la demande'}</button>
+          </div>
+        </div>
+      </div>}
 
       {/* Signature Popup */}
       {sigPopup && <SignaturePopup

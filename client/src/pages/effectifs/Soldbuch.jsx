@@ -22,9 +22,11 @@ export default function Soldbuch() {
   const [decoForm, setDecoForm] = useState({ decoration_id: '', nom_custom: '', date_attribution: '', attribue_par: '', motif: '' })
   const [decoMsg, setDecoMsg] = useState(null)
 
-  const [signPopup, setSignPopup] = useState(null) // null | { slot: 'soldat'|'referent' }
-  const [viewMode, setViewMode] = useState('book') // 'book' | 'classic'
+  const [signPopup, setSignPopup] = useState(null)
+  const [viewMode, setViewMode] = useState('book')
   const [showDetails, setShowDetails] = useState(false)
+  const [soldeData, setSoldeData] = useState([])
+  const [soldeBalance, setSoldeBalance] = useState(0)
 
   const isSelf = user?.effectif_id && String(user.effectif_id) === String(id)
   const canManageDecos = user?.isAdmin || user?.isRecenseur || isSelf
@@ -45,6 +47,11 @@ export default function Soldbuch() {
       setDecorations(decoRes.data.data || [])
       setAllDecorations(allDecoRes.data.data || [])
       setLoading(false)
+      // Load solde
+      apiClient.get(`/solde/${id}`).then(r => {
+        setSoldeData(r.data.data?.operations || [])
+        setSoldeBalance(r.data.data?.balance || 0)
+      }).catch(() => {})
     }).catch(() => setLoading(false))
   }, [id])
 
@@ -90,6 +97,7 @@ export default function Soldbuch() {
             {showDetails ? '✕ Fermer' : '📝 Detailler'}
           </button>}
           <Link to={`/effectifs/${id}/edit`} className="btn btn-secondary btn-small">✏️ Modifier</Link>
+          <a href="/docs/guide-soldbuch.html" target="_blank" className="btn btn-secondary btn-small" rel="noopener">❓ Guide</a>
           <Link to={`/dossiers/effectif/${id}`} className="btn btn-secondary btn-small">📁 Dossier</Link>
           <Link to={`/effectifs/${id}/soldbuch/edit`} className="btn btn-primary btn-small layout-desktop-only">🖋️ Mise en page</Link>
         </div>
@@ -133,6 +141,8 @@ export default function Soldbuch() {
           bookCells={data.layout?.bookCells || {}}
           attestations={data.attestations || []}
           pendingEdits={data.pendingEdits || []}
+          soldeData={soldeData}
+          soldeBalance={soldeBalance}
           onUpdate={async () => {
             const res = await apiClient.get(`/soldbuch/${id}`, { noCache: true })
             setData(res.data.data)

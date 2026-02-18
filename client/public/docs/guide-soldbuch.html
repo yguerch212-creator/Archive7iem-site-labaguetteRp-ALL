@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Guide — Comment remplir son Soldbuch</title>
+<style>
+@page { size: A4; margin: 15mm 18mm; }
+@media print { body { font-size: 11pt; } .no-print { display: none; } }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Courier New', monospace; background: #f5f0e1; color: #1a1a2e; line-height: 1.6; padding: 30px; max-width: 900px; margin: 0 auto; }
+h1 { text-align: center; font-size: 1.6rem; border-bottom: 3px double #4b5320; padding-bottom: 10px; margin-bottom: 5px; }
+.subtitle { text-align: center; font-size: 0.85rem; color: #666; margin-bottom: 25px; letter-spacing: 2px; text-transform: uppercase; }
+h2 { font-size: 1.15rem; color: #4b5320; border-bottom: 1px solid #4b5320; padding-bottom: 4px; margin: 25px 0 10px; }
+h3 { font-size: 0.95rem; margin: 15px 0 5px; color: #2a2a3e; }
+p, li { font-size: 0.85rem; margin-bottom: 6px; }
+ul, ol { padding-left: 22px; margin-bottom: 10px; }
+table { width: 100%; border-collapse: collapse; margin: 8px 0 15px; font-size: 0.8rem; }
+th, td { border: 1px solid #8a7e6b; padding: 5px 8px; text-align: left; }
+th { background: #4b5320; color: #f5f0e1; font-weight: 600; }
+tr:nth-child(even) { background: rgba(75,83,32,0.06); }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.7rem; font-weight: 700; }
+.badge-soldat { background: #d4edda; color: #155724; }
+.badge-off { background: #fff3cd; color: #856404; }
+.badge-sanit { background: #cce5ff; color: #004085; }
+.badge-auto { background: #e2e3e5; color: #383d41; }
+.badge-admin { background: #f8d7da; color: #721c24; }
+.note { background: rgba(75,83,32,0.08); border-left: 3px solid #4b5320; padding: 8px 12px; margin: 10px 0; font-size: 0.8rem; }
+.icon { font-size: 1rem; margin-right: 4px; }
+.page-ref { font-weight: 700; color: #4b5320; }
+.footer { text-align: center; margin-top: 30px; padding-top: 10px; border-top: 2px solid #4b5320; font-size: 0.7rem; color: #666; }
+.btn-print { display: block; margin: 0 auto 20px; padding: 10px 30px; background: #4b5320; color: #f5f0e1; border: none; cursor: pointer; font-family: inherit; font-size: 0.9rem; border-radius: 4px; }
+.btn-print:hover { background: #3a4218; }
+.legend { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0; }
+</style>
+</head>
+<body>
+
+<button class="btn-print no-print" onclick="window.print()">📄 Imprimer / Sauvegarder en PDF</button>
+
+<h1>📖 Comment remplir son Soldbuch</h1>
+<p class="subtitle">Sanitätsdienst — 7. Armeekorps — Guide pratique</p>
+
+<div class="note">
+Le <strong>Soldbuch</strong> (livret de solde) est le document d'identité militaire de chaque soldat. Il contient toutes les informations personnelles, administratives et médicales. Ce guide explique chaque section, qui la remplit, et quoi y mettre.
+</div>
+
+<h2>🏷️ Légende — Qui remplit quoi ?</h2>
+<div class="legend">
+<span class="badge badge-soldat">👤 SOLDAT</span>
+<span class="badge badge-off">⭐ OFFICIER / ADMINISTRATIF</span>
+<span class="badge badge-sanit">🏥 SANITÄTS</span>
+<span class="badge badge-auto">⚙️ AUTOMATIQUE</span>
+<span class="badge badge-admin">🔧 ADMIN</span>
+</div>
+<p>Quand vous remplissez votre propre Soldbuch en tant que soldat, vos modifications sont <strong>soumises à validation</strong> par un officier ou administratif. Les officiers et administratifs peuvent modifier directement.</p>
+
+<h2>📄 Pages 1-2 — Identité &amp; Description</h2>
+
+<table>
+<tr><th>Champ</th><th>Rempli par</th><th>Quoi mettre</th></tr>
+<tr><td>Nom, Prénom</td><td><span class="badge badge-auto">⚙️ AUTO</span></td><td>Rempli automatiquement à la création de l'effectif</td></tr>
+<tr><td>Grade, Unité</td><td><span class="badge badge-auto">⚙️ AUTO</span></td><td>Mis à jour automatiquement lors des promotions/mutations</td></tr>
+<tr><td>Erkennungsmarke (plaque)</td><td><span class="badge badge-auto">⚙️ AUTO</span></td><td>Format : <code>UNITE/GRADE_RANG/ID</code></td></tr>
+<tr><td>Groupe sanguin</td><td><span class="badge badge-sanit">🏥 SANIT</span></td><td>A, B, AB, O (avec + ou -)</td></tr>
+<tr><td>Date/lieu de naissance</td><td><span class="badge badge-off">⭐ OFF</span></td><td>Date RP + ville/région RP</td></tr>
+<tr><td>Religion</td><td><span class="badge badge-soldat">👤 SOLDAT</span></td><td>Evangelisch, Katholisch, Gottgläubig, ou autre</td></tr>
+<tr><td>Profession (Beruf)</td><td><span class="badge badge-soldat">👤 SOLDAT</span></td><td>Métier civil avant l'armée (ex: Bäcker, Mechaniker, Student...)</td></tr>
+<tr><td>Description personnelle</td><td><span class="badge badge-soldat">👤 SOLDAT</span> <span class="badge badge-sanit">🏥 SANIT</span></td><td>Taille, corpulence, visage, cheveux, barbe, yeux, signes particuliers, pointure</td></tr>
+<tr><td>Signature du détenteur</td><td><span class="badge badge-soldat">👤 SOLDAT</span></td><td>Votre signature personnelle — dessinez-la au clic</td></tr>
+<tr><td>Signature officier référent</td><td><span class="badge badge-off">⭐ OFF</span></td><td>L'officier qui valide votre Soldbuch signe ici</td></tr>
+<tr><td>Tampon</td><td><span class="badge badge-off">⭐ OFF</span></td><td>Tampon officiel de l'unité (depuis la bibliothèque)</td></tr>
+</table>
+
+<div class="note">
+💡 <strong>Astuce RP :</strong> Pour la religion, les choix historiques courants sont Evangelisch (protestant), Katholisch (catholique), ou Gottgläubig (« croyant en Dieu », neutre). Inventez ce qui colle à votre personnage !
+</div>
+
+<h2>📄 Page 3 — Attestations</h2>
+<p><span class="badge badge-off">⭐ OFFICIER</span> <span class="badge badge-auto">⚙️ AUTO</span></p>
+<p>Chaque modification aux pages 1 et 2 est enregistrée ici. Les attestations sont générées automatiquement lors de :</p>
+<ul>
+<li><strong>Promotion</strong> — changement de grade</li>
+<li><strong>Décoration</strong> — attribution d'une médaille</li>
+<li><strong>Modification de données</strong> — changement validé sur les pages 1-2</li>
+</ul>
+<p>Un officier peut aussi ajouter des attestations manuelles et les signer. Remplissez les colonnes :</p>
+<table>
+<tr><th>Colonne</th><th>Exemple</th></tr>
+<tr><td>N°</td><td>1, 2, 3... (numéro séquentiel)</td></tr>
+<tr><td>Modification</td><td>"Promotion au grade de Gefreiter", "Attribution EK2"</td></tr>
+<tr><td>Page</td><td>1 ou 2 (la page concernée)</td></tr>
+<tr><td>Date</td><td>Date RP de la modification</td></tr>
+<tr><td>Signature</td><td>✍️ Cliquez pour signer (officier uniquement)</td></tr>
+</table>
+
+<h2>📄 Page 4 — Recrutement &amp; Unités</h2>
+<p><span class="badge badge-off">⭐ OFF / ADMIN</span></p>
+<table>
+<tr><th>Section</th><th>Quoi mettre</th></tr>
+<tr><td>A. Bureau de recrutement</td><td>Le bureau/centre qui a recruté le soldat (ex: "Wehrbezirkskommando Berlin")</td></tr>
+<tr><td>B. Unité de remplacement</td><td>L'unité d'entraînement/réserve (auto: unité actuelle en ligne a). Cie + N° registre.</td></tr>
+<tr><td>C. Unité de campagne</td><td>Les unités de combat successives. Numéro de série auto-générable 🎲</td></tr>
+<tr><td>D. Unité actuelle + Garnison</td><td>Garnison = ville de stationnement</td></tr>
+</table>
+
+<h2>📄 Page 5 — Adresses des proches</h2>
+<p><span class="badge badge-soldat">👤 SOLDAT</span></p>
+<p>Remplissez les coordonnées RP de vos proches :</p>
+<ul>
+<li><strong>Épouse</strong> — Nom, adresse</li>
+<li><strong>Parents</strong> — Père, mère</li>
+<li><strong>Personne à prévenir</strong> — En cas de blessure/décès</li>
+</ul>
+
+<h2>📄 Pages 6-7 — Serment &amp; Fidélité</h2>
+<p><span class="badge badge-auto">⚙️ AUTO</span> — Pages décoratives avec le texte du serment. Rien à remplir.</p>
+
+<h2>📄 Pages 8a-8b — Équipement</h2>
+<p><span class="badge badge-off">⭐ OFF</span> <span class="badge badge-soldat">👤 SOLDAT</span></p>
+<p>Inventaire de l'équipement personnel du soldat :</p>
+
+<table>
+<tr><th>Section</th><th>Exemples</th></tr>
+<tr><td><strong>8a — Habillement</strong></td><td>Feldbluse, Stahlhelm, Stiefel, Mantel, Zeltbahn...</td></tr>
+<tr><td><strong>8b — Armes &amp; optique</strong></td><td>Karabiner 98k, P38, MG42, Feldstecher, Gasmaske...</td></tr>
+</table>
+<p>Pour chaque item : marque/modèle, N° de série (🎲 auto-générable), date de remise.</p>
+
+<div class="note">
+💡 <strong>RP tip :</strong> L'équipement reflète votre rôle. Un Sanitäter aura un Verbandkasten (trousse médicale), un Funker aura un Feldfernsprecher (téléphone de campagne), etc.
+</div>
+
+<h2>📄 Page 9 — Vaccinations</h2>
+<p><span class="badge badge-sanit">🏥 SANIT</span> <span class="badge badge-auto">⚙️ AUTO</span></p>
+<p>Rempli automatiquement depuis le module médical. Les médecins enregistrent :</p>
+<ul>
+<li>Type de vaccin (Typhus, Cholera, Tetanus, Pocken...)</li>
+<li>Date d'administration</li>
+<li>Médecin responsable</li>
+</ul>
+
+<h2>📄 Pages 10-11 — Solde &amp; Habillement (détail)</h2>
+<p><span class="badge badge-off">⭐ OFF</span> — Tables de comptabilité. En RP, peu utilisé sauf pour les logisticiens (919).</p>
+
+<h2>📄 Page 12 — Hospitalisations</h2>
+<p><span class="badge badge-sanit">🏥 SANIT</span> <span class="badge badge-auto">⚙️ AUTO</span></p>
+<p>Rempli automatiquement. Chaque séjour en infirmerie/Lazarett :</p>
+<ul>
+<li>Date d'entrée / sortie</li>
+<li>Motif (blessure, maladie, repos...)</li>
+<li>Établissement</li>
+</ul>
+
+<h2>📄 Page 13 — Blessures de guerre</h2>
+<p><span class="badge badge-sanit">🏥 SANIT</span> <span class="badge badge-auto">⚙️ AUTO</span></p>
+<p>Rempli automatiquement. Pour chaque blessure :</p>
+<ul>
+<li>Date et lieu</li>
+<li>Type de blessure</li>
+<li>Gravité (légère, modérée, grave, critique)</li>
+<li>Arme/cause</li>
+</ul>
+
+<h2>📄 Page 14 — Décorations</h2>
+<p><span class="badge badge-auto">⚙️ AUTO</span></p>
+<p>Liste automatique de toutes les décorations attribuées à l'effectif. Chaque décoration indique :</p>
+<ul>
+<li>Nom de la décoration (ex: Eisernes Kreuz 2. Klasse)</li>
+<li>Date d'attribution</li>
+</ul>
+
+<h2>📄 Pages 15-16 — Tir &amp; Dentaire</h2>
+<p><span class="badge badge-off">⭐ OFF</span></p>
+<ul>
+<li><strong>Page 15</strong> — Résultats de tir (Schießergebnis). Arme, date, score.</li>
+<li><strong>Page 16</strong> — Station dentaire. Soins dentaires reçus.</li>
+</ul>
+
+<h2>📄 Pages 17-20 — Affectations &amp; Mutations</h2>
+<p><span class="badge badge-off">⭐ OFF</span></p>
+<p>Historique détaillé des mutations entre unités. Suite de la page 4. Chaque ligne :</p>
+<ul>
+<li>De (unité d'origine) → À (nouvelle unité)</li>
+<li>Date de mutation</li>
+<li>Motif (promotion, réorganisation, blessure...)</li>
+</ul>
+
+<h2>📄 Page 21 — Formations &amp; Compétences</h2>
+<p><span class="badge badge-off">⭐ OFF</span> <span class="badge badge-soldat">👤 SOLDAT</span></p>
+<p>Formations suivies et compétences acquises :</p>
+<ul>
+<li>Brevets (conduite véhicules, parachutisme, plongée...)</li>
+<li>Formations spécialisées (radio, médical, explosifs...)</li>
+<li>Langues parlées</li>
+</ul>
+
+<h2>📄 Pages 22-24 — Permissions &amp; Congés</h2>
+<p><span class="badge badge-auto">⚙️ AUTO</span></p>
+<p>Rempli automatiquement depuis le module PDS (Plan de Service). Les permissions d'absence approuvées apparaissent ici :</p>
+<ul>
+<li>Date de départ / retour</li>
+<li>Destination</li>
+<li>Motif (permission, convalescence, mission spéciale...)</li>
+</ul>
+
+<h2>🔑 Récapitulatif des permissions</h2>
+
+<table>
+<tr><th>Vous êtes...</th><th>Vous pouvez...</th></tr>
+<tr><td><span class="badge badge-soldat">👤 Soldat (propriétaire)</span></td><td>Remplir vos infos personnelles (religion, profession, description, adresses, signature). Modifications soumises à validation.</td></tr>
+<tr><td><span class="badge badge-off">⭐ Officier / Administratif</span></td><td>Modifier directement tous les champs. Signer en tant que référent. Apposer un tampon. Valider les modifications des soldats.</td></tr>
+<tr><td><span class="badge badge-sanit">🏥 Sanitäts</span></td><td>Les données médicales (vaccins, hospitalisations, blessures, description physique) sont remplies via le module Médical et apparaissent automatiquement.</td></tr>
+<tr><td><span class="badge badge-admin">🔧 Admin système</span></td><td>Gestion technique. Ne signe PAS les documents — rôle de maintenance uniquement.</td></tr>
+</table>
+
+<h2>✍️ Les signatures</h2>
+<p>Il y a deux emplacements de signature sur le Soldbuch :</p>
+<ol>
+<li><strong>Signature du détenteur</strong> (page 2, bas) — Le soldat signe son propre Soldbuch. Dessinez votre signature au clic.</li>
+<li><strong>Signature officier référent</strong> (page 2, bas) — Un officier ou administratif valide le Soldbuch en signant.</li>
+</ol>
+<p>Les attestations (page 3) peuvent aussi être signées individuellement par un officier.</p>
+
+<div class="note">
+💡 <strong>Votre signature est enregistrée</strong> et réutilisable sur d'autres documents du site (rapports, affaires, visites médicales...). Dessinez-la soigneusement !
+</div>
+
+<h2>🎲 Les numéros de série</h2>
+<p>Certains champs ont un bouton 🎲 qui génère automatiquement un numéro au format <code>UNITE-ANNEE-XXXX</code> (ex: <code>916-2026-4817</code>). Utilisez-le pour l'équipement, les registres, etc.</p>
+
+<h2>📱 Compatibilité mobile</h2>
+<p>Le Soldbuch est consultable sur mobile (lecture seule). Pour <strong>modifier</strong> le contenu (cellules éditables, layout), utilisez un <strong>ordinateur</strong>. Les boutons d'édition sont masqués sur mobile.</p>
+
+<div class="footer">
+Archives 7e Armeekorps — Sanitätsdienst — Guide du Soldbuch<br>
+Document généré automatiquement — Version 1.0
+</div>
+
+</body>
+</html>
