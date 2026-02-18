@@ -123,24 +123,60 @@
 .sb-page h4, h4.sb-center { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.5px; margin: 0.4rem 0 0.3rem; }
 
 /* ============================================
-   PAGE 1 — Identity
+   PAGE 1 — Identity (v1 field style)
    ============================================ */
-.sb-page1-grade { font-size: 0.82rem; font-weight: 600; margin: 0.2rem 0; }
-.sb-page1-name { font-size: 0.92rem; font-weight: 700; margin: 0.5rem 0 0.15rem; }
-.sb-page1-field { font-size: 0.68rem; margin-bottom: 0.2rem; }
-
-.sb-grade-box {
-  border: 1.5px solid rgba(0,0,0,0.35);
-  padding: 0.2rem 0.3rem;
-  margin: 0.3rem 0;
-}
-.sb-grade-box-labels {
+.sb-field {
   display: flex;
-  justify-content: space-around;
-  font-size: 0.5rem;
-  opacity: 0.5;
-  font-style: italic;
+  margin-bottom: 0.3rem;
+  gap: 0.3rem;
 }
+.sb-field-label {
+  font-weight: 700;
+  min-width: 130px;
+  white-space: nowrap;
+  font-size: 0.72rem;
+}
+.sb-field-value {
+  border-bottom: 1px dotted rgba(0,0,0,0.3);
+  flex: 1;
+  padding-bottom: 1px;
+  min-height: 1.2em;
+}
+
+.sb-section-title {
+  font-weight: 700;
+  font-size: 0.82rem;
+  text-align: center;
+  margin: 0.8rem 0 0.5rem;
+  letter-spacing: 1px;
+}
+
+.sb-divider {
+  border: none;
+  border-top: 1px solid rgba(0,0,0,0.15);
+  margin: 0.6rem 0;
+}
+
+/* Promotion box */
+.sb-box {
+  border: 1.5px solid rgba(0,0,0,0.4);
+  padding: 0.4rem;
+  margin: 0.4rem 0;
+}
+.sb-promo-row {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.2rem;
+  font-size: 0.72rem;
+}
+.sb-promo-row .sb-promo-label { font-weight: 700; min-width: 20px; }
+.sb-promo-row .sb-promo-date,
+.sb-promo-row .sb-promo-grade {
+  border-bottom: 1px dotted rgba(0,0,0,0.3);
+  flex: 1;
+  min-height: 1.1em;
+}
+
 .sb-lbl-cell { font-weight: 700; font-size: 0.62rem; white-space: nowrap; }
 .sb-val-cell { font-size: 0.65rem; }
 
@@ -268,14 +304,41 @@
 /* ============================================
    RULES / 10 GEBOTE
    ============================================ */
+/* Rules list (used inside sb-gebote) */
 .sb-rules, ol.sb-rules {
   font-size: 0.5rem;
   line-height: 1.25;
   padding-left: 1rem;
   margin: 0;
-  flex: 1;
 }
 .sb-rules li { margin-bottom: 0.1rem; }
+
+/* Gebote container — fills the page */
+.sb-gebote {
+  flex: 1;
+  font-size: 0.58rem;
+  line-height: 1.35;
+  display: flex;
+  flex-direction: column;
+}
+.sb-gebote h3 {
+  font-size: 0.75rem;
+  text-align: center;
+  margin: 0 0 0.3rem;
+  letter-spacing: 1px;
+}
+.sb-gebote h4 {
+  font-size: 0.62rem;
+  text-align: center;
+  margin: 0 0 0.5rem;
+  font-weight: 400;
+}
+.sb-gebote ol {
+  padding-left: 1.2rem;
+  margin: 0;
+  flex: 1;
+}
+.sb-gebote ol li { margin-bottom: 0.2rem; }
 
 /* ============================================
    SPECIFIC SECTIONS

@@ -284,33 +284,44 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
   /* 0: Règlement | Page 1 */
   S.push(<div className="sb-spread" key="s0">
     <div className="sb-page sb-page-l sb-page-dark">
-      <h3 className="sb-center sb-u">À lire attentivement !</h3>
-      <h4 className="sb-center">Règlement</h4>
-      <ol className="sb-rules">{REGLES.map((r,i)=><li key={i}>{r}</li>)}</ol>
-      <div className="sb-spacer"/>
+      <div className="sb-gebote">
+        <h3>10 Commandements</h3>
+        <h4>pour la conduite du soldat allemand en temps de guerre</h4>
+        <ol>{REGLES.map((r,i)=><li key={i}>{r}</li>)}</ol>
+        <div style={{marginTop:'0.5rem',fontSize:'0.5rem',opacity:0.5}}>W.N.3. 11/III. 4. 1000. 4/1901.</div>
+      </div>
     </div>
     <div className="sb-page sb-page-r">
-      <h3 className="sb-center" style={{letterSpacing:3,marginBottom:0}}>Soldbuch</h3>
-      <p className="sb-center sb-xs" style={{marginTop:2,marginBottom:8}}>zugleich Personalausweis</p>
-      <p className="sb-center sb-sm" style={{marginBottom:2}}>Nr. <Ink>{e.id}</Ink></p>
-      <p className="sb-center sb-label" style={{marginBottom:0}}>für</p>
-      <p className="sb-center sb-page1-grade"><Ink>{e.grade_nom||'\u00A0'}</Ink></p>
-      <p className="sb-center sb-xs" style={{marginTop:0}}>(Dienstgrad)</p>
-      <div className="sb-grade-box">
-        <table className="sb-t sb-t-inner"><tbody>
-          <tr><td className="sb-lbl-cell" style={{width:'15%'}}>ab</td><td className="sb-val-cell"><Ink small>{e.date_entree_ig||'\u00A0'}</Ink></td><td className="sb-val-cell"><Ink small>{e.grade_nom||'\u00A0'}</Ink></td></tr>
-          <tr><td className="sb-lbl-cell">ab</td><td className="sb-val-cell">{'\u00A0'}</td><td className="sb-val-cell">{'\u00A0'}</td></tr>
-          <tr><td className="sb-lbl-cell">ab</td><td className="sb-val-cell">{'\u00A0'}</td><td className="sb-val-cell">{'\u00A0'}</td></tr>
-        </tbody></table>
-        <div className="sb-grade-box-labels"><span>(Datum)</span><span>(neuer Dienstgrad)</span></div>
+      <div style={{textAlign:'center',marginBottom:'1rem'}}>
+        <div style={{fontSize:'1.4rem',fontWeight:700,letterSpacing:'4px'}}>Soldbuch</div>
+        <div style={{fontSize:'0.7rem',letterSpacing:'2px'}}>et carte d'identité</div>
       </div>
-      <p className="sb-center sb-page1-name"><Ink>{`${e.prenom||''} ${e.nom||''}`}</Ink></p>
-      <p className="sb-center sb-xs" style={{marginTop:0}}>(Vor- und Zuname)</p>
+      <div style={{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.8rem'}}>
+        <span style={{fontWeight:700}}>Nr.</span>
+        <span style={{background:'rgba(0,0,0,0.08)',padding:'2px 16px',borderBottom:'1px solid rgba(0,0,0,0.3)',flex:1,textAlign:'center',fontWeight:600}}><Ink>{e.id||'—'}</Ink></span>
+      </div>
+      <div style={{textAlign:'center',marginBottom:'0.5rem',fontWeight:600}}>pour</div>
+      <div className="sb-field"><span className="sb-field-label">le</span><span className="sb-field-value"><Ink>{e.grade_nom||'\u00A0'}</Ink></span></div>
+      <div style={{textAlign:'center',fontSize:'0.65rem',opacity:0.5,marginBottom:'0.5rem'}}>(rang)</div>
+      <div className="sb-box">
+        <div className="sb-promo-row">
+          <span className="sb-promo-label" style={{minWidth:'auto'}}>{'\u00A0'}</span>
+          <span className="sb-promo-date" style={{textAlign:'center',fontSize:'0.65rem',opacity:0.5,borderBottom:'none'}}>(Date)</span>
+          <span className="sb-promo-grade" style={{textAlign:'center',fontSize:'0.65rem',opacity:0.5,borderBottom:'none'}}>(nouveau grade)</span>
+        </div>
+        <div className="sb-promo-row"><span className="sb-promo-label">le</span><span className="sb-promo-date"><Ink small>{e.date_entree_ig||''}</Ink></span><span className="sb-promo-grade"><Ink small>{e.grade_nom||''}</Ink></span></div>
+        <div className="sb-promo-row"><span className="sb-promo-label">le</span><span className="sb-promo-date"></span><span className="sb-promo-grade"></span></div>
+        <div className="sb-promo-row"><span className="sb-promo-label">le</span><span className="sb-promo-date"></span><span className="sb-promo-grade"></span></div>
+      </div>
+      <div style={{marginTop:'1.5rem'}}>
+        <div className="sb-field"><span className="sb-field-value" style={{textAlign:'center',fontWeight:600,fontSize:'0.95rem'}}><Ink>{`${e.prenom||''} ${e.nom||''}`}</Ink></span></div>
+        <div style={{textAlign:'center',fontSize:'0.65rem',opacity:0.5}}>(Prénom et nom)</div>
+      </div>
       <div className="sb-spacer"/>
-      <p className="sb-page1-field">Beschreibung und Nummer der<br/>Erkennungsmarke <Ink>{e.numero_service||'\u00A0'}</Ink></p>
-      <p className="sb-page1-field">Blutgruppe <Ink>{e.blutgruppe||'\u00A0'}</Ink></p>
-      <p className="sb-page1-field">Gasmaskengröße <Ink>{e.gasmaskengroesse||'\u00A0'}</Ink></p>
-      <p className="sb-page1-field">Wehrnummer <Ink>{genWehr(e)||'\u00A0'}</Ink></p>
+      <div className="sb-field"><span className="sb-field-label">Plaque d'identité</span><span className="sb-field-value"><Ink>{e.numero_service||'\u00A0'}</Ink></span></div>
+      <div className="sb-field"><span className="sb-field-label">Groupe sanguin</span><span className="sb-field-value"><Ink>{e.blutgruppe||'\u00A0'}</Ink></span></div>
+      <div className="sb-field"><span className="sb-field-label">Taille du masque à gaz</span><span className="sb-field-value"><Ink>{e.gasmaskengroesse||'\u00A0'}</Ink></span></div>
+      <div className="sb-field"><span className="sb-field-label">Numéro de service</span><span className="sb-field-value"><Ink>{genWehr(e)||'\u00A0'}</Ink></span></div>
       <PageNum n={1}/>
     </div>
   </div>)
