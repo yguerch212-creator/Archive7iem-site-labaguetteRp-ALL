@@ -4,9 +4,10 @@ const bcrypt = require('bcryptjs')
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
 const admin = require('../middleware/admin')
+const privileged = require('../middleware/privileged')
 
 // GET /api/admin/groups — List all groups
-router.get('/groups', auth, admin, async (req, res) => {
+router.get('/groups', auth, privileged, async (req, res) => {
   try {
     const rows = await query('SELECT id, name FROM `groups` ORDER BY name')
     res.json({ success: true, data: rows })
@@ -14,7 +15,7 @@ router.get('/groups', auth, admin, async (req, res) => {
 })
 
 // GET /api/admin/users
-router.get('/users', auth, admin, async (req, res) => {
+router.get('/users', auth, privileged, async (req, res) => {
   try {
     const users = await query(`
       SELECT u.id, u.nom, u.prenom, u.username, u.role_level, u.must_change_password, u.active,
@@ -45,7 +46,7 @@ router.get('/users', auth, admin, async (req, res) => {
 })
 
 // GET /api/admin/effectifs-sans-compte
-router.get('/effectifs-sans-compte', auth, admin, async (req, res) => {
+router.get('/effectifs-sans-compte', auth, privileged, async (req, res) => {
   try {
     const rows = await query(`
       SELECT e.id, e.nom, e.prenom, g.nom_complet AS grade_nom, u.nom AS unite_nom
@@ -64,7 +65,7 @@ router.get('/effectifs-sans-compte', auth, admin, async (req, res) => {
 })
 
 // POST /api/admin/users (create from effectif)
-router.post('/users', auth, admin, async (req, res) => {
+router.post('/users', auth, privileged, async (req, res) => {
   try {
     const { effectif_id, password } = req.body
     const eff = await queryOne(`
@@ -89,10 +90,15 @@ router.post('/users', auth, admin, async (req, res) => {
 })
 
 // PUT /api/admin/users/:id/group
-router.put('/users/:id/group', auth, admin, async (req, res) => {
+router.put('/users/:id/group', auth, privileged, async (req, res) => {
   try {
     const { action, group } = req.body // action: 'add'|'remove', group: 'Administration'|'Administratif'|etc.
     const groupName = group || 'Administration'
+    // Non-admins cannot modify admin-level groups
+    const restrictedGroups = ['Administration', 'Etat-Major']
+    if (restrictedGroups.includes(groupName) && !req.user.isAdmin) {
+      return res.status(403).json({ success: false, message: 'Seul un administrateur peut modifier ce groupe' })
+    }
     const grp = await queryOne("SELECT id FROM `groups` WHERE name = ?", [groupName])
     if (!grp) return res.status(500).json({ success: false, message: `Groupe ${groupName} introuvable` })
 
@@ -108,7 +114,7 @@ router.put('/users/:id/group', auth, admin, async (req, res) => {
 })
 
 // GET /api/admin/users/:id/groups — Get all groups for a user
-router.get('/users/:id/groups', auth, admin, async (req, res) => {
+router.get('/users/:id/groups', auth, privileged, async (req, res) => {
   try {
     const rows = await query(`
       SELECT g.id, g.name FROM \`groups\` g
@@ -145,8 +151,8 @@ router.put('/users/:id/toggle-active', auth, admin, async (req, res) => {
 
 // (duplicate /groups route removed — defined at top of file)
 
-// GET /api/admin/logs — Activity logs (admin only)
-router.get('/logs', auth, admin, async (req, res) => {
+// GET /api/admin/logs — Activity logs
+router.get('/logs', auth, privileged, async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 50, 200)
     const rows = await query(
@@ -159,8 +165,8 @@ router.get('/logs', auth, admin, async (req, res) => {
   }
 })
 
-// PUT /api/admin/users/:id/reset-password — Reset user password (admin only)
-router.put('/users/:id/reset-password', auth, admin, async (req, res) => {
+// PUT /api/admin/users/:id/reset-password
+router.put('/users/:id/reset-password', auth, privileged, async (req, res) => {
   try {
     const { new_password } = req.body
     if (!new_password || new_password.length < 6) {
@@ -181,8 +187,8 @@ router.put('/users/:id/reset-password', auth, admin, async (req, res) => {
   }
 })
 
-// GET /api/admin/password-requests — Get pending password reset requests
-router.get('/password-requests', auth, admin, async (req, res) => {
+// GET /api/admin/password-requests
+router.get('/password-requests', auth, privileged, async (req, res) => {
   try {
     const rows = await query(`
       SELECT n.id, n.message AS content, n.created_at, n.lu AS read_at
@@ -196,8 +202,8 @@ router.get('/password-requests', auth, admin, async (req, res) => {
   }
 })
 
-// PUT /api/admin/notifications/:id/read — Mark notification as read
-router.put('/notifications/:id/read', auth, admin, async (req, res) => {
+// PUT /api/admin/notifications/:id/read
+router.put('/notifications/:id/read', auth, privileged, async (req, res) => {
   try {
     await pool.execute('UPDATE notifications SET lu = 1 WHERE id = ?', [req.params.id])
     res.json({ success: true })

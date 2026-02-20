@@ -68,7 +68,7 @@ export default function DossierPersonnel() {
     try {
       const routes = {
         note: `/dossiers/entrees/${id}`,
-        decoration: `/decorations/${id}`,
+        decoration: `/decorations/effectif-decoration/${id}`,
         historique: `/effectifs/historique/${id}`,
         pds: `/pds/${id}`,
         interdit: `/interdits/${id}`,

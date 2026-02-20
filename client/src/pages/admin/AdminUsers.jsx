@@ -101,7 +101,8 @@ export default function AdminUsers() {
     } catch (err) { flash('error', err.response?.data?.message || 'Erreur') }
   }
 
-  if (!user?.isAdmin) return <div className="container" style={{ textAlign: 'center', padding: '3rem' }}>🚫 Accès refusé</div>
+  const canManage = user?.isAdmin || user?.isOfficier || user?.isRecenseur || user?.isEtatMajor
+  if (!canManage) return <div className="container" style={{ textAlign: 'center', padding: '3rem' }}>🚫 Accès refusé</div>
 
   const filtered = users.filter(u => {
     if (!search) return true
@@ -244,16 +245,19 @@ export default function AdminUsers() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', marginBottom: 'var(--space-lg)' }}>
               {ALL_GROUPS.map(g => {
                 const has = selectedGroups.includes(g.name)
+                const restrictedGroups = ['Administration', 'Etat-Major']
+                const canToggle = user?.isAdmin || !restrictedGroups.includes(g.name)
                 return (
                   <div key={g.name}
-                    onClick={() => toggleGroup(g.name)}
+                    onClick={() => canToggle ? toggleGroup(g.name) : null}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 'var(--space-md)',
                       padding: 'var(--space-sm) var(--space-md)',
                       border: `2px solid ${has ? g.color : 'var(--border-color)'}`,
                       borderRadius: 'var(--border-radius)',
-                      cursor: 'pointer',
+                      cursor: canToggle ? 'pointer' : 'not-allowed',
                       background: has ? `${g.color}10` : '',
+                      opacity: canToggle ? 1 : 0.5,
                       transition: 'all 0.2s'
                     }}
                   >
@@ -282,9 +286,9 @@ export default function AdminUsers() {
             {/* Account actions */}
             <h3 style={{ margin: '0 0 var(--space-sm)', fontSize: '0.95rem' }}>⚡ Compte</h3>
             <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap', marginBottom: 'var(--space-lg)' }}>
-              <button className="btn btn-secondary btn-small" onClick={toggleActive}>
+              {user?.isAdmin && <button className="btn btn-secondary btn-small" onClick={toggleActive}>
                 {selected.active ? '🔴 Désactiver' : '🟢 Activer'}
-              </button>
+              </button>}
               <button className="btn btn-secondary btn-small" onClick={async () => {
                 const newPwd = prompt(`Nouveau mot de passe pour ${selected.username} (min 6 car.) :`)
                 if (!newPwd || newPwd.length < 6) { if (newPwd !== null) alert('Minimum 6 caractères'); return }
@@ -295,9 +299,9 @@ export default function AdminUsers() {
               }}>
                 🔑 Réinitialiser MDP
               </button>
-              <button className="btn btn-small" style={{ background: 'var(--danger)', color: 'white', border: 'none' }} onClick={deleteUser}>
+              {user?.isAdmin && <button className="btn btn-small" style={{ background: 'var(--danger)', color: 'white', border: 'none' }} onClick={deleteUser}>
                 🗑️ Supprimer le compte
-              </button>
+              </button>}
             </div>
 
             <div style={{ textAlign: 'center' }}>

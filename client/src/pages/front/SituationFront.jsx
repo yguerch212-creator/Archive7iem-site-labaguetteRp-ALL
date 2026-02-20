@@ -11,7 +11,7 @@ export default function SituationFront() {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ type_event: 'attaque', resultat: 'win', camp_vainqueur: 'allemand', date_rp: '', note: '' })
+  const [form, setForm] = useState({ type_event: 'attaque', camp_vainqueur: 'allemand', date_rp: '', note: '' })
 
   const canReport = user?.isAdmin || user?.isOfficier || user?.isSousOfficier || user?.isEtatMajor
   const canDelete = user?.isAdmin || user?.isOfficier || user?.isEtatMajor
@@ -37,9 +37,11 @@ export default function SituationFront() {
     e.preventDefault()
     if (!selected) return
     try {
-      await api.post(`/front/cartes/${selected}/events`, form)
+      // resultat auto: attaque = win_all (complète), defense = win (partielle)
+      const payload = { ...form, resultat: form.type_event === 'attaque' ? 'win_all' : 'win' }
+      await api.post(`/front/cartes/${selected}/events`, payload)
       setShowForm(false)
-      setForm({ type_event: 'attaque', resultat: 'win', camp_vainqueur: 'allemand', date_rp: '', note: '' })
+      setForm({ type_event: 'attaque', camp_vainqueur: 'allemand', date_rp: '', note: '' })
       loadEvents(selected)
       load()
     } catch (err) { alert(err.response?.data?.message || 'Erreur') }
@@ -54,14 +56,13 @@ export default function SituationFront() {
     } catch {}
   }
 
-  const resultatLabel = (r, camp) => {
-    const labels = {
-      win: camp === 'allemand' ? '🟢 Victoire DE' : '🔴 Victoire US',
-      win_all: camp === 'allemand' ? '🟢🟢 Victoire totale DE' : '🔴🔴 Victoire totale US',
-      lose: camp === 'allemand' ? '🟢 Victoire DE' : '🔴 Victoire US',
-      lose_all: camp === 'allemand' ? '🟢🟢 Victoire totale DE' : '🔴🔴 Victoire totale US'
+  const resultatLabel = (type_event, camp) => {
+    // Attaque + win = victoire complète, Défense + win = victoire partielle
+    const isComplete = type_event === 'attaque'
+    if (camp === 'allemand') {
+      return isComplete ? '🟢🟢 Victoire totale DE' : '🟢 Victoire partielle DE'
     }
-    return labels[r] || r
+    return isComplete ? '🔴🔴 Victoire totale US' : '🔴 Victoire partielle US'
   }
 
   const selectedCarte = cartes.find(c => c.id === selected)
@@ -100,7 +101,7 @@ export default function SituationFront() {
               </div>
               {c.dernierEvent && (
                 <div className="front-last-event">
-                  Dernier : {c.dernierEvent.type_event === 'attaque' ? '⚔️' : '🛡️'} {resultatLabel(c.dernierEvent.resultat, c.dernierEvent.camp_vainqueur)}
+                  Dernier : {c.dernierEvent.type_event === 'attaque' ? '⚔️' : '🛡️'} {resultatLabel(c.dernierEvent.type_event, c.dernierEvent.camp_vainqueur)}
                   {c.dernierEvent.date_rp && ` — ${c.dernierEvent.date_rp}`}
                 </div>
               )}
@@ -125,13 +126,6 @@ export default function SituationFront() {
                 <select className="form-input" value={form.type_event} onChange={e => setForm(p => ({...p, type_event: e.target.value}))}>
                   <option value="attaque">⚔️ Attaque de base</option>
                   <option value="defense">🛡️ Défense de base</option>
-                </select>
-              </div>
-              <div className="form-row">
-                <label>Résultat</label>
-                <select className="form-input" value={form.resultat} onChange={e => setForm(p => ({...p, resultat: e.target.value}))}>
-                  <option value="win">Win (victoire partielle)</option>
-                  <option value="win_all">Win All (victoire totale)</option>
                 </select>
               </div>
               <div className="form-row">
@@ -174,7 +168,7 @@ export default function SituationFront() {
                     <td>{new Date(ev.date_irl).toLocaleDateString('fr-FR')}</td>
                     <td>{ev.date_rp || '—'}</td>
                     <td>{ev.type_event === 'attaque' ? '⚔️ Attaque' : '🛡️ Défense'}</td>
-                    <td>{resultatLabel(ev.resultat, ev.camp_vainqueur)}</td>
+                    <td>{resultatLabel(ev.type_event, ev.camp_vainqueur)}</td>
                     <td>{ev.rapporte_par_nom || '—'}</td>
                     <td>{ev.note || '—'}</td>
                     {canDelete && <td><button className="btn btn-danger btn-small" onClick={() => deleteEvent(ev.id)}>🗑️</button></td>}

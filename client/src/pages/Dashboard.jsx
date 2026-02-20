@@ -114,7 +114,7 @@ export default function Dashboard() {
   if (user?.isAdmin || user?.isOfficier || user?.isRecenseur) {
     navCards.push({ icon: '📊', title: 'Statistiques', desc: 'Vue d\'ensemble', to: '/admin/stats' })
   }
-  if (user?.isAdmin) {
+  if (user?.isAdmin || user?.isOfficier || user?.isRecenseur || user?.isEtatMajor) {
     navCards.push({ icon: '⚙️', title: 'Administration', desc: 'Utilisateurs & permissions', to: '/admin/users' })
   }
 
