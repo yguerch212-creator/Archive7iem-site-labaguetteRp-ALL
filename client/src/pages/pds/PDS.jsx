@@ -114,7 +114,7 @@ export default function PDS() {
   const saveMine = async () => {
     setSaving(true)
     try {
-      await api.put('/pds/saisie', { effectif_id: user.effectif_id, semaine, ...myPds })
+      await api.put('/pds/saisie', { effectif_id: user.effectif_id, semaine: semaineActuelle || semaine, ...myPds })
       setMessage('PDS sauvegardé ✓'); setTimeout(() => setMessage(''), 2000)
       loadAll(); setView('list')
     } catch (err) { setMessage('Erreur: ' + (err.response?.data?.message || err.message)) }
@@ -143,7 +143,8 @@ export default function PDS() {
     return (
       <div className="pds-page">
         <button className="btn btn-secondary btn-small" onClick={() => setView('list')} style={{ marginBottom: 'var(--space-md)' }}>← Retour</button>
-        <h2 style={{ marginBottom: 'var(--space-lg)' }}>✏️ Mon PDS — {weekLabel(semaine)}</h2>
+        <h2 style={{ marginBottom: 'var(--space-lg)' }}>✏️ Mon PDS — {weekLabel(semaineActuelle)}</h2>
+        {semaine !== semaineActuelle && <div className="pds-message-bar" style={{background:'var(--danger)',color:'#fff',marginBottom:'var(--space-md)'}}>⚠️ Vous ne pouvez remplir que la semaine en cours. Redirigé automatiquement.</div>}
 
         <div className="paper-card" style={{ padding: 'var(--space-lg)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -296,7 +297,7 @@ export default function PDS() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)', flexWrap: 'wrap', gap: '0.5rem' }}>
         <BackButton label="← Tableau de bord" />
         <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-          {hasEffectif && <button className="btn btn-primary btn-small" onClick={() => setView('edit')}>✏️ Mon PDS</button>}
+          {hasEffectif && <button className="btn btn-primary btn-small" onClick={() => { setSemaine(semaineActuelle); setView('edit') }}>✏️ Mon PDS</button>}
           {isPrivileged && <button className="btn btn-secondary btn-small" onClick={() => setView('rapport')}>📊 Rapport</button>}
           <button className="btn btn-secondary btn-small" onClick={() => setView('permissions')}>🏖️ Permissions</button>
           {isPrivileged && <button className="btn btn-secondary btn-small" onClick={() => exportToPdf('pds-table', `PDS_${semaine}`)}>📄 PDF</button>}

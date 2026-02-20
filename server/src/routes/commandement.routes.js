@@ -93,23 +93,36 @@ router.get('/etat', auth, officier, async (req, res) => {
     let semaine = req.query.semaine
     let weekStart
 
-    if (semaine) {
-      // Use provided week
-      const d = new Date(semaine + 'T20:00:00Z')
-      weekStart = d.toISOString().slice(0, 19).replace('T', ' ')
-    } else {
-      // Current RP week (Friday 20h → Friday 20h)
-      const now = new Date()
-      const day = now.getUTCDay()
-      const hour = now.getUTCHours()
-      let daysBack = (day - 5 + 7) % 7
-      if (daysBack === 0 && hour < 20) daysBack = 7
-      const friday = new Date(now)
-      friday.setUTCDate(friday.getUTCDate() - daysBack)
-      friday.setUTCHours(20, 0, 0, 0)
-      weekStart = friday.toISOString().slice(0, 19).replace('T', ' ')
-      semaine = friday.toISOString().slice(0, 10)
+    // Compute current RP week Friday
+    const now = new Date()
+    const day = now.getUTCDay()
+    const hour = now.getUTCHours()
+    let daysBack = (day - 5 + 7) % 7
+    if (daysBack === 0 && hour < 20) daysBack = 7
+    const friday = new Date(now)
+    friday.setUTCDate(friday.getUTCDate() - daysBack)
+    friday.setUTCHours(20, 0, 0, 0)
+
+    if (!semaine) {
+      // Use ISO week format matching pds_semaines
+      const d = new Date(friday)
+      const dayNum = d.getUTCDay() || 7
+      d.setUTCDate(d.getUTCDate() + 4 - dayNum)
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+      const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7)
+      semaine = `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`
     }
+
+    // Compute weekStart from ISO week string for rapport date filter
+    const [y, wn] = semaine.split('-W').map(Number)
+    const jan4 = new Date(Date.UTC(y, 0, 4))
+    const dow = jan4.getUTCDay() || 7
+    const mon = new Date(jan4)
+    mon.setUTCDate(jan4.getUTCDate() - dow + 1 + (wn - 1) * 7)
+    const fri = new Date(mon)
+    fri.setUTCDate(mon.getUTCDate() + 4)
+    fri.setUTCHours(20, 0, 0, 0)
+    weekStart = fri.toISOString().slice(0, 19).replace('T', ' ')
 
     // Available weeks
     const weeks = await query("SELECT DISTINCT semaine FROM pds_semaines ORDER BY semaine DESC LIMIT 20")

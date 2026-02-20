@@ -7,7 +7,7 @@ import { formatDate } from '../../utils/dates'
 
 export default function Moderation() {
   const { user } = useAuth()
-  const [data, setData] = useState({ docs: [], permissions: [], rapports: [], interdits: [], media: [], medical: [] })
+  const [data, setData] = useState({ docs: [], permissions: [], rapports: [], interdits: [], media: [], medical: [], habillement: [] })
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState(null)
   const [tab, setTab] = useState('docs')
@@ -18,10 +18,11 @@ export default function Moderation() {
     try {
       const res = await api.get('/moderation/pending')
       // Also load pending media + medical
-      let mediaData = [], medicalData = []
+      let mediaData = [], medicalData = [], habData = []
       try { const mRes = await api.get('/media/pending'); mediaData = mRes.data.data || [] } catch {}
       try { const mdRes = await api.get('/medical/pending/list'); medicalData = mdRes.data.data || [] } catch {}
-      setData({ ...res.data.data, media: mediaData, medical: medicalData })
+      try { const hRes = await api.get('/habillement/demandes?statut=en_attente'); habData = hRes.data.data || [] } catch {}
+      setData({ ...res.data.data, media: mediaData, medical: medicalData, habillement: habData })
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
   }
@@ -103,6 +104,7 @@ export default function Moderation() {
     { key: 'interdits', label: '🚫 Interdits actifs', count: data.interdits.length },
     { key: 'media', label: '📸 Médias', count: data.media.length },
     { key: 'medical', label: '🏥 Visites médicales', count: data.medical.length },
+    { key: 'habillement', label: '👔 Habillement', count: data.habillement.length },
   ]
 
   return (
@@ -302,6 +304,36 @@ export default function Moderation() {
                         <td style={td}>{fmtDate(i.date_debut)}</td>
                         <td style={td}>
                           <button className="btn btn-sm btn-primary" style={{ padding: '2px 10px', fontSize: '0.75rem' }} onClick={() => leverInterdit(i.id)}>🔓 Lever</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+
+          {tab === 'habillement' && (
+            <div className="paper-card" style={{ overflow: 'auto' }}>
+              {data.habillement.length === 0 ? (
+                <p style={{ textAlign: 'center', padding: 'var(--space-lg)', color: 'var(--text-muted)' }}>✅ Aucune demande en attente</p>
+              ) : (
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                  <thead><tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+                    <th style={th}>Demandeur</th><th style={th}>Description</th><th style={th}>Motif</th><th style={th}>Date</th><th style={th}>Actions</th>
+                  </tr></thead>
+                  <tbody>
+                    {data.habillement.map(d => (
+                      <tr key={d.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        <td style={td}><strong>{d.grade_nom ? `${d.grade_nom} ` : ''}{d.prenom} {d.nom}</strong></td>
+                        <td style={td}>{d.description}</td>
+                        <td style={td}>{d.motif || '—'}</td>
+                        <td style={td}>{fmtDate(d.created_at)}</td>
+                        <td style={td}>
+                          {user?.isOfficier || user?.isAdmin ? (<div style={{display:'flex',gap:4}}>
+                            <button className="btn btn-sm" style={{ padding: '2px 8px', fontSize: '0.75rem', background: 'var(--military-green)', color: '#fff' }} onClick={async () => { try { await api.put(`/habillement/demandes/${d.id}`, { statut: 'approuve', reponse: '' }); flash('success', 'Approuvé'); load() } catch(e) { flash('error', e.response?.data?.message||'Erreur') } }}>✅</button>
+                            <button className="btn btn-sm" style={{ padding: '2px 8px', fontSize: '0.75rem', background: 'var(--danger)', color: '#fff' }} onClick={async () => { const r = prompt('Motif du refus ?'); if (r !== null) { try { await api.put(`/habillement/demandes/${d.id}`, { statut: 'refuse', reponse: r }); flash('success', 'Refusé'); load() } catch(e) { flash('error', e.response?.data?.message||'Erreur') } } }}>❌</button>
+                          </div>) : <span className="badge">En attente</span>}
                         </td>
                       </tr>
                     ))}

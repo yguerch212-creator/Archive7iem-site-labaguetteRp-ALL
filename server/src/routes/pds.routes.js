@@ -128,6 +128,12 @@ router.put('/saisie', auth, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Vous ne pouvez modifier que votre propre PDS' })
     }
 
+    // Lock: only current RP week is editable (unless admin)
+    const currentWeek = getCurrentWeek()
+    if (!req.user.isAdmin && semaine !== currentWeek) {
+      return res.status(403).json({ success: false, message: 'Vous ne pouvez remplir que la semaine en cours' })
+    }
+
     // Compute total hours from creneaux
     const totalHeures = 
       parseCreneaux(lundi) + parseCreneaux(mardi) + parseCreneaux(mercredi) +

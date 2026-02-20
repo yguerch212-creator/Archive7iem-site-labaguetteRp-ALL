@@ -4,6 +4,20 @@ import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import BackButton from '../../components/BackButton'
 
+function weekLabel(w) {
+  try {
+    const [y, wn] = w.split('-W').map(Number)
+    const jan4 = new Date(Date.UTC(y, 0, 4))
+    const dow = jan4.getUTCDay() || 7
+    const mon = new Date(jan4)
+    mon.setUTCDate(jan4.getUTCDate() - dow + 1 + (wn - 1) * 7)
+    const fri = new Date(mon); fri.setUTCDate(mon.getUTCDate() + 4)
+    const nxt = new Date(fri); nxt.setUTCDate(fri.getUTCDate() + 7)
+    const fmt = d => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+    return `Sem. ${fmt(fri)} → ${fmt(nxt)}`
+  } catch { return w }
+}
+
 export default function Commandement() {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -141,7 +155,7 @@ export default function Commandement() {
               <select className="form-input" style={{ maxWidth: 180, fontSize: '0.8rem' }} value={etat.semaine} onChange={async (e) => {
                 try { const r = await api.get('/commandement/etat', { params: { semaine: e.target.value } }); setEtat(r.data) } catch {}
               }}>
-                {(etat.weeks || []).map(w => <option key={w} value={w}>{w}</option>)}
+                {(etat.weeks || []).map(w => <option key={w} value={w}>{weekLabel(w)}</option>)}
               </select>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>— {etat.data?.length || 0} effectifs actifs</span>
             </div>

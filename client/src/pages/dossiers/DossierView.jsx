@@ -141,7 +141,7 @@ export default function DossierView() {
                     <div className="book-entry-footer">
                       <span>Par {e.created_by_nom}</span>
                       <span>{formatDate(e.created_at)}</span>
-                      {(user?.isAdmin || user?.id === e.created_by) && (
+                      {(user?.isAdmin || user?.isRecenseur || user?.id === e.created_by) && (
                         <button className="btn btn-sm" style={{ color: 'var(--danger)', fontSize: '0.7rem', padding: '2px 6px' }} onClick={() => deleteEntry(e.id)}>🗑️</button>
                       )}
                     </div>

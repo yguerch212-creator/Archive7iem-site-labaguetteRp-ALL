@@ -189,7 +189,7 @@ router.delete('/entrees/:id', auth, async (req, res) => {
   try {
     const entry = await queryOne('SELECT created_by FROM dossier_entrees WHERE id = ?', [req.params.id])
     if (!entry) return res.status(404).json({ success: false, message: 'Entrée non trouvée' })
-    if (entry.created_by !== req.user.id && !req.user.isAdmin) {
+    if (entry.created_by !== req.user.id && !req.user.isAdmin && !req.user.isRecenseur) {
       return res.status(403).json({ success: false, message: 'Non autorisé' })
     }
     await pool.execute('DELETE FROM dossier_entrees WHERE id = ?', [req.params.id])
