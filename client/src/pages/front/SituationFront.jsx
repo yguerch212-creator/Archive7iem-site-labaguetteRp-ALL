@@ -109,17 +109,21 @@ export default function SituationFront() {
 
   const sel = cartes.find(c => c.id === selected)
 
-  // Filter events for history
+  // Filter events for history — use local date string to avoid UTC issues
   const filteredEvents = events.filter(ev => {
     if (histFilter === 'all') return true
-    const evDate = new Date(ev.date_irl)
+    const evLocal = new Date(ev.date_irl).toLocaleDateString('fr-CA') // YYYY-MM-DD format
     if (histFilter === 'jour') {
-      return evDate.toISOString().slice(0, 10) === histDate
+      return evLocal === histDate
     }
-    // semaine = 7 days from selected date
-    const start = new Date(histDate); start.setDate(start.getDate() - start.getDay() + 1) // monday
-    const end = new Date(start); end.setDate(end.getDate() + 7)
-    return evDate >= start && evDate < end
+    // semaine = Monday to Sunday of the week containing histDate
+    const ref = new Date(histDate + 'T12:00:00')
+    const day = ref.getDay() || 7 // Sunday = 7
+    const monday = new Date(ref); monday.setDate(ref.getDate() - day + 1)
+    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6)
+    const monStr = monday.toLocaleDateString('fr-CA')
+    const sunStr = sunday.toLocaleDateString('fr-CA')
+    return evLocal >= monStr && evLocal <= sunStr
   })
 
   // Group by day
@@ -246,7 +250,7 @@ export default function SituationFront() {
                     <option value="all">📋 Tout</option>
                   </select>
                   {histFilter !== 'all' && (
-                    <input type="date" className="form-input" value={histDate} onChange={e => setHistDate(e.target.value)} style={{ maxWidth: 160 }} />
+                    <input type="date" className="form-input" value={histDate} onChange={e => setHistDate(e.target.value)} style={{ maxWidth: 170 }} />
                   )}
                 </div>
 
