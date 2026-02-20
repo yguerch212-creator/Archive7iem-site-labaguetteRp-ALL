@@ -55,8 +55,10 @@ export default function SituationFront() {
   const sel = cartes.find(c => c.id === selected)
 
   const eventIcon = (ev) => {
-    if (ev.type_event === 'attaque') return ev.camp_vainqueur === 'allemand' ? '✅' : '✅'
-    if (ev.type_event === 'defense') return ev.camp_vainqueur === 'allemand' ? '⚠️✅' : '⚠️✅'
+    if (ev.type_event === 'defense' && ev.camp_vainqueur === 'allemand') return '⚠️'
+    if (ev.type_event === 'defense' && ev.camp_vainqueur === 'us') return '❌'
+    if (ev.type_event === 'attaque' && ev.camp_vainqueur === 'allemand') return '✅'
+    if (ev.type_event === 'attaque' && ev.camp_vainqueur === 'us') return '⚠️✅'
     if (ev.type_event === 'prise') return '🚩'
     if (ev.type_event === 'perte') return '🏳️'
     return '•'
@@ -117,8 +119,8 @@ export default function SituationFront() {
                 <div className="front-section">
                   <p className="front-section-label">🇩🇪 Défense de base allemande</p>
                   <div className="front-btn-row">
-                    <button className="front-btn front-btn-de" onClick={() => post({ type_event: 'defense', resultat: 'win_all', camp_vainqueur: 'allemand' })}>✅ Win ALL</button>
-                    <button className="front-btn front-btn-us" onClick={() => post({ type_event: 'defense', resultat: 'win', camp_vainqueur: 'us' })}>⚠️✅ Win US</button>
+                    <button className="front-btn front-btn-warn" onClick={() => post({ type_event: 'defense', resultat: 'win_all', camp_vainqueur: 'allemand' })}>⚠️ Win ALL</button>
+                    <button className="front-btn front-btn-lose" onClick={() => post({ type_event: 'defense', resultat: 'win', camp_vainqueur: 'us' })}>❌ Win US</button>
                   </div>
                 </div>
 
@@ -126,7 +128,7 @@ export default function SituationFront() {
                   <p className="front-section-label">🇺🇸 Attaque de base américaine</p>
                   <div className="front-btn-row">
                     <button className="front-btn front-btn-de" onClick={() => post({ type_event: 'attaque', resultat: 'win_all', camp_vainqueur: 'allemand' })}>✅ Win ALL</button>
-                    <button className="front-btn front-btn-us" onClick={() => post({ type_event: 'attaque', resultat: 'win', camp_vainqueur: 'us' })}>✅ Win US</button>
+                    <button className="front-btn front-btn-warn2" onClick={() => post({ type_event: 'attaque', resultat: 'win', camp_vainqueur: 'us' })}>⚠️✅ Win US</button>
                   </div>
                 </div>
 

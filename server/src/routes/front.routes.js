@@ -64,4 +64,44 @@ router.delete('/events/:id', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
 
+// GET /api/front/rapport — Weekly/daily front report
+router.get('/rapport', optionalAuth, async (req, res) => {
+  try {
+    const { periode, date_debut, date_fin } = req.query
+    let where = ''
+    const params = []
+    if (date_debut && date_fin) {
+      where = 'AND e.date_irl BETWEEN ? AND ?'
+      params.push(date_debut, date_fin + ' 23:59:59')
+    } else if (periode === 'jour') {
+      where = 'AND DATE(e.date_irl) = CURDATE()'
+    } else if (periode === 'semaine') {
+      where = 'AND e.date_irl >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)'
+    }
+
+    const cartes = await query('SELECT * FROM situation_front_cartes ORDER BY ordre')
+    const rapport = []
+    for (const c of cartes) {
+      const events = await query(`
+        SELECT e.*, v.nom as vp_nom, v.numero as vp_numero
+        FROM situation_front_events e 
+        LEFT JOIN situation_front_vp v ON v.id = e.vp_id
+        WHERE e.carte_id = ? ${where}
+        ORDER BY e.date_irl DESC
+      `, [c.id, ...params])
+
+      const stats = {
+        att_all: events.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'allemand').length,
+        att_us: events.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'us').length,
+        def_all: events.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'allemand').length,
+        def_us: events.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'us').length,
+        prises: events.filter(e => e.type_event === 'prise').length,
+        pertes: events.filter(e => e.type_event === 'perte').length
+      }
+      rapport.push({ carte: c, events, stats })
+    }
+    res.json({ success: true, data: rapport })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
 module.exports = router

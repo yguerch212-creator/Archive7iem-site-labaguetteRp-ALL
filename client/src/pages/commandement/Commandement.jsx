@@ -143,7 +143,7 @@ export default function Commandement() {
           <Link to="/interdits" className="btn btn-secondary btn-sm">🚫 Interdits</Link>
           <Link to="/pds" className="btn btn-secondary btn-sm">⏱️ PDS</Link>
           <button className="btn btn-secondary btn-sm" onClick={async () => {
-            try { const r = await api.get('/front/stats'); setFrontStats(r.data.data); setShowFront(true) } catch { setMsg('Erreur') }
+            try { const r = await api.get('/front/rapport?periode=semaine'); setFrontStats(r.data.data); setShowFront(true) } catch { setMsg('Erreur chargement rapport front') }
           }}>⚔️ Rapport du Front</button>
           <Link to="/front" className="btn btn-secondary btn-sm">⚔️ Situation du Front</Link>
           <Link to="/admin/stats" className="btn btn-secondary btn-sm">📊 Statistiques</Link>
@@ -230,38 +230,68 @@ export default function Commandement() {
         <div className="popup-overlay" onClick={() => setShowFront(false)}>
           <div className="popup-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 700, maxHeight: '85vh', overflow: 'auto' }}>
             <button className="popup-close" onClick={() => setShowFront(false)}>✕</button>
-            <h2 style={{ marginTop: 0, textAlign: 'center' }}>⚔️ Rapport du Front</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)', textAlign: 'center' }}>
-              <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{frontStats.prises}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>🚩 Prises</div></div>
-              <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--danger)' }}>{frontStats.pertes}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>🏳️ Pertes</div></div>
-              <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{frontStats.attaques + frontStats.defenses}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>Batailles</div></div>
-              <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--success)' }}>{frontStats.victoires_all}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>🏆 Victoires ALL</div></div>
-              <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--danger)' }}>{frontStats.victoires_us}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>🏆 Victoires US</div></div>
-              <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{frontStats.attaques + frontStats.defenses > 0 ? Math.round(frontStats.victoires_all / (frontStats.attaques + frontStats.defenses) * 100) : 0}%</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>Taux victoire</div></div>
-            </div>
-            {frontStats.daily?.length > 0 && (
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                <thead><tr style={{ borderBottom: '2px solid var(--border-color)' }}>
-                  <th style={{ padding: '6px 10px', textAlign: 'left' }}>Jour</th>
-                  <th style={{ padding: '6px 10px', textAlign: 'center' }}>🚩</th>
-                  <th style={{ padding: '6px 10px', textAlign: 'center' }}>🏳️</th>
-                  <th style={{ padding: '6px 10px', textAlign: 'center' }}>⚔️</th>
-                </tr></thead>
-                <tbody>
-                  {[...new Set(frontStats.daily.map(d => d.jour))].sort().reverse().map(day => {
-                    const dd = frontStats.daily.filter(d => d.jour === day)
-                    return (
-                      <tr key={day} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                        <td style={{ padding: '6px 10px' }}>{new Date(day).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' })}</td>
-                        <td style={{ padding: '6px 10px', textAlign: 'center' }}>{dd.find(d => d.event_type === 'prise')?.c || 0}</td>
-                        <td style={{ padding: '6px 10px', textAlign: 'center' }}>{dd.find(d => d.event_type === 'perte')?.c || 0}</td>
-                        <td style={{ padding: '6px 10px', textAlign: 'center' }}>{(dd.find(d => d.event_type === 'attaque')?.c || 0) + (dd.find(d => d.event_type === 'defense')?.c || 0)}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            )}
+            <h2 style={{ marginTop: 0, textAlign: 'center' }}>⚔️ Rapport du Front — Semaine</h2>
+
+            {/* Global summary */}
+            {(() => {
+              const totals = frontStats.reduce((acc, r) => ({
+                att_all: acc.att_all + r.stats.att_all, att_us: acc.att_us + r.stats.att_us,
+                def_all: acc.def_all + r.stats.def_all, def_us: acc.def_us + r.stats.def_us,
+                prises: acc.prises + r.stats.prises, pertes: acc.pertes + r.stats.pertes
+              }), { att_all: 0, att_us: 0, def_all: 0, def_us: 0, prises: 0, pertes: 0 })
+              const batailles = totals.att_all + totals.att_us + totals.def_all + totals.def_us
+              const vicAll = totals.att_all + totals.def_all
+              const vicUs = totals.att_us + totals.def_us
+              return (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)', textAlign: 'center' }}>
+                  <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.3rem', fontWeight: 700 }}>{batailles}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>⚔️ Batailles</div></div>
+                  <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--success)' }}>{vicAll}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>🏆 Win ALL</div></div>
+                  <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--danger)' }}>{vicUs}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>🏆 Win US</div></div>
+                  <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.3rem', fontWeight: 700 }}>{totals.prises}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>🚩 Prises VP</div></div>
+                  <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--danger)' }}>{totals.pertes}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>🏳️ Pertes VP</div></div>
+                  <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.3rem', fontWeight: 700 }}>{batailles > 0 ? Math.round(vicAll / batailles * 100) : 0}%</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>Taux victoire</div></div>
+                </div>
+              )
+            })()}
+
+            {/* Per-map breakdown */}
+            {frontStats.map(r => {
+              const s = r.stats
+              const total = s.att_all + s.att_us + s.def_all + s.def_us + s.prises + s.pertes
+              if (total === 0) return null
+
+              // Group events by day
+              const byDay = {}
+              r.events.forEach(ev => {
+                const day = new Date(ev.date_irl).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' })
+                if (!byDay[day]) byDay[day] = []
+                byDay[day].push(ev)
+              })
+
+              return (
+                <div key={r.carte.id} style={{ marginBottom: 'var(--space-lg)' }}>
+                  <h3 style={{ margin: '0 0 var(--space-sm)', fontSize: '0.95rem' }}>{r.carte.nom}</h3>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 'var(--space-sm)' }}>
+                    ✅ Att Win ALL: {s.att_all} · ⚠️✅ Att Win US: {s.att_us} · ⚠️ Déf Win ALL: {s.def_all} · ❌ Déf Win US: {s.def_us} · 🚩 {s.prises} prises · 🏳️ {s.pertes} pertes
+                  </div>
+                  {Object.entries(byDay).map(([day, evs]) => (
+                    <div key={day}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)', margin: '0.4rem 0 0.2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: 2 }}>{day}</div>
+                      {evs.map(ev => {
+                        const icon = ev.type_event === 'prise' ? '🚩' : ev.type_event === 'perte' ? '🏳️'
+                          : ev.type_event === 'defense' && ev.camp_vainqueur === 'allemand' ? '⚠️'
+                          : ev.type_event === 'defense' && ev.camp_vainqueur === 'us' ? '❌'
+                          : ev.type_event === 'attaque' && ev.camp_vainqueur === 'allemand' ? '✅' : '⚠️✅'
+                        const label = ev.type_event === 'prise' ? `Prise — ${ev.vp_nom || 'VP' + ev.vp_numero}`
+                          : ev.type_event === 'perte' ? `Perte — ${ev.vp_nom || 'VP' + ev.vp_numero}`
+                          : `${ev.type_event === 'attaque' ? 'Attaque' : 'Défense'} de base — Win ${ev.camp_vainqueur === 'allemand' ? 'ALL' : 'US'}`
+                        return <div key={ev.id} style={{ fontSize: '0.8rem', padding: '2px 0 2px 1rem' }}>{icon} {label} {ev.heure ? `— ${ev.heure}` : ''}</div>
+                      })}
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
