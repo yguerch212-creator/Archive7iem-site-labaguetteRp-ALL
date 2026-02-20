@@ -376,4 +376,17 @@ router.get('/:id/historique', optionalAuth, async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
 
+// DELETE /api/effectifs/historique/:id — Delete a historique entry
+router.delete('/historique/:id', auth, async (req, res) => {
+  try {
+    const entry = await queryOne('SELECT * FROM effectif_historique WHERE id = ?', [req.params.id])
+    if (!entry) return res.status(404).json({ success: false, message: 'Entrée non trouvée' })
+    if (!req.user.isAdmin && !req.user.isRecenseur && !req.user.isOfficier) {
+      return res.status(403).json({ success: false, message: 'Non autorisé' })
+    }
+    await pool.execute('DELETE FROM effectif_historique WHERE id = ?', [req.params.id])
+    res.json({ success: true })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
 module.exports = router
