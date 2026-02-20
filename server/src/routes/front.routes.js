@@ -3,139 +3,92 @@ const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
 const { optionalAuth } = require('../middleware/auth')
 
-// Maps configuration
-const MAPS = {
-  'berlin-mur-est': {
-    nom: 'Berlin — Mur Est',
-    vps: [
-      { id: 'feldkommandantur', nom: 'Feldkommandantur' },
-      { id: 'marrais', nom: 'Marais' },
-      { id: 'mur-est', nom: 'Mur Est' },
-      { id: 'village', nom: 'Village' },
-      { id: 'poste-radio', nom: 'Poste Radio' }
-    ],
-    specials: [
-      { id: 'defense-base-all', nom: 'Défense de Base Allemande', type: 'defense' },
-      { id: 'attaque-base-us', nom: 'Attaque de Base Américaine', type: 'attaque' }
-    ]
-  },
-  'berlin-brandburg': {
-    nom: 'Berlin — Porte de Brandebourg',
-    vps: [
-      { id: 'reichstag', nom: 'Reichstag' },
-      { id: 'porte-brandburg', nom: 'Porte de Brandebourg' },
-      { id: 'station-train', nom: 'Station de Train' },
-      { id: 'cabane', nom: 'Cabane' }
-    ],
-    specials: []
-  },
-  'falaise-bunker': {
-    nom: 'Falaise — Bunker',
-    vps: [
-      { id: 'vp1', nom: 'VP1' },
-      { id: 'village', nom: 'Village' },
-      { id: 'bunker', nom: 'Bunker' },
-      { id: 'hameau', nom: 'Hameau' },
-      { id: 'vp5', nom: 'VP5' }
-    ],
-    specials: []
-  },
-  'falaise-billy': {
-    nom: 'Falaise — Maison Billy',
-    vps: [
-      { id: 'vp1', nom: 'VP1' },
-      { id: 'village', nom: 'Village' },
-      { id: 'maison-billy', nom: 'Maison Billy' },
-      { id: 'hameau', nom: 'Hameau' },
-      { id: 'vp5', nom: 'VP5' }
-    ],
-    specials: []
-  }
-}
-
-// GET /api/front/maps — List available maps
-router.get('/maps', optionalAuth, (req, res) => {
-  const maps = Object.entries(MAPS).map(([id, m]) => ({ id, nom: m.nom, vps: m.vps, specials: m.specials || [] }))
-  res.json({ success: true, data: maps })
-})
-
-// GET /api/front/events — Get front events (filterable by map, date)
-router.get('/events', optionalAuth, async (req, res) => {
+// GET /api/front/cartes — Liste des cartes avec stats
+router.get('/cartes', optionalAuth, async (req, res) => {
   try {
-    const { map, date } = req.query
-    let sql = `SELECT f.*, CONCAT(e.prenom,' ',e.nom) as effectif_nom, g.nom_complet as grade_nom
-               FROM front_events f
-               LEFT JOIN effectifs e ON e.id = f.effectif_id
-               LEFT JOIN grades g ON g.id = e.grade_id
-               WHERE 1=1`
-    const params = []
-    if (map) { sql += ' AND f.map_id = ?'; params.push(map) }
-    if (date) { sql += ' AND DATE(f.event_date) = ?'; params.push(date) }
-    sql += ' ORDER BY f.event_date DESC, f.event_time DESC LIMIT 500'
-    const rows = await query(sql, params)
-    res.json({ success: true, data: rows })
+    const cartes = await query('SELECT * FROM situation_front_cartes ORDER BY ordre')
+    // Pour chaque carte, compter les events
+    for (const c of cartes) {
+      const stats = await queryOne(`
+        SELECT 
+          COUNT(*) as total,
+          SUM(CASE WHEN type_event='attaque' AND camp_vainqueur='allemand' THEN 1 ELSE 0 END) as att_win_de,
+          SUM(CASE WHEN type_event='attaque' AND camp_vainqueur='us' THEN 1 ELSE 0 END) as att_win_us,
+          SUM(CASE WHEN type_event='defense' AND camp_vainqueur='allemand' THEN 1 ELSE 0 END) as def_win_de,
+          SUM(CASE WHEN type_event='defense' AND camp_vainqueur='us' THEN 1 ELSE 0 END) as def_win_us
+        FROM situation_front_events WHERE carte_id = ?
+      `, [c.id])
+      c.stats = stats
+      // Dernier event
+      c.dernierEvent = await queryOne(
+        'SELECT * FROM situation_front_events WHERE carte_id = ? ORDER BY date_irl DESC LIMIT 1', [c.id]
+      )
+    }
+    res.json({ success: true, data: cartes })
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
 
-// POST /api/front/events — Create a front event (SO+ only)
-router.post('/events', auth, async (req, res) => {
+// GET /api/front/cartes/:id/events — Historique d'une carte
+router.get('/cartes/:id/events', optionalAuth, async (req, res) => {
   try {
-    // Check rank: sous-officier or higher
-    if (!req.user.isOfficier && !req.user.isAdmin && !req.user.isRecenseur && !req.user.isEtatMajor) {
-      // Check if user has sous-officier group
-      const soGroup = await queryOne("SELECT 1 FROM user_groups ug JOIN `groups` g ON g.id = ug.group_id WHERE ug.user_id = ? AND g.name = 'Sous-officier'", [req.user.id])
-      if (!soGroup) return res.status(403).json({ success: false, message: 'Rang sous-officier minimum requis' })
-    }
+    const events = await query(`
+      SELECT e.*, CONCAT(ef.prenom,' ',ef.nom) as rapporte_par_nom 
+      FROM situation_front_events e 
+      LEFT JOIN effectifs ef ON ef.id = e.rapporte_par
+      WHERE e.carte_id = ? 
+      ORDER BY e.date_irl DESC
+    `, [req.params.id])
+    res.json({ success: true, data: events })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
 
-    const { map_id, event_type, vp_id, vp_nom, winner, event_time } = req.body
-    if (!map_id || !event_type) return res.status(400).json({ success: false, message: 'map_id et event_type requis' })
-
-    // Auto-fill time if not provided (Europe/Paris)
-    const now = new Date()
-    const parisTime = event_time || now.toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit' })
-
+// POST /api/front/cartes/:id/events — Ajouter un événement (officier/admin/SO)
+router.post('/cartes/:id/events', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isSousOfficier && !req.user.isEtatMajor)
+      return res.status(403).json({ success: false, message: 'Non autorisé' })
+    const { type_event, resultat, camp_vainqueur, date_rp, note } = req.body
+    if (!type_event || !resultat || !camp_vainqueur)
+      return res.status(400).json({ success: false, message: 'Champs requis manquants' })
     const [result] = await pool.execute(
-      `INSERT INTO front_events (map_id, event_type, vp_id, vp_nom, winner, event_time, event_date, effectif_id)
-       VALUES (?, ?, ?, ?, ?, ?, CURDATE(), ?)`,
-      [map_id, event_type, vp_id || null, vp_nom || null, winner || null, parisTime, req.user.effectif_id || null]
+      'INSERT INTO situation_front_events (carte_id, type_event, resultat, camp_vainqueur, date_rp, note, rapporte_par) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [req.params.id, type_event, resultat, camp_vainqueur, date_rp || null, note || null, req.user.effectif_id || null]
     )
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
 
-// GET /api/front/stats — Stats for commandement
-router.get('/stats', auth, async (req, res) => {
+// DELETE /api/front/events/:id — Supprimer un événement (admin/officier)
+router.delete('/events/:id', auth, async (req, res) => {
   try {
-    const { date, from, to } = req.query
-    let dateFilter = ''
-    const params = []
-    if (date) { dateFilter = 'AND DATE(event_date) = ?'; params.push(date) }
-    else if (from && to) { dateFilter = 'AND DATE(event_date) BETWEEN ? AND ?'; params.push(from, to) }
-
-    const prises = await queryOne(`SELECT COUNT(*) as c FROM front_events WHERE event_type = 'prise' ${dateFilter}`, params)
-    const pertes = await queryOne(`SELECT COUNT(*) as c FROM front_events WHERE event_type = 'perte' ${dateFilter}`, params)
-    const attaques = await queryOne(`SELECT COUNT(*) as c FROM front_events WHERE event_type = 'attaque' ${dateFilter}`, params)
-    const defenses = await queryOne(`SELECT COUNT(*) as c FROM front_events WHERE event_type = 'defense' ${dateFilter}`, params)
-    const victoiresAll = await queryOne(`SELECT COUNT(*) as c FROM front_events WHERE winner = 'ALL' AND event_type IN ('attaque','defense') ${dateFilter}`, params)
-    const victoiresUs = await queryOne(`SELECT COUNT(*) as c FROM front_events WHERE winner = 'US' AND event_type IN ('attaque','defense') ${dateFilter}`, params)
-
-    // Daily breakdown
-    const daily = await query(`SELECT DATE(event_date) as jour, event_type, COUNT(*) as c FROM front_events WHERE 1=1 ${dateFilter} GROUP BY jour, event_type ORDER BY jour DESC`, params)
-
-    res.json({ success: true, data: {
-      prises: prises.c, pertes: pertes.c,
-      attaques: attaques.c, defenses: defenses.c,
-      victoires_all: victoiresAll.c, victoires_us: victoiresUs.c,
-      daily
-    }})
+    if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isEtatMajor)
+      return res.status(403).json({ success: false, message: 'Non autorisé' })
+    await pool.execute('DELETE FROM situation_front_events WHERE id = ?', [req.params.id])
+    res.json({ success: true })
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })
 
-// DELETE /api/front/events/:id — Delete event (admin/officier)
-router.delete('/events/:id', auth, async (req, res) => {
+// POST /api/front/cartes — Ajouter une carte (admin)
+router.post('/cartes', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin && !req.user.isOfficier) return res.status(403).json({ success: false, message: 'Non autorisé' })
-    await pool.execute('DELETE FROM front_events WHERE id = ?', [req.params.id])
+    if (!req.user.isAdmin && !req.user.isEtatMajor)
+      return res.status(403).json({ success: false, message: 'Admin only' })
+    const { nom, description } = req.body
+    const maxOrdre = await queryOne('SELECT COALESCE(MAX(ordre),0)+1 as next FROM situation_front_cartes')
+    const [result] = await pool.execute(
+      'INSERT INTO situation_front_cartes (nom, description, ordre) VALUES (?, ?, ?)',
+      [nom, description || null, maxOrdre.next]
+    )
+    res.json({ success: true, data: { id: result.insertId } })
+  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+})
+
+// DELETE /api/front/cartes/:id — Supprimer une carte (admin)
+router.delete('/cartes/:id', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin && !req.user.isEtatMajor)
+      return res.status(403).json({ success: false, message: 'Admin only' })
+    await pool.execute('DELETE FROM situation_front_cartes WHERE id = ?', [req.params.id])
     res.json({ success: true })
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
 })

@@ -1,214 +1,189 @@
-import BackButton from '../../components/BackButton'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
-import './front.css'
-
-const EVENT_ICONS = { prise: '🚩', perte: '🏳️', attaque: '🇺🇸', defense: '🇩🇪' }
-const EVENT_LABELS = { prise: "Prise de l'avant-poste", perte: "Perte de l'avant-poste", attaque: 'Attaque de base', defense: 'Défense de base' }
+import BackButton from '../../components/BackButton'
+import './situation-front.css'
 
 export default function SituationFront() {
   const { user } = useAuth()
-  const [maps, setMaps] = useState([])
-  const [selectedMap, setSelectedMap] = useState(null)
+  const [cartes, setCartes] = useState([])
+  const [selected, setSelected] = useState(null)
   const [events, setEvents] = useState([])
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
-  const [loading, setLoading] = useState(false)
-  const [msg, setMsg] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ type_event: 'attaque', resultat: 'win', camp_vainqueur: 'allemand', date_rp: '', note: '' })
 
-  // Form state
-  const [eventType, setEventType] = useState('prise')
-  const [vpId, setVpId] = useState('')
-  const [winner, setWinner] = useState('')
-  const [timeMode, setTimeMode] = useState('auto') // auto | manual | unknown
-  const [manualTime, setManualTime] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+  const canReport = user?.isAdmin || user?.isOfficier || user?.isSousOfficier || user?.isEtatMajor
+  const canDelete = user?.isAdmin || user?.isOfficier || user?.isEtatMajor
 
-  const canPost = user?.isOfficier || user?.isAdmin || user?.isRecenseur || user?.isEtatMajor || user?.isSousOfficier
-
-  useEffect(() => {
-    api.get('/front/maps').then(r => setMaps(r.data.data)).catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (selectedMap) loadEvents()
-  }, [selectedMap, date])
-
-  const loadEvents = async () => {
-    setLoading(true)
+  const load = async () => {
     try {
-      const r = await api.get('/front/events', { params: { map: selectedMap, date } })
-      setEvents(r.data.data || [])
-    } catch { }
-    setLoading(false)
+      const r = await api.get('/front/cartes')
+      setCartes(r.data.data)
+    } catch {} finally { setLoading(false) }
   }
 
-  const submit = async () => {
-    setSubmitting(true)
-    try {
-      const map = maps.find(m => m.id === selectedMap)
-      const vp = map?.vps?.find(v => v.id === vpId)
-      let eventTime = null
-      if (timeMode === 'manual') eventTime = manualTime
-      else if (timeMode === 'unknown') {
-        // Take previous event's time with xx minutes
-        const prev = events.length > 0 ? events[0] : null
-        eventTime = prev?.event_time ? prev.event_time.split(':')[0] + 'hxx' : '??hxx'
-      }
-      // auto = null → server auto-fills with Paris time
+  useEffect(() => { load() }, [])
 
-      await api.post('/front/events', {
-        map_id: selectedMap,
-        event_type: eventType,
-        vp_id: vpId || null,
-        vp_nom: vp?.nom || null,
-        winner: ['attaque', 'defense'].includes(eventType) ? winner : null,
-        event_time: eventTime
-      })
-      setMsg('✅ Événement enregistré')
-      setTimeout(() => setMsg(''), 2000)
-      setVpId('')
-      setWinner('')
-      loadEvents()
-    } catch (err) { setMsg('❌ ' + (err.response?.data?.message || 'Erreur')) }
-    setSubmitting(false)
+  const loadEvents = async (carteId) => {
+    setSelected(carteId)
+    try {
+      const r = await api.get(`/front/cartes/${carteId}/events`)
+      setEvents(r.data.data)
+    } catch { setEvents([]) }
+  }
+
+  const submitEvent = async (e) => {
+    e.preventDefault()
+    if (!selected) return
+    try {
+      await api.post(`/front/cartes/${selected}/events`, form)
+      setShowForm(false)
+      setForm({ type_event: 'attaque', resultat: 'win', camp_vainqueur: 'allemand', date_rp: '', note: '' })
+      loadEvents(selected)
+      load()
+    } catch (err) { alert(err.response?.data?.message || 'Erreur') }
   }
 
   const deleteEvent = async (id) => {
     if (!confirm('Supprimer cet événement ?')) return
-    try { await api.delete(`/front/events/${id}`); loadEvents() } catch { }
+    try {
+      await api.delete(`/front/events/${id}`)
+      loadEvents(selected)
+      load()
+    } catch {}
   }
 
-  const isToday = date === new Date().toISOString().slice(0, 10)
-  const map = maps.find(m => m.id === selectedMap)
+  const resultatLabel = (r, camp) => {
+    const labels = {
+      win: camp === 'allemand' ? '🟢 Victoire DE' : '🔴 Victoire US',
+      win_all: camp === 'allemand' ? '🟢🟢 Victoire totale DE' : '🔴🔴 Victoire totale US',
+      lose: camp === 'allemand' ? '🟢 Victoire DE' : '🔴 Victoire US',
+      lose_all: camp === 'allemand' ? '🟢🟢 Victoire totale DE' : '🔴🔴 Victoire totale US'
+    }
+    return labels[r] || r
+  }
 
-  // Stats for current day
-  const prises = events.filter(e => e.event_type === 'prise').length
-  const pertes = events.filter(e => e.event_type === 'perte').length
-  const attaques = events.filter(e => e.event_type === 'attaque').length
-  const defenses = events.filter(e => e.event_type === 'defense').length
-  const vicAll = events.filter(e => e.winner === 'ALL').length
-  const vicUs = events.filter(e => e.winner === 'US').length
+  const selectedCarte = cartes.find(c => c.id === selected)
+
+  if (loading) return <div className="container"><p>Chargement...</p></div>
 
   return (
     <div className="container">
       <BackButton />
-      <h1 style={{ textAlign: 'center' }}>⚔️ Situation du Front</h1>
+      <h2>⚔️ Situation du Front</h2>
+      <p className="front-subtitle">État des opérations sur les différents théâtres</p>
 
-      {!selectedMap ? (
-        <div className="front-maps-grid">
-          {maps.map(m => (
-            <div key={m.id} className="paper-card front-map-card" onClick={() => setSelectedMap(m.id)}>
-              <h3>{m.nom}</h3>
-              <p className="text-muted">{m.vps.length} avant-postes{m.specials?.length ? ` · ${m.specials.length} spéciaux` : ''}</p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-lg)', flexWrap: 'wrap' }}>
-            <button className="btn btn-secondary btn-sm" onClick={() => setSelectedMap(null)}>← Cartes</button>
-            <h2 style={{ margin: 0 }}>{map?.nom}</h2>
-            <input type="date" className="form-input" style={{ maxWidth: 180 }} value={date} onChange={e => setDate(e.target.value)} />
-            {!isToday && <button className="btn btn-sm" onClick={() => setDate(new Date().toISOString().slice(0, 10))}>Aujourd'hui</button>}
-          </div>
-
-          {/* Stats chips */}
-          <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
-            <span className="pds-stat-chip">🚩 {prises} prises</span>
-            <span className="pds-stat-chip chip-red">🏳️ {pertes} pertes</span>
-            {attaques > 0 && <span className="pds-stat-chip">🇺🇸 {attaques} attaques</span>}
-            {defenses > 0 && <span className="pds-stat-chip">🇩🇪 {defenses} défenses</span>}
-            {vicAll > 0 && <span className="pds-stat-chip chip-green">🏆 ALL: {vicAll}</span>}
-            {vicUs > 0 && <span className="pds-stat-chip chip-red">🏆 US: {vicUs}</span>}
-          </div>
-
-          {/* New event form — only for SO+ and today */}
-          {canPost && isToday && (
-            <div className="paper-card" style={{ padding: 'var(--space-md)', marginBottom: 'var(--space-lg)' }}>
-              <h4 style={{ margin: '0 0 var(--space-sm)' }}>📝 Nouvel événement</h4>
-              {msg && <div className="alert" style={{ marginBottom: 'var(--space-sm)' }}>{msg}</div>}
-              <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                <div>
-                  <label className="form-label" style={{ fontSize: '.75rem' }}>Type</label>
-                  <select className="form-input" value={eventType} onChange={e => { setEventType(e.target.value); setVpId(''); setWinner('') }}>
-                    <option value="prise">🚩 Prise d'avant-poste</option>
-                    <option value="perte">🏳️ Perte d'avant-poste</option>
-                    {(map?.specials || []).filter(s => s.type === 'attaque').map(s => <option key={s.id} value="attaque">🇺🇸 {s.nom}</option>)}
-                    {(map?.specials || []).filter(s => s.type === 'defense').map(s => <option key={s.id} value="defense">🇩🇪 {s.nom}</option>)}
-                  </select>
-                </div>
-                {['prise', 'perte'].includes(eventType) && (
-                  <div>
-                    <label className="form-label" style={{ fontSize: '.75rem' }}>Avant-poste</label>
-                    <select className="form-input" value={vpId} onChange={e => setVpId(e.target.value)}>
-                      <option value="">— Choisir —</option>
-                      {(map?.vps || []).map(v => <option key={v.id} value={v.id}>{v.nom}</option>)}
-                    </select>
-                  </div>
-                )}
-                {['attaque', 'defense'].includes(eventType) && (
-                  <div>
-                    <label className="form-label" style={{ fontSize: '.75rem' }}>Victoire</label>
-                    <select className="form-input" value={winner} onChange={e => setWinner(e.target.value)}>
-                      <option value="">— Résultat —</option>
-                      <option value="ALL">🇩🇪 Allemands</option>
-                      <option value="US">🇺🇸 Américains</option>
-                    </select>
-                  </div>
-                )}
-                <div>
-                  <label className="form-label" style={{ fontSize: '.75rem' }}>Heure</label>
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <label style={{ fontSize: '.8rem', cursor: 'pointer' }}><input type="radio" name="timeMode" checked={timeMode === 'auto'} onChange={() => setTimeMode('auto')} /> Auto</label>
-                    <label style={{ fontSize: '.8rem', cursor: 'pointer' }}><input type="radio" name="timeMode" checked={timeMode === 'manual'} onChange={() => setTimeMode('manual')} /> Manuelle</label>
-                    <label style={{ fontSize: '.8rem', cursor: 'pointer' }}><input type="radio" name="timeMode" checked={timeMode === 'unknown'} onChange={() => setTimeMode('unknown')} /> Inconnue</label>
-                    {timeMode === 'manual' && <input type="time" className="form-input" style={{ maxWidth: 120, fontSize: '.8rem' }} value={manualTime} onChange={e => setManualTime(e.target.value)} />}
-                  </div>
-                </div>
-                <button className="btn btn-primary btn-sm" onClick={submit} disabled={submitting || (['prise','perte'].includes(eventType) && !vpId) || (['attaque','defense'].includes(eventType) && !winner) || (timeMode === 'manual' && !manualTime)}>
-                  {submitting ? '...' : '✅ Enregistrer'}
-                </button>
+      <div className="front-grid">
+        {cartes.map(c => {
+          const s = c.stats || {}
+          const totalDE = (parseInt(s.att_win_de) || 0) + (parseInt(s.def_win_de) || 0)
+          const totalUS = (parseInt(s.att_win_us) || 0) + (parseInt(s.def_win_us) || 0)
+          const total = totalDE + totalUS
+          const pctDE = total > 0 ? Math.round(totalDE / total * 100) : 50
+          const isSelected = selected === c.id
+          return (
+            <div key={c.id} className={`front-card ${isSelected ? 'active' : ''}`} onClick={() => loadEvents(c.id)}>
+              <h3>{c.nom}</h3>
+              {c.description && <p className="front-card-desc">{c.description}</p>}
+              <div className="front-bar">
+                <div className="front-bar-de" style={{ width: `${pctDE}%` }}>{pctDE > 15 ? `${pctDE}%` : ''}</div>
+                <div className="front-bar-us" style={{ width: `${100 - pctDE}%` }}>{(100 - pctDE) > 15 ? `${100 - pctDE}%` : ''}</div>
               </div>
-              <p className="text-muted" style={{ fontSize: '.7rem', marginTop: 'var(--space-xs)' }}>
-                Par {user?.grade_nom || ''} {user?.prenom || ''} {user?.nom || ''} — Heure auto (Paris)
-              </p>
+              <div className="front-stats-row">
+                <span>🇩🇪 {totalDE} victoires</span>
+                <span>🇺🇸 {totalUS} victoires</span>
+              </div>
+              <div className="front-stats-detail">
+                <span>⚔️ Att: {parseInt(s.att_win_de)||0} DE / {parseInt(s.att_win_us)||0} US</span>
+                <span>🛡️ Déf: {parseInt(s.def_win_de)||0} DE / {parseInt(s.def_win_us)||0} US</span>
+              </div>
+              {c.dernierEvent && (
+                <div className="front-last-event">
+                  Dernier : {c.dernierEvent.type_event === 'attaque' ? '⚔️' : '🛡️'} {resultatLabel(c.dernierEvent.resultat, c.dernierEvent.camp_vainqueur)}
+                  {c.dernierEvent.date_rp && ` — ${c.dernierEvent.date_rp}`}
+                </div>
+              )}
             </div>
+          )
+        })}
+      </div>
+
+      {selected && (
+        <div className="front-detail">
+          <h3>📋 Historique — {selectedCarte?.nom}</h3>
+          {canReport && (
+            <button className="btn btn-primary" onClick={() => setShowForm(!showForm)} style={{ marginBottom: '1rem' }}>
+              {showForm ? '✕ Annuler' : '+ Rapporter un événement'}
+            </button>
           )}
 
-          {/* Events list */}
-          <div className="paper-card" style={{ overflow: 'auto' }}>
-            {loading ? <p className="text-muted" style={{ textAlign: 'center', padding: 'var(--space-lg)' }}>Chargement...</p> : events.length === 0 ? (
-              <p className="text-muted" style={{ textAlign: 'center', padding: 'var(--space-lg)' }}>Aucun événement pour cette journée</p>
-            ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                <thead><tr style={{ borderBottom: '2px solid var(--border-color)' }}>
-                  <th style={{ padding: '8px 12px', textAlign: 'left' }}>Heure</th>
-                  <th style={{ padding: '8px 12px', textAlign: 'left' }}>Événement</th>
-                  <th style={{ padding: '8px 12px', textAlign: 'left' }}>VP</th>
-                  <th style={{ padding: '8px 12px', textAlign: 'left' }}>Par</th>
-                  {(user?.isAdmin || user?.isOfficier) && <th style={{ padding: '8px 12px' }}></th>}
-                </tr></thead>
-                <tbody>
-                  {events.map(e => (
-                    <tr key={e.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '8px 12px', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>{e.event_time}</td>
-                      <td style={{ padding: '8px 12px' }}>
-                        {EVENT_ICONS[e.event_type]} {EVENT_LABELS[e.event_type]}
-                        {e.winner && <span className={`badge ${e.winner === 'ALL' ? 'badge-green' : 'badge-red'}`} style={{ marginLeft: 8 }}>Win: {e.winner}</span>}
-                      </td>
-                      <td style={{ padding: '8px 12px' }}>{e.vp_nom || '—'}</td>
-                      <td style={{ padding: '8px 12px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>{e.grade_nom ? `${e.grade_nom} ` : ''}{e.effectif_nom || '—'}</td>
-                      {(user?.isAdmin || user?.isOfficier) && <td style={{ padding: '8px 12px' }}>
-                        <button className="btn btn-sm" style={{ color: 'var(--danger)', fontSize: '.7rem' }} onClick={() => deleteEvent(e.id)}>🗑️</button>
-                      </td>}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </>
+          {showForm && (
+            <form onSubmit={submitEvent} className="front-form paper-card">
+              <div className="form-row">
+                <label>Type</label>
+                <select className="form-input" value={form.type_event} onChange={e => setForm(p => ({...p, type_event: e.target.value}))}>
+                  <option value="attaque">⚔️ Attaque de base</option>
+                  <option value="defense">🛡️ Défense de base</option>
+                </select>
+              </div>
+              <div className="form-row">
+                <label>Résultat</label>
+                <select className="form-input" value={form.resultat} onChange={e => setForm(p => ({...p, resultat: e.target.value}))}>
+                  <option value="win">Win (victoire partielle)</option>
+                  <option value="win_all">Win All (victoire totale)</option>
+                </select>
+              </div>
+              <div className="form-row">
+                <label>Vainqueur</label>
+                <select className="form-input" value={form.camp_vainqueur} onChange={e => setForm(p => ({...p, camp_vainqueur: e.target.value}))}>
+                  <option value="allemand">🇩🇪 Allemand</option>
+                  <option value="us">🇺🇸 US / Allié</option>
+                </select>
+              </div>
+              <div className="form-row">
+                <label>Date RP (libre)</label>
+                <input className="form-input" value={form.date_rp} onChange={e => setForm(p => ({...p, date_rp: e.target.value}))} placeholder="ex: 15 Août 1944" />
+              </div>
+              <div className="form-row">
+                <label>Note</label>
+                <input className="form-input" value={form.note} onChange={e => setForm(p => ({...p, note: e.target.value}))} placeholder="Détails optionnels..." />
+              </div>
+              <button type="submit" className="btn btn-primary">📝 Enregistrer</button>
+            </form>
+          )}
+
+          {events.length === 0 ? (
+            <p className="muted">Aucun événement enregistré pour cette carte.</p>
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Date IRL</th>
+                  <th>Date RP</th>
+                  <th>Type</th>
+                  <th>Résultat</th>
+                  <th>Rapporté par</th>
+                  <th>Note</th>
+                  {canDelete && <th></th>}
+                </tr>
+              </thead>
+              <tbody>
+                {events.map(ev => (
+                  <tr key={ev.id}>
+                    <td>{new Date(ev.date_irl).toLocaleDateString('fr-FR')}</td>
+                    <td>{ev.date_rp || '—'}</td>
+                    <td>{ev.type_event === 'attaque' ? '⚔️ Attaque' : '🛡️ Défense'}</td>
+                    <td>{resultatLabel(ev.resultat, ev.camp_vainqueur)}</td>
+                    <td>{ev.rapporte_par_nom || '—'}</td>
+                    <td>{ev.note || '—'}</td>
+                    {canDelete && <td><button className="btn btn-danger btn-small" onClick={() => deleteEvent(ev.id)}>🗑️</button></td>}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       )}
     </div>
   )

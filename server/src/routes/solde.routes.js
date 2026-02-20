@@ -5,19 +5,16 @@ const { optionalAuth } = require('../middleware/auth')
 
 // Solde par grade (Reichsmark/mois) — données historiques Wehrmacht 1944
 const SOLDE_PAR_RANG = {
-  // Mannschaften (HDR)
   5:  15.00,   // Schütze/Grenadier
   10: 15.00,   // Oberschütze
   15: 23.00,   // Gefreiter
   20: 27.00,   // Obergefreiter
   25: 30.00,   // Stabsgefreiter
-  // Unteroffiziere (SO)
   35: 31.00,   // Unteroffizier
   40: 38.00,   // Unterfeldwebel
   45: 45.00,   // Feldwebel
   50: 56.00,   // Oberfeldwebel
   55: 65.00,   // Stabsfeldwebel
-  // Offiziere
   60: 180.00,  // Leutnant
   65: 230.00,  // Oberleutnant
   70: 290.00,  // Hauptmann
@@ -36,9 +33,8 @@ router.get('/:effectifId', optionalAuth, async (req, res) => {
       'SELECT * FROM solde_effectifs WHERE effectif_id = ? ORDER BY date_operation DESC LIMIT 200',
       [req.params.effectifId]
     )
-    // Calcul balance
     const balRow = await queryOne(
-      `SELECT COALESCE(SUM(CASE WHEN type_operation='credit' THEN montant ELSE -montant END), 0) as balance
+      `SELECT COALESCE(SUM(CASE WHEN type IN ('paie','prime','autre') THEN montant ELSE -montant END), 0) as balance
        FROM solde_effectifs WHERE effectif_id = ?`,
       [req.params.effectifId]
     )
@@ -54,8 +50,8 @@ router.post('/:effectifId/credit', auth, async (req, res) => {
     const { montant, motif } = req.body
     if (!montant || montant <= 0) return res.status(400).json({ success: false, message: 'Montant invalide' })
     await pool.execute(
-      'INSERT INTO solde_effectifs (effectif_id, montant, motif, type_operation, created_by) VALUES (?, ?, ?, ?, ?)',
-      [req.params.effectifId, montant, motif || 'Crédit manuel', 'credit', req.user.id]
+      'INSERT INTO solde_effectifs (effectif_id, date_operation, type, montant, description, created_by) VALUES (?, CURDATE(), ?, ?, ?, ?)',
+      [req.params.effectifId, 'prime', montant, motif || 'Crédit manuel', req.user.id]
     )
     res.json({ success: true })
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
@@ -69,8 +65,8 @@ router.post('/:effectifId/debit', auth, async (req, res) => {
     const { montant, motif } = req.body
     if (!montant || montant <= 0) return res.status(400).json({ success: false, message: 'Montant invalide' })
     await pool.execute(
-      'INSERT INTO solde_effectifs (effectif_id, montant, motif, type_operation, created_by) VALUES (?, ?, ?, ?, ?)',
-      [req.params.effectifId, montant, motif || 'Débit', 'debit', req.user.id]
+      'INSERT INTO solde_effectifs (effectif_id, date_operation, type, montant, description, created_by) VALUES (?, CURDATE(), ?, ?, ?, ?)',
+      [req.params.effectifId, 'depense', montant, motif || 'Débit', req.user.id]
     )
     res.json({ success: true })
   } catch (err) { res.status(500).json({ success: false, message: err.message }) }
@@ -87,13 +83,12 @@ router.post('/auto-payday', auth, async (req, res) => {
     let count = 0
     for (const eff of effectifs) {
       const rang = gradeMap[eff.grade_id] || 5
-      // Find closest rang in SOLDE_PAR_RANG
       const keys = Object.keys(SOLDE_PAR_RANG).map(Number).sort((a, b) => a - b)
       let solde = 15
       for (const k of keys) { if (rang >= k) solde = SOLDE_PAR_RANG[k] }
       await pool.execute(
-        'INSERT INTO solde_effectifs (effectif_id, montant, motif, type_operation, created_by) VALUES (?, ?, ?, ?, ?)',
-        [eff.id, solde, 'Wehrsold — Solde hebdomadaire', 'credit', req.user.id]
+        'INSERT INTO solde_effectifs (effectif_id, date_operation, type, montant, description, created_by) VALUES (?, CURDATE(), ?, ?, ?, ?)',
+        [eff.id, 'paie', solde, 'Wehrsold — Solde hebdomadaire', req.user.id]
       )
       count++
     }
@@ -131,8 +126,8 @@ cron.schedule('0 19 * * 5', async () => {
       let solde = 15
       for (const k of keys) { if (rang >= k) solde = SOLDE_PAR_RANG[k] }
       await pool.execute(
-        'INSERT INTO solde_effectifs (effectif_id, montant, motif, type_operation, created_by) VALUES (?, ?, ?, ?, ?)',
-        [eff.id, solde, 'Wehrsold — Solde hebdomadaire (auto)', 'credit', 1]
+        'INSERT INTO solde_effectifs (effectif_id, date_operation, type, montant, description, created_by) VALUES (?, CURDATE(), ?, ?, ?, ?)',
+        [eff.id, 'paie', solde, 'Wehrsold — Solde hebdomadaire (auto)', 1]
       )
       count++
     }
