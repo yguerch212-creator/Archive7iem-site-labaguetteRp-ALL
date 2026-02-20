@@ -331,8 +331,8 @@ export default function Moderation() {
                         <td style={td}>{fmtDate(d.created_at)}</td>
                         <td style={td}>
                           {user?.isOfficier || user?.isAdmin ? (<div style={{display:'flex',gap:4}}>
-                            <button className="btn btn-sm" style={{ padding: '2px 8px', fontSize: '0.75rem', background: 'var(--military-green)', color: '#fff' }} onClick={async () => { try { await api.put(`/habillement/demandes/${d.id}`, { statut: 'approuve', reponse: '' }); flash('success', 'Approuvé'); load() } catch(e) { flash('error', e.response?.data?.message||'Erreur') } }}>✅</button>
-                            <button className="btn btn-sm" style={{ padding: '2px 8px', fontSize: '0.75rem', background: 'var(--danger)', color: '#fff' }} onClick={async () => { const r = prompt('Motif du refus ?'); if (r !== null) { try { await api.put(`/habillement/demandes/${d.id}`, { statut: 'refuse', reponse: r }); flash('success', 'Refusé'); load() } catch(e) { flash('error', e.response?.data?.message||'Erreur') } } }}>❌</button>
+                            <button className="btn btn-sm" style={{ padding: '2px 8px', fontSize: '0.75rem', background: 'var(--military-green)', color: '#fff' }} onClick={async () => { try { await api.put(`/habillement/demandes/${d.id}/validate`, { statut: 'approuve', reponse: '' }); flash('success', 'Approuvé'); load() } catch(e) { flash('error', e.response?.data?.message||'Erreur') } }}>✅</button>
+                            <button className="btn btn-sm" style={{ padding: '2px 8px', fontSize: '0.75rem', background: 'var(--danger)', color: '#fff' }} onClick={async () => { const r = prompt('Motif du refus ?'); if (r !== null) { try { await api.put(`/habillement/demandes/${d.id}/validate`, { statut: 'refuse', reponse: r }); flash('success', 'Refusé'); load() } catch(e) { flash('error', e.response?.data?.message||'Erreur') } } }}>❌</button>
                           </div>) : <span className="badge">En attente</span>}
                         </td>
                       </tr>

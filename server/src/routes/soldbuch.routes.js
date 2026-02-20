@@ -31,6 +31,8 @@ router.get('/:effectifId', optionalAuth, async (req, res) => {
     const attestations = await query(`SELECT a.*, CONCAT(s.prenom,' ',s.nom) AS signe_par_nom FROM soldbuch_attestations a LEFT JOIN effectifs s ON s.id = a.signe_par WHERE a.effectif_id = ? ORDER BY a.numero`, [req.params.effectifId])
     // Pending edits
     const pendingEdits = await query("SELECT * FROM soldbuch_pending_edits WHERE effectif_id = ? AND statut = 'pending'", [req.params.effectifId])
+    // Habillement demands
+    const habillementDemandes = await query("SELECT dh.*, CONCAT(t.prenom,' ',t.nom) AS traite_par_nom FROM demandes_habillement dh LEFT JOIN effectifs t ON t.id = dh.traite_par WHERE dh.effectif_id = ? ORDER BY dh.created_at", [req.params.effectifId])
 
     // If signature_soldat is a file path (not data URI), try to use signatures_effectifs instead
     if (effectif.signature_soldat && !effectif.signature_soldat.startsWith('data:')) {
@@ -55,7 +57,8 @@ router.get('/:effectifId', optionalAuth, async (req, res) => {
         blessures,
         permissions,
         attestations,
-        pendingEdits
+        pendingEdits,
+        habillementDemandes
       }
     })
   } catch (err) {

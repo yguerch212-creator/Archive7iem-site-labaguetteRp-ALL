@@ -143,6 +143,7 @@ export default function Soldbuch() {
           pendingEdits={data.pendingEdits || []}
           soldeData={soldeData}
           soldeBalance={soldeBalance}
+          habillementDemandes={data.habillementDemandes || []}
           onUpdate={async () => {
             const res = await apiClient.get(`/soldbuch/${id}`, { noCache: true })
             setData(res.data.data)

@@ -106,7 +106,7 @@ const CAMPAIGN_UNITS = [
   '716. Infanterie-Division'
 ]
 
-export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[],vaccinations=[],blessures=[],permissions=[],bookCells:initCells={},attestations=[],pendingEdits=[],soldeData=[],soldeBalance=0,onUpdate}){
+export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[],vaccinations=[],blessures=[],permissions=[],bookCells:initCells={},attestations=[],pendingEdits=[],soldeData=[],soldeBalance=0,habillementDemandes=[],onUpdate}){
   const { user } = useAuth()
   const[isOpen,setIsOpen]=useState(false)
   const[spread,setSpread]=useState(0)
@@ -491,8 +491,20 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
     <div className="sb-page sb-page-l">
       <h4 className="sb-center">Remarques habillement</h4>
       <p className="sb-xs sb-center">(Échanges, demandes spéciales)</p>
-      <div className="sb-lined">{Array.from({length:14},(_,i)=><div key={i} className="sb-line"/>)}</div>
-      {canEdit && <div style={{marginTop:6,textAlign:'center'}}>
+      {habillementDemandes.length > 0 ? (
+        <table className="sb-t" style={{fontSize:'0.5rem'}}>
+          <thead><tr><th>Date</th><th>Description</th><th>Statut</th><th>Réponse</th></tr></thead>
+          <tbody>{habillementDemandes.map(d=><tr key={d.id}>
+            <td>{d.created_at ? new Date(d.created_at).toLocaleDateString('fr-FR') : '—'}</td>
+            <td>{d.description}</td>
+            <td><span style={{color: d.statut==='approuve'?'green':d.statut==='refuse'?'red':'orange'}}>{d.statut==='approuve'?'✅':d.statut==='refuse'?'❌':'⏳'} {d.statut}</span></td>
+            <td>{d.reponse||'—'}</td>
+          </tr>)}</tbody>
+        </table>
+      ) : (
+        <div className="sb-lined">{Array.from({length:14},(_,i)=><div key={i} className="sb-line"/>)}</div>
+      )}
+      {isOwner && <div style={{marginTop:6,textAlign:'center'}}>
         <button className="btn btn-secondary" style={{fontSize:'.6rem',padding:'3px 8px'}} onClick={()=>{setHabPopup(true);setHabDesc('');setHabMotif('');setHabMsg('')}}>📝 Faire une demande d'habillement</button>
       </div>}
       <PageNum n={8}/>

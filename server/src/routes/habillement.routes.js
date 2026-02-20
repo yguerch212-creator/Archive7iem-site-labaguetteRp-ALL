@@ -8,14 +8,18 @@ const { createAutoAttestation } = require('./attestations.routes')
 router.get('/demandes', auth, async (req, res) => {
   try {
     let sql, params
+    const statutFilter = req.query.statut
     if (req.user.isAdmin || req.user.isOfficier || req.user.isRecenseur) {
-      sql = `SELECT d.*, CONCAT(e.prenom,' ',e.nom) as effectif_nom,
+      sql = `SELECT d.*, CONCAT(e.prenom,' ',e.nom) as effectif_nom, e.prenom, e.nom,
+             g.nom_complet as grade_nom,
              CONCAT(v.prenom,' ',v.nom) as traite_par_nom
              FROM demandes_habillement d
              LEFT JOIN effectifs e ON e.id = d.effectif_id
+             LEFT JOIN grades g ON g.id = e.grade_id
              LEFT JOIN effectifs v ON v.id = d.traite_par
+             ${statutFilter ? 'WHERE d.statut = ?' : ''}
              ORDER BY d.created_at DESC LIMIT 200`
-      params = []
+      params = statutFilter ? [statutFilter] : []
     } else {
       sql = `SELECT d.*, CONCAT(v.prenom,' ',v.nom) as traite_par_nom
              FROM demandes_habillement d
