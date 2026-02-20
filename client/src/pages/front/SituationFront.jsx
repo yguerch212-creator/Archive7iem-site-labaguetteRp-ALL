@@ -26,18 +26,37 @@ const LABEL = (ev) => {
   return ''
 }
 
-// Compute current VP level from events (most recent prise/perte)
-function getCurrentVP(events, vps) {
-  if (!vps?.length) return null
-  // Walk events oldest→newest, track highest VP held
-  const sorted = [...events].filter(e => e.type_event === 'prise' || e.type_event === 'perte').sort((a, b) => new Date(a.date_irl) - new Date(b.date_irl))
-  let currentVP = 0 // 0 = no VP held
+// Berlin Mur Est (carte_id=1) has non-linear VP system:
+// VP1 & VP2 independent → both needed for VP3 → VP3 needed for VP4 & VP5 (independent)
+// All other maps are linear (1→2→3→4→5)
+const NON_LINEAR_CARTE = 1 // Berlin Mur Est
+
+// Returns array of held VP numbers
+function getHeldVPs(events, vps, carteId) {
+  if (!vps?.length) return []
+  const sorted = [...events].filter(e => e.type_event === 'prise' || e.type_event === 'perte')
+    .sort((a, b) => new Date(a.date_irl) - new Date(b.date_irl) || a.id - b.id)
+
+  if (carteId === NON_LINEAR_CARTE) {
+    // Track each VP independently
+    const held = new Set()
+    for (const ev of sorted) {
+      const vpNum = ev.vp_numero || vps.find(v => v.id === ev.vp_id)?.numero || 0
+      if (!vpNum) continue
+      if (ev.type_event === 'prise') held.add(vpNum)
+      if (ev.type_event === 'perte') held.delete(vpNum)
+    }
+    return [...held].sort((a, b) => a - b)
+  }
+
+  // Linear maps: highest VP held
+  let currentVP = 0
   for (const ev of sorted) {
     const vpNum = ev.vp_numero || vps.find(v => v.id === ev.vp_id)?.numero || 0
     if (ev.type_event === 'prise' && vpNum > currentVP) currentVP = vpNum
     if (ev.type_event === 'perte' && vpNum <= currentVP) currentVP = vpNum - 1
   }
-  return Math.max(0, currentVP)
+  return currentVP > 0 ? Array.from({ length: currentVP }, (_, i) => i + 1) : []
 }
 
 function HeureSelect({ value, onChange }) {
@@ -147,13 +166,15 @@ export default function SituationFront() {
           const attAll = parseInt(s.att_all) || 0, attUs = parseInt(s.att_us) || 0
           const defAll = parseInt(s.def_all) || 0, defUs = parseInt(s.def_us) || 0
           const total = attAll + attUs + defAll + defUs + (parseInt(s.prises) || 0) + (parseInt(s.pertes) || 0)
-          const vpLevel = getCurrentVP(c.lastEvents || [], c.vps || [])
-          const vpDisplay = vpLevel > 0 ? c.vps?.find(v => v.numero === vpLevel) : null
+          const heldVPs = getHeldVPs(c.lastEvents || [], c.vps || [], c.id)
           return (
             <div key={c.id} className={`front-card ${selected === c.id ? 'active' : ''}`} onClick={() => openCarte(c.id)}>
               <h3>{c.nom}</h3>
-              {vpLevel > 0 && <div className="front-vp-current">🚩 VP{vpLevel}{vpDisplay?.nom ? ` — ${vpDisplay.nom}` : ''}</div>}
-              {vpLevel === 0 && total > 0 && <div className="front-vp-current" style={{color:'#8b8060'}}>Aucun VP tenu</div>}
+              {heldVPs.length > 0 && <div className="front-vp-current">🚩 {heldVPs.map(n => {
+                const vp = c.vps?.find(v => v.numero === n)
+                return `VP${n}${vp?.nom ? ` ${vp.nom}` : ''}`
+              }).join(' · ')}</div>}
+              {heldVPs.length === 0 && total > 0 && <div className="front-vp-current" style={{color:'#8b8060'}}>Aucun VP tenu</div>}
               {total > 0 ? (
                 <div className="front-card-stats">
                   <span>⚔️ Att: {attAll} ALL / {attUs} US</span>
