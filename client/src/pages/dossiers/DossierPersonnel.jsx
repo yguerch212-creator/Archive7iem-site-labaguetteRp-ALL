@@ -63,6 +63,22 @@ export default function DossierPersonnel() {
     }
   }
 
+  const deleteTimelineItem = async (type, id) => {
+    if (!confirm('Supprimer cet élément ?')) return
+    try {
+      const routes = {
+        note: `/dossiers/entrees/${id}`,
+        decoration: `/decorations/${id}`,
+        historique: `/effectifs/historique/${id}`,
+        pds: `/pds/${id}`,
+        interdit: `/interdits/${id}`,
+        medical: `/medical/visites/${id}`
+      }
+      if (routes[type]) await api.delete(routes[type])
+      loadAll()
+    } catch (err) { setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur suppression' }) }
+  }
+
   if (!data || !effectif) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div>
 
   const { dossier, rapports, interdits, medical, entrees } = data
@@ -281,6 +297,12 @@ export default function DossierPersonnel() {
                       </>
                     )}
                     {item.type === 'historique' && <p>{item.data.description}</p>}
+                    {item.type === 'decoration' && item.data.id && (user?.isAdmin || user?.isRecenseur) && (
+                      <button className="btn btn-sm btn-ghost" onClick={() => deleteTimelineItem('decoration', item.data.id)}>🗑️</button>
+                    )}
+                    {item.type === 'historique' && item.data.id && (user?.isAdmin || user?.isRecenseur) && (
+                      <button className="btn btn-sm btn-ghost" onClick={() => deleteTimelineItem('historique', item.data.id)}>🗑️</button>
+                    )}
                     {item.type === 'pds' && <p><strong>{item.data.total_heures}h</strong> {(item.data.total_heures || 0) >= 6 ? '✅' : '❌ < 6h minimum'}</p>}
                     {item.type === 'decoration' && <p><strong>{item.data.decoration_nom || item.data.nom_custom}</strong>{item.data.motif ? ` — ${item.data.motif}` : ''}</p>}
                     {item.type === 'affaire' && <p><Link to={`/sanctions/${item.data.id}`}>{item.data.titre}</Link> — Rôle: {item.data.role || '?'} ({item.data.statut})</p>}

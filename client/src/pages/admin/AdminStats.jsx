@@ -9,9 +9,11 @@ const BAR_COLORS = ['var(--military-green)', '#3498db', '#e74c3c', '#f39c12']
 
 export default function AdminStats() {
   const [stats, setStats] = useState(null)
+  const [frontStats, setFrontStats] = useState(null)
 
   useEffect(() => {
     api.get('/stats').then(r => setStats(r.data)).catch(() => {})
+    api.get('/front/stats').then(r => setFrontStats(r.data.data)).catch(() => {})
   }, [])
 
   if (!stats) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div>
@@ -169,6 +171,55 @@ export default function AdminStats() {
           </tbody>
         </table>
       </div>
+
+      {/* Front Stats */}
+      {frontStats && (
+        <div className="paper-card" style={{ padding: 'var(--space-md)', marginTop: 'var(--space-lg)' }}>
+          <h3>⚔️ Situation du Front</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)' }}>
+            <StatCard value={frontStats.prises} label="Prises" icon="🚩" />
+            <StatCard value={frontStats.pertes} label="Pertes" icon="🏳️" color="var(--danger)" />
+            <StatCard value={frontStats.attaques} label="Attaques" icon="🇺🇸" />
+            <StatCard value={frontStats.defenses} label="Défenses" icon="🇩🇪" />
+            <StatCard value={frontStats.victoires_all} label="Victoires ALL" icon="🏆" color="var(--success)" />
+            <StatCard value={frontStats.victoires_us} label="Victoires US" icon="🏆" color="var(--danger)" />
+          </div>
+          {frontStats.daily?.length > 0 && (() => {
+            const days = [...new Set(frontStats.daily.map(d => d.jour))].sort().reverse().slice(0, 14)
+            return (
+              <div>
+                <h4>Activité par jour</h4>
+                {days.map(day => {
+                  const dd = frontStats.daily.filter(d => d.jour === day)
+                  const p = dd.find(d => d.event_type === 'prise')?.c || 0
+                  const l = dd.find(d => d.event_type === 'perte')?.c || 0
+                  const a = dd.find(d => d.event_type === 'attaque')?.c || 0
+                  const df = dd.find(d => d.event_type === 'defense')?.c || 0
+                  const t = p + l + a + df
+                  return (
+                    <div key={day} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, fontSize: '0.8rem' }}>
+                      <span style={{ minWidth: 80, fontFamily: 'var(--font-mono)' }}>{new Date(day).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</span>
+                      <div style={{ flex: 1, display: 'flex', height: 18, borderRadius: 3, overflow: 'hidden', background: 'var(--bg-card)' }}>
+                        {p > 0 && <div style={{ width: `${p/t*100}%`, background: 'var(--military-green)' }} title={`${p} prises`} />}
+                        {l > 0 && <div style={{ width: `${l/t*100}%`, background: 'var(--danger)' }} title={`${l} pertes`} />}
+                        {a > 0 && <div style={{ width: `${a/t*100}%`, background: '#3498db' }} title={`${a} attaques`} />}
+                        {df > 0 && <div style={{ width: `${df/t*100}%`, background: '#f39c12' }} title={`${df} défenses`} />}
+                      </div>
+                      <span style={{ minWidth: 30, textAlign: 'right' }}>{t}</span>
+                    </div>
+                  )
+                })}
+                <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                  <Legend color="var(--military-green)" label="Prises" />
+                  <Legend color="var(--danger)" label="Pertes" />
+                  <Legend color="#3498db" label="Attaques" />
+                  <Legend color="#f39c12" label="Défenses" />
+                </div>
+              </div>
+            )
+          })()}
+        </div>
+      )}
     </div>
   )
 }

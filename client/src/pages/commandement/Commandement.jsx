@@ -30,6 +30,8 @@ export default function Commandement() {
   const [showEtat, setShowEtat] = useState(false)
   const [etatFilter, setEtatFilter] = useState('')
   const [etatUnite, setEtatUnite] = useState('')
+  const [frontStats, setFrontStats] = useState(null)
+  const [showFront, setShowFront] = useState(false)
 
   useEffect(() => {
     api.get('/commandement/dashboard').then(r => setData(r.data)).catch(() => {})
@@ -140,6 +142,9 @@ export default function Commandement() {
           <Link to="/rapports" className="btn btn-secondary btn-sm">📝 Rapports</Link>
           <Link to="/interdits" className="btn btn-secondary btn-sm">🚫 Interdits</Link>
           <Link to="/pds" className="btn btn-secondary btn-sm">⏱️ PDS</Link>
+          <button className="btn btn-secondary btn-sm" onClick={async () => {
+            try { const r = await api.get('/front/stats'); setFrontStats(r.data.data); setShowFront(true) } catch { setMsg('Erreur') }
+          }}>⚔️ Rapport du Front</button>
           <Link to="/front" className="btn btn-secondary btn-sm">⚔️ Situation du Front</Link>
           <Link to="/admin/stats" className="btn btn-secondary btn-sm">📊 Statistiques</Link>
         </div>
@@ -216,6 +221,47 @@ export default function Commandement() {
                 </>
               )
             })()}
+          </div>
+        </div>
+      )}
+
+      {/* Front Report Popup */}
+      {showFront && frontStats && (
+        <div className="popup-overlay" onClick={() => setShowFront(false)}>
+          <div className="popup-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 700, maxHeight: '85vh', overflow: 'auto' }}>
+            <button className="popup-close" onClick={() => setShowFront(false)}>✕</button>
+            <h2 style={{ marginTop: 0, textAlign: 'center' }}>⚔️ Rapport du Front</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)', textAlign: 'center' }}>
+              <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{frontStats.prises}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>🚩 Prises</div></div>
+              <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--danger)' }}>{frontStats.pertes}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>🏳️ Pertes</div></div>
+              <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{frontStats.attaques + frontStats.defenses}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>Batailles</div></div>
+              <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--success)' }}>{frontStats.victoires_all}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>🏆 Victoires ALL</div></div>
+              <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--danger)' }}>{frontStats.victoires_us}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>🏆 Victoires US</div></div>
+              <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{frontStats.attaques + frontStats.defenses > 0 ? Math.round(frontStats.victoires_all / (frontStats.attaques + frontStats.defenses) * 100) : 0}%</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>Taux victoire</div></div>
+            </div>
+            {frontStats.daily?.length > 0 && (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                <thead><tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+                  <th style={{ padding: '6px 10px', textAlign: 'left' }}>Jour</th>
+                  <th style={{ padding: '6px 10px', textAlign: 'center' }}>🚩</th>
+                  <th style={{ padding: '6px 10px', textAlign: 'center' }}>🏳️</th>
+                  <th style={{ padding: '6px 10px', textAlign: 'center' }}>⚔️</th>
+                </tr></thead>
+                <tbody>
+                  {[...new Set(frontStats.daily.map(d => d.jour))].sort().reverse().map(day => {
+                    const dd = frontStats.daily.filter(d => d.jour === day)
+                    return (
+                      <tr key={day} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        <td style={{ padding: '6px 10px' }}>{new Date(day).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' })}</td>
+                        <td style={{ padding: '6px 10px', textAlign: 'center' }}>{dd.find(d => d.event_type === 'prise')?.c || 0}</td>
+                        <td style={{ padding: '6px 10px', textAlign: 'center' }}>{dd.find(d => d.event_type === 'perte')?.c || 0}</td>
+                        <td style={{ padding: '6px 10px', textAlign: 'center' }}>{(dd.find(d => d.event_type === 'attaque')?.c || 0) + (dd.find(d => d.event_type === 'defense')?.c || 0)}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       )}

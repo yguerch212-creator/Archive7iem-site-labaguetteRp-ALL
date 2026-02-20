@@ -20,6 +20,8 @@ export default function SituationFront() {
   const [eventType, setEventType] = useState('prise')
   const [vpId, setVpId] = useState('')
   const [winner, setWinner] = useState('')
+  const [timeMode, setTimeMode] = useState('auto') // auto | manual | unknown
+  const [manualTime, setManualTime] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   const canPost = user?.isOfficier || user?.isAdmin || user?.isRecenseur || user?.isEtatMajor || user?.isSousOfficier
@@ -46,12 +48,22 @@ export default function SituationFront() {
     try {
       const map = maps.find(m => m.id === selectedMap)
       const vp = map?.vps?.find(v => v.id === vpId)
+      let eventTime = null
+      if (timeMode === 'manual') eventTime = manualTime
+      else if (timeMode === 'unknown') {
+        // Take previous event's time with xx minutes
+        const prev = events.length > 0 ? events[0] : null
+        eventTime = prev?.event_time ? prev.event_time.split(':')[0] + 'hxx' : '??hxx'
+      }
+      // auto = null → server auto-fills with Paris time
+
       await api.post('/front/events', {
         map_id: selectedMap,
         event_type: eventType,
         vp_id: vpId || null,
         vp_nom: vp?.nom || null,
-        winner: ['attaque', 'defense'].includes(eventType) ? winner : null
+        winner: ['attaque', 'defense'].includes(eventType) ? winner : null,
+        event_time: eventTime
       })
       setMsg('✅ Événement enregistré')
       setTimeout(() => setMsg(''), 2000)
@@ -145,7 +157,16 @@ export default function SituationFront() {
                     </select>
                   </div>
                 )}
-                <button className="btn btn-primary btn-sm" onClick={submit} disabled={submitting || (['prise','perte'].includes(eventType) && !vpId) || (['attaque','defense'].includes(eventType) && !winner)}>
+                <div>
+                  <label className="form-label" style={{ fontSize: '.75rem' }}>Heure</label>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <label style={{ fontSize: '.8rem', cursor: 'pointer' }}><input type="radio" name="timeMode" checked={timeMode === 'auto'} onChange={() => setTimeMode('auto')} /> Auto</label>
+                    <label style={{ fontSize: '.8rem', cursor: 'pointer' }}><input type="radio" name="timeMode" checked={timeMode === 'manual'} onChange={() => setTimeMode('manual')} /> Manuelle</label>
+                    <label style={{ fontSize: '.8rem', cursor: 'pointer' }}><input type="radio" name="timeMode" checked={timeMode === 'unknown'} onChange={() => setTimeMode('unknown')} /> Inconnue</label>
+                    {timeMode === 'manual' && <input type="time" className="form-input" style={{ maxWidth: 120, fontSize: '.8rem' }} value={manualTime} onChange={e => setManualTime(e.target.value)} />}
+                  </div>
+                </div>
+                <button className="btn btn-primary btn-sm" onClick={submit} disabled={submitting || (['prise','perte'].includes(eventType) && !vpId) || (['attaque','defense'].includes(eventType) && !winner) || (timeMode === 'manual' && !manualTime)}>
                   {submitting ? '...' : '✅ Enregistrer'}
                 </button>
               </div>

@@ -374,13 +374,20 @@ function TelegramBody({ contenu, user, onRefresh }) {
 
   // Soldbuch signature via SignaturePopup (with stamp support)
   const handleSoldbuchSign = async (signatureData) => {
+    console.log('[SOLDBUCH_SIGN]', { sbEffectifId, sbSlot, hasData: !!signatureData, dataLen: signatureData?.length })
+    if (!sbEffectifId || !sbSlot || !signatureData) {
+      setSignMsg('❌ Données manquantes pour la signature')
+      return
+    }
     try {
-      await api.put(`/soldbuch/${sbEffectifId}/sign`, { slot: sbSlot, signature_data: signatureData })
+      const resp = await api.put(`/soldbuch/${sbEffectifId}/sign`, { slot: sbSlot, signature_data: signatureData })
+      console.log('[SOLDBUCH_SIGN] Response:', resp.data)
       setSignMsg('✅ Soldbuch signé avec succès !')
       setSigned(true)
       setShowSigPopup(false)
       if (onRefresh) onRefresh()
     } catch (err) {
+      console.error('[SOLDBUCH_SIGN] Error:', err.response?.data || err.message)
       setSignMsg('❌ ' + (err.response?.data?.message || 'Erreur'))
     }
   }
