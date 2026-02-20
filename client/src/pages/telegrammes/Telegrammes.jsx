@@ -344,6 +344,24 @@ function TelegramBody({ contenu, user, onRefresh }) {
   const sbEffectifId = sbMatch?.[1]
   const sbSlot = sbMatch?.[2]
 
+  // Check if soldbuch signature already exists
+  useEffect(() => {
+    if (!sbEffectifId || !sbSlot) return
+    const col = sbSlot === 'referent' ? 'signature_referent' : 'signature_soldat'
+    api.get(`/soldbuch/${sbEffectifId}`).then(r => {
+      const eff = r.data?.data?.effectif || r.data?.effectif
+      if (eff && eff[col]) setSigned(true)
+    }).catch(() => {})
+  }, [sbEffectifId, sbSlot])
+
+  // Check if affaire signature already done
+  useEffect(() => {
+    if (!sigId) return
+    api.get(`/affaires/signatures/${sigId}`).then(r => {
+      if (r.data?.data?.signature_data) setSigned(true)
+    }).catch(() => {})
+  }, [sigId])
+
   const displayContent = contenu?.replace(/<!--SIG:\d+:\d*:\d*-->/, '').replace(/<!--SOLDBUCH_SIGN:\d+:\w+-->/, '').trim()
 
   const getPos = (e) => {
@@ -403,6 +421,12 @@ function TelegramBody({ contenu, user, onRefresh }) {
             <button className="btn btn-primary btn-small" onClick={() => setShowSigPopup(true)}>✍️ Signer / Tamponner</button>
             <button className="btn btn-secondary btn-small" onClick={() => navigate(`/effectifs/${sbEffectifId}/soldbuch`)}>📖 Voir le Soldbuch</button>
           </div>
+        </div>
+      )}
+      {sbEffectifId && signed && (
+        <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(107,143,60,0.08)', border: '1px solid rgba(107,143,60,0.3)', borderRadius: 6, display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <span>✅ Signature déjà apposée</span>
+          <button className="btn btn-secondary btn-small" onClick={() => navigate(`/effectifs/${sbEffectifId}/soldbuch`)}>📖 Voir le Soldbuch</button>
         </div>
       )}
       {showSigPopup && <SignaturePopup
