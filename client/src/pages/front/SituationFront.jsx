@@ -13,7 +13,7 @@ export default function SituationFront() {
   const [tab, setTab] = useState('report')
 
   const canReport = user?.isAdmin || user?.isOfficier || user?.isSousOfficier || user?.isEtatMajor
-  const canDelete = user?.isAdmin || user?.isOfficier || user?.isEtatMajor
+  const canDelete = user?.isAdmin || user?.isOfficier || user?.isEtatMajor || user?.isRecenseur
 
   const load = async () => {
     try { const r = await api.get('/front/cartes'); setCartes(r.data.data) }

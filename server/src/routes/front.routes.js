@@ -57,7 +57,7 @@ router.post('/cartes/:id/events', auth, async (req, res) => {
 // DELETE /api/front/events/:id
 router.delete('/events/:id', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isEtatMajor)
+    if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isEtatMajor && !req.user.isRecenseur)
       return res.status(403).json({ success: false, message: 'Non autorisé' })
     await pool.execute('DELETE FROM situation_front_events WHERE id = ?', [req.params.id])
     res.json({ success: true })
