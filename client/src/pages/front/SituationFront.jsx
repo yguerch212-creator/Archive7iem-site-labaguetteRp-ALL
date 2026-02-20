@@ -4,21 +4,13 @@ import api from '../../api/client'
 import BackButton from '../../components/BackButton'
 import './situation-front.css'
 
-const LABEL = (type_event, resultat, camp) => {
-  const isDefeat = resultat === 'lose' || resultat === 'lose_all'
-  const side = camp === 'allemand' ? 'DE' : 'US'
-  if (isDefeat) return `❌ Défaite ${side}`
-  if (type_event === 'attaque') return `✅ Victoire ${side}`
-  return `⚠️✅ Vic. défensive ${side}`
-}
-
 export default function SituationFront() {
   const { user } = useAuth()
   const [cartes, setCartes] = useState([])
   const [selected, setSelected] = useState(null)
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState('report') // 'report' | 'history'
+  const [tab, setTab] = useState('report')
 
   const canReport = user?.isAdmin || user?.isOfficier || user?.isSousOfficier || user?.isEtatMajor
   const canDelete = user?.isAdmin || user?.isOfficier || user?.isEtatMajor
@@ -30,28 +22,17 @@ export default function SituationFront() {
   useEffect(() => { load() }, [])
 
   const openCarte = async (id) => {
-    setSelected(id)
-    setTab('report')
+    setSelected(id); setTab('report')
     try { const r = await api.get(`/front/cartes/${id}/events`); setEvents(r.data.data) }
     catch { setEvents([]) }
   }
 
-  const report = async (type_event, camp_vainqueur) => {
+  const post = async (data) => {
     if (!selected) return
-    const resultat = type_event === 'attaque' ? 'win_all' : 'win'
+    const heure = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
     try {
-      await api.post(`/front/cartes/${selected}/events`, { type_event, resultat, camp_vainqueur })
-      openCarte(selected)
-      load()
-    } catch (err) { alert(err.response?.data?.message || 'Erreur') }
-  }
-
-  const reportDefeat = async (camp_vainqueur) => {
-    if (!selected) return
-    try {
-      await api.post(`/front/cartes/${selected}/events`, { type_event: 'attaque', resultat: 'lose', camp_vainqueur })
-      openCarte(selected)
-      load()
+      await api.post(`/front/cartes/${selected}/events`, { ...data, heure })
+      openCarte(selected); load()
     } catch (err) { alert(err.response?.data?.message || 'Erreur') }
   }
 
@@ -61,6 +42,22 @@ export default function SituationFront() {
   }
 
   const sel = cartes.find(c => c.id === selected)
+
+  const eventIcon = (ev) => {
+    if (ev.type_event === 'attaque') return ev.camp_vainqueur === 'allemand' ? '✅' : '✅'
+    if (ev.type_event === 'defense') return ev.camp_vainqueur === 'allemand' ? '⚠️✅' : '⚠️✅'
+    if (ev.type_event === 'prise') return '🚩'
+    if (ev.type_event === 'perte') return '🏳️'
+    return '•'
+  }
+  const eventLabel = (ev) => {
+    if (ev.type_event === 'attaque') return `Attaque de base — Win ${ev.camp_vainqueur === 'allemand' ? 'ALL' : 'US'}`
+    if (ev.type_event === 'defense') return `Défense de base — Win ${ev.camp_vainqueur === 'allemand' ? 'ALL' : 'US'}`
+    const vpName = ev.vp_nom || `VP${ev.vp_numero || '?'}`
+    if (ev.type_event === 'prise') return `Prise — ${vpName}`
+    if (ev.type_event === 'perte') return `Perte — ${vpName}`
+    return ''
+  }
 
   if (loading) return <div className="container"><p>Chargement...</p></div>
 
@@ -72,35 +69,29 @@ export default function SituationFront() {
       <div className="front-grid">
         {cartes.map(c => {
           const s = c.stats || {}
-          const totalDE = (parseInt(s.att_win_de) || 0) + (parseInt(s.def_win_de) || 0)
-          const totalUS = (parseInt(s.att_win_us) || 0) + (parseInt(s.def_win_us) || 0)
-          const total = totalDE + totalUS
-          const pctDE = total > 0 ? Math.round(totalDE / total * 100) : 50
+          const attAll = parseInt(s.att_all) || 0, attUs = parseInt(s.att_us) || 0
+          const defAll = parseInt(s.def_all) || 0, defUs = parseInt(s.def_us) || 0
+          const total = attAll + attUs + defAll + defUs
           return (
             <div key={c.id} className={`front-card ${selected === c.id ? 'active' : ''}`} onClick={() => openCarte(c.id)}>
               <h3>{c.nom}</h3>
-              {total > 0 && <>
-                <div className="front-bar">
-                  <div className="front-bar-de" style={{ width: `${pctDE}%` }}>{pctDE > 10 ? `${pctDE}%` : ''}</div>
-                  <div className="front-bar-us" style={{ width: `${100 - pctDE}%` }}>{(100 - pctDE) > 10 ? `${100 - pctDE}%` : ''}</div>
+              {total > 0 ? (
+                <div className="front-card-stats">
+                  <span>⚔️ Att: {attAll} ALL / {attUs} US</span>
+                  <span>🛡️ Déf: {defAll} ALL / {defUs} US</span>
+                  <span>🚩 {parseInt(s.prises)||0} prises · 🏳️ {parseInt(s.pertes)||0} pertes</span>
                 </div>
-                <div className="front-stats-row">
-                  <span>🇩🇪 {totalDE} vic. / {parseInt(s.defeat_de)||0} déf.</span>
-                  <span>🇺🇸 {totalUS} vic. / {parseInt(s.defeat_us)||0} déf.</span>
-                </div>
-              </>}
-              {!total && <p className="muted" style={{margin:'0.5rem 0 0',fontSize:'0.8rem'}}>Aucun événement</p>}
+              ) : <p className="muted" style={{margin:'0.3rem 0 0',fontSize:'0.8rem'}}>Aucun événement</p>}
             </div>
           )
         })}
       </div>
 
-      {/* Popup carte */}
       {selected && (
         <div className="popup-overlay" onClick={() => setSelected(null)}>
           <div className="popup-content front-popup" onClick={e => e.stopPropagation()}>
             <button className="popup-close" onClick={() => setSelected(null)}>✕</button>
-            <h3 style={{margin:'0 0 1rem',textAlign:'center'}}>{sel?.nom}</h3>
+            <h3 style={{margin:'0 0 0.75rem',textAlign:'center'}}>{sel?.nom}</h3>
 
             <div className="front-tabs">
               <button className={`front-tab ${tab==='report'?'active':''}`} onClick={() => setTab('report')}>📝 Rapporter</button>
@@ -109,23 +100,40 @@ export default function SituationFront() {
 
             {tab === 'report' && canReport && (
               <div className="front-actions">
-                <p className="front-section-label">⚔️ Attaque de base</p>
-                <div className="front-btn-row">
-                  <button className="front-btn front-btn-de" onClick={() => report('attaque', 'allemand')}>✅ Victoire 🇩🇪</button>
-                  <button className="front-btn front-btn-us" onClick={() => report('attaque', 'us')}>✅ Victoire 🇺🇸</button>
+                {/* Bases */}
+                <div className="front-section">
+                  <p className="front-section-label">🇩🇪 Défense de base allemande</p>
+                  <div className="front-btn-row">
+                    <button className="front-btn front-btn-de" onClick={() => post({ type_event: 'defense', resultat: 'win_all', camp_vainqueur: 'allemand' })}>✅ Win ALL</button>
+                    <button className="front-btn front-btn-us" onClick={() => post({ type_event: 'defense', resultat: 'win', camp_vainqueur: 'us' })}>⚠️✅ Win US</button>
+                  </div>
                 </div>
 
-                <p className="front-section-label">🛡️ Défense de base</p>
-                <div className="front-btn-row">
-                  <button className="front-btn front-btn-de" onClick={() => report('defense', 'allemand')}>⚠️✅ Vic. défensive 🇩🇪</button>
-                  <button className="front-btn front-btn-us" onClick={() => report('defense', 'us')}>⚠️✅ Vic. défensive 🇺🇸</button>
+                <div className="front-section">
+                  <p className="front-section-label">🇺🇸 Attaque de base américaine</p>
+                  <div className="front-btn-row">
+                    <button className="front-btn front-btn-de" onClick={() => post({ type_event: 'attaque', resultat: 'win_all', camp_vainqueur: 'allemand' })}>✅ Win ALL</button>
+                    <button className="front-btn front-btn-us" onClick={() => post({ type_event: 'attaque', resultat: 'win', camp_vainqueur: 'us' })}>✅ Win US</button>
+                  </div>
                 </div>
 
-                <p className="front-section-label">❌ Défaite</p>
-                <div className="front-btn-row">
-                  <button className="front-btn front-btn-lose" onClick={() => reportDefeat('us')}>❌ Défaite (US gagne)</button>
-                  <button className="front-btn front-btn-lose-de" onClick={() => reportDefeat('allemand')}>❌ Défaite (DE gagne)</button>
-                </div>
+                {/* VPs */}
+                {sel?.vps?.length > 0 && (
+                  <div className="front-section">
+                    <p className="front-section-label">🚩 Avant-postes (VP)</p>
+                    <div className="front-vp-grid">
+                      {sel.vps.map(vp => (
+                        <div key={vp.id} className="front-vp-item">
+                          <span className="front-vp-name">VP{vp.numero}{vp.nom ? ` — ${vp.nom}` : ''}</span>
+                          <div className="front-vp-btns">
+                            <button className="front-btn-sm front-btn-prise" onClick={() => post({ type_event: 'prise', resultat: 'vp', vp_id: vp.id })}>🚩 Prise</button>
+                            <button className="front-btn-sm front-btn-perte" onClick={() => post({ type_event: 'perte', resultat: 'vp', vp_id: vp.id })}>🏳️ Perte</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             {tab === 'report' && !canReport && (
@@ -138,15 +146,15 @@ export default function SituationFront() {
                   <p className="muted" style={{textAlign:'center'}}>Aucun événement.</p>
                 ) : events.map(ev => (
                   <div key={ev.id} className="front-event-row">
-                    <div className="front-event-info">
-                      <span className="front-event-type">{ev.type_event === 'attaque' ? '⚔️' : '🛡️'}</span>
-                      <span>{LABEL(ev.type_event, ev.resultat, ev.camp_vainqueur)}</span>
+                    <div className="front-event-main">
+                      <span>{eventIcon(ev)}</span>
+                      <span className="front-event-label">{eventLabel(ev)}</span>
+                      {ev.heure && <span className="front-event-time">{ev.heure}</span>}
                     </div>
                     <div className="front-event-meta">
                       <span>{new Date(ev.date_irl).toLocaleDateString('fr-FR')}</span>
                       {ev.rapporte_par_nom && <span>— {ev.rapporte_par_nom}</span>}
-                      {ev.note && <span className="muted">({ev.note})</span>}
-                      {canDelete && <button className="btn btn-danger btn-small" onClick={() => deleteEvent(ev.id)} style={{padding:'2px 6px',fontSize:'0.7rem'}}>🗑️</button>}
+                      {canDelete && <button className="front-del" onClick={() => deleteEvent(ev.id)}>🗑️</button>}
                     </div>
                   </div>
                 ))}
