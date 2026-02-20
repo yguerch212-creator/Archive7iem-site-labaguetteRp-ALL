@@ -4,67 +4,63 @@ import api from '../../api/client'
 import BackButton from '../../components/BackButton'
 import './situation-front.css'
 
+const LABEL = (type_event, resultat, camp) => {
+  const isDefeat = resultat === 'lose' || resultat === 'lose_all'
+  const side = camp === 'allemand' ? 'DE' : 'US'
+  if (isDefeat) return `❌ Défaite ${side}`
+  if (type_event === 'attaque') return `✅ Victoire ${side}`
+  return `⚠️✅ Vic. défensive ${side}`
+}
+
 export default function SituationFront() {
   const { user } = useAuth()
   const [cartes, setCartes] = useState([])
   const [selected, setSelected] = useState(null)
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ type_event: 'attaque', issue: 'victoire', camp_vainqueur: 'allemand', date_rp: '', note: '' })
+  const [tab, setTab] = useState('report') // 'report' | 'history'
 
   const canReport = user?.isAdmin || user?.isOfficier || user?.isSousOfficier || user?.isEtatMajor
   const canDelete = user?.isAdmin || user?.isOfficier || user?.isEtatMajor
 
   const load = async () => {
-    try {
-      const r = await api.get('/front/cartes')
-      setCartes(r.data.data)
-    } catch {} finally { setLoading(false) }
+    try { const r = await api.get('/front/cartes'); setCartes(r.data.data) }
+    catch {} finally { setLoading(false) }
   }
-
   useEffect(() => { load() }, [])
 
-  const loadEvents = async (carteId) => {
-    setSelected(carteId)
-    try {
-      const r = await api.get(`/front/cartes/${carteId}/events`)
-      setEvents(r.data.data)
-    } catch { setEvents([]) }
+  const openCarte = async (id) => {
+    setSelected(id)
+    setTab('report')
+    try { const r = await api.get(`/front/cartes/${id}/events`); setEvents(r.data.data) }
+    catch { setEvents([]) }
   }
 
-  const submitEvent = async (e) => {
-    e.preventDefault()
+  const report = async (type_event, camp_vainqueur) => {
+    if (!selected) return
+    const resultat = type_event === 'attaque' ? 'win_all' : 'win'
+    try {
+      await api.post(`/front/cartes/${selected}/events`, { type_event, resultat, camp_vainqueur })
+      openCarte(selected)
+      load()
+    } catch (err) { alert(err.response?.data?.message || 'Erreur') }
+  }
+
+  const reportDefeat = async (camp_vainqueur) => {
     if (!selected) return
     try {
-      const resultat = form.issue === 'defaite' ? 'lose' : (form.type_event === 'attaque' ? 'win_all' : 'win')
-      const { issue, ...rest } = form
-      await api.post(`/front/cartes/${selected}/events`, { ...rest, resultat })
-      setShowForm(false)
-      setForm({ type_event: 'attaque', issue: 'victoire', camp_vainqueur: 'allemand', date_rp: '', note: '' })
-      loadEvents(selected)
+      await api.post(`/front/cartes/${selected}/events`, { type_event: 'attaque', resultat: 'lose', camp_vainqueur })
+      openCarte(selected)
       load()
     } catch (err) { alert(err.response?.data?.message || 'Erreur') }
   }
 
   const deleteEvent = async (id) => {
-    if (!confirm('Supprimer cet événement ?')) return
-    try {
-      await api.delete(`/front/events/${id}`)
-      loadEvents(selected)
-      load()
-    } catch {}
+    if (!confirm('Supprimer ?')) return
+    try { await api.delete(`/front/events/${id}`); openCarte(selected); load() } catch {}
   }
 
-  const resultatLabel = (type_event, resultat, camp) => {
-    // Défaite = ❌, Victoire attaque = ✅, Victoire défense = ⚠️✅
-    const isDefeat = resultat === 'lose' || resultat === 'lose_all'
-    if (isDefeat) return `❌ Défaite ${camp === 'allemand' ? 'DE' : 'US'}`
-    if (type_event === 'attaque') return `✅ Victoire ${camp === 'allemand' ? 'DE' : 'US'}`
-    return `⚠️✅ Victoire défensive ${camp === 'allemand' ? 'DE' : 'US'}`
-  }
-
-  const selectedCarte = cartes.find(c => c.id === selected)
+  const sel = cartes.find(c => c.id === selected)
 
   if (loading) return <div className="container"><p>Chargement...</p></div>
 
@@ -72,7 +68,6 @@ export default function SituationFront() {
     <div className="container">
       <BackButton />
       <h2>⚔️ Situation du Front</h2>
-      <p className="front-subtitle">État des opérations sur les différents théâtres</p>
 
       <div className="front-grid">
         {cartes.map(c => {
@@ -81,108 +76,83 @@ export default function SituationFront() {
           const totalUS = (parseInt(s.att_win_us) || 0) + (parseInt(s.def_win_us) || 0)
           const total = totalDE + totalUS
           const pctDE = total > 0 ? Math.round(totalDE / total * 100) : 50
-          const isSelected = selected === c.id
           return (
-            <div key={c.id} className={`front-card ${isSelected ? 'active' : ''}`} onClick={() => loadEvents(c.id)}>
+            <div key={c.id} className={`front-card ${selected === c.id ? 'active' : ''}`} onClick={() => openCarte(c.id)}>
               <h3>{c.nom}</h3>
-              {c.description && <p className="front-card-desc">{c.description}</p>}
-              <div className="front-bar">
-                <div className="front-bar-de" style={{ width: `${pctDE}%` }}>{pctDE > 15 ? `${pctDE}%` : ''}</div>
-                <div className="front-bar-us" style={{ width: `${100 - pctDE}%` }}>{(100 - pctDE) > 15 ? `${100 - pctDE}%` : ''}</div>
-              </div>
-              <div className="front-stats-row">
-                <span>🇩🇪 {totalDE} vic. / {parseInt(s.defeat_de)||0} déf.</span>
-                <span>🇺🇸 {totalUS} vic. / {parseInt(s.defeat_us)||0} déf.</span>
-              </div>
-              <div className="front-stats-detail">
-                <span>✅ Att: {parseInt(s.att_win_de)||0} / {parseInt(s.att_win_us)||0}</span>
-                <span>⚠️✅ Déf: {parseInt(s.def_win_de)||0} / {parseInt(s.def_win_us)||0}</span>
-              </div>
-              {c.dernierEvent && (
-                <div className="front-last-event">
-                  Dernier : {c.dernierEvent.type_event === 'attaque' ? '⚔️' : '🛡️'} {resultatLabel(c.dernierEvent.type_event, c.dernierEvent.resultat, c.dernierEvent.camp_vainqueur)}
-                  {c.dernierEvent.date_rp && ` — ${c.dernierEvent.date_rp}`}
+              {total > 0 && <>
+                <div className="front-bar">
+                  <div className="front-bar-de" style={{ width: `${pctDE}%` }}>{pctDE > 10 ? `${pctDE}%` : ''}</div>
+                  <div className="front-bar-us" style={{ width: `${100 - pctDE}%` }}>{(100 - pctDE) > 10 ? `${100 - pctDE}%` : ''}</div>
                 </div>
-              )}
+                <div className="front-stats-row">
+                  <span>🇩🇪 {totalDE} vic. / {parseInt(s.defeat_de)||0} déf.</span>
+                  <span>🇺🇸 {totalUS} vic. / {parseInt(s.defeat_us)||0} déf.</span>
+                </div>
+              </>}
+              {!total && <p className="muted" style={{margin:'0.5rem 0 0',fontSize:'0.8rem'}}>Aucun événement</p>}
             </div>
           )
         })}
       </div>
 
+      {/* Popup carte */}
       {selected && (
-        <div className="front-detail">
-          <h3>📋 Historique — {selectedCarte?.nom}</h3>
-          {canReport && (
-            <button className="btn btn-primary" onClick={() => setShowForm(!showForm)} style={{ marginBottom: '1rem' }}>
-              {showForm ? '✕ Annuler' : '+ Rapporter un événement'}
-            </button>
-          )}
+        <div className="popup-overlay" onClick={() => setSelected(null)}>
+          <div className="popup-content front-popup" onClick={e => e.stopPropagation()}>
+            <button className="popup-close" onClick={() => setSelected(null)}>✕</button>
+            <h3 style={{margin:'0 0 1rem',textAlign:'center'}}>{sel?.nom}</h3>
 
-          {showForm && (
-            <form onSubmit={submitEvent} className="front-form paper-card">
-              <div className="form-row">
-                <label>Type</label>
-                <select className="form-input" value={form.type_event} onChange={e => setForm(p => ({...p, type_event: e.target.value}))}>
-                  <option value="attaque">⚔️ Attaque de base</option>
-                  <option value="defense">🛡️ Défense de base</option>
-                </select>
-              </div>
-              <div className="form-row">
-                <label>Issue</label>
-                <select className="form-input" value={form.issue} onChange={e => setForm(p => ({...p, issue: e.target.value}))}>
-                  <option value="victoire">✅ Victoire</option>
-                  <option value="defaite">❌ Défaite</option>
-                </select>
-              </div>
-              <div className="form-row">
-                <label>Vainqueur</label>
-                <select className="form-input" value={form.camp_vainqueur} onChange={e => setForm(p => ({...p, camp_vainqueur: e.target.value}))}>
-                  <option value="allemand">🇩🇪 Allemand</option>
-                  <option value="us">🇺🇸 US / Allié</option>
-                </select>
-              </div>
-              <div className="form-row">
-                <label>Date RP (libre)</label>
-                <input className="form-input" value={form.date_rp} onChange={e => setForm(p => ({...p, date_rp: e.target.value}))} placeholder="ex: 15 Août 1944" />
-              </div>
-              <div className="form-row">
-                <label>Note</label>
-                <input className="form-input" value={form.note} onChange={e => setForm(p => ({...p, note: e.target.value}))} placeholder="Détails optionnels..." />
-              </div>
-              <button type="submit" className="btn btn-primary">📝 Enregistrer</button>
-            </form>
-          )}
+            <div className="front-tabs">
+              <button className={`front-tab ${tab==='report'?'active':''}`} onClick={() => setTab('report')}>📝 Rapporter</button>
+              <button className={`front-tab ${tab==='history'?'active':''}`} onClick={() => setTab('history')}>📋 Historique ({events.length})</button>
+            </div>
 
-          {events.length === 0 ? (
-            <p className="muted">Aucun événement enregistré pour cette carte.</p>
-          ) : (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Date IRL</th>
-                  <th>Date RP</th>
-                  <th>Type</th>
-                  <th>Résultat</th>
-                  <th>Rapporté par</th>
-                  <th>Note</th>
-                  {canDelete && <th></th>}
-                </tr>
-              </thead>
-              <tbody>
-                {events.map(ev => (
-                  <tr key={ev.id}>
-                    <td>{new Date(ev.date_irl).toLocaleDateString('fr-FR')}</td>
-                    <td>{ev.date_rp || '—'}</td>
-                    <td>{ev.type_event === 'attaque' ? '⚔️ Attaque' : '🛡️ Défense'}</td>
-                    <td>{resultatLabel(ev.type_event, ev.resultat, ev.camp_vainqueur)}</td>
-                    <td>{ev.rapporte_par_nom || '—'}</td>
-                    <td>{ev.note || '—'}</td>
-                    {canDelete && <td><button className="btn btn-danger btn-small" onClick={() => deleteEvent(ev.id)}>🗑️</button></td>}
-                  </tr>
+            {tab === 'report' && canReport && (
+              <div className="front-actions">
+                <p className="front-section-label">⚔️ Attaque de base</p>
+                <div className="front-btn-row">
+                  <button className="front-btn front-btn-de" onClick={() => report('attaque', 'allemand')}>✅ Victoire 🇩🇪</button>
+                  <button className="front-btn front-btn-us" onClick={() => report('attaque', 'us')}>✅ Victoire 🇺🇸</button>
+                </div>
+
+                <p className="front-section-label">🛡️ Défense de base</p>
+                <div className="front-btn-row">
+                  <button className="front-btn front-btn-de" onClick={() => report('defense', 'allemand')}>⚠️✅ Vic. défensive 🇩🇪</button>
+                  <button className="front-btn front-btn-us" onClick={() => report('defense', 'us')}>⚠️✅ Vic. défensive 🇺🇸</button>
+                </div>
+
+                <p className="front-section-label">❌ Défaite</p>
+                <div className="front-btn-row">
+                  <button className="front-btn front-btn-lose" onClick={() => reportDefeat('us')}>❌ Défaite (US gagne)</button>
+                  <button className="front-btn front-btn-lose-de" onClick={() => reportDefeat('allemand')}>❌ Défaite (DE gagne)</button>
+                </div>
+              </div>
+            )}
+            {tab === 'report' && !canReport && (
+              <p className="muted" style={{textAlign:'center',padding:'1rem'}}>Seuls les officiers/SO peuvent rapporter.</p>
+            )}
+
+            {tab === 'history' && (
+              <div className="front-history">
+                {events.length === 0 ? (
+                  <p className="muted" style={{textAlign:'center'}}>Aucun événement.</p>
+                ) : events.map(ev => (
+                  <div key={ev.id} className="front-event-row">
+                    <div className="front-event-info">
+                      <span className="front-event-type">{ev.type_event === 'attaque' ? '⚔️' : '🛡️'}</span>
+                      <span>{LABEL(ev.type_event, ev.resultat, ev.camp_vainqueur)}</span>
+                    </div>
+                    <div className="front-event-meta">
+                      <span>{new Date(ev.date_irl).toLocaleDateString('fr-FR')}</span>
+                      {ev.rapporte_par_nom && <span>— {ev.rapporte_par_nom}</span>}
+                      {ev.note && <span className="muted">({ev.note})</span>}
+                      {canDelete && <button className="btn btn-danger btn-small" onClick={() => deleteEvent(ev.id)} style={{padding:'2px 6px',fontSize:'0.7rem'}}>🗑️</button>}
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          )}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
