@@ -15,7 +15,9 @@ router.get('/cartes', optionalAuth, async (req, res) => {
           SUM(CASE WHEN type_event='attaque' AND camp_vainqueur='allemand' THEN 1 ELSE 0 END) as att_win_de,
           SUM(CASE WHEN type_event='attaque' AND camp_vainqueur='us' THEN 1 ELSE 0 END) as att_win_us,
           SUM(CASE WHEN type_event='defense' AND camp_vainqueur='allemand' THEN 1 ELSE 0 END) as def_win_de,
-          SUM(CASE WHEN type_event='defense' AND camp_vainqueur='us' THEN 1 ELSE 0 END) as def_win_us
+          SUM(CASE WHEN type_event='defense' AND camp_vainqueur='us' THEN 1 ELSE 0 END) as def_win_us,
+          SUM(CASE WHEN resultat='lose' AND camp_vainqueur='allemand' THEN 1 ELSE 0 END) as defeat_de,
+          SUM(CASE WHEN resultat='lose' AND camp_vainqueur='us' THEN 1 ELSE 0 END) as defeat_us
         FROM situation_front_events WHERE carte_id = ?
       `, [c.id])
       c.stats = stats
