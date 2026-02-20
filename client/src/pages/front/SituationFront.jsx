@@ -4,6 +4,52 @@ import api from '../../api/client'
 import BackButton from '../../components/BackButton'
 import './situation-front.css'
 
+const ICON = (ev) => {
+  if (ev.type_event === 'debut') return '🔔'
+  if (ev.type_event === 'fin') return '🏁'
+  if (ev.type_event === 'defense' && ev.camp_vainqueur === 'allemand') return '⚠️'
+  if (ev.type_event === 'defense' && ev.camp_vainqueur === 'us') return '❌'
+  if (ev.type_event === 'attaque' && ev.camp_vainqueur === 'allemand') return '✅'
+  if (ev.type_event === 'attaque' && ev.camp_vainqueur === 'us') return '⚠️✅'
+  if (ev.type_event === 'prise') return '🚩'
+  if (ev.type_event === 'perte') return '🏳️'
+  return '•'
+}
+const LABEL = (ev) => {
+  if (ev.type_event === 'debut') return 'Début des combats'
+  if (ev.type_event === 'fin') return 'Fin des combats'
+  if (ev.type_event === 'attaque') return `Attaque de base — Win ${ev.camp_vainqueur === 'allemand' ? 'ALL' : 'US'}`
+  if (ev.type_event === 'defense') return `Défense de base — Win ${ev.camp_vainqueur === 'allemand' ? 'ALL' : 'US'}`
+  const vpName = ev.vp_nom || `VP${ev.vp_numero || '?'}`
+  if (ev.type_event === 'prise') return `Prise — ${vpName}`
+  if (ev.type_event === 'perte') return `Perte — ${vpName}`
+  return ''
+}
+
+// Compute current VP level from events (most recent prise/perte)
+function getCurrentVP(events, vps) {
+  if (!vps?.length) return null
+  // Walk events oldest→newest, track highest VP held
+  const sorted = [...events].filter(e => e.type_event === 'prise' || e.type_event === 'perte').sort((a, b) => new Date(a.date_irl) - new Date(b.date_irl))
+  let currentVP = 0 // 0 = no VP held
+  for (const ev of sorted) {
+    const vpNum = ev.vp_numero || vps.find(v => v.id === ev.vp_id)?.numero || 0
+    if (ev.type_event === 'prise' && vpNum > currentVP) currentVP = vpNum
+    if (ev.type_event === 'perte' && vpNum <= currentVP) currentVP = vpNum - 1
+  }
+  return Math.max(0, currentVP)
+}
+
+function HeureSelect({ value, onChange }) {
+  return (
+    <div className="front-heure-select">
+      <button type="button" className={`front-heure-btn ${value === 'auto' ? 'active' : ''}`} onClick={() => onChange('auto')}>🕐 Auto</button>
+      <button type="button" className={`front-heure-btn ${value === 'manual' ? 'active' : ''}`} onClick={() => onChange('manual')}>✏️ Manuel</button>
+      <button type="button" className={`front-heure-btn ${value === 'inconnu' ? 'active' : ''}`} onClick={() => onChange('inconnu')}>❓ Inconnu</button>
+    </div>
+  )
+}
+
 export default function SituationFront() {
   const { user } = useAuth()
   const [cartes, setCartes] = useState([])
@@ -11,6 +57,11 @@ export default function SituationFront() {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('report')
+  const [flash, setFlash] = useState(null)
+  const [heureMode, setHeureMode] = useState('auto')
+  const [heureManuel, setHeureManuel] = useState('')
+  const [histFilter, setHistFilter] = useState('jour') // jour | semaine | all
+  const [histDate, setHistDate] = useState(new Date().toISOString().slice(0, 10))
 
   const canReport = user?.isAdmin || user?.isOfficier || user?.isSousOfficier || user?.isEtatMajor
   const canDelete = user?.isAdmin || user?.isOfficier || user?.isEtatMajor || user?.isRecenseur
@@ -27,16 +78,20 @@ export default function SituationFront() {
     catch { setEvents([]) }
   }
 
-  const [flash, setFlash] = useState(null)
+  const getHeure = () => {
+    if (heureMode === 'auto') return new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    if (heureMode === 'manual') return heureManuel || null
+    return null // inconnu
+  }
 
   const post = async (data) => {
     if (!selected) return
-    const heure = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
     try {
-      await api.post(`/front/cartes/${selected}/events`, { ...data, heure })
-      // Flash confirmation then switch to history
-      const label = data.type_event === 'prise' ? '🚩 Prise enregistrée' 
+      await api.post(`/front/cartes/${selected}/events`, { ...data, heure: getHeure() })
+      const label = data.type_event === 'prise' ? '🚩 Prise enregistrée'
         : data.type_event === 'perte' ? '🏳️ Perte enregistrée'
+        : data.type_event === 'debut' ? '🔔 Début enregistré'
+        : data.type_event === 'fin' ? '🏁 Fin enregistrée'
         : data.type_event === 'attaque' ? '⚔️ Attaque enregistrée'
         : '🛡️ Défense enregistrée'
       setFlash(label)
@@ -54,23 +109,26 @@ export default function SituationFront() {
 
   const sel = cartes.find(c => c.id === selected)
 
-  const eventIcon = (ev) => {
-    if (ev.type_event === 'defense' && ev.camp_vainqueur === 'allemand') return '⚠️'
-    if (ev.type_event === 'defense' && ev.camp_vainqueur === 'us') return '❌'
-    if (ev.type_event === 'attaque' && ev.camp_vainqueur === 'allemand') return '✅'
-    if (ev.type_event === 'attaque' && ev.camp_vainqueur === 'us') return '⚠️✅'
-    if (ev.type_event === 'prise') return '🚩'
-    if (ev.type_event === 'perte') return '🏳️'
-    return '•'
-  }
-  const eventLabel = (ev) => {
-    if (ev.type_event === 'attaque') return `Attaque de base — Win ${ev.camp_vainqueur === 'allemand' ? 'ALL' : 'US'}`
-    if (ev.type_event === 'defense') return `Défense de base — Win ${ev.camp_vainqueur === 'allemand' ? 'ALL' : 'US'}`
-    const vpName = ev.vp_nom || `VP${ev.vp_numero || '?'}`
-    if (ev.type_event === 'prise') return `Prise — ${vpName}`
-    if (ev.type_event === 'perte') return `Perte — ${vpName}`
-    return ''
-  }
+  // Filter events for history
+  const filteredEvents = events.filter(ev => {
+    if (histFilter === 'all') return true
+    const evDate = new Date(ev.date_irl)
+    if (histFilter === 'jour') {
+      return evDate.toISOString().slice(0, 10) === histDate
+    }
+    // semaine = 7 days from selected date
+    const start = new Date(histDate); start.setDate(start.getDate() - start.getDay() + 1) // monday
+    const end = new Date(start); end.setDate(end.getDate() + 7)
+    return evDate >= start && evDate < end
+  })
+
+  // Group by day
+  const byDay = {}
+  filteredEvents.forEach(ev => {
+    const day = new Date(ev.date_irl).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+    if (!byDay[day]) byDay[day] = []
+    byDay[day].push(ev)
+  })
 
   if (loading) return <div className="container"><p>Chargement...</p></div>
 
@@ -84,10 +142,14 @@ export default function SituationFront() {
           const s = c.stats || {}
           const attAll = parseInt(s.att_all) || 0, attUs = parseInt(s.att_us) || 0
           const defAll = parseInt(s.def_all) || 0, defUs = parseInt(s.def_us) || 0
-          const total = attAll + attUs + defAll + defUs
+          const total = attAll + attUs + defAll + defUs + (parseInt(s.prises) || 0) + (parseInt(s.pertes) || 0)
+          const vpLevel = getCurrentVP(c.lastEvents || [], c.vps || [])
+          const vpDisplay = vpLevel > 0 ? c.vps?.find(v => v.numero === vpLevel) : null
           return (
             <div key={c.id} className={`front-card ${selected === c.id ? 'active' : ''}`} onClick={() => openCarte(c.id)}>
               <h3>{c.nom}</h3>
+              {vpLevel > 0 && <div className="front-vp-current">🚩 VP{vpLevel}{vpDisplay?.nom ? ` — ${vpDisplay.nom}` : ''}</div>}
+              {vpLevel === 0 && total > 0 && <div className="front-vp-current" style={{color:'#8b8060'}}>Aucun VP tenu</div>}
               {total > 0 ? (
                 <div className="front-card-stats">
                   <span>⚔️ Att: {attAll} ALL / {attUs} US</span>
@@ -100,21 +162,40 @@ export default function SituationFront() {
         })}
       </div>
 
+      {/* Popup carte */}
       {selected && (
         <div className="popup-overlay" onClick={() => setSelected(null)}>
           <div className="popup-content front-popup" onClick={e => e.stopPropagation()}>
             <button className="popup-close" onClick={() => setSelected(null)}>✕</button>
-            <h3 style={{margin:'0 0 0.75rem',textAlign:'center'}}>{sel?.nom}</h3>
+            <h3 className="front-popup-title">{sel?.nom}</h3>
 
             <div className="front-tabs">
               <button className={`front-tab ${tab==='report'?'active':''}`} onClick={() => setTab('report')}>📝 Rapporter</button>
               <button className={`front-tab ${tab==='history'?'active':''}`} onClick={() => setTab('history')}>📋 Historique ({events.length})</button>
             </div>
 
-            {flash && <div style={{ padding: '0.5rem 0.75rem', marginBottom: '0.75rem', background: 'rgba(107,143,60,0.15)', border: '1px solid rgba(107,143,60,0.4)', borderRadius: 6, textAlign: 'center', fontWeight: 'bold', color: '#8bc34a' }}>{flash}</div>}
+            {flash && <div className="front-flash">{flash}</div>}
 
             {tab === 'report' && canReport && (
               <div className="front-actions">
+                {/* Heure selector */}
+                <div className="front-section">
+                  <p className="front-section-label">🕐 Heure</p>
+                  <HeureSelect value={heureMode} onChange={setHeureMode} />
+                  {heureMode === 'manual' && (
+                    <input type="time" className="form-input" value={heureManuel} onChange={e => setHeureManuel(e.target.value)} style={{ marginTop: '0.3rem', maxWidth: 140 }} />
+                  )}
+                </div>
+
+                {/* Début / Fin combats */}
+                <div className="front-section">
+                  <p className="front-section-label">🔔 Combats</p>
+                  <div className="front-btn-row">
+                    <button className="front-btn front-btn-combat" onClick={() => post({ type_event: 'debut', resultat: 'vp' })}>🔔 Début des combats</button>
+                    <button className="front-btn front-btn-combat" onClick={() => post({ type_event: 'fin', resultat: 'vp' })}>🏁 Fin des combats</button>
+                  </div>
+                </div>
+
                 {/* Bases */}
                 <div className="front-section">
                   <p className="front-section-label">🇩🇪 Défense de base allemande</p>
@@ -155,38 +236,69 @@ export default function SituationFront() {
               <p className="muted" style={{textAlign:'center',padding:'1rem'}}>Seuls les officiers/SO peuvent rapporter.</p>
             )}
 
-            {tab === 'history' && (() => {
-              // Group events by day
-              const byDay = {}
-              events.forEach(ev => {
-                const day = new Date(ev.date_irl).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-                if (!byDay[day]) byDay[day] = []
-                byDay[day].push(ev)
-              })
-              return (
+            {tab === 'history' && (
               <div className="front-history">
-                {events.length === 0 ? (
-                  <p className="muted" style={{textAlign:'center'}}>Aucun événement.</p>
+                {/* Filter bar */}
+                <div className="front-hist-filter">
+                  <select className="form-input" value={histFilter} onChange={e => setHistFilter(e.target.value)} style={{ maxWidth: 130 }}>
+                    <option value="jour">📅 Jour</option>
+                    <option value="semaine">📆 Semaine</option>
+                    <option value="all">📋 Tout</option>
+                  </select>
+                  {histFilter !== 'all' && (
+                    <input type="date" className="form-input" value={histDate} onChange={e => setHistDate(e.target.value)} style={{ maxWidth: 160 }} />
+                  )}
+                </div>
+
+                {filteredEvents.length === 0 ? (
+                  <p className="muted" style={{textAlign:'center'}}>Aucun événement pour cette période.</p>
                 ) : Object.entries(byDay).map(([day, dayEvents]) => (
                   <div key={day}>
                     <p className="front-day-label">{day}</p>
                     {dayEvents.map(ev => (
-                  <div key={ev.id} className="front-event-row">
-                    <div className="front-event-main">
-                      <span>{eventIcon(ev)}</span>
-                      <span className="front-event-label">{eventLabel(ev)}</span>
-                      {ev.heure && <span className="front-event-time">{ev.heure}</span>}
-                    </div>
-                    <div className="front-event-meta">
-                      {ev.rapporte_par_nom && <span>{ev.rapporte_par_nom}</span>}
-                      {canDelete && <button className="front-del" onClick={() => deleteEvent(ev.id)}>🗑️</button>}
-                    </div>
+                      <div key={ev.id} className="front-event-row">
+                        <div className="front-event-main">
+                          <span>{ICON(ev)}</span>
+                          <span className="front-event-label">{LABEL(ev)}</span>
+                          <span className="front-event-time">{ev.heure || '??h??'}</span>
+                        </div>
+                        <div className="front-event-meta">
+                          {ev.rapporte_par_nom && <span>{ev.rapporte_par_nom}</span>}
+                          {canDelete && <button className="front-del" onClick={() => deleteEvent(ev.id)}>🗑️</button>}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ))}
-                  </div>
-                ))}
+
+                {/* Rapport summary at bottom */}
+                {filteredEvents.length > 0 && (() => {
+                  const s = {
+                    att_all: filteredEvents.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'allemand').length,
+                    att_us: filteredEvents.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'us').length,
+                    def_all: filteredEvents.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'allemand').length,
+                    def_us: filteredEvents.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'us').length,
+                    prises: filteredEvents.filter(e => e.type_event === 'prise').length,
+                    pertes: filteredEvents.filter(e => e.type_event === 'perte').length,
+                  }
+                  const bat = s.att_all + s.att_us + s.def_all + s.def_us
+                  return (
+                    <div className="front-rapport-summary">
+                      <p className="front-section-label">📊 Résumé</p>
+                      <div className="front-rapport-grid">
+                        <span>⚔️ Batailles: {bat}</span>
+                        <span>✅ Win ALL att: {s.att_all}</span>
+                        <span>⚠️✅ Win US att: {s.att_us}</span>
+                        <span>⚠️ Win ALL déf: {s.def_all}</span>
+                        <span>❌ Win US déf: {s.def_us}</span>
+                        <span>🚩 Prises: {s.prises}</span>
+                        <span>🏳️ Pertes: {s.pertes}</span>
+                      </div>
+                    </div>
+                  )
+                })()}
               </div>
-              )})()}
+            )}
           </div>
         </div>
       )}

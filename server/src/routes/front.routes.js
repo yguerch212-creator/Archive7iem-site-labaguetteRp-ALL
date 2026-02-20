@@ -9,6 +9,13 @@ router.get('/cartes', optionalAuth, async (req, res) => {
     const cartes = await query('SELECT * FROM situation_front_cartes ORDER BY ordre')
     for (const c of cartes) {
       c.vps = await query('SELECT * FROM situation_front_vp WHERE carte_id = ? ORDER BY numero', [c.id])
+      // Last VP events for current VP display
+      c.lastEvents = await query(`
+        SELECT e.*, v.numero as vp_numero FROM situation_front_events e 
+        LEFT JOIN situation_front_vp v ON v.id = e.vp_id
+        WHERE e.carte_id = ? AND e.type_event IN ('prise','perte')
+        ORDER BY e.date_irl ASC
+      `, [c.id])
       c.stats = await queryOne(`
         SELECT 
           SUM(CASE WHEN type_event='attaque' AND camp_vainqueur='allemand' THEN 1 ELSE 0 END) as att_all,
@@ -67,16 +74,16 @@ router.delete('/events/:id', auth, async (req, res) => {
 // GET /api/front/rapport — Weekly/daily front report
 router.get('/rapport', optionalAuth, async (req, res) => {
   try {
-    const { periode, date_debut, date_fin } = req.query
+    const { periode, date_debut } = req.query
     let where = ''
     const params = []
-    if (date_debut && date_fin) {
-      where = 'AND e.date_irl BETWEEN ? AND ?'
-      params.push(date_debut, date_fin + ' 23:59:59')
-    } else if (periode === 'jour') {
-      where = 'AND DATE(e.date_irl) = CURDATE()'
+    const refDate = date_debut || new Date().toISOString().slice(0, 10)
+    if (periode === 'jour') {
+      where = 'AND DATE(e.date_irl) = ?'
+      params.push(refDate)
     } else if (periode === 'semaine') {
-      where = 'AND e.date_irl >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)'
+      where = 'AND e.date_irl >= DATE_SUB(?, INTERVAL 7 DAY) AND DATE(e.date_irl) <= ?'
+      params.push(refDate, refDate)
     }
 
     const cartes = await query('SELECT * FROM situation_front_cartes ORDER BY ordre')

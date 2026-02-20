@@ -32,6 +32,8 @@ export default function Commandement() {
   const [etatUnite, setEtatUnite] = useState('')
   const [frontStats, setFrontStats] = useState(null)
   const [showFront, setShowFront] = useState(false)
+  const [frontPeriode, setFrontPeriode] = useState('semaine')
+  const [frontDate, setFrontDate] = useState(new Date().toISOString().slice(0, 10))
 
   useEffect(() => {
     api.get('/commandement/dashboard').then(r => setData(r.data)).catch(() => {})
@@ -143,9 +145,8 @@ export default function Commandement() {
           <Link to="/interdits" className="btn btn-secondary btn-sm">🚫 Interdits</Link>
           <Link to="/pds" className="btn btn-secondary btn-sm">⏱️ PDS</Link>
           <button className="btn btn-secondary btn-sm" onClick={async () => {
-            try { const r = await api.get('/front/rapport?periode=semaine'); setFrontStats(r.data.data); setShowFront(true) } catch { setMsg('Erreur chargement rapport front') }
+            try { const r = await api.get(`/front/rapport?periode=${frontPeriode}&date_debut=${frontDate}&date_fin=${frontDate}`); setFrontStats(r.data.data); setShowFront(true) } catch { setMsg('Erreur chargement rapport front') }
           }}>⚔️ Rapport du Front</button>
-          <Link to="/front" className="btn btn-secondary btn-sm">⚔️ Situation du Front</Link>
           <Link to="/admin/stats" className="btn btn-secondary btn-sm">📊 Statistiques</Link>
         </div>
       </div>
@@ -230,7 +231,18 @@ export default function Commandement() {
         <div className="popup-overlay" onClick={() => setShowFront(false)}>
           <div className="popup-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 700, maxHeight: '85vh', overflow: 'auto' }}>
             <button className="popup-close" onClick={() => setShowFront(false)}>✕</button>
-            <h2 style={{ marginTop: 0, textAlign: 'center' }}>⚔️ Rapport du Front — Semaine</h2>
+            <h2 style={{ marginTop: 0, textAlign: 'center' }}>⚔️ Rapport du Front</h2>
+            <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+              <select className="form-input" value={frontPeriode} onChange={e => setFrontPeriode(e.target.value)} style={{ maxWidth: 130 }}>
+                <option value="jour">📅 Jour</option>
+                <option value="semaine">📆 Semaine</option>
+              </select>
+              <input type="date" className="form-input" value={frontDate} onChange={e => setFrontDate(e.target.value)} style={{ maxWidth: 160 }} />
+              <button className="btn btn-secondary btn-small" onClick={async () => {
+                try { const r = await api.get(`/front/rapport?periode=${frontPeriode}&date_debut=${frontDate}&date_fin=${frontDate}`); setFrontStats(r.data.data) } catch {}
+              }}>🔄</button>
+              <button className="btn btn-secondary btn-small" onClick={() => window.print()}>🖨️ Imprimer</button>
+            </div>
 
             {/* Global summary */}
             {(() => {

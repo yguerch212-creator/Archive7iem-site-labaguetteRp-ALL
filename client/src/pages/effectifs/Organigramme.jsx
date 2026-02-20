@@ -413,11 +413,9 @@ export default function Organigramme() {
                     <div style={{ fontSize: '0.62rem', opacity: 0.9 }}>
                       <CmdText unitKey={code} field="kommandeur" placeholder="Kommandeur ?"/>
                     </div>
-                    {getField(code, 'adjoint') && (
-                      <div style={{ fontSize: '0.58rem', opacity: 0.7 }}>
-                        Adj. <CmdText unitKey={code} field="adjoint" placeholder=""/>
-                      </div>
-                    )}
+                    <div style={{ fontSize: '0.58rem', opacity: 0.7 }}>
+                      Adj. <CmdText unitKey={code} field="adjoint" placeholder="— vacant —"/>
+                    </div>
                   </div>
                 </div>
               )
