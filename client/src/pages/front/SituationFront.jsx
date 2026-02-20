@@ -27,12 +27,23 @@ export default function SituationFront() {
     catch { setEvents([]) }
   }
 
+  const [flash, setFlash] = useState(null)
+
   const post = async (data) => {
     if (!selected) return
     const heure = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
     try {
       await api.post(`/front/cartes/${selected}/events`, { ...data, heure })
-      openCarte(selected); load()
+      // Flash confirmation then switch to history
+      const label = data.type_event === 'prise' ? '🚩 Prise enregistrée' 
+        : data.type_event === 'perte' ? '🏳️ Perte enregistrée'
+        : data.type_event === 'attaque' ? '⚔️ Attaque enregistrée'
+        : '🛡️ Défense enregistrée'
+      setFlash(label)
+      setTimeout(() => setFlash(null), 2500)
+      setTab('history')
+      const r = await api.get(`/front/cartes/${selected}/events`); setEvents(r.data.data)
+      load()
     } catch (err) { alert(err.response?.data?.message || 'Erreur') }
   }
 
@@ -98,6 +109,8 @@ export default function SituationFront() {
               <button className={`front-tab ${tab==='history'?'active':''}`} onClick={() => setTab('history')}>📋 Historique ({events.length})</button>
             </div>
 
+            {flash && <div style={{ padding: '0.5rem 0.75rem', marginBottom: '0.75rem', background: 'rgba(107,143,60,0.15)', border: '1px solid rgba(107,143,60,0.4)', borderRadius: 6, textAlign: 'center', fontWeight: 'bold', color: '#8bc34a' }}>{flash}</div>}
+
             {tab === 'report' && canReport && (
               <div className="front-actions">
                 {/* Bases */}
@@ -140,11 +153,22 @@ export default function SituationFront() {
               <p className="muted" style={{textAlign:'center',padding:'1rem'}}>Seuls les officiers/SO peuvent rapporter.</p>
             )}
 
-            {tab === 'history' && (
+            {tab === 'history' && (() => {
+              // Group events by day
+              const byDay = {}
+              events.forEach(ev => {
+                const day = new Date(ev.date_irl).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+                if (!byDay[day]) byDay[day] = []
+                byDay[day].push(ev)
+              })
+              return (
               <div className="front-history">
                 {events.length === 0 ? (
                   <p className="muted" style={{textAlign:'center'}}>Aucun événement.</p>
-                ) : events.map(ev => (
+                ) : Object.entries(byDay).map(([day, dayEvents]) => (
+                  <div key={day}>
+                    <p className="front-day-label">{day}</p>
+                    {dayEvents.map(ev => (
                   <div key={ev.id} className="front-event-row">
                     <div className="front-event-main">
                       <span>{eventIcon(ev)}</span>
@@ -152,14 +176,15 @@ export default function SituationFront() {
                       {ev.heure && <span className="front-event-time">{ev.heure}</span>}
                     </div>
                     <div className="front-event-meta">
-                      <span>{new Date(ev.date_irl).toLocaleDateString('fr-FR')}</span>
-                      {ev.rapporte_par_nom && <span>— {ev.rapporte_par_nom}</span>}
+                      {ev.rapporte_par_nom && <span>{ev.rapporte_par_nom}</span>}
                       {canDelete && <button className="front-del" onClick={() => deleteEvent(ev.id)}>🗑️</button>}
                     </div>
                   </div>
                 ))}
+                  </div>
+                ))}
               </div>
-            )}
+              )})()}
           </div>
         </div>
       )}

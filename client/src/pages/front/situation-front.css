@@ -76,6 +76,13 @@
   padding: 2px 4px; opacity: 0.6;
 }
 .front-del:hover { opacity: 1; }
+.front-day-label {
+  margin: 0.75rem 0 0.25rem; padding: 0.3rem 0;
+  font-size: 0.8rem; font-weight: bold; color: #b0a080;
+  border-bottom: 1px solid rgba(139,128,96,0.25);
+  text-transform: capitalize;
+}
+.front-day-label:first-child { margin-top: 0; }
 
 @media (max-width: 500px) {
   .front-grid { grid-template-columns: 1fr; }
