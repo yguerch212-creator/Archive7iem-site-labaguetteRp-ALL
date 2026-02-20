@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import api from '../../api/client'
 import EffectifAutocomplete from '../../components/EffectifAutocomplete'
 import { exportCsv } from '../../utils/exportCsv'
+import SignaturePopup from '../../components/SignaturePopup'
 import './telegrammes.css'
 
 const PRIORITY_ICONS = { Normal: '📨', Urgent: '🔴', Secret: '🔒', 'Sehr Geheim': '☠️' }
@@ -331,6 +332,7 @@ function TelegramBody({ contenu, user, onRefresh }) {
   const [showSign, setShowSign] = useState(false)
   const [signMsg, setSignMsg] = useState('')
   const [signed, setSigned] = useState(false)
+  const [showSigPopup, setShowSigPopup] = useState(false)
 
   // Detect affaire signature request: <!--SIG:sigId:affaireId:pieceId-->
   const sigMatch = contenu?.match(/<!--SIG:(\d+):(\d*):(\d*)-->/)
@@ -355,17 +357,12 @@ function TelegramBody({ contenu, user, onRefresh }) {
   const stopDraw = () => setDrawing(false)
   const clearCanvas = () => { canvasRef.current.getContext('2d').clearRect(0, 0, 400, 120); setHasContent(false) }
 
+  // Affaire signature submit (inline canvas)
   const submitSignature = async () => {
-    if (!hasContent) return
+    if (!hasContent || !sigId) return
     const data = canvasRef.current.toDataURL('image/png')
     try {
-      if (sbEffectifId) {
-        // Soldbuch signature
-        await api.put(`/soldbuch/${sbEffectifId}/sign`, { slot: sbSlot, signature_data: data })
-      } else if (sigId) {
-        // Affaire signature
-        await api.put(`/affaires/signatures/${sigId}/sign`, { signature_data: data })
-      }
+      await api.put(`/affaires/signatures/${sigId}/sign`, { signature_data: data })
       setSignMsg('✅ Document signé avec succès !')
       setSigned(true)
       setShowSign(false)
@@ -375,16 +372,49 @@ function TelegramBody({ contenu, user, onRefresh }) {
     }
   }
 
+  // Soldbuch signature via SignaturePopup (with stamp support)
+  const handleSoldbuchSign = async (signatureData) => {
+    try {
+      await api.put(`/soldbuch/${sbEffectifId}/sign`, { slot: sbSlot, signature_data: signatureData })
+      setSignMsg('✅ Soldbuch signé avec succès !')
+      setSigned(true)
+      setShowSigPopup(false)
+      if (onRefresh) onRefresh()
+    } catch (err) {
+      setSignMsg('❌ ' + (err.response?.data?.message || 'Erreur'))
+    }
+  }
+
   return (
     <div>
       <div className="telegram-body">{displayContent}</div>
-      {(sigId || sbEffectifId) && !signed && (
+
+      {/* Soldbuch signature → uses SignaturePopup with stamp support */}
+      {sbEffectifId && !signed && (
+        <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(107,143,60,0.08)', border: '1px solid rgba(107,143,60,0.3)', borderRadius: 6 }}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button className="btn btn-primary btn-small" onClick={() => setShowSigPopup(true)}>✍️ Signer / Tamponner</button>
+            <button className="btn btn-secondary btn-small" onClick={() => navigate(`/effectifs/${sbEffectifId}/soldbuch`)}>📖 Voir le Soldbuch</button>
+          </div>
+        </div>
+      )}
+      {showSigPopup && <SignaturePopup
+        onClose={() => setShowSigPopup(false)}
+        onSign={handleSoldbuchSign}
+        documentType="soldbuch"
+        documentId={parseInt(sbEffectifId)}
+        documentLabel={`Soldbuch`}
+        slotLabel={sbSlot === 'referent' ? 'Signature officier référent' : 'Signature du soldat'}
+        hideRequest={true}
+      />}
+
+      {/* Affaire signature → inline canvas */}
+      {sigId && !sbEffectifId && !signed && (
         <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(107,143,60,0.08)', border: '1px solid rgba(107,143,60,0.3)', borderRadius: 6 }}>
           {!showSign ? (
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <button className="btn btn-primary btn-small" onClick={() => setShowSign(true)}>✍️ Signer directement</button>
               {affaireId && <button className="btn btn-secondary btn-small" onClick={() => navigate(`/sanctions/${affaireId}`)}>📁 Voir l'affaire</button>}
-              {sbEffectifId && <button className="btn btn-secondary btn-small" onClick={() => navigate(`/effectifs/${sbEffectifId}/soldbuch`)}>📖 Voir le Soldbuch</button>}
             </div>
           ) : (
             <div>
@@ -394,7 +424,7 @@ function TelegramBody({ contenu, user, onRefresh }) {
                 onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw}
                 onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw} />
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <button className="btn btn-primary btn-small" onClick={submitSignature} disabled={!hasContent}>✅ {sbEffectifId ? 'Signer le Soldbuch' : 'Valider la signature'}</button>
+                <button className="btn btn-primary btn-small" onClick={submitSignature} disabled={!hasContent}>✅ Valider la signature</button>
                 <button className="btn btn-small" onClick={clearCanvas}>🗑️ Effacer</button>
                 <button className="btn btn-small" onClick={() => setShowSign(false)}>Annuler</button>
               </div>

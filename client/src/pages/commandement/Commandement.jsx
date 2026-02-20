@@ -205,7 +205,7 @@ export default function Commandement() {
                           <td>{r.unite_code || '—'}</td>
                           <td style={{ fontSize: '0.75rem' }}>{r.grade_nom || '—'}</td>
                           <td><strong>{r.prenom} {r.nom}</strong></td>
-                          <td style={{ textAlign: 'center', fontSize: '1.1rem' }}>{r.pds_fait ? '✅' : '❌'}</td>
+                          <td style={{ textAlign: 'center', fontSize: '1.1rem' }}>{r.pds_fait && (r.pds_heures || 0) >= 6 ? '✅' : r.pds_fait ? '⚠️' : '❌'}</td>
                           <td style={{ textAlign: 'center', fontWeight: 600, color: (r.pds_heures || 0) >= 6 ? 'var(--success)' : 'var(--danger)' }}>{r.pds_heures ? `${r.pds_heures}h` : '—'}</td>
                           <td style={{ textAlign: 'center', fontSize: '1.1rem' }}>{r.rapports_semaine ? `✅ (${r.rapports_semaine})` : '❌'}</td>
                         </tr>
