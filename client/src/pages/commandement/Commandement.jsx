@@ -140,6 +140,7 @@ export default function Commandement() {
           <Link to="/rapports" className="btn btn-secondary btn-sm">📝 Rapports</Link>
           <Link to="/interdits" className="btn btn-secondary btn-sm">🚫 Interdits</Link>
           <Link to="/pds" className="btn btn-secondary btn-sm">⏱️ PDS</Link>
+          <Link to="/front" className="btn btn-secondary btn-sm">⚔️ Situation du Front</Link>
           <Link to="/admin/stats" className="btn btn-secondary btn-sm">📊 Statistiques</Link>
         </div>
       </div>

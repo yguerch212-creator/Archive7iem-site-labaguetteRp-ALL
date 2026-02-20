@@ -42,6 +42,7 @@ const organigrammeRoutes = require('./routes/organigramme.routes')
 const soldeRoutes = require('./routes/solde.routes')
 const habillementRoutes = require('./routes/habillement.routes')
 const avisRechercheRoutes = require('./routes/avis-recherche.routes')
+const frontRoutes = require('./routes/front.routes')
 
 const app = express()
 app.set('trust proxy', 1) // Behind Nginx
@@ -113,6 +114,7 @@ app.use('/api/organigramme', organigrammeRoutes)
 app.use('/api/solde', soldeRoutes)
 app.use('/api/habillement', habillementRoutes)
 app.use('/api/avis-recherche', avisRechercheRoutes)
+app.use('/api/front', frontRoutes)
 
 // Stats endpoint
 app.get('/api/stats', async (req, res) => {

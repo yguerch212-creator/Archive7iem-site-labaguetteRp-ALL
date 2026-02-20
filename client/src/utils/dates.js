@@ -19,6 +19,22 @@ export function formatDateTime(d) {
   return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
+// Convert ISO week (2026-W08) to date range "14/02 — 21/02/2026"
+export function formatWeek(w) {
+  if (!w || !w.includes('-W')) return w
+  try {
+    const [y, wn] = w.split('-W').map(Number)
+    const jan4 = new Date(Date.UTC(y, 0, 4))
+    const dow = jan4.getUTCDay() || 7
+    const mon = new Date(jan4)
+    mon.setUTCDate(jan4.getUTCDate() - dow + 1 + (wn - 1) * 7)
+    const fri = new Date(mon); fri.setUTCDate(mon.getUTCDate() + 4)
+    const nxt = new Date(fri); nxt.setUTCDate(fri.getUTCDate() + 7)
+    const fmt = d => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+    return `${fmt(fri)} — ${fmt(nxt)}/${y}`
+  } catch { return w }
+}
+
 // Format date as dd/mm/yyyy or return raw string if already formatted (e.g. "Mars 1944")
 export function formatDateSoft(d) {
   if (!d) return '—'

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
+import { formatWeek } from '../../utils/dates'
 import './dossiers.css'
 
 const RAPPORT_ICONS = { rapport: '📋', recommandation: '⭐', incident: '🚨' }
@@ -99,7 +100,7 @@ export default function DossierPersonnel() {
     if (hist?.pds?.length) {
       const totalH = hist.pds.reduce((s, p) => s + (p.total_heures || 0), 0)
       text += `⏱️ PRISE DE SERVICE (${hist.pds.length} semaines, ${totalH}h total)\n`
-      hist.pds.slice(0, 10).forEach(p => { text += `  • Semaine ${p.semaine} — ${p.total_heures}h\n` })
+      hist.pds.slice(0, 10).forEach(p => { text += `  • ${formatWeek(p.semaine)} — ${p.total_heures}h\n` })
       if (hist.pds.length > 10) text += `  ... et ${hist.pds.length - 10} semaines précédentes\n`
       text += `\n`
     }
@@ -246,7 +247,7 @@ export default function DossierPersonnel() {
                       {item.type === 'medical' && `🏥 Visite médicale — ${item.data.aptitude || ''}`}
                       {item.type === 'note' && `📝 Note`}
                       {item.type === 'historique' && `📜 ${item.data.type === 'creation' ? 'Création' : item.data.type === 'reserve' ? 'Réserve' : item.data.type === 'reintegration' ? 'Réintégration' : item.data.type === 'decoration' ? 'Décoration' : item.data.type === 'grade' ? 'Changement de grade' : item.data.type}`}
-                      {item.type === 'pds' && `⏱️ PDS — Semaine ${item.data.semaine}`}
+                      {item.type === 'pds' && `⏱️ PDS — ${formatWeek(item.data.semaine)}`}
                       {item.type === 'decoration' && `🎖️ Décoration`}
                       {item.type === 'affaire' && `⚖️ Affaire ${item.data.numero}`}
                     </span>
@@ -274,7 +275,7 @@ export default function DossierPersonnel() {
                         {item.data.titre && <p><strong>{item.data.titre}</strong></p>}
                         <p>{item.data.contenu}</p>
                         <p className="text-muted">Par {item.data.created_by_nom}{item.data.date_rp ? ` — RP: ${item.data.date_rp}` : ''}</p>
-                        {(user?.isAdmin || user?.id === item.data.created_by) && (
+                        {(user?.isAdmin || user?.isRecenseur || user?.id === item.data.created_by) && (
                           <button className="btn btn-sm btn-ghost" onClick={() => deleteEntry(item.data.id)}>🗑️</button>
                         )}
                       </>
@@ -350,8 +351,9 @@ export default function DossierPersonnel() {
                 </tr></thead>
                 <tbody>
                   {hist.pds.map((p, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '8px 12px' }}>{p.semaine}</td>
+                    <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }}
+                      onClick={() => window.location.href = `/pds?semaine=${p.semaine}`}>
+                      <td style={{ padding: '8px 12px' }}>{formatWeek(p.semaine)}</td>
                       <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 600, color: (p.total_heures || 0) >= 6 ? 'var(--success)' : 'var(--danger)' }}>{p.total_heures || 0}h</td>
                       <td style={{ padding: '8px 12px', textAlign: 'center' }}>{(p.total_heures || 0) >= 6 ? '✅' : '❌ < 6h'}</td>
                     </tr>
