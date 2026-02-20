@@ -117,11 +117,18 @@ export default function SignaturePopup({ onClose, onSign, onRequestSent, documen
         piece: `/sanctions/piece/${documentId}`
       }
       const docPath = pathMap[documentType] || '/'
+      // Add inline sign tag for soldbuch referent requests
+      const soldbuchSignTag = documentType === 'soldbuch' && slotLabel?.includes('référent')
+        ? `<!--SOLDBUCH_SIGN:${documentId}:referent-->`
+        : documentType === 'soldbuch'
+          ? `<!--SOLDBUCH_SIGN:${documentId}:soldat-->`
+          : ''
       const contenu = [
         `Demande de signature pour : ${documentLabel || 'Document'}`,
         slotLabel ? `Emplacement : ${slotLabel}` : '',
         requestMessage ? `\nMessage : ${requestMessage}` : '',
-        `\nLien : ${window.location.origin}${docPath}`
+        `\nLien : ${window.location.origin}${docPath}`,
+        soldbuchSignTag
       ].filter(Boolean).join('\n')
       const target = requestTarget || {}
       await api.post('/telegrammes', {

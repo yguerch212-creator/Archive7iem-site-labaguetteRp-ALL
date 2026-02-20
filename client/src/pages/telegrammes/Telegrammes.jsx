@@ -332,11 +332,17 @@ function TelegramBody({ contenu, user, onRefresh }) {
   const [signMsg, setSignMsg] = useState('')
   const [signed, setSigned] = useState(false)
 
-  // Detect signature request: <!--SIG:sigId:affaireId:pieceId-->
+  // Detect affaire signature request: <!--SIG:sigId:affaireId:pieceId-->
   const sigMatch = contenu?.match(/<!--SIG:(\d+):(\d*):(\d*)-->/)
   const sigId = sigMatch?.[1]
   const affaireId = sigMatch?.[2]
-  const displayContent = contenu?.replace(/<!--SIG:\d+:\d*:\d*-->/, '').trim()
+
+  // Detect soldbuch signature request: <!--SOLDBUCH_SIGN:effectifId:slot-->
+  const sbMatch = contenu?.match(/<!--SOLDBUCH_SIGN:(\d+):(\w+)-->/)
+  const sbEffectifId = sbMatch?.[1]
+  const sbSlot = sbMatch?.[2]
+
+  const displayContent = contenu?.replace(/<!--SIG:\d+:\d*:\d*-->/, '').replace(/<!--SOLDBUCH_SIGN:\d+:\w+-->/, '').trim()
 
   const getPos = (e) => {
     const rect = canvasRef.current.getBoundingClientRect()
@@ -350,28 +356,35 @@ function TelegramBody({ contenu, user, onRefresh }) {
   const clearCanvas = () => { canvasRef.current.getContext('2d').clearRect(0, 0, 400, 120); setHasContent(false) }
 
   const submitSignature = async () => {
-    if (!hasContent || !sigId) return
+    if (!hasContent) return
     const data = canvasRef.current.toDataURL('image/png')
     try {
-      await api.put(`/affaires/signatures/${sigId}/sign`, { signature_data: data })
+      if (sbEffectifId) {
+        // Soldbuch signature
+        await api.put(`/soldbuch/${sbEffectifId}/sign`, { slot: sbSlot, signature_data: data })
+      } else if (sigId) {
+        // Affaire signature
+        await api.put(`/affaires/signatures/${sigId}/sign`, { signature_data: data })
+      }
       setSignMsg('✅ Document signé avec succès !')
       setSigned(true)
       setShowSign(false)
       if (onRefresh) onRefresh()
     } catch (err) {
-      setSignMsg('❌ ' + (err.response?.data?.error || 'Erreur'))
+      setSignMsg('❌ ' + (err.response?.data?.message || err.response?.data?.error || 'Erreur'))
     }
   }
 
   return (
     <div>
       <div className="telegram-body">{displayContent}</div>
-      {sigId && !signed && (
+      {(sigId || sbEffectifId) && !signed && (
         <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(107,143,60,0.08)', border: '1px solid rgba(107,143,60,0.3)', borderRadius: 6 }}>
           {!showSign ? (
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <button className="btn btn-primary btn-small" onClick={() => setShowSign(true)}>✍️ Signer directement</button>
               {affaireId && <button className="btn btn-secondary btn-small" onClick={() => navigate(`/sanctions/${affaireId}`)}>📁 Voir l'affaire</button>}
+              {sbEffectifId && <button className="btn btn-secondary btn-small" onClick={() => navigate(`/effectifs/${sbEffectifId}/soldbuch`)}>📖 Voir le Soldbuch</button>}
             </div>
           ) : (
             <div>
@@ -381,7 +394,7 @@ function TelegramBody({ contenu, user, onRefresh }) {
                 onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw}
                 onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw} />
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <button className="btn btn-primary btn-small" onClick={submitSignature} disabled={!hasContent}>✅ Valider la signature</button>
+                <button className="btn btn-primary btn-small" onClick={submitSignature} disabled={!hasContent}>✅ {sbEffectifId ? 'Signer le Soldbuch' : 'Valider la signature'}</button>
                 <button className="btn btn-small" onClick={clearCanvas}>🗑️ Effacer</button>
                 <button className="btn btn-small" onClick={() => setShowSign(false)}>Annuler</button>
               </div>
