@@ -18,8 +18,8 @@
 .front-card-stats { font-size: 0.8rem; color: #b0a080; display: flex; flex-direction: column; gap: 2px; }
 .front-vp-current { font-size: 0.85rem; font-weight: bold; color: #8bc34a; margin-bottom: 0.3rem; }
 
-/* Popup - big and visible */
-.front-popup { max-width: 650px; width: 96vw; max-height: 88vh; overflow-y: auto; padding: 1.5rem; }
+/* Popup - big and visible, dark theme override */
+.front-popup { max-width: 650px; width: 96vw; max-height: 88vh; overflow-y: auto; padding: 1.5rem; background: #1e1c18 !important; border: 1px solid rgba(139,128,96,0.4); }
 .front-popup-title { margin: 0 0 1rem; text-align: center; color: #e8dcc0; font-size: 1.25rem; }
 .front-flash {
   padding: 0.5rem 0.75rem; margin-bottom: 0.75rem;
