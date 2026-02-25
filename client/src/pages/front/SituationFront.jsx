@@ -275,10 +275,30 @@ export default function SituationFront() {
               <h3>{c.nom}</h3>
               {status === 'fin' && <div className="front-vp-current" style={{color:'#90b0d0'}}>🏁 Cessez-le-feu</div>}
               {status === 'stale' && <div className="front-vp-current" style={{color:'#8b8060',fontSize:'0.8rem'}}>Aucun combat en cours</div>}
-              {status === 'vp' && <div className="front-vp-current">🚩 {heldVPs.map(n => {
-                const vp = c.vps?.find(v => v.numero === n)
-                return `VP${n}${vp?.nom ? ` ${vp.nom}` : ''}`
-              }).join(' · ')}</div>}
+              {status === 'vp' && <div className="front-vp-current">🚩 {(() => {
+                // Berlin Mur Est: condense display — show front line position
+                if (c.id === NON_LINEAR_CARTE) {
+                  const has = (n) => heldVPs.includes(n)
+                  // VP4+VP5 held → show both (independent)
+                  // VP3 held → show VP3 (implies VP1+VP2)
+                  // VP1 or VP2 → show only what's held at that level
+                  const parts = []
+                  if (has(4) || has(5)) {
+                    if (has(4)) { const v = c.vps?.find(x=>x.numero===4); parts.push(`VP4${v?.nom ? ` ${v.nom}` : ''}`) }
+                    if (has(5)) { const v = c.vps?.find(x=>x.numero===5); parts.push(`VP5${v?.nom ? ` ${v.nom}` : ''}`) }
+                  } else if (has(3)) {
+                    const v = c.vps?.find(x=>x.numero===3); parts.push(`VP3${v?.nom ? ` ${v.nom}` : ''}`)
+                  } else {
+                    if (has(1)) { const v = c.vps?.find(x=>x.numero===1); parts.push(`VP1${v?.nom ? ` ${v.nom}` : ''}`) }
+                    if (has(2)) { const v = c.vps?.find(x=>x.numero===2); parts.push(`VP2${v?.nom ? ` ${v.nom}` : ''}`) }
+                  }
+                  return parts.join(' · ')
+                }
+                // Linear maps: just show highest VP
+                const highest = Math.max(...heldVPs)
+                const vp = c.vps?.find(v => v.numero === highest)
+                return `VP${highest}${vp?.nom ? ` ${vp.nom}` : ''}`
+              })()}</div>}
               {status === 'none' && total > 0 && <div className="front-vp-current" style={{color:'#8b8060'}}>Aucun VP tenu</div>}
               {total > 0 ? (
                 <div className="front-card-stats">
