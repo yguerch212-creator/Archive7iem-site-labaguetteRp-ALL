@@ -16,7 +16,7 @@ router.get('/:effectifId', optionalAuth, async (req, res) => {
       [req.params.effectifId]
     )
     res.json({ success: true, data: rows })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // POST /api/attestations/:effectif_id — Manual attestation (officier/admin/administratif)
@@ -38,7 +38,7 @@ router.post('/:effectifId', auth, async (req, res) => {
       [effectifId, nextNum, modification, page || null, dt, req.user.id]
     )
     res.json({ success: true, data: { id: result.insertId, numero: nextNum } })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // Sign an attestation
@@ -53,7 +53,7 @@ router.put('/:attestationId/sign', auth, async (req, res) => {
       [req.user.effectif_id || null, signature_data || null, req.params.attestationId]
     )
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // ==================== PENDING EDITS ====================
@@ -70,7 +70,7 @@ router.get('/pending/:effectifId', auth, async (req, res) => {
       [req.params.effectifId]
     )
     res.json({ success: true, data: rows })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // POST /api/attestations/pending/:effectif_id — Soldier submits a cell edit
@@ -84,7 +84,7 @@ router.post('/pending/:effectifId', auth, async (req, res) => {
       [req.params.effectifId, cell_id, old_value || null, new_value, req.user.id]
     )
     res.json({ success: true, data: { id: result.insertId } })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // PUT /api/attestations/pending/:pendingId/validate — Approve/reject
@@ -129,7 +129,7 @@ router.put('/pending/:pendingId/validate', auth, async (req, res) => {
     }
 
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // ==================== AUTO-ATTESTATION HELPER ====================
@@ -155,7 +155,7 @@ router.delete('/:id', auth, async (req, res) => {
     if (!req.user.isAdmin) return res.status(403).json({ success: false, message: 'Réservé aux administrateurs' })
     await pool.execute('DELETE FROM soldbuch_attestations WHERE id = ?', [req.params.id])
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // PUT /api/attestations/:id/barrer — Officier/Administratif: strike through with reason
@@ -171,7 +171,7 @@ router.put('/:id/barrer', auth, async (req, res) => {
       [motif, req.user.effectif_id || req.user.id, req.params.id]
     )
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 module.exports = router

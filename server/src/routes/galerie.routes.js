@@ -17,7 +17,7 @@ router.get('/', optionalAuth, async (req, res) => {
     sql += ' ORDER BY g.created_at DESC'
     const rows = await query(sql, params)
     res.json({ success: true, data: rows })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // POST /api/galerie
@@ -31,7 +31,7 @@ router.post('/', auth, async (req, res) => {
       [unite_id || null, titre || null, description || null, image_data, autoApprove, req.user.id]
     )
     res.json({ success: true, data: { id: result.insertId } })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // PUT /api/galerie/:id/approve
@@ -40,7 +40,7 @@ router.put('/:id/approve', auth, async (req, res) => {
     if (!req.user.isAdmin && !req.user.isOfficier) return res.status(403).json({ success: false, message: 'Non autorisé' })
     await pool.execute('UPDATE galerie SET approuve = 1 WHERE id = ?', [req.params.id])
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // DELETE /api/galerie/:id
@@ -51,7 +51,7 @@ router.delete('/:id', auth, async (req, res) => {
     if (!req.user.isAdmin && !req.user.isOfficier && item.created_by !== req.user.id) return res.status(403).json({ error: 'Non autorisé' })
     await pool.execute('DELETE FROM galerie WHERE id = ?', [req.params.id])
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 module.exports = router

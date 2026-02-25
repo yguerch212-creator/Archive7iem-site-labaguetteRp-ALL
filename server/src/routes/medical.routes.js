@@ -22,7 +22,7 @@ router.get('/', optionalAuth, async (req, res) => {
     `)
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -38,7 +38,7 @@ router.get('/effectif/:effectif_id', auth, async (req, res) => {
     `, [req.params.effectif_id])
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -60,7 +60,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
     if (!row) return res.status(404).json({ success: false, message: 'Visite introuvable' })
     res.json({ success: true, data: row })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -102,7 +102,7 @@ router.post('/', auth, async (req, res) => {
     notifyMedical({ aptitude: aptitude || 'Apte', effectif_nom: `Effectif #${effectif_id}`, medecin_nom: medecin || 'Inconnu' }).catch(() => {})
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -116,7 +116,7 @@ router.put('/:id', auth, recenseur, async (req, res) => {
     )
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -127,7 +127,7 @@ router.delete('/:id', auth, async (req, res) => {
     await pool.execute('DELETE FROM visites_medicales WHERE id = ?', [req.params.id])
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -154,7 +154,7 @@ router.put('/:id/valider', auth, async (req, res) => {
     }
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -176,7 +176,7 @@ router.get('/pending/list', auth, async (req, res) => {
     `)
     res.json({ data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -187,7 +187,7 @@ router.get('/my-signature', auth, async (req, res) => {
     const [rows] = await pool.execute('SELECT signature_data FROM signatures_effectifs WHERE effectif_id = ?', [req.user.effectif_id])
     res.json({ data: rows[0]?.signature_data || null })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -214,7 +214,7 @@ router.put('/:id/sign', auth, async (req, res) => {
 
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 

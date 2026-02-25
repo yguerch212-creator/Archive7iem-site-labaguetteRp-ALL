@@ -47,7 +47,7 @@ router.get('/dashboard', auth, officier, async (req, res) => {
       activiteRecente,
       ordresRecents,
     })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // GET /api/commandement/notes
@@ -60,7 +60,7 @@ router.get('/notes', auth, officier, async (req, res) => {
       ORDER BY n.created_at DESC LIMIT 50
     `, [req.user.id, req.user.id])
     res.json({ success: true, data: rows })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // POST /api/commandement/notes
@@ -73,7 +73,7 @@ router.post('/notes', auth, officier, async (req, res) => {
       [contenu, req.user.id, nom, destinataire_id || null, prive ? 1 : 0]
     )
     res.json({ success: true, data: { id: result.insertId } })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // DELETE /api/commandement/notes/:id
@@ -84,7 +84,7 @@ router.delete('/notes/:id', auth, officier, async (req, res) => {
     if (!req.user.isAdmin && note.auteur_id !== req.user.id) return res.status(403).json({ error: 'Non autorisé' })
     await pool.execute('DELETE FROM notes_commandement WHERE id = ?', [req.params.id])
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // GET /api/commandement/etat — État PDS + rapports par effectif cette semaine
@@ -142,7 +142,7 @@ router.get('/etat', auth, officier, async (req, res) => {
     `, [semaine, semaine, weekStart])
 
     res.json({ success: true, data: rows, semaine, weekStart, weeks: weeks.map(w => w.semaine) })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 module.exports = router

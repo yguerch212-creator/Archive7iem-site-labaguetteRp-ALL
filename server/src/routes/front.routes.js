@@ -28,7 +28,7 @@ router.get('/cartes', optionalAuth, async (req, res) => {
       `, [c.id])
     }
     res.json({ success: true, data: cartes })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // GET /api/front/cartes/:id/events — History for a map
@@ -43,7 +43,7 @@ router.get('/cartes/:id/events', optionalAuth, async (req, res) => {
       WHERE e.carte_id = ? ORDER BY e.date_irl DESC
     `, [req.params.id])
     res.json({ success: true, data: events })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // POST /api/front/cartes/:id/events — Add event
@@ -58,7 +58,7 @@ router.post('/cartes/:id/events', auth, async (req, res) => {
       [req.params.id, type_event, resultat || 'vp', camp_vainqueur || '', vp_id || null, heure || null, note || null, req.user.effectif_id || null]
     )
     res.json({ success: true, data: { id: result.insertId } })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // DELETE /api/front/events/:id
@@ -68,7 +68,7 @@ router.delete('/events/:id', auth, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Non autorisé' })
     await pool.execute('DELETE FROM situation_front_events WHERE id = ?', [req.params.id])
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // GET /api/front/rapport — Weekly/daily front report
@@ -108,7 +108,7 @@ router.get('/rapport', optionalAuth, async (req, res) => {
       rapport.push({ carte: c, events, stats })
     }
     res.json({ success: true, data: rapport })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 module.exports = router

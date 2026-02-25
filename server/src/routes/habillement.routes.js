@@ -28,7 +28,7 @@ router.get('/demandes', auth, async (req, res) => {
       params = [req.user.effectif_id]
     }
     res.json({ success: true, data: await query(sql, params) })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // POST /api/habillement/demandes — Créer une demande
@@ -43,7 +43,7 @@ router.post('/demandes', auth, async (req, res) => {
       [effectifId, description, motif || null]
     )
     res.json({ success: true, data: { id: result.insertId } })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // PUT /api/habillement/demandes/:id/validate — Approuver ou refuser
@@ -79,7 +79,7 @@ router.put('/demandes/:id/validate', auth, async (req, res) => {
     }
 
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // GET /api/habillement/pending-count — Count pending for officers
@@ -87,7 +87,7 @@ router.get('/pending-count', auth, async (req, res) => {
   try {
     const row = await queryOne("SELECT COUNT(*) as c FROM demandes_habillement WHERE statut = 'en_attente'")
     res.json({ success: true, count: row.c })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 module.exports = router

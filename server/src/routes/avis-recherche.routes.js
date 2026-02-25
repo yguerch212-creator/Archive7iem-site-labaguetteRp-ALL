@@ -31,7 +31,7 @@ router.get('/', optionalAuth, async (req, res) => {
     `)
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -49,7 +49,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
     if (!rows.length) return res.status(404).json({ success: false, message: 'Non trouvé' })
     res.json({ success: true, data: rows[0] })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -66,7 +66,7 @@ router.post('/', auth, feldgendarmerie, upload.single('photo'), async (req, res)
     )
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -77,7 +77,7 @@ router.put('/:id/statut', auth, feldgendarmerie, async (req, res) => {
     await pool.execute('UPDATE avis_recherche SET statut = ? WHERE id = ?', [statut, req.params.id])
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -87,7 +87,7 @@ router.delete('/:id', auth, feldgendarmerie, async (req, res) => {
     await pool.execute('DELETE FROM avis_recherche WHERE id = ?', [req.params.id])
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 

@@ -54,7 +54,7 @@ const generalLimiter = rateLimit({ windowMs: 1 * 60 * 1000, max: 300, validate: 
 
 // Middlewares
 app.use(helmet({ crossOriginResourcePolicy: false }))
-const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://localhost:5173,http://76.13.43.180,https://archives-7earmekorps.com').split(',')
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://localhost:5173,https://archives-7earmekorps.com').split(',')
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) cb(null, true)
@@ -66,8 +66,8 @@ app.use(generalLimiter)
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 
-// Static uploads
-app.use('/uploads', express.static('uploads'))
+// Static uploads — no directory listing, files accessible by direct URL only
+app.use('/uploads', express.static('uploads', { dotfiles: 'deny', index: false }))
 
 // Request timing & dev logs
 app.use((req, res, next) => {
@@ -116,8 +116,8 @@ app.use('/api/habillement', habillementRoutes)
 app.use('/api/avis-recherche', avisRechercheRoutes)
 app.use('/api/front', frontRoutes)
 
-// Stats endpoint
-app.get('/api/stats', async (req, res) => {
+// Stats endpoint (auth required)
+app.get('/api/stats', auth, async (req, res) => {
   try {
     const { query } = require('./config/db')
     const effectifs = await queryOne('SELECT COUNT(*) as c FROM effectifs')
@@ -214,8 +214,8 @@ app.get('/api/stats', async (req, res) => {
   }
 })
 
-// Archives administratives — recent documents across all types
-app.get('/api/stats/archives', async (req, res) => {
+// Archives administratives — recent documents across all types (auth required)
+app.get('/api/stats/archives', auth, async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 30, 100)
     const rows = await query(`

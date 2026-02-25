@@ -33,7 +33,7 @@ router.get('/', optionalAuth, async (req, res) => {
       `, [req.user.effectif_id])
     }
     res.json({ success: true, data: rows })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // GET /api/journal/pending — articles pending validation (officiers+)
@@ -61,7 +61,7 @@ router.get('/pending', auth, async (req, res) => {
       return (r.auteur_rang || 0) < 35
     })
     res.json({ success: true, data: filtered })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // GET /api/journal/:id
@@ -80,7 +80,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
     `, [req.params.id])
     if (!j) return res.status(404).json({ success: false, message: 'Article introuvable' })
     res.json({ success: true, data: j })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // POST /api/journal — create article
@@ -95,7 +95,7 @@ router.post('/', auth, async (req, res) => {
       [titre, sous_titre || null, req.user.effectif_id, `${req.user.prenom || ''} ${req.user.nom || ''}`.trim(), contenu || '', 'brouillon']
     )
     res.json({ success: true, data: { id: result.insertId } })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // PUT /api/journal/:id — update article (author only while draft/refused)
@@ -113,7 +113,7 @@ router.put('/:id', auth, async (req, res) => {
     await pool.execute('UPDATE journal_articles SET titre=?, sous_titre=?, contenu=? WHERE id=?',
       [titre || article.titre, sous_titre ?? article.sous_titre, contenu ?? article.contenu, req.params.id])
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // PUT /api/journal/:id/layout — save layout
@@ -127,7 +127,7 @@ router.put('/:id/layout', auth, async (req, res) => {
     const { layout } = req.body
     await pool.execute('UPDATE journal_articles SET layout=? WHERE id=?', [JSON.stringify(layout), req.params.id])
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // PUT /api/journal/:id/submit — submit for validation
@@ -148,7 +148,7 @@ router.put('/:id/submit', auth, async (req, res) => {
     
     await pool.execute('UPDATE journal_articles SET statut=? WHERE id=?', ['en_attente', req.params.id])
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // PUT /api/journal/:id/validate — validate article
@@ -175,7 +175,7 @@ router.put('/:id/validate', auth, async (req, res) => {
       await pool.execute('UPDATE journal_articles SET statut=? WHERE id=?', ['refuse', req.params.id])
     }
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // DELETE /api/journal/:id
@@ -188,7 +188,7 @@ router.delete('/:id', auth, async (req, res) => {
     }
     await pool.execute('DELETE FROM journal_articles WHERE id = ?', [req.params.id])
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 module.exports = router

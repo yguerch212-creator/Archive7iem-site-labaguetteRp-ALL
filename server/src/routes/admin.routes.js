@@ -11,7 +11,7 @@ router.get('/groups', auth, privileged, async (req, res) => {
   try {
     const rows = await query('SELECT id, name FROM `groups` ORDER BY name')
     res.json({ success: true, data: rows })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // GET /api/admin/users
@@ -41,7 +41,7 @@ router.get('/users', auth, privileged, async (req, res) => {
     `)
     res.json({ success: true, data: users })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -60,7 +60,7 @@ router.get('/effectifs-sans-compte', auth, privileged, async (req, res) => {
     `)
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -76,16 +76,17 @@ router.post('/users', auth, privileged, async (req, res) => {
     const exists = await queryOne('SELECT id FROM users WHERE nom = ? AND prenom = ? AND unite_id = ?', [eff.nom, eff.prenom, eff.unite_id])
     if (exists) return res.status(400).json({ success: false, message: 'Compte déjà existant' })
 
-    const hash = await bcrypt.hash(password || 'Wehrmacht123', 10)
+    if (!password || password.length < 8) return res.status(400).json({ success: false, message: 'Mot de passe requis (min 8 caractères)' })
+    const hash = await bcrypt.hash(password, 10)
     const username = `${eff.prenom.toLowerCase()}.${eff.nom.toLowerCase()}`.replace(/\s/g, '')
     
     await pool.execute(
       'INSERT INTO users (nom, prenom, username, password_hash, unite_id, grade_id, effectif_id, role_level, must_change_password, active) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, 1)',
       [eff.nom, eff.prenom, username, hash, eff.unite_id, eff.grade_id, eff.id]
     )
-    res.json({ success: true, message: `Compte créé pour ${eff.prenom} ${eff.nom} (${username}) — mdp: ${password || 'Wehrmacht123'}` })
+    res.json({ success: true, message: `Compte créé pour ${eff.prenom} ${eff.nom} (${username})` })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -109,7 +110,7 @@ router.put('/users/:id/group', auth, privileged, async (req, res) => {
     }
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -123,7 +124,7 @@ router.get('/users/:id/groups', auth, privileged, async (req, res) => {
     `, [req.params.id])
     res.json({ success: true, data: rows.map(r => r.name) })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -135,7 +136,7 @@ router.delete('/users/:id', auth, admin, async (req, res) => {
     await pool.execute('DELETE FROM users WHERE id = ?', [req.params.id])
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -145,7 +146,7 @@ router.put('/users/:id/toggle-active', auth, admin, async (req, res) => {
     await pool.execute('UPDATE users SET active = NOT active WHERE id = ?', [req.params.id])
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -161,7 +162,7 @@ router.get('/logs', auth, privileged, async (req, res) => {
     )
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -183,7 +184,7 @@ router.put('/users/:id/reset-password', auth, privileged, async (req, res) => {
 
     res.json({ success: true, message: `Mot de passe réinitialisé. L'utilisateur devra le changer à la prochaine connexion.` })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -198,7 +199,7 @@ router.get('/password-requests', auth, privileged, async (req, res) => {
     `, [req.user.id])
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -208,7 +209,7 @@ router.put('/notifications/:id/read', auth, privileged, async (req, res) => {
     await pool.execute('UPDATE notifications SET lu = 1 WHERE id = ?', [req.params.id])
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 

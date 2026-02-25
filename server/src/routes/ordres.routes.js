@@ -31,7 +31,7 @@ router.get('/', optionalAuth, async (req, res) => {
       ORDER BY o.created_at DESC
     `)
     res.json({ success: true, data: rows })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // GET /api/ordres/:id
@@ -51,7 +51,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       acknowledged = !!ack
     }
     res.json({ ...ordre, accuses, acknowledged })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // POST /api/ordres (officier/admin)
@@ -76,7 +76,7 @@ router.post('/', auth, async (req, res) => {
     }
 
     res.json({ success: true, data: { id: result.insertId, numero } })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // POST /api/ordres/:id/accuse — Acknowledge
@@ -85,7 +85,7 @@ router.post('/:id/accuse', auth, async (req, res) => {
     if (!req.user.effectif_id) return res.status(400).json({ success: false, message: 'Effectif requis' })
     await pool.execute('INSERT IGNORE INTO ordres_accuses (ordre_id, effectif_id) VALUES (?, ?)', [req.params.id, req.user.effectif_id])
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // DELETE /api/ordres/:id
@@ -94,7 +94,7 @@ router.delete('/:id', auth, async (req, res) => {
     if (!req.user.isAdmin && !req.user.isOfficier) return res.status(403).json({ success: false, message: 'Non autorisé' })
     await pool.execute('DELETE FROM ordres WHERE id = ?', [req.params.id])
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 module.exports = router

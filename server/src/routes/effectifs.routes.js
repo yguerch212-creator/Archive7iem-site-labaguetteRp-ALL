@@ -27,7 +27,7 @@ router.get('/', optionalAuth, async (req, res) => {
     const rows = await query(sql, params)
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -44,7 +44,7 @@ router.get('/all', auth, async (req, res) => {
     `)
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -61,7 +61,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
     if (!row) return res.status(404).json({ success: false, message: 'Effectif non trouvé' })
     res.json({ success: true, data: row })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -189,7 +189,7 @@ router.post('/', auth, recenseur, async (req, res) => {
       } 
     })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -226,7 +226,7 @@ router.put('/:id', auth, recenseur, async (req, res) => {
     }
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -238,7 +238,7 @@ router.post('/:id/photo', auth, recenseur, upload.single('photo'), handleUploadE
     await pool.execute('UPDATE effectifs SET photo = ? WHERE id = ?', [photoUrl, req.params.id])
     res.json({ success: true, data: { photo: photoUrl } })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -248,7 +248,7 @@ router.delete('/:id', auth, admin, async (req, res) => {
     await pool.execute('DELETE FROM effectifs WHERE id = ?', [req.params.id])
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -259,7 +259,7 @@ router.get('/:id/layout', optionalAuth, async (req, res) => {
     if (!row || !row.layout_json) return res.json({ blocks: null })
     const data = typeof row.layout_json === 'string' ? JSON.parse(row.layout_json) : row.layout_json
     res.json(data)
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // PUT /api/effectifs/:id/layout — Save layout blocks
@@ -273,7 +273,7 @@ router.put('/:id/layout', auth, async (req, res) => {
       [req.params.id, json]
     )
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // GET /api/effectifs/:id/signature — Get saved personal signature
@@ -281,7 +281,7 @@ router.get('/:id/signature', optionalAuth, async (req, res) => {
   try {
     const row = await queryOne('SELECT signature_data FROM signatures_effectifs WHERE effectif_id = ?', [req.params.id])
     res.json(row || { signature_data: null })
-  } catch (err) { res.status(500).json({ error: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Erreur serveur' }) }
 })
 
 // PUT /api/effectifs/:id/signature — Save personal signature (only own)
@@ -297,7 +297,7 @@ router.put('/:id/signature', auth, async (req, res) => {
       [req.params.id, signature_data, signature_data]
     )
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ error: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Erreur serveur' }) }
 })
 
 // PUT /api/effectifs/:id/reserve — Toggle réserve
@@ -333,7 +333,7 @@ router.put('/:id/reserve', auth, async (req, res) => {
       logHistorique(eff.id, 'reintegration', `Réintégration depuis la réserve`)
       res.json({ success: true, message: 'Effectif sorti de réserve' })
     }
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // GET /api/effectifs/:id/historique — Full timeline
@@ -373,7 +373,7 @@ router.get('/:id/historique', optionalAuth, async (req, res) => {
     `, [id])
 
     res.json({ success: true, historique, pds, rapports, interdits, medical, decorations, affaires })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // DELETE /api/effectifs/historique/:id — Delete a historique entry
@@ -386,7 +386,7 @@ router.delete('/historique/:id', auth, async (req, res) => {
     }
     await pool.execute('DELETE FROM effectif_historique WHERE id = ?', [req.params.id])
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 module.exports = router

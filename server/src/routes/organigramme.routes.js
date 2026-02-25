@@ -18,7 +18,7 @@ router.get('/', optionalAuth, async (req, res) => {
       ORDER BY o.ordre ASC
     `)
     res.json({ success: true, data: rows })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // GET /api/organigramme/layout — get saved layout
@@ -26,7 +26,7 @@ router.get('/layout', optionalAuth, async (req, res) => {
   try {
     const row = await queryOne('SELECT * FROM organigramme_layout ORDER BY id DESC LIMIT 1')
     res.json({ success: true, data: row || null })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // PUT /api/organigramme/layout — save layout (admin/etat-major only)
@@ -43,7 +43,7 @@ router.put('/layout', auth, async (req, res) => {
         [JSON.stringify(layout), req.user.effectif_id || req.user.id])
     }
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // POST /api/organigramme — add node
@@ -56,7 +56,7 @@ router.post('/', auth, async (req, res) => {
       [effectif_id || null, titre_poste || null, parent_id || null, unite_id || null, ordre || 0, pos_x ?? 0, pos_y ?? 0]
     )
     res.json({ success: true, data: { id: result.insertId } })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // PUT /api/organigramme/bulk — save entire tree order (MUST be before /:id)
@@ -70,7 +70,7 @@ router.put('/bulk/save', auth, async (req, res) => {
         [n.parent_id || null, n.ordre || 0, n.pos_x ?? 0, n.pos_y ?? 0, n.id])
     }
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // PUT /api/organigramme/:id
@@ -83,7 +83,7 @@ router.put('/:id', auth, async (req, res) => {
       [effectif_id || null, titre_poste || null, parent_id || null, unite_id || null, ordre || 0, pos_x ?? 0, pos_y ?? 0, req.params.id]
     )
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // DELETE /api/organigramme/:id
@@ -95,7 +95,7 @@ router.delete('/:id', auth, async (req, res) => {
     if (node) await pool.execute('UPDATE organigramme SET parent_id=? WHERE parent_id=?', [node.parent_id, req.params.id])
     await pool.execute('DELETE FROM organigramme WHERE id=?', [req.params.id])
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 module.exports = router

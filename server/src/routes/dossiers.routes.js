@@ -37,7 +37,7 @@ router.get('/', auth, async (req, res) => {
     `, params)
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -101,7 +101,7 @@ router.get('/effectif/:effectifId', auth, async (req, res) => {
       }
     })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -127,7 +127,7 @@ router.get('/:id', auth, async (req, res) => {
 
     res.json({ success: true, data: { dossier, entrees } })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -142,7 +142,7 @@ router.post('/', auth, async (req, res) => {
     )
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -156,7 +156,7 @@ router.post('/:id/entrees', auth, async (req, res) => {
     )
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -170,7 +170,7 @@ router.put('/:id', auth, async (req, res) => {
     )
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -180,7 +180,7 @@ router.delete('/:id', auth, admin, async (req, res) => {
     await pool.execute('DELETE FROM dossiers WHERE id = ?', [req.params.id])
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -195,7 +195,7 @@ router.delete('/entrees/:id', auth, async (req, res) => {
     await pool.execute('DELETE FROM dossier_entrees WHERE id = ?', [req.params.id])
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -206,7 +206,7 @@ router.get('/:id/layout', auth, async (req, res) => {
     if (!row || !row.layout_json) return res.json({ blocks: null })
     const data = typeof row.layout_json === 'string' ? JSON.parse(row.layout_json) : row.layout_json
     res.json(data)
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // PUT /api/dossiers/:id/layout
@@ -220,7 +220,7 @@ router.put('/:id/layout', auth, async (req, res) => {
       [req.params.id, json]
     )
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 module.exports = router

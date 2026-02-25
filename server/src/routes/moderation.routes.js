@@ -58,7 +58,7 @@ router.get('/pending', auth, async (req, res) => {
       data: { docs, permissions, rapports, interdits }
     })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 

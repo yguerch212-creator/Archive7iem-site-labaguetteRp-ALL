@@ -5,7 +5,7 @@
 $DB_HOST = 'localhost';       // tu peux tester 127.0.0.1 si ça échoue
 $DB_NAME = 'archives7e';
 $DB_USER = 'archives_user';
-$DB_PASS = 'Admin123';        // ton mot de passe
+$DB_PASS = getenv('DB_PASS') ?: '';  // Set via environment variable
 
 $dsn = "mysql:host=$DB_HOST;dbname=$DB_NAME;charset=utf8mb4";
 

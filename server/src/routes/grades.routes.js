@@ -7,7 +7,7 @@ router.get('/', async (req, res) => {
     const grades = await query('SELECT id, nom_complet, rang, categorie, unite_id FROM grades ORDER BY rang DESC')
     res.json({ success: true, data: grades })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -20,7 +20,7 @@ router.get('/:id', async (req, res) => {
     }
     res.json({ success: true, data: grade[0] })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 

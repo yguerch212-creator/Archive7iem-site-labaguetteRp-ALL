@@ -39,7 +39,7 @@ router.get('/:effectifId', optionalAuth, async (req, res) => {
       [req.params.effectifId]
     )
     res.json({ success: true, data: { operations: solde, balance: parseFloat(balRow.balance) || 0 } })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // POST /api/solde/:effectifId/credit — Ajouter solde manuellement (officier/admin)
@@ -54,7 +54,7 @@ router.post('/:effectifId/credit', auth, async (req, res) => {
       [req.params.effectifId, 'prime', montant, motif || 'Crédit manuel', req.user.id]
     )
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // POST /api/solde/:effectifId/debit — Retrait (officier/admin)
@@ -69,7 +69,7 @@ router.post('/:effectifId/debit', auth, async (req, res) => {
       [req.params.effectifId, 'depense', montant, motif || 'Débit', req.user.id]
     )
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // POST /api/solde/auto-payday — Auto-pay all effectifs (called by cron or manually)
@@ -93,7 +93,7 @@ router.post('/auto-payday', auth, async (req, res) => {
       count++
     }
     res.json({ success: true, message: `Solde versée à ${count} effectifs` })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // GET /api/solde/grille — Grille de solde par grade
@@ -107,7 +107,7 @@ router.get('/grille/all', optionalAuth, async (req, res) => {
       return { grade: g.nom_complet, rang: g.rang, solde }
     })
     res.json({ success: true, data: grille })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // === CRON AUTO-PAYDAY : Tous les vendredis à 20h (UTC+1 = 19h UTC) ===

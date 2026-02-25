@@ -12,7 +12,7 @@ router.get('/', optionalAuth, async (req, res) => {
     const rows = await query('SELECT * FROM decorations ORDER BY categorie, rang DESC')
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -28,7 +28,7 @@ router.get('/effectif/:id', optionalAuth, async (req, res) => {
     `, [req.params.id])
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -56,7 +56,7 @@ router.post('/effectif/:id', auth, async (req, res) => {
     } catch(e) { console.error("Auto-op error:", e.message) }
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -71,7 +71,7 @@ router.delete('/effectif-decoration/:id', auth, recenseur, async (req, res) => {
     await pool.execute('DELETE FROM effectif_decorations WHERE id = ?', [req.params.id])
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 

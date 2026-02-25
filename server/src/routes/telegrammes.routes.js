@@ -77,7 +77,7 @@ router.get('/', optionalAuth, async (req, res) => {
     }
 
     res.json({ success: true, data: rows, unread })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // GET /api/telegrammes/:id
@@ -108,7 +108,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
     }
 
     res.json({ success: true, data: row })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // POST /api/telegrammes — send (supports multiple destinataires)
@@ -155,7 +155,7 @@ router.post('/', auth, async (req, res) => {
     notifyTelegramme({ numero, expediteur_nom: expNom, destinataire_nom: destNomLegacy, objet, priorite: priorite || 'Normal', prive }).catch(() => {})
 
     res.json({ success: true, data: { id: result.insertId, numero } })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // PUT /api/telegrammes/:id/archiver
@@ -171,7 +171,7 @@ router.put('/:id/archiver', auth, async (req, res) => {
     }
     await pool.execute('UPDATE telegrammes SET statut = "Archivé" WHERE id = ?', [req.params.id])
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // DELETE /api/telegrammes/:id
@@ -180,7 +180,7 @@ router.delete('/:id', auth, async (req, res) => {
     if (!req.user.isAdmin) return res.status(403).json({ success: false, message: 'Admin requis' })
     await pool.execute('DELETE FROM telegrammes WHERE id = ?', [req.params.id])
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 module.exports = router

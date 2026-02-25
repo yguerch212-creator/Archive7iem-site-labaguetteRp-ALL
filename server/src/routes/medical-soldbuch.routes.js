@@ -22,7 +22,7 @@ router.get('/hospitalisations', optionalAuth, async (req, res) => {
     if (effectif_id) { sql += ' AND h.effectif_id = ?'; params.push(effectif_id) }
     sql += ' ORDER BY h.date_entree DESC'
     res.json({ success: true, data: await query(sql, params) })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 router.post('/hospitalisations', auth, async (req, res) => {
@@ -37,14 +37,14 @@ router.post('/hospitalisations', auth, async (req, res) => {
       [effectif_id || null, effectif_nom_libre || null, fmtDate(date_entree), fmtDate(date_sortie) || null, etablissement, motif, diagnostic || null, traitement || null, medecin_id || null, medecin_nom || null, notes || null, req.user.id]
     )
     res.json({ success: true, data: { id: result.insertId } })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 router.delete('/hospitalisations/:id', auth, async (req, res) => {
   try {
     if (!req.user.isAdmin && !req.user.isSanitaets && !req.user.isRecenseur) return res.status(403).json({ success: false, message: 'Non autorisé' })
     await pool.execute('DELETE FROM hospitalisations WHERE id = ?', [req.params.id]); res.json({ success: true }) }
-  catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  catch (err) { console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" }) }
 })
 
 // ==================== VACCINATIONS ====================
@@ -58,7 +58,7 @@ router.get('/vaccinations', optionalAuth, async (req, res) => {
     if (effectif_id) { sql += ' AND v.effectif_id = ?'; params.push(effectif_id) }
     sql += ' ORDER BY v.date_vaccination DESC'
     res.json({ success: true, data: await query(sql, params) })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 router.post('/vaccinations', auth, async (req, res) => {
@@ -73,14 +73,14 @@ router.post('/vaccinations', auth, async (req, res) => {
       [effectif_id || null, effectif_nom_libre || null, type_vaccin, fmtDate(date_vaccination), fmtDate(date_rappel) || null, medecin_id || null, medecin_nom || null, lot || null, notes || null, req.user.id]
     )
     res.json({ success: true, data: { id: result.insertId } })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 router.delete('/vaccinations/:id', auth, async (req, res) => {
   try {
     if (!req.user.isAdmin && !req.user.isSanitaets && !req.user.isRecenseur) return res.status(403).json({ success: false, message: 'Non autorisé' })
     await pool.execute('DELETE FROM vaccinations WHERE id = ?', [req.params.id]); res.json({ success: true }) }
-  catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  catch (err) { console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" }) }
 })
 
 // ==================== BLESSURES ====================
@@ -94,7 +94,7 @@ router.get('/blessures', optionalAuth, async (req, res) => {
     if (effectif_id) { sql += ' AND b.effectif_id = ?'; params.push(effectif_id) }
     sql += ' ORDER BY b.date_blessure DESC'
     res.json({ success: true, data: await query(sql, params) })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 router.post('/blessures', auth, async (req, res) => {
@@ -109,14 +109,14 @@ router.post('/blessures', auth, async (req, res) => {
       [effectif_id || null, effectif_nom_libre || null, fmtDate(date_blessure), type_blessure, localisation, circonstances || null, gravite || 'legere', sequelles || null, medecin_id || null, medecin_nom || null, notes || null, req.user.id]
     )
     res.json({ success: true, data: { id: result.insertId } })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 router.delete('/blessures/:id', auth, async (req, res) => {
   try {
     if (!req.user.isAdmin && !req.user.isSanitaets && !req.user.isRecenseur) return res.status(403).json({ success: false, message: 'Non autorisé' })
     await pool.execute('DELETE FROM blessures WHERE id = ?', [req.params.id]); res.json({ success: true }) }
-  catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  catch (err) { console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" }) }
 })
 
 // ==================== SYNC: Update effectif physical data ====================
@@ -134,7 +134,7 @@ router.put('/sync-physique/:effectifId', auth, async (req, res) => {
     params.push(req.params.effectifId)
     await pool.execute(`UPDATE effectifs SET ${fields.join(', ')} WHERE id = ?`, params)
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // ==================== SOINS AU FRONT ====================
@@ -155,7 +155,7 @@ router.get('/soins', optionalAuth, async (req, res) => {
     if (date_to) { sql += ' AND s.date_soin <= ?'; params.push(date_to + ' 23:59:59') }
     sql += ' ORDER BY s.date_soin DESC LIMIT 500'
     res.json({ success: true, data: await query(sql, params) })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // POST /api/medical-soldbuch/soins — Quick log a soin (Sanitäts)
@@ -170,7 +170,7 @@ router.post('/soins', auth, async (req, res) => {
       [medecinId, patient_id || null, patient_nom_libre || null, type_soin || 'Premiers soins (terrain)', contexte || 'Au combat', notes || null, req.user.id]
     )
     res.json({ success: true, data: { id: result.insertId } })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // GET /api/medical-soldbuch/stats — Medical stats (for officers)
@@ -202,7 +202,7 @@ router.get('/stats', auth, async (req, res) => {
       blessures_total: totalBlessures[0]?.total || 0,
       vaccinations_total: totalVaccins[0]?.total || 0,
     }})
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // ==================== AUTO-RECONCILIATION ====================
@@ -231,7 +231,7 @@ router.put('/reconcile/:effectifId', auth, async (req, res) => {
       }
     }
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 module.exports = router

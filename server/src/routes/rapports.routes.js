@@ -28,7 +28,7 @@ router.get('/next-number', auth, async (req, res) => {
     const num = String((row?.cnt || 0) + 1).padStart(3, '0')
     res.json({ success: true, data: { numero: `${prefix}-${year}-${num}` } })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -37,7 +37,7 @@ router.get('/templates/list', auth, async (req, res) => {
   try {
     const rows = await query('SELECT * FROM rapport_templates ORDER BY type, nom')
     res.json({ success: true, data: rows })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // GET /api/rapports (guest: only published+approved, user: all)
@@ -62,7 +62,7 @@ router.get('/', optionalAuth, async (req, res) => {
     `)
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -73,7 +73,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
     if (!row) return res.status(404).json({ success: false, message: 'Rapport non trouvé' })
     res.json({ success: true, data: row })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -155,7 +155,7 @@ router.post('/', auth, async (req, res) => {
 
     res.json({ success: true, data: { id: rapportId } })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -186,7 +186,7 @@ router.put('/:id/publish', auth, async (req, res) => {
     }
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -200,7 +200,7 @@ router.put('/:id/redact', auth, async (req, res) => {
     await pool.execute('UPDATE rapports SET redactions = ? WHERE id = ?', [JSON.stringify(redactions), req.params.id])
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -284,7 +284,7 @@ router.put('/:id/prendre-en-charge', auth, async (req, res) => {
     res.json({ success: true, data: { affaire_id: affaireId, numero } })
   } catch (err) {
     console.error('Prendre en charge error:', err)
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -299,7 +299,7 @@ router.get('/moderation/queue', auth, async (req, res) => {
     `)
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -318,7 +318,7 @@ router.put('/:id/moderate', auth, async (req, res) => {
     }
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -328,7 +328,7 @@ router.delete('/:id', auth, admin, async (req, res) => {
     await pool.execute('DELETE FROM rapports WHERE id = ?', [req.params.id])
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -341,7 +341,7 @@ router.get('/:id/layout', optionalAuth, async (req, res) => {
     if (!row || !row.layout_json) return res.json({ blocks: null })
     const data = typeof row.layout_json === 'string' ? JSON.parse(row.layout_json) : row.layout_json
     res.json(data)
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // PUT /api/rapports/:id/layout — Save layout blocks
@@ -355,7 +355,7 @@ router.put('/:id/layout', auth, async (req, res) => {
       [req.params.id, json]
     )
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // PUT /api/rapports/:id/validate — Validate rapport (hierarchical chain)
@@ -410,7 +410,7 @@ router.put('/:id/validate', auth, async (req, res) => {
     logActivity(req, 'validate_rapport', 'rapport', req.params.id, `Validé par ${validatorName}`)
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -453,7 +453,7 @@ router.put('/:id/sign', auth, async (req, res) => {
 
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 

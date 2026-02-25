@@ -26,7 +26,7 @@ router.get('/', optionalAuth, async (req, res) => {
     )
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -43,7 +43,7 @@ router.get('/pending', auth, async (req, res) => {
     )
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -59,7 +59,7 @@ router.post('/repertoire', auth, async (req, res) => {
     )
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -79,7 +79,7 @@ router.post('/', auth, async (req, res) => {
     )
     res.json({ success: true, data: { id: result.insertId, statut } })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -93,7 +93,7 @@ router.put('/:id/approve', auth, async (req, res) => {
       [decision, decision === 'approuve' ? 1 : 0, req.params.id])
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -108,7 +108,7 @@ router.put('/:id', auth, async (req, res) => {
     )
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -123,7 +123,7 @@ router.delete('/:id', auth, admin, async (req, res) => {
     await pool.execute('DELETE FROM documentation WHERE id = ?', [req.params.id])
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 

@@ -26,7 +26,7 @@ router.get('/', optionalAuth, async (req, res) => {
     `)
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -43,7 +43,7 @@ router.get('/effectif/:effectif_id', auth, async (req, res) => {
     `, [req.params.effectif_id])
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -84,7 +84,7 @@ router.post('/', auth, feldgendarmerie, async (req, res) => {
     notifyInterdit({ effectif_nom: effectif_nom || 'Inconnu', type, motif, ordonne_par: `${req.user.prenom || ''} ${req.user.nom || req.user.username}`.trim() }).catch(() => {})
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -98,7 +98,7 @@ router.put('/:id/lever', auth, feldgendarmerie, async (req, res) => {
     )
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -109,7 +109,7 @@ router.delete('/:id', auth, async (req, res) => {
     await pool.execute('DELETE FROM interdits_front WHERE id = ?', [req.params.id])
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 

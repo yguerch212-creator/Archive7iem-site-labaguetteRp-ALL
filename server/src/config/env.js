@@ -4,7 +4,7 @@ module.exports = {
   port: parseInt(process.env.PORT || '3001'),
   nodeEnv: process.env.NODE_ENV || 'development',
   jwt: {
-    secret: process.env.JWT_SECRET || 'dev-secret-change-me',
+    secret: process.env.JWT_SECRET || (() => { console.error('FATAL: JWT_SECRET not set in .env'); process.exit(1); })(),
     expiresIn: '24h'
   },
   db: {

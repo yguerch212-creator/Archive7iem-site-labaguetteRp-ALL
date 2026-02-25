@@ -60,7 +60,7 @@ router.post('/upload', auth, upload.single('file'), async (req, res) => {
     })
   } catch (err) {
     console.error('Upload error:', err)
-    res.status(500).json({ error: err.message || 'Erreur upload' })
+    console.error(err); res.status(500).json({ error: 'Erreur serveur' })
   }
 })
 

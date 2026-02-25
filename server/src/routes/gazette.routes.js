@@ -8,7 +8,7 @@ router.get('/', optionalAuth, async (req, res) => {
   try {
     const rows = await query('SELECT id, numero, semaine, titre, published, created_at FROM gazettes ORDER BY numero DESC')
     res.json({ success: true, data: rows })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // GET /api/gazette/:id
@@ -17,7 +17,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
     const g = await queryOne('SELECT * FROM gazettes WHERE id = ?', [req.params.id])
     if (!g) return res.status(404).json({ success: false, message: 'Gazette introuvable' })
     res.json({ success: true, data: g })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // GET /api/gazette/generate/preview — Auto-generate content from this week's data
@@ -73,7 +73,7 @@ router.get('/generate/preview', auth, async (req, res) => {
     const nextNum = (lastGazette?.n || 0) + 1
     
     res.json({ success: true, numero: nextNum, semaine: `S${weekNum}-${now.getFullYear()}`, contenu })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // POST /api/gazette — Create/publish
@@ -86,7 +86,7 @@ router.post('/', auth, async (req, res) => {
       [numero, semaine || null, titre || `Gazette N°${numero}`, contenu, published ? 1 : 0]
     )
     res.json({ success: true, data: { id: result.insertId } })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // DELETE /api/gazette/:id
@@ -95,7 +95,7 @@ router.delete('/:id', auth, async (req, res) => {
     if (!req.user.isAdmin) return res.status(403).json({ error: 'Admin uniquement' })
     await pool.execute('DELETE FROM gazettes WHERE id = ?', [req.params.id])
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 module.exports = router

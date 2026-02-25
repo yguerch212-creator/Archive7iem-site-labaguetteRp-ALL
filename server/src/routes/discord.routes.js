@@ -42,7 +42,7 @@ router.post('/notify', auth, async (req, res) => {
 
     res.json({ success: true, message: 'DM envoyé' })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 

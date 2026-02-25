@@ -5,11 +5,21 @@ header('Content-Type: application/json');
 session_start();
 
 try {
+  // Session check
+  if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['ok'=>false,'error'=>'Non authentifié']);
+    exit;
+  }
+
   if (!isset($_FILES['file'])) throw new Exception('Aucun fichier envoyé.');
 
   $file = $_FILES['file'];
   $allowed = ['image/png','image/jpeg','image/jpg','image/gif','video/mp4','video/webm'];
-  if (!in_array($file['type'], $allowed)) throw new Exception('Type non autorisé.');
+  // Server-side MIME check using finfo (not trusting client)
+  $finfo = new finfo(FILEINFO_MIME_TYPE);
+  $realMime = $finfo->file($file['tmp_name']);
+  if (!in_array($realMime, $allowed)) throw new Exception('Type non autorisé.');
 
   $targetDir = __DIR__ . '/../uploads/rapports/';
   if (!is_dir($targetDir)) mkdir($targetDir, 0775, true);

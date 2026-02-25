@@ -62,7 +62,7 @@ router.get('/:effectifId', optionalAuth, async (req, res) => {
       }
     })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -83,7 +83,7 @@ router.put('/:effectifId/layout', auth, async (req, res) => {
     }
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -115,7 +115,7 @@ router.put('/:effectifId/book-cells', auth, async (req, res) => {
     }
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -147,7 +147,7 @@ router.put('/:effectifId/sign', auth, async (req, res) => {
 
     res.json({ success: true, message: 'Signature enregistrée' })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -188,7 +188,7 @@ router.put('/:effectifId/details', auth, async (req, res) => {
       res.json({ success: true, message: 'Details enregistres' })
     }
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -201,7 +201,7 @@ router.put('/:effectifId/details/validate', auth, async (req, res) => {
     await pool.execute('UPDATE effectifs SET soldbuch_details_pending = 0 WHERE id = ?', [req.params.effectifId])
     res.json({ success: true, message: 'Details valides' })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -216,7 +216,7 @@ router.put('/:effectifId/stamp', auth, async (req, res) => {
     await pool.execute('UPDATE effectifs SET stamp_path = ? WHERE id = ?', [stamp_path, req.params.effectifId])
     res.json({ success: true, message: 'Tampon apposé' })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 

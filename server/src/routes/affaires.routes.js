@@ -217,7 +217,7 @@ router.get('/pieces/:pid/layout', optionalAuth, async (req, res) => {
   try {
     const layout = await queryOne('SELECT * FROM piece_layouts WHERE piece_id = ?', [req.params.pid])
     res.json({ success: true, data: layout || null })
-  } catch (err) { res.status(500).json({ error: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Erreur serveur' }) }
 })
 
 // PUT /api/affaires/pieces/:pid/layout
@@ -234,7 +234,7 @@ router.put('/pieces/:pid/layout', auth, async (req, res) => {
         [req.params.pid, JSON.stringify(layout), html_published || null, req.user.id])
     }
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ error: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Erreur serveur' }) }
 })
 
 // ==================== SIGNATURES ====================
@@ -353,7 +353,7 @@ router.get('/:id/layout', optionalAuth, async (req, res) => {
     if (!row || !row.layout_json) return res.json({ blocks: null })
     const data = typeof row.layout_json === 'string' ? JSON.parse(row.layout_json) : row.layout_json
     res.json(data)
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // PUT /api/affaires/:id/layout
@@ -367,7 +367,7 @@ router.put('/:id/layout', auth, async (req, res) => {
       [req.params.id, json]
     )
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 module.exports = router

@@ -88,7 +88,7 @@ router.get('/', optionalAuth, async (req, res) => {
       stats: { total: totalEffectifs, saisis, valides }
     })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -109,7 +109,7 @@ router.get('/mine', auth, async (req, res) => {
     `, [semaine, req.user.effectif_id])
     res.json({ success: true, data: row, semaine, semaineActuelle: getCurrentWeek() })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -155,7 +155,7 @@ router.put('/saisie', auth, async (req, res) => {
 
     res.json({ success: true, total_heures: Math.round(totalHeures * 10) / 10 })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -167,7 +167,7 @@ router.get('/historique/:effectif_id', auth, async (req, res) => {
     `, [req.params.effectif_id])
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -209,7 +209,7 @@ router.get('/recap', auth, async (req, res) => {
 
     res.json({ success: true, data: { rows, perms, semaine, stats: { total, remplis, valides, nonRemplis: nonRemplis.length } } })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -240,7 +240,7 @@ router.get('/permissions', auth, async (req, res) => {
     const rows = await query(sql, params)
     res.json({ success: true, data: rows })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -262,7 +262,7 @@ router.post('/permissions', auth, async (req, res) => {
     )
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -282,7 +282,7 @@ router.put('/permissions/:id/traiter', auth, async (req, res) => {
     )
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
 })
 
@@ -292,7 +292,7 @@ router.delete('/:id', auth, async (req, res) => {
     if (!req.user.isAdmin) return res.status(403).json({ success: false, message: 'Admin requis' })
     await pool.execute('DELETE FROM pds_semaines WHERE id = ?', [req.params.id])
     res.json({ success: true })
-  } catch (err) { res.status(500).json({ success: false, message: err.message }) }
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 module.exports = router
