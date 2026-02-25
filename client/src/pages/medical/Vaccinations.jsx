@@ -37,7 +37,7 @@ export default function Vaccinations() {
 
   const remove = async (id) => {
     if (!confirm('Supprimer ?')) return
-    try { await api.delete(`/medical-soldbuch/vaccinations/${id}`); load() } catch { alert('Erreur') }
+    try { setItems(prev => prev.filter(x => x.id !== id)); await api.delete(`/medical-soldbuch/vaccinations/${id}`) } catch { alert('Erreur'); load() }
   }
 
   const fmt = (d) => { if (!d) return '—'; try { return new Date(d).toLocaleDateString('fr-FR') } catch { return d } }

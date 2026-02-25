@@ -28,12 +28,14 @@ export default function InterditsFront() {
   const submit = async (e) => {
     e.preventDefault()
     try {
-      await api.post('/interdits', form)
+      const res = await api.post('/interdits', form)
       setShowForm(false)
       setForm({ effectif_id: '', effectif_nom: '', motif: '', type: 'Disciplinaire', date_debut: new Date().toISOString().slice(0, 10), date_fin: '', condition_fin: '', notes: '' })
       setMessage({ type: 'success', text: 'Interdit de front prononcé ✓' })
       setTimeout(() => setMessage(null), 3000)
-      load()
+      // Optimistic: add to local list then refresh in background
+      if (res.data?.data) setInterdits(prev => [res.data.data, ...prev])
+      else load()
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur' })
     }
@@ -44,9 +46,10 @@ export default function InterditsFront() {
     if (!motif) return
     try {
       await api.put(`/interdits/${id}/lever`, { motif_levee: motif })
+      // Optimistic: update local state
+      setInterdits(prev => prev.map(i => i.id === id ? { ...i, actif: 0, motif_levee: motif, date_levee: new Date().toISOString() } : i))
       setMessage({ type: 'success', text: 'Interdit levé ✓' })
       setTimeout(() => setMessage(null), 3000)
-      load()
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur' })
     }
@@ -170,7 +173,7 @@ export default function InterditsFront() {
                       {i.actif && <button className="btn btn-sm btn-primary" style={{ fontSize: '0.75rem', padding: '4px 10px' }} onClick={() => lever(i.id)}>✅ Lever</button>}
                       {user?.isAdmin && <button className="btn btn-sm" style={{ fontSize: '0.75rem', padding: '4px 8px', color: 'var(--danger)' }} onClick={async () => {
                         if (!confirm('Supprimer cet interdit ?')) return
-                        try { await api.delete(`/interdits/${i.id}`); load() } catch (err) { alert('Erreur') }
+                        try { setInterdits(prev => prev.filter(x => x.id !== i.id)); await api.delete(`/interdits/${i.id}`) } catch (err) { alert('Erreur'); load() }
                       }}>🗑️</button>}
                     </div>
                   </td>

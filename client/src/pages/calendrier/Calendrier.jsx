@@ -39,7 +39,7 @@ export default function Calendrier() {
 
   const remove = async (id) => {
     if (!confirm('Supprimer cet événement ?')) return
-    try { await api.delete(`/calendrier/${id}`); load() } catch { alert('Erreur') }
+    try { setEvents(prev => prev.filter(e => e.id !== id)); await api.delete(`/calendrier/${id}`) } catch { alert('Erreur'); load() }
   }
 
   // Build calendar grid

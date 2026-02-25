@@ -107,25 +107,52 @@ export default function SituationFront() {
 
   const post = async (data) => {
     if (!selected) return
+    const heure = getHeure()
+    const label = data.type_event === 'prise' ? '🚩 Prise enregistrée'
+      : data.type_event === 'perte' ? '🏳️ Perte enregistrée'
+      : data.type_event === 'debut' ? '🔔 Début enregistré'
+      : data.type_event === 'fin' ? '🏁 Fin enregistrée'
+      : data.type_event === 'attaque' ? '⚔️ Attaque enregistrée'
+      : '🛡️ Défense enregistrée'
+
+    // Optimistic: add event locally immediately
+    const now = new Date()
+    const tempId = Date.now()
+    const vp = sel?.vps?.find(v => v.id === data.vp_id)
+    const optimisticEvent = {
+      id: tempId, carte_id: selected, ...data, heure,
+      date_irl: now.toISOString(), vp_nom: vp?.nom || null, vp_numero: vp?.numero || null,
+      rapporte_par_nom: user?.prenom ? `${user.prenom} ${user.nom}` : null
+    }
+    setEvents(prev => [optimisticEvent, ...prev])
+    setFlash(label)
+    setTimeout(() => setFlash(null), 2500)
+    setTab('history')
+
     try {
-      await api.post(`/front/cartes/${selected}/events`, { ...data, heure: getHeure() })
-      const label = data.type_event === 'prise' ? '🚩 Prise enregistrée'
-        : data.type_event === 'perte' ? '🏳️ Perte enregistrée'
-        : data.type_event === 'debut' ? '🔔 Début enregistré'
-        : data.type_event === 'fin' ? '🏁 Fin enregistrée'
-        : data.type_event === 'attaque' ? '⚔️ Attaque enregistrée'
-        : '🛡️ Défense enregistrée'
-      setFlash(label)
-      setTimeout(() => setFlash(null), 2500)
-      setTab('history')
-      const r = await api.get(`/front/cartes/${selected}/events`); setEvents(r.data.data)
-      load()
-    } catch (err) { alert(err.response?.data?.message || 'Erreur') }
+      const r = await api.post(`/front/cartes/${selected}/events`, { ...data, heure })
+      // Replace temp event with real one (with server ID)
+      setEvents(prev => prev.map(e => e.id === tempId ? { ...e, id: r.data.data.id } : e))
+      load() // refresh cartes stats in background
+    } catch (err) {
+      // Rollback on error
+      setEvents(prev => prev.filter(e => e.id !== tempId))
+      alert(err.response?.data?.message || 'Erreur')
+    }
   }
 
   const deleteEvent = async (id) => {
     if (!confirm('Supprimer ?')) return
-    try { await api.delete(`/front/events/${id}`); openCarte(selected); load() } catch {}
+    // Optimistic: remove locally first
+    const backup = events.find(e => e.id === id)
+    setEvents(prev => prev.filter(e => e.id !== id))
+    try {
+      await api.delete(`/front/events/${id}`)
+      load() // refresh carte stats
+    } catch {
+      // Rollback
+      if (backup) setEvents(prev => [...prev, backup].sort((a, b) => new Date(b.date_irl) - new Date(a.date_irl)))
+    }
   }
 
   const sel = cartes.find(c => c.id === selected)

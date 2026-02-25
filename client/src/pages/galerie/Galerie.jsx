@@ -50,8 +50,8 @@ export default function Galerie() {
     } catch (err) { setMsg(err.response?.data?.message || 'Erreur') }
   }
 
-  const approve = async (id) => { try { await api.put(`/galerie/${id}/approve`); load() } catch {} }
-  const remove = async (id) => { if (confirm('Supprimer ?')) { try { await api.delete(`/galerie/${id}`); load(); setSelected(null) } catch {} } }
+  const approve = async (id) => { try { setPhotos(prev => prev.map(p => p.id === id ? { ...p, approved: 1 } : p)); await api.put(`/galerie/${id}/approve`) } catch { load() } }
+  const remove = async (id) => { if (confirm('Supprimer ?')) { try { setPhotos(prev => prev.filter(p => p.id !== id)); setSelected(null); await api.delete(`/galerie/${id}`) } catch { load() } } }
 
   return (
     <div className="container" style={{ paddingBottom: 'var(--space-xxl)' }}>

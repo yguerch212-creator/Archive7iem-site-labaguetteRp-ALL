@@ -39,7 +39,7 @@ export default function Hospitalisations() {
 
   const remove = async (id) => {
     if (!confirm('Supprimer cette hospitalisation ?')) return
-    try { await api.delete(`/medical-soldbuch/hospitalisations/${id}`); load() } catch { alert('Erreur') }
+    try { setItems(prev => prev.filter(x => x.id !== id)); await api.delete(`/medical-soldbuch/hospitalisations/${id}`) } catch { alert('Erreur'); load() }
   }
 
   const fmt = (d) => { if (!d) return '—'; try { return new Date(d).toLocaleDateString('fr-FR') } catch { return d } }

@@ -47,27 +47,33 @@ export default function Telegrammes() {
     try {
       const res = await api.get(`/telegrammes/${t.id}`)
       setSelected(res.data.data)
-      load()
     } catch (err) { console.error(err) }
   }
 
   const archiver = async (id) => {
     try {
-      await api.put(`/telegrammes/${id}/archiver`)
+      // Optimistic: remove from list
+      setTelegrammes(prev => prev.filter(t => t.id !== id))
       setSelected(null)
-      load()
-    } catch (err) { console.error(err) }
+      await api.put(`/telegrammes/${id}/archiver`)
+    } catch (err) { console.error(err); load() }
   }
 
   const submit = async (e) => {
     e.preventDefault()
     try {
       const res = await api.post('/telegrammes', { ...form, destinataires: form.destinataires })
+      const newTel = res.data.data
       setForm({ destinataires: [], objet: '', contenu: '', priorite: 'Normal', prive: false }); setDestInput('')
       setShowForm(false)
-      setMessage({ type: 'success', text: `Télégramme ${res.data.data.numero} envoyé ✓` })
+      setMessage({ type: 'success', text: `Télégramme ${newTel.numero} envoyé ✓` })
       setTimeout(() => setMessage(null), 3000)
-      load()
+      // Add to local list if on 'tous' or 'envoyes' tab
+      if (tab === 'tous' || tab === 'envoyes') {
+        setTelegrammes(prev => [newTel, ...prev])
+      } else {
+        load() // different tab, just refresh
+      }
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur' })
     }
@@ -113,7 +119,11 @@ export default function Telegrammes() {
           {user?.isAdmin && (
             <button className="btn btn-danger btn-small" onClick={async () => {
               if (!confirm('Supprimer ce télégramme ?')) return
-              try { await api.delete(`/telegrammes/${t.id}`); setSelected(null); load() } catch (err) { alert(err.response?.data?.message || 'Erreur') }
+              try {
+                setSelected(null)
+                setTelegrammes(prev => prev.filter(tg => tg.id !== t.id))
+                await api.delete(`/telegrammes/${t.id}`)
+              } catch (err) { alert(err.response?.data?.message || 'Erreur'); load() }
             }}>🗑️ Supprimer</button>
           )}
         </div>

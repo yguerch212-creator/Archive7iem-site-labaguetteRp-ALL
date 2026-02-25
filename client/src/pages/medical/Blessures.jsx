@@ -41,7 +41,7 @@ export default function Blessures() {
 
   const remove = async (id) => {
     if (!confirm('Supprimer ?')) return
-    try { await api.delete(`/medical-soldbuch/blessures/${id}`); load() } catch { alert('Erreur') }
+    try { setItems(prev => prev.filter(x => x.id !== id)); await api.delete(`/medical-soldbuch/blessures/${id}`) } catch { alert('Erreur'); load() }
   }
 
   const fmt = (d) => { if (!d) return '—'; try { return new Date(d).toLocaleDateString('fr-FR') } catch { return d } }
