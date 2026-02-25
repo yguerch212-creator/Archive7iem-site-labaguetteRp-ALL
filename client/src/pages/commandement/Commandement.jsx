@@ -234,20 +234,43 @@ export default function Commandement() {
           <div className="popup-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 700, maxHeight: '85vh', overflow: 'auto' }}>
             <button className="popup-close" onClick={() => setShowFront(false)}>✕</button>
             <h2 style={{ marginTop: 0, textAlign: 'center' }}>⚔️ Rapport du Front</h2>
-            <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
-              <select className="form-input" value={frontPeriode} onChange={async e => {
-                setFrontPeriode(e.target.value)
-                try { const r = await api.get(`/front/rapport?periode=${e.target.value}&date_debut=${frontDate}&date_fin=${frontDate}`); setFrontStats(r.data.data) } catch {}
-              }} style={{ maxWidth: 130 }}>
-                <option value="jour">📅 Jour</option>
-                <option value="semaine">📆 Semaine</option>
-              </select>
-              <input type="date" className="form-input" value={frontDate} onChange={async e => {
-                setFrontDate(e.target.value)
-                try { const r = await api.get(`/front/rapport?periode=${frontPeriode}&date_debut=${e.target.value}&date_fin=${e.target.value}`); setFrontStats(r.data.data) } catch {}
-              }} style={{ maxWidth: 160 }} />
-              <button className="btn btn-secondary btn-small" onClick={() => window.print()}>🖨️ Imprimer</button>
-            </div>
+            {(() => {
+              const loadFront = async (p, d) => {
+                try { const r = await api.get(`/front/rapport?periode=${p}&date_debut=${d}`); setFrontStats(r.data.data) } catch {}
+              }
+              const shiftFrontDate = (days) => {
+                const nd = new Date(frontDate + 'T12:00:00'); nd.setDate(nd.getDate() + days)
+                const s = `${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}-${String(nd.getDate()).padStart(2,'0')}`
+                setFrontDate(s); loadFront(frontPeriode, s)
+              }
+              const todayStr = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` })()
+              // RP week label
+              const fRef = new Date(frontDate + 'T12:00:00')
+              const fDay = fRef.getDay(); const fDiff = fDay >= 5 ? fDay - 5 : fDay + 2
+              const fFri = new Date(fRef); fFri.setDate(fRef.getDate() - fDiff)
+              const fFriEnd = new Date(fFri); fFriEnd.setDate(fFri.getDate() + 7)
+              const rpLabel = `${fFri.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})} — ${fFriEnd.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'})}`
+              return (
+                <div style={{ marginBottom: 'var(--space-md)' }}>
+                  <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 8 }}>
+                    <button className={`btn btn-sm ${frontPeriode==='jour'?'btn-primary':'btn-secondary'}`} onClick={() => { setFrontPeriode('jour'); loadFront('jour', frontDate) }}>📅 Jour</button>
+                    <button className={`btn btn-sm ${frontPeriode==='semaine'?'btn-primary':'btn-secondary'}`} onClick={() => { setFrontPeriode('semaine'); loadFront('semaine', frontDate) }}>📆 Semaine RP</button>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <button className="btn btn-sm btn-secondary" onClick={() => shiftFrontDate(frontPeriode === 'jour' ? -1 : -7)}>◀</button>
+                    <button className={`btn btn-sm ${frontDate===todayStr?'btn-primary':'btn-secondary'}`} onClick={() => { setFrontDate(todayStr); loadFront(frontPeriode, todayStr) }}>Aujourd'hui</button>
+                    <button className="btn btn-sm btn-secondary" onClick={() => shiftFrontDate(frontPeriode === 'jour' ? 1 : 7)}>▶</button>
+                    <input type="date" className="form-input" value={frontDate} onChange={e => { setFrontDate(e.target.value); loadFront(frontPeriode, e.target.value) }} style={{ maxWidth: 150, fontSize: '0.8rem', padding: '4px 6px' }} />
+                    <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>🖨️</button>
+                  </div>
+                  <div style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: 6, textTransform: 'capitalize' }}>
+                    {frontPeriode === 'jour'
+                      ? new Date(frontDate + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+                      : `Semaine RP : ${rpLabel}`}
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* Global summary */}
             {(() => {

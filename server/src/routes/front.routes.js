@@ -82,8 +82,15 @@ router.get('/rapport', optionalAuth, async (req, res) => {
       where = 'AND DATE(e.date_irl) = ?'
       params.push(refDate)
     } else if (periode === 'semaine') {
-      where = 'AND e.date_irl >= DATE_SUB(?, INTERVAL 7 DAY) AND DATE(e.date_irl) <= ?'
-      params.push(refDate, refDate)
+      // RP week: Friday 20h → Friday 20h
+      // Find the Friday before or on refDate
+      const ref = new Date(refDate + 'T12:00:00')
+      const day = ref.getDay() // 0=Sun 5=Fri
+      const diff = day >= 5 ? day - 5 : day + 2
+      const fri = new Date(ref); fri.setDate(ref.getDate() - diff)
+      const friEnd = new Date(fri); friEnd.setDate(fri.getDate() + 7)
+      where = 'AND DATE(e.date_irl) >= ? AND DATE(e.date_irl) < ?'
+      params.push(fri.toISOString().slice(0, 10), friEnd.toISOString().slice(0, 10))
     }
 
     const cartes = await query('SELECT * FROM situation_front_cartes ORDER BY ordre')
@@ -97,11 +104,14 @@ router.get('/rapport', optionalAuth, async (req, res) => {
         ORDER BY e.date_irl DESC
       `, [c.id, ...params])
 
+      const att_all = events.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'allemand').length
+      const att_us = events.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'us').length
+      const def_all = events.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'allemand').length
+      const def_us = events.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'us').length
       const stats = {
-        att_all: events.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'allemand').length,
-        att_us: events.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'us').length,
-        def_all: events.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'allemand').length,
-        def_us: events.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'us').length,
+        att_all, att_us, def_all, def_us,
+        nb_attaques: att_all + att_us,
+        nb_defenses: def_all + def_us,
         prises: events.filter(e => e.type_event === 'prise').length,
         pertes: events.filter(e => e.type_event === 'perte').length
       }

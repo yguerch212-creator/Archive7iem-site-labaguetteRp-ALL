@@ -31,16 +31,30 @@ const LABEL = (ev) => {
 // All other maps are linear (1→2→3→4→5)
 const NON_LINEAR_CARTE = 1 // Berlin Mur Est
 
-// Returns array of held VP numbers
-function getHeldVPs(events, vps, carteId) {
-  if (!vps?.length) return []
-  const sorted = [...events].filter(e => e.type_event === 'prise' || e.type_event === 'perte')
-    .sort((a, b) => new Date(a.date_irl) - new Date(b.date_irl) || a.id - b.id)
+// Returns { heldVPs: number[], status: 'vp'|'fin'|'none' }
+function getCarteStatus(events, vps, carteId) {
+  if (!vps?.length || !events?.length) return { heldVPs: [], status: 'none' }
 
+  // Sort all events chronologically
+  const sorted = [...events].sort((a, b) => new Date(a.date_irl) - new Date(b.date_irl) || a.id - b.id)
+
+  // Check if last event is "fin des combats"
+  const last = sorted[sorted.length - 1]
+  if (last?.type_event === 'fin') {
+    // Still compute VPs for reference but status = fin
+    const heldVPs = computeHeldVPs(sorted.filter(e => e.type_event === 'prise' || e.type_event === 'perte'), vps, carteId)
+    return { heldVPs, status: 'fin' }
+  }
+
+  const vpEvents = sorted.filter(e => e.type_event === 'prise' || e.type_event === 'perte')
+  const heldVPs = computeHeldVPs(vpEvents, vps, carteId)
+  return { heldVPs, status: heldVPs.length > 0 ? 'vp' : 'none' }
+}
+
+function computeHeldVPs(vpEvents, vps, carteId) {
   if (carteId === NON_LINEAR_CARTE) {
-    // Track each VP independently
     const held = new Set()
-    for (const ev of sorted) {
+    for (const ev of vpEvents) {
       const vpNum = ev.vp_numero || vps.find(v => v.id === ev.vp_id)?.numero || 0
       if (!vpNum) continue
       if (ev.type_event === 'prise') held.add(vpNum)
@@ -48,15 +62,46 @@ function getHeldVPs(events, vps, carteId) {
     }
     return [...held].sort((a, b) => a - b)
   }
-
-  // Linear maps: highest VP held
+  // Linear
   let currentVP = 0
-  for (const ev of sorted) {
+  for (const ev of vpEvents) {
     const vpNum = ev.vp_numero || vps.find(v => v.id === ev.vp_id)?.numero || 0
     if (ev.type_event === 'prise' && vpNum > currentVP) currentVP = vpNum
     if (ev.type_event === 'perte' && vpNum <= currentVP) currentVP = vpNum - 1
   }
   return currentVP > 0 ? Array.from({ length: currentVP }, (_, i) => i + 1) : []
+}
+
+// RP week: Friday 20h → Friday 20h
+function getRPWeekRange(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00')
+  const day = d.getDay() // 0=Sun ... 5=Fri 6=Sat
+  // Find previous Friday (or current if Friday)
+  let fridayStart = new Date(d)
+  const diff = day >= 5 ? day - 5 : day + 2 // days since last Friday
+  fridayStart.setDate(d.getDate() - diff)
+  let fridayEnd = new Date(fridayStart)
+  fridayEnd.setDate(fridayStart.getDate() + 7)
+  return {
+    start: fridayStart,
+    end: fridayEnd,
+    label: `${fridayStart.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})} — ${fridayEnd.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'})}`
+  }
+}
+
+// Sort events: "debut" always first in its day, "fin" always last, rest by time
+function sortEvents(events) {
+  return [...events].sort((a, b) => {
+    const dayA = (a.date_irl || '').slice(0, 10)
+    const dayB = (b.date_irl || '').slice(0, 10)
+    if (dayA !== dayB) return dayB.localeCompare(dayA) // newest day first
+    // Same day: debut first, fin last, rest by time desc
+    if (a.type_event === 'debut' && b.type_event !== 'debut') return -1
+    if (b.type_event === 'debut' && a.type_event !== 'debut') return 1
+    if (a.type_event === 'fin' && b.type_event !== 'fin') return 1
+    if (b.type_event === 'fin' && a.type_event !== 'fin') return -1
+    return new Date(b.date_irl) - new Date(a.date_irl)
+  })
 }
 
 function HeureSelect({ value, onChange }) {
@@ -164,26 +209,30 @@ export default function SituationFront() {
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
   }
 
+  // Date navigation helpers
+  const shiftDate = (days) => {
+    const d = new Date(histDate + 'T12:00:00')
+    d.setDate(d.getDate() + days)
+    setHistDate(toDateStr(d))
+  }
+  const isToday = histDate === toDateStr(new Date())
+  const rpWeek = getRPWeekRange(histDate)
+
   // Filter events for history
   const filteredEvents = events.filter(ev => {
     if (histFilter === 'all') return true
     const evDate = toDateStr(ev.date_irl)
-    if (histFilter === 'jour') {
-      return evDate === histDate
-    }
-    // semaine = Monday to Sunday of the week containing histDate
-    const ref = new Date(histDate + 'T12:00:00')
-    const day = ref.getDay() || 7 // Sunday = 7
-    const monday = new Date(ref); monday.setDate(ref.getDate() - day + 1)
-    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6)
-    const monStr = toDateStr(monday)
-    const sunStr = toDateStr(sunday)
-    return evDate >= monStr && evDate <= sunStr
+    if (histFilter === 'jour') return evDate === histDate
+    // Semaine RP: Friday → Friday
+    return evDate >= toDateStr(rpWeek.start) && evDate < toDateStr(rpWeek.end)
   })
+
+  // Sort with debut first, fin last per day
+  const sortedFiltered = sortEvents(filteredEvents)
 
   // Group by day
   const byDay = {}
-  filteredEvents.forEach(ev => {
+  sortedFiltered.forEach(ev => {
     const day = new Date(ev.date_irl).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
     if (!byDay[day]) byDay[day] = []
     byDay[day].push(ev)
@@ -202,15 +251,16 @@ export default function SituationFront() {
           const attAll = parseInt(s.att_all) || 0, attUs = parseInt(s.att_us) || 0
           const defAll = parseInt(s.def_all) || 0, defUs = parseInt(s.def_us) || 0
           const total = attAll + attUs + defAll + defUs + (parseInt(s.prises) || 0) + (parseInt(s.pertes) || 0)
-          const heldVPs = getHeldVPs(c.lastEvents || [], c.vps || [], c.id)
+          const { heldVPs, status } = getCarteStatus(c.lastEvents || [], c.vps || [], c.id)
           return (
             <div key={c.id} className={`front-card ${selected === c.id ? 'active' : ''}`} onClick={() => openCarte(c.id)}>
               <h3>{c.nom}</h3>
-              {heldVPs.length > 0 && <div className="front-vp-current">🚩 {heldVPs.map(n => {
+              {status === 'fin' && <div className="front-vp-current" style={{color:'#90b0d0'}}>🏁 Fin des combats</div>}
+              {status === 'vp' && <div className="front-vp-current">🚩 {heldVPs.map(n => {
                 const vp = c.vps?.find(v => v.numero === n)
                 return `VP${n}${vp?.nom ? ` ${vp.nom}` : ''}`
               }).join(' · ')}</div>}
-              {heldVPs.length === 0 && total > 0 && <div className="front-vp-current" style={{color:'#8b8060'}}>Aucun VP tenu</div>}
+              {status === 'none' && total > 0 && <div className="front-vp-current" style={{color:'#8b8060'}}>Aucun VP tenu</div>}
               {total > 0 ? (
                 <div className="front-card-stats">
                   <span>⚔️ Att: {attAll} ALL / {attUs} US</span>
@@ -301,17 +351,28 @@ export default function SituationFront() {
               <div className="front-history">
                 {/* Filter bar */}
                 <div className="front-hist-filter">
-                  <select className="form-input" value={histFilter} onChange={e => setHistFilter(e.target.value)} style={{ maxWidth: 130 }}>
-                    <option value="jour">📅 Jour</option>
-                    <option value="semaine">📆 Semaine</option>
-                    <option value="all">📋 Tout</option>
-                  </select>
+                  <div className="front-filter-tabs">
+                    <button className={`front-ftab ${histFilter==='jour'?'active':''}`} onClick={() => setHistFilter('jour')}>📅 Jour</button>
+                    <button className={`front-ftab ${histFilter==='semaine'?'active':''}`} onClick={() => setHistFilter('semaine')}>📆 Semaine RP</button>
+                    <button className={`front-ftab ${histFilter==='all'?'active':''}`} onClick={() => setHistFilter('all')}>📋 Tout</button>
+                  </div>
                   {histFilter !== 'all' && (
-                    <input type="date" className="form-input" value={histDate} onChange={e => setHistDate(e.target.value)} style={{ maxWidth: 170 }} />
+                    <div className="front-date-nav">
+                      <button className="front-nav-btn" onClick={() => shiftDate(histFilter === 'jour' ? -1 : -7)}>◀</button>
+                      <button className={`front-nav-today ${isToday ? 'active' : ''}`} onClick={() => setHistDate(toDateStr(new Date()))}>Aujourd'hui</button>
+                      <button className="front-nav-btn" onClick={() => shiftDate(histFilter === 'jour' ? 1 : 7)}>▶</button>
+                      <input type="date" className="form-input front-date-pick" value={histDate} onChange={e => setHistDate(e.target.value)} />
+                    </div>
+                  )}
+                  {histFilter === 'jour' && (
+                    <div className="front-date-label">{new Date(histDate + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>
+                  )}
+                  {histFilter === 'semaine' && (
+                    <div className="front-date-label">Semaine RP : {rpWeek.label}</div>
                   )}
                 </div>
 
-                {filteredEvents.length === 0 ? (
+                {sortedFiltered.length === 0 ? (
                   <p className="muted" style={{textAlign:'center'}}>Aucun événement pour cette période.</p>
                 ) : Object.entries(byDay).map(([day, dayEvents]) => (
                   <div key={day}>
@@ -333,14 +394,14 @@ export default function SituationFront() {
                 ))}
 
                 {/* Rapport summary at bottom */}
-                {filteredEvents.length > 0 && (() => {
+                {sortedFiltered.length > 0 && (() => {
                   const s = {
-                    att_all: filteredEvents.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'allemand').length,
-                    att_us: filteredEvents.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'us').length,
-                    def_all: filteredEvents.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'allemand').length,
-                    def_us: filteredEvents.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'us').length,
-                    prises: filteredEvents.filter(e => e.type_event === 'prise').length,
-                    pertes: filteredEvents.filter(e => e.type_event === 'perte').length,
+                    att_all: sortedFiltered.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'allemand').length,
+                    att_us: sortedFiltered.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'us').length,
+                    def_all: sortedFiltered.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'allemand').length,
+                    def_us: sortedFiltered.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'us').length,
+                    prises: sortedFiltered.filter(e => e.type_event === 'prise').length,
+                    pertes: sortedFiltered.filter(e => e.type_event === 'perte').length,
                   }
                   const nbAtt = s.att_all + s.att_us
                   const nbDef = s.def_all + s.def_us
