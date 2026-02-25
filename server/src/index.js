@@ -67,6 +67,10 @@ app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 
 // Static uploads — no directory listing, files accessible by direct URL only
+// Multer saves to server/uploads/ (relative to middleware), so we serve from there
+const path = require('path')
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'), { dotfiles: 'deny', index: false }))
+// Also serve from root uploads/ for backward compatibility (older files)
 app.use('/uploads', express.static('uploads', { dotfiles: 'deny', index: false }))
 
 // Request timing & dev logs

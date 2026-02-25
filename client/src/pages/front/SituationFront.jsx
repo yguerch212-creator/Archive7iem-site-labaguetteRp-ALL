@@ -374,55 +374,102 @@ export default function SituationFront() {
 
                 {sortedFiltered.length === 0 ? (
                   <p className="muted" style={{textAlign:'center'}}>Aucun événement pour cette période.</p>
-                ) : Object.entries(byDay).map(([day, dayEvents]) => (
-                  <div key={day}>
-                    <p className="front-day-label">{day}</p>
-                    {dayEvents.map(ev => (
-                      <div key={ev.id} className="front-event-row">
-                        <div className="front-event-main">
-                          <span>{ICON(ev)}</span>
-                          <span className="front-event-label">{LABEL(ev)}</span>
-                          <span className="front-event-time">{ev.heure || '??h??'}</span>
+                ) : histFilter === 'semaine' ? (
+                  /* Semaine RP: summary only, no day-by-day */
+                  (() => {
+                    const s = {
+                      att_all: sortedFiltered.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'allemand').length,
+                      att_us: sortedFiltered.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'us').length,
+                      def_all: sortedFiltered.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'allemand').length,
+                      def_us: sortedFiltered.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'us').length,
+                      prises: sortedFiltered.filter(e => e.type_event === 'prise').length,
+                      pertes: sortedFiltered.filter(e => e.type_event === 'perte').length,
+                      debuts: sortedFiltered.filter(e => e.type_event === 'debut').length,
+                      fins: sortedFiltered.filter(e => e.type_event === 'fin').length,
+                    }
+                    const nbAtt = s.att_all + s.att_us
+                    const nbDef = s.def_all + s.def_us
+                    const bat = nbAtt + nbDef
+                    const vicAll = s.att_all + s.def_all
+                    const vicUs = s.att_us + s.def_us
+                    return (
+                      <div className="front-week-summary">
+                        <p className="front-section-label">📊 Rapport de la semaine RP</p>
+                        <div className="front-week-grid">
+                          <div className="front-week-stat"><span className="front-week-num">{s.debuts}</span><span className="front-week-label">🔔 Sessions</span></div>
+                          <div className="front-week-stat"><span className="front-week-num">{bat}</span><span className="front-week-label">⚔️ Batailles</span></div>
+                          <div className="front-week-stat"><span className="front-week-num">{nbAtt}</span><span className="front-week-label">🗡️ Attaques</span></div>
+                          <div className="front-week-stat"><span className="front-week-num">{nbDef}</span><span className="front-week-label">🛡️ Défenses</span></div>
+                          <div className="front-week-stat"><span className="front-week-num" style={{color:'#8bc34a'}}>{vicAll}</span><span className="front-week-label">🏆 Win ALL</span></div>
+                          <div className="front-week-stat"><span className="front-week-num" style={{color:'#e57373'}}>{vicUs}</span><span className="front-week-label">🏆 Win US</span></div>
+                          <div className="front-week-stat"><span className="front-week-num">{s.prises}</span><span className="front-week-label">🚩 Prises VP</span></div>
+                          <div className="front-week-stat"><span className="front-week-num" style={{color:'#e57373'}}>{s.pertes}</span><span className="front-week-label">🏳️ Pertes VP</span></div>
+                          <div className="front-week-stat"><span className="front-week-num">{bat > 0 ? Math.round(vicAll / bat * 100) : 0}%</span><span className="front-week-label">Taux victoire</span></div>
                         </div>
-                        <div className="front-event-meta">
-                          {ev.rapporte_par_nom && <span>{ev.rapporte_par_nom}</span>}
-                          {canDelete && <button className="front-del" onClick={() => deleteEvent(ev.id)}>🗑️</button>}
-                        </div>
+                        {bat > 0 && (
+                          <div className="front-week-details">
+                            <p>✅ Win ALL att: {s.att_all} · ⚠️✅ Win US att: {s.att_us}</p>
+                            <p>⚠️ Win ALL déf: {s.def_all} · ❌ Win US déf: {s.def_us}</p>
+                            <p>Bilan VP: +{s.prises} / -{s.pertes} ({s.prises - s.pertes >= 0 ? '+' : ''}{s.prises - s.pertes} net)</p>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()
+                ) : (
+                  /* Jour / Tout: day-by-day events */
+                  <>
+                    {Object.entries(byDay).map(([day, dayEvents]) => (
+                      <div key={day}>
+                        <p className="front-day-label">{day}</p>
+                        {dayEvents.map(ev => (
+                          <div key={ev.id} className="front-event-row">
+                            <div className="front-event-main">
+                              <span>{ICON(ev)}</span>
+                              <span className="front-event-label">{LABEL(ev)}</span>
+                              <span className="front-event-time">{ev.heure || '??h??'}</span>
+                            </div>
+                            <div className="front-event-meta">
+                              {ev.rapporte_par_nom && <span>{ev.rapporte_par_nom}</span>}
+                              {canDelete && <button className="front-del" onClick={() => deleteEvent(ev.id)}>🗑️</button>}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     ))}
-                  </div>
-                ))}
-
-                {/* Rapport summary at bottom */}
-                {sortedFiltered.length > 0 && (() => {
-                  const s = {
-                    att_all: sortedFiltered.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'allemand').length,
-                    att_us: sortedFiltered.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'us').length,
-                    def_all: sortedFiltered.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'allemand').length,
-                    def_us: sortedFiltered.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'us').length,
-                    prises: sortedFiltered.filter(e => e.type_event === 'prise').length,
-                    pertes: sortedFiltered.filter(e => e.type_event === 'perte').length,
-                  }
-                  const nbAtt = s.att_all + s.att_us
-                  const nbDef = s.def_all + s.def_us
-                  const bat = nbAtt + nbDef
-                  return (
-                    <div className="front-rapport-summary">
-                      <p className="front-section-label">📊 Résumé</p>
-                      <div className="front-rapport-grid">
-                        <span>⚔️ Batailles: {bat}</span>
-                        <span>🗡️ Attaques: {nbAtt}</span>
-                        <span>🛡️ Défenses: {nbDef}</span>
-                        <span>✅ Win ALL att: {s.att_all}</span>
-                        <span>⚠️✅ Win US att: {s.att_us}</span>
-                        <span>⚠️ Win ALL déf: {s.def_all}</span>
-                        <span>❌ Win US déf: {s.def_us}</span>
-                        <span>🚩 Prises: {s.prises}</span>
-                        <span>🏳️ Pertes: {s.pertes}</span>
-                      </div>
-                    </div>
-                  )
-                })()}
+                    {/* Summary for jour */}
+                    {sortedFiltered.length > 0 && (() => {
+                      const s = {
+                        att_all: sortedFiltered.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'allemand').length,
+                        att_us: sortedFiltered.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'us').length,
+                        def_all: sortedFiltered.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'allemand').length,
+                        def_us: sortedFiltered.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'us').length,
+                        prises: sortedFiltered.filter(e => e.type_event === 'prise').length,
+                        pertes: sortedFiltered.filter(e => e.type_event === 'perte').length,
+                      }
+                      const nbAtt = s.att_all + s.att_us
+                      const nbDef = s.def_all + s.def_us
+                      const bat = nbAtt + nbDef
+                      if (bat === 0 && s.prises === 0 && s.pertes === 0) return null
+                      return (
+                        <div className="front-rapport-summary">
+                          <p className="front-section-label">📊 Résumé</p>
+                          <div className="front-rapport-grid">
+                            <span>⚔️ Batailles: {bat}</span>
+                            <span>🗡️ Attaques: {nbAtt}</span>
+                            <span>🛡️ Défenses: {nbDef}</span>
+                            <span>✅ Win ALL att: {s.att_all}</span>
+                            <span>⚠️✅ Win US att: {s.att_us}</span>
+                            <span>⚠️ Win ALL déf: {s.def_all}</span>
+                            <span>❌ Win US déf: {s.def_us}</span>
+                            <span>🚩 Prises: {s.prises}</span>
+                            <span>🏳️ Pertes: {s.pertes}</span>
+                          </div>
+                        </div>
+                      )
+                    })()}
+                  </>
+                )}
               </div>
             )}
           </div>
