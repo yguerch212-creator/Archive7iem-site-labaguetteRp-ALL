@@ -124,6 +124,28 @@
 }
 .front-day-label:first-child { margin-top: 0; }
 
+/* Mini Calendar */
+.mini-cal {
+  background: rgba(20,18,14,0.95); border: 1px solid rgba(139,128,96,0.4);
+  border-radius: 8px; padding: 0.6rem; margin-top: 0.3rem;
+}
+.mini-cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; }
+.mini-cal-title { font-size: 0.85rem; color: #e8dcc0; font-weight: 500; text-transform: capitalize; }
+.mini-cal-nav { background: none; border: none; color: #b0a080; cursor: pointer; font-size: 0.9rem; padding: 2px 6px; }
+.mini-cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; text-align: center; }
+.mini-cal-dow { font-size: 0.65rem; color: #8b8060; padding: 2px 0; }
+.mini-cal-day {
+  position: relative; font-size: 0.8rem; color: #b0a080; padding: 4px 2px;
+  cursor: pointer; border-radius: 4px; transition: background 0.15s;
+}
+.mini-cal-day:hover { background: rgba(139,128,96,0.2); }
+.mini-cal-day.selected { background: rgba(107,143,60,0.3); color: #8bc34a; font-weight: bold; }
+.mini-cal-day.today { color: #e8dcc0; font-weight: bold; }
+.mini-cal-dot {
+  position: absolute; bottom: 1px; left: 50%; transform: translateX(-50%);
+  width: 4px; height: 4px; border-radius: 50%; background: #8bc34a;
+}
+
 /* Week summary */
 .front-week-summary { padding: 0.5rem 0; }
 .front-week-grid {

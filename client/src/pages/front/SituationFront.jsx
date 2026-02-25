@@ -122,6 +122,50 @@ function HeureSelect({ value, onChange }) {
   )
 }
 
+function MiniCalendar({ value, onChange, eventDates, onClose }) {
+  const [viewDate, setViewDate] = useState(() => new Date(value + 'T12:00:00'))
+  const year = viewDate.getFullYear(), month = viewDate.getMonth()
+  const firstDay = new Date(year, month, 1)
+  const startDow = (firstDay.getDay() + 6) % 7 // Mon=0
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const pad = n => String(n).padStart(2, '0')
+  const today = (() => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}` })()
+
+  const cells = []
+  for (let i = 0; i < startDow; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+
+  const prev = () => setViewDate(new Date(year, month - 1, 1))
+  const next = () => setViewDate(new Date(year, month + 1, 1))
+
+  return (
+    <div className="mini-cal">
+      <div className="mini-cal-header">
+        <button onClick={prev} className="mini-cal-nav">◀</button>
+        <span className="mini-cal-title">{viewDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</span>
+        <button onClick={next} className="mini-cal-nav">▶</button>
+      </div>
+      <div className="mini-cal-days">
+        {['Lu','Ma','Me','Je','Ve','Sa','Di'].map(d => <div key={d} className="mini-cal-dow">{d}</div>)}
+        {cells.map((d, i) => {
+          if (!d) return <div key={`e${i}`} />
+          const dateStr = `${year}-${pad(month+1)}-${pad(d)}`
+          const isSelected = dateStr === value
+          const isToday = dateStr === today
+          const hasEvents = eventDates?.has(dateStr)
+          return (
+            <div key={d} className={`mini-cal-day ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}`}
+              onClick={() => { onChange(dateStr); onClose?.() }}>
+              {d}
+              {hasEvents && <span className="mini-cal-dot" />}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function SituationFront() {
   const { user } = useAuth()
   const [cartes, setCartes] = useState([])
@@ -140,6 +184,10 @@ export default function SituationFront() {
   const canReport = user?.isAdmin || user?.isOfficier || user?.isSousOfficier || user?.isEtatMajor
   const canDelete = user?.isAdmin || user?.isOfficier || user?.isEtatMajor || user?.isRecenseur
   const weekRef = useRef(null)
+  const [showCal, setShowCal] = useState(false)
+
+  // Compute dates that have events (for calendar dots)
+  const eventDates = new Set(events.map(e => (e.date_irl || '').slice(0, 10)).filter(Boolean))
 
   const exportWeekPng = async () => {
     if (!weekRef.current) return
@@ -400,8 +448,11 @@ export default function SituationFront() {
                       <button className="front-nav-btn" onClick={() => shiftDate(histFilter === 'jour' ? -1 : -7)}>◀</button>
                       <button className={`front-nav-today ${isToday ? 'active' : ''}`} onClick={() => setHistDate(toDateStr(new Date()))}>Aujourd'hui</button>
                       <button className="front-nav-btn" onClick={() => shiftDate(histFilter === 'jour' ? 1 : 7)}>▶</button>
-                      <input type="date" className="form-input front-date-pick" value={histDate} onChange={e => setHistDate(e.target.value)} />
+                      <button className="front-nav-btn" onClick={() => setShowCal(!showCal)}>📅</button>
                     </div>
+                  )}
+                  {showCal && histFilter !== 'all' && (
+                    <MiniCalendar value={histDate} onChange={setHistDate} eventDates={eventDates} onClose={() => setShowCal(false)} />
                   )}
                   {histFilter === 'jour' && (
                     <div className="front-date-label">{new Date(histDate + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>
