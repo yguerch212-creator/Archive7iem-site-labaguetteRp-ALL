@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import BackButton from '../../components/BackButton'
+import html2canvas from 'html2canvas'
 import './situation-front.css'
 
 const ICON = (ev) => {
@@ -94,13 +95,13 @@ function sortEvents(events) {
   return [...events].sort((a, b) => {
     const dayA = (a.date_irl || '').slice(0, 10)
     const dayB = (b.date_irl || '').slice(0, 10)
-    if (dayA !== dayB) return dayB.localeCompare(dayA) // newest day first
-    // Same day: debut first, fin last, rest by time desc
+    if (dayA !== dayB) return dayB.localeCompare(dayA) // newest day first in group headers
+    // Within same day: début always first, fin always last, rest chronological
     if (a.type_event === 'debut' && b.type_event !== 'debut') return -1
     if (b.type_event === 'debut' && a.type_event !== 'debut') return 1
     if (a.type_event === 'fin' && b.type_event !== 'fin') return 1
     if (b.type_event === 'fin' && a.type_event !== 'fin') return -1
-    return new Date(b.date_irl) - new Date(a.date_irl)
+    return new Date(a.date_irl) - new Date(b.date_irl) // chronological within day
   })
 }
 
@@ -131,6 +132,16 @@ export default function SituationFront() {
 
   const canReport = user?.isAdmin || user?.isOfficier || user?.isSousOfficier || user?.isEtatMajor
   const canDelete = user?.isAdmin || user?.isOfficier || user?.isEtatMajor || user?.isRecenseur
+  const weekRef = useRef(null)
+
+  const exportWeekPng = async () => {
+    if (!weekRef.current) return
+    const canvas = await html2canvas(weekRef.current, { scale: 2, backgroundColor: '#1e1c18', logging: false })
+    const link = document.createElement('a')
+    link.download = `rapport-front-${rpWeek.label.replace(/[/ ]/g, '-')}.png`
+    link.href = canvas.toDataURL('image/png')
+    link.click()
+  }
 
   const load = async () => {
     try { const r = await api.get('/front/cartes'); setCartes(r.data.data) }
@@ -255,7 +266,7 @@ export default function SituationFront() {
           return (
             <div key={c.id} className={`front-card ${selected === c.id ? 'active' : ''}`} onClick={() => openCarte(c.id)}>
               <h3>{c.nom}</h3>
-              {status === 'fin' && <div className="front-vp-current" style={{color:'#90b0d0'}}>🏁 Fin des combats</div>}
+              {status === 'fin' && <div className="front-vp-current" style={{color:'#90b0d0'}}>🏁 Cessez-le-feu</div>}
               {status === 'vp' && <div className="front-vp-current">🚩 {heldVPs.map(n => {
                 const vp = c.vps?.find(v => v.numero === n)
                 return `VP${n}${vp?.nom ? ` ${vp.nom}` : ''}`
@@ -375,7 +386,7 @@ export default function SituationFront() {
                 {sortedFiltered.length === 0 ? (
                   <p className="muted" style={{textAlign:'center'}}>Aucun événement pour cette période.</p>
                 ) : histFilter === 'semaine' ? (
-                  /* Semaine RP: summary only, no day-by-day */
+                  /* Semaine RP: summary only */
                   (() => {
                     const s = {
                       att_all: sortedFiltered.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'allemand').length,
@@ -393,8 +404,12 @@ export default function SituationFront() {
                     const vicAll = s.att_all + s.def_all
                     const vicUs = s.att_us + s.def_us
                     return (
-                      <div className="front-week-summary">
-                        <p className="front-section-label">📊 Rapport de la semaine RP</p>
+                      <div className="front-week-summary" ref={weekRef}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <p className="front-section-label">📊 Rapport — {sel?.nom}</p>
+                          <button className="front-nav-btn" onClick={exportWeekPng} title="Télécharger en PNG">📥</button>
+                        </div>
+                        <p style={{ fontSize: '0.8rem', color: '#8b8060', margin: '0 0 0.5rem' }}>Semaine RP : {rpWeek.label}</p>
                         <div className="front-week-grid">
                           <div className="front-week-stat"><span className="front-week-num">{s.debuts}</span><span className="front-week-label">🔔 Sessions</span></div>
                           <div className="front-week-stat"><span className="front-week-num">{bat}</span><span className="front-week-label">⚔️ Batailles</span></div>
