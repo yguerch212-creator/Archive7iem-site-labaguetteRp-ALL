@@ -13,7 +13,7 @@ router.get('/cartes', optionalAuth, async (req, res) => {
       c.lastEvents = await query(`
         SELECT e.*, v.numero as vp_numero FROM situation_front_events e 
         LEFT JOIN situation_front_vp v ON v.id = e.vp_id
-        WHERE e.carte_id = ? AND e.type_event IN ('prise','perte')
+        WHERE e.carte_id = ? AND e.type_event IN ('prise','perte','debut','fin')
         ORDER BY e.date_irl ASC
       `, [c.id])
       c.stats = await queryOne(`
