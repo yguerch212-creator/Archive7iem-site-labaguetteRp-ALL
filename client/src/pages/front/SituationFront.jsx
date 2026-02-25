@@ -32,19 +32,25 @@ const LABEL = (ev) => {
 // All other maps are linear (1→2→3→4→5)
 const NON_LINEAR_CARTE = 1 // Berlin Mur Est
 
-// Returns { heldVPs: number[], status: 'vp'|'fin'|'none' }
+// Returns { heldVPs: number[], status: 'vp'|'fin'|'stale'|'none' }
 function getCarteStatus(events, vps, carteId) {
   if (!vps?.length || !events?.length) return { heldVPs: [], status: 'none' }
 
-  // Sort all events chronologically
   const sorted = [...events].sort((a, b) => new Date(a.date_irl) - new Date(b.date_irl) || a.id - b.id)
-
-  // Check if last event is "fin des combats"
   const last = sorted[sorted.length - 1]
-  if (last?.type_event === 'fin') {
-    // Still compute VPs for reference but status = fin
-    const heldVPs = computeHeldVPs(sorted.filter(e => e.type_event === 'prise' || e.type_event === 'perte'), vps, carteId)
-    return { heldVPs, status: 'fin' }
+
+  // Check if last event is "fin des combats" → cessez-le-feu
+  if (last?.type_event === 'fin') return { heldVPs: [], status: 'fin' }
+
+  // Check if last event is stale (from a previous day, cutoff at 3AM)
+  if (last?.date_irl) {
+    const lastDate = new Date(last.date_irl)
+    const now = new Date()
+    // "Today" starts at 3AM — if last event was before today's 3AM, it's stale
+    const cutoff = new Date(now)
+    cutoff.setHours(3, 0, 0, 0)
+    if (now.getHours() < 3) cutoff.setDate(cutoff.getDate() - 1) // before 3AM, cutoff is yesterday 3AM
+    if (lastDate < cutoff) return { heldVPs: [], status: 'stale' }
   }
 
   const vpEvents = sorted.filter(e => e.type_event === 'prise' || e.type_event === 'perte')
@@ -91,17 +97,18 @@ function getRPWeekRange(dateStr) {
 }
 
 // Sort events: "debut" always first in its day, "fin" always last, rest by time
+// Sort: newest first overall. Within same day: fin on top (most recent), début at bottom (earliest).
 function sortEvents(events) {
   return [...events].sort((a, b) => {
     const dayA = (a.date_irl || '').slice(0, 10)
     const dayB = (b.date_irl || '').slice(0, 10)
-    if (dayA !== dayB) return dayB.localeCompare(dayA) // newest day first in group headers
-    // Within same day: début always first, fin always last, rest chronological
-    if (a.type_event === 'debut' && b.type_event !== 'debut') return -1
-    if (b.type_event === 'debut' && a.type_event !== 'debut') return 1
-    if (a.type_event === 'fin' && b.type_event !== 'fin') return 1
-    if (b.type_event === 'fin' && a.type_event !== 'fin') return -1
-    return new Date(a.date_irl) - new Date(b.date_irl) // chronological within day
+    if (dayA !== dayB) return dayB.localeCompare(dayA) // newest day first
+    // Within same day: newest on top, BUT début pinned to bottom, fin pinned to top
+    if (a.type_event === 'fin' && b.type_event !== 'fin') return -1
+    if (b.type_event === 'fin' && a.type_event !== 'fin') return 1
+    if (a.type_event === 'debut' && b.type_event !== 'debut') return 1
+    if (b.type_event === 'debut' && a.type_event !== 'debut') return -1
+    return new Date(b.date_irl) - new Date(a.date_irl) // newest first
   })
 }
 
@@ -267,6 +274,7 @@ export default function SituationFront() {
             <div key={c.id} className={`front-card ${selected === c.id ? 'active' : ''}`} onClick={() => openCarte(c.id)}>
               <h3>{c.nom}</h3>
               {status === 'fin' && <div className="front-vp-current" style={{color:'#90b0d0'}}>🏁 Cessez-le-feu</div>}
+              {status === 'stale' && <div className="front-vp-current" style={{color:'#8b8060',fontSize:'0.8rem'}}>Aucun combat en cours</div>}
               {status === 'vp' && <div className="front-vp-current">🚩 {heldVPs.map(n => {
                 const vp = c.vps?.find(v => v.numero === n)
                 return `VP${n}${vp?.nom ? ` ${vp.nom}` : ''}`
