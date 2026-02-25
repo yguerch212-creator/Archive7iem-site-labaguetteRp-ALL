@@ -10,7 +10,7 @@
     font-family: 'IBM Plex Mono', 'Courier New', monospace;
     background: #1a1814;
     color: #d4c5a0;
-    line-height: 1.6;
+    line-height: 1.7;
     padding: 0 0 3rem;
   }
   .header {
@@ -36,80 +36,59 @@
   .toc a:hover { text-decoration: underline; }
   section { margin-bottom: 2.5rem; }
   h2 {
-    font-size: 1.3rem;
-    color: #e8dcc0;
+    font-size: 1.3rem; color: #e8dcc0;
     border-bottom: 2px solid rgba(139,128,96,0.4);
-    padding-bottom: 0.4rem;
-    margin-bottom: 1rem;
+    padding-bottom: 0.4rem; margin-bottom: 1rem;
   }
   h3 { font-size: 1.05rem; color: #d4c5a0; margin: 1.2rem 0 0.5rem; }
+  h4 { font-size: 0.95rem; color: #c0b090; margin: 0.8rem 0 0.4rem; }
   p { margin-bottom: 0.7rem; color: #b0a080; }
   ul, ol { padding-left: 1.5rem; margin-bottom: 0.7rem; color: #b0a080; }
   li { margin: 0.3rem 0; }
+  strong { color: #d4c5a0; }
   .note {
-    background: rgba(107,143,60,0.15);
-    border-left: 3px solid #6b8f3c;
-    padding: 0.6rem 1rem;
-    margin: 0.7rem 0;
-    border-radius: 0 6px 6px 0;
-    font-size: 0.9rem;
+    background: rgba(107,143,60,0.15); border-left: 3px solid #6b8f3c;
+    padding: 0.6rem 1rem; margin: 0.7rem 0; border-radius: 0 6px 6px 0; font-size: 0.9rem;
   }
   .warning {
-    background: rgba(200,160,50,0.15);
-    border-left: 3px solid #c8a032;
-    padding: 0.6rem 1rem;
-    margin: 0.7rem 0;
-    border-radius: 0 6px 6px 0;
-    font-size: 0.9rem;
+    background: rgba(200,160,50,0.15); border-left: 3px solid #c8a032;
+    padding: 0.6rem 1rem; margin: 0.7rem 0; border-radius: 0 6px 6px 0; font-size: 0.9rem;
+  }
+  .danger {
+    background: rgba(180,50,50,0.15); border-left: 3px solid #b83232;
+    padding: 0.6rem 1rem; margin: 0.7rem 0; border-radius: 0 6px 6px 0; font-size: 0.9rem;
   }
   code {
-    background: rgba(139,128,96,0.2);
-    padding: 0.15rem 0.4rem;
-    border-radius: 3px;
-    font-size: 0.9em;
-    color: #d4c5a0;
+    background: rgba(139,128,96,0.2); padding: 0.15rem 0.4rem;
+    border-radius: 3px; font-size: 0.9em; color: #d4c5a0;
   }
   .step {
-    background: rgba(30,28,24,0.6);
-    border: 1px solid rgba(139,128,96,0.2);
-    border-radius: 6px;
-    padding: 0.8rem 1rem;
-    margin: 0.5rem 0;
+    background: rgba(30,28,24,0.6); border: 1px solid rgba(139,128,96,0.2);
+    border-radius: 6px; padding: 0.8rem 1rem; margin: 0.5rem 0;
   }
   .step-num {
-    display: inline-block;
-    background: #6b8f3c;
-    color: #1a1814;
-    width: 1.5rem;
-    height: 1.5rem;
-    text-align: center;
-    border-radius: 50%;
-    font-weight: bold;
-    font-size: 0.85rem;
-    line-height: 1.5rem;
-    margin-right: 0.5rem;
+    display: inline-block; background: #6b8f3c; color: #1a1814;
+    width: 1.5rem; height: 1.5rem; text-align: center; border-radius: 50%;
+    font-weight: bold; font-size: 0.85rem; line-height: 1.5rem; margin-right: 0.5rem;
   }
   .back-btn {
-    display: inline-block;
-    margin: 1rem 0;
-    padding: 0.5rem 1rem;
-    background: rgba(139,128,96,0.2);
-    border: 1px solid rgba(139,128,96,0.4);
-    border-radius: 6px;
-    color: #d4c5a0;
-    text-decoration: none;
-    font-family: inherit;
+    display: inline-block; margin: 1rem 0; padding: 0.5rem 1rem;
+    background: rgba(139,128,96,0.2); border: 1px solid rgba(139,128,96,0.4);
+    border-radius: 6px; color: #d4c5a0; text-decoration: none; font-family: inherit;
   }
   .back-btn:hover { background: rgba(139,128,96,0.3); }
-  img { max-width: 100%; border-radius: 6px; margin: 0.5rem 0; }
-  .emoji { font-size: 1.2rem; }
   .perm-table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.85rem; }
   .perm-table th, .perm-table td { border: 1px solid rgba(139,128,96,0.3); padding: 0.4rem 0.6rem; text-align: left; }
   .perm-table th { background: rgba(30,28,24,0.8); color: #e8dcc0; }
   .perm-table td { color: #b0a080; }
+  .shortcut { display: inline-block; background: rgba(139,128,96,0.25); border: 1px solid rgba(139,128,96,0.4); border-radius: 4px; padding: 0.2rem 0.5rem; font-size: 0.8rem; color: #e8dcc0; margin: 0.1rem; }
+  .icon-grid { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 0.8rem; margin: 0.5rem 0; font-size: 0.9rem; }
+  .icon-grid span:nth-child(odd) { font-size: 1.2rem; text-align: center; }
+  hr { border: none; border-top: 1px solid rgba(139,128,96,0.2); margin: 1.5rem 0; }
   @media (max-width: 600px) {
     .header h1 { font-size: 1.2rem; }
     h2 { font-size: 1.1rem; }
+    .perm-table { font-size: 0.75rem; }
   }
 </style>
 </head>
@@ -118,372 +97,653 @@
 <div class="header">
   <h1>📖 Guide d'utilisation</h1>
   <p>Archives du 7. Armeekorps — LaBaguetteRP</p>
+  <p style="font-size:0.75rem; margin-top:0.5rem; color:#8b8060;">Dernière mise à jour : 25 février 2026</p>
 </div>
 
 <div class="container">
 
 <a href="/" class="back-btn">← Retour au site</a>
 
+<div class="note">💡 <strong>Nouveau sur le site ?</strong> Commencez par les sections 1 (Compte) et 2 (Tableau de bord). Le reste viendra naturellement au fil de votre utilisation.</div>
+
 <nav class="toc">
-  <h2>Sommaire</h2>
+  <h2>📑 Sommaire</h2>
   <ol>
     <li><a href="#compte">Créer un compte & se connecter</a></li>
-    <li><a href="#dashboard">Le tableau de bord</a></li>
+    <li><a href="#dashboard">Le tableau de bord (Dashboard)</a></li>
+    <li><a href="#navigation">Navigation & interface</a></li>
+    <li><a href="#effectifs">Effectifs & fiches</a></li>
     <li><a href="#soldbuch">Soldbuch (livret militaire)</a></li>
-    <li><a href="#pds">Plan de service (PDS)</a></li>
+    <li><a href="#pds">Plan de Service (PDS)</a></li>
     <li><a href="#rapports">Rapports</a></li>
     <li><a href="#telegrammes">Télégrammes</a></li>
     <li><a href="#dossiers">Dossiers personnels</a></li>
+    <li><a href="#front">Situation du Front</a></li>
     <li><a href="#medical">Service médical</a></li>
     <li><a href="#sanctions">Justice & Sanctions</a></li>
-    <li><a href="#front">Situation du Front</a></li>
     <li><a href="#documentation">Documentation</a></li>
+    <li><a href="#signatures">Signatures & Tampons</a></li>
     <li><a href="#commandement">Commandement (officiers)</a></li>
     <li><a href="#organigramme">Organigramme</a></li>
-    <li><a href="#permissions">Rôles & Permissions</a></li>
+    <li><a href="#archives">Archives</a></li>
     <li><a href="#partage">Liens de partage</a></li>
-    <li><a href="#faq">FAQ</a></li>
+    <li><a href="#permissions">Rôles & Permissions</a></li>
+    <li><a href="#faq">FAQ & Dépannage</a></li>
   </ol>
 </nav>
 
 <!-- ==================== 1. COMPTE ==================== -->
 <section id="compte">
-  <h2>1. Créer un compte & se connecter</h2>
+  <h2>1. 🔐 Créer un compte & se connecter</h2>
   
-  <h3>Création de compte</h3>
-  <p>Les comptes sont créés par un <strong>administrateur</strong> ou un <strong>officier</strong>. Vous ne pouvez pas vous inscrire vous-même.</p>
-  <div class="step">
-    <span class="step-num">1</span> Un officier/admin crée votre fiche d'effectif avec votre nom RP, grade, unité.
-  </div>
-  <div class="step">
-    <span class="step-num">2</span> Un admin crée votre compte utilisateur (nom d'utilisateur + mot de passe temporaire).
-  </div>
-  <div class="step">
-    <span class="step-num">3</span> Connectez-vous et <strong>changez votre mot de passe</strong> immédiatement.
-  </div>
+  <h3>Comment obtenir un compte ?</h3>
+  <p>Vous <strong>ne pouvez pas créer de compte vous-même</strong>. Un administrateur ou officier doit le faire pour vous.</p>
+  <div class="step"><span class="step-num">1</span> <strong>Demandez à un officier</strong> de créer votre fiche effectif (nom RP, grade, unité).</div>
+  <div class="step"><span class="step-num">2</span> Un <strong>administrateur crée votre compte</strong> avec un nom d'utilisateur et un mot de passe temporaire.</div>
+  <div class="step"><span class="step-num">3</span> <strong>Connectez-vous</strong> et changez votre mot de passe immédiatement.</div>
 
-  <h3>Connexion</h3>
-  <p>Allez sur la page de connexion et entrez votre <strong>nom d'utilisateur</strong> et <strong>mot de passe</strong>.</p>
-  <div class="note">💡 Votre nom d'utilisateur est au format <code>prenom.nom</code> (ex : <code>hans.mueller</code>).</div>
+  <h3>Se connecter</h3>
+  <p>Sur la page de connexion, entrez votre <strong>nom d'utilisateur</strong> et <strong>mot de passe</strong>.</p>
+  <div class="note">💡 Le nom d'utilisateur est au format <code>prenom.nom</code> (ex : <code>hans.mueller</code>). C'est votre nom RP, pas votre pseudo Discord.</div>
+
+  <h3>Accès invité</h3>
+  <p>Pas de compte ? Cliquez sur <strong>"👁️ Accès invité"</strong> pour consulter le site en <strong>lecture seule</strong>. Vous pourrez voir les rapports, effectifs, et documents publiés, mais pas créer ni modifier quoi que ce soit.</p>
 
   <h3>Mot de passe oublié</h3>
-  <p>Pas de récupération automatique. Cliquez sur <strong>"Mot de passe oublié"</strong> sur la page de login : entrez votre nom d'utilisateur et votre <strong>ID Discord</strong>. Un administrateur réinitialisera votre mot de passe.</p>
+  <p>Pas de récupération automatique par email. Sur la page de connexion :</p>
+  <div class="step"><span class="step-num">1</span> Cliquez sur <strong>"🔑 Mot de passe oublié ?"</strong></div>
+  <div class="step"><span class="step-num">2</span> Entrez votre <strong>nom d'utilisateur</strong> + votre <strong>ID ou pseudo Discord</strong></div>
+  <div class="step"><span class="step-num">3</span> Un administrateur recevra votre demande et réinitialisera votre mot de passe</div>
+
+  <h3>Changer votre mot de passe</h3>
+  <p>Une fois connecté, cliquez sur l'icône <strong>🔑</strong> dans la barre du haut (topbar) pour accéder à la page de changement de mot de passe.</p>
 </section>
 
 <!-- ==================== 2. DASHBOARD ==================== -->
 <section id="dashboard">
-  <h2>2. Le tableau de bord</h2>
-  <p>Le Dashboard est votre page d'accueil après connexion. Vous y trouvez :</p>
+  <h2>2. 🏠 Le tableau de bord (Dashboard)</h2>
+  <p>C'est votre <strong>page d'accueil</strong> après connexion. Tout part d'ici.</p>
+  
+  <h3>Ce que vous y trouvez</h3>
   <ul>
-    <li><strong>Cartes de navigation</strong> — Accès rapide à toutes les sections du site</li>
-    <li><strong>Activité récente</strong> — Derniers rapports et télégrammes</li>
-    <li><strong>File de validation</strong> (officiers) — Documents en attente de validation</li>
-    <li><strong>Notifications</strong> — Alertes pour les événements qui vous concernent</li>
-    <li><strong>Histoire</strong> — Section sur l'historique de la 352. Infanterie-Division</li>
+    <li><strong>Cartes de navigation</strong> — Accès rapide à toutes les sections du site (effectifs, rapports, PDS, front, etc.)</li>
+    <li><strong>Activité récente</strong> — Les derniers rapports et télégrammes envoyés</li>
+    <li><strong>Notifications</strong> — Alertes personnalisées (incidents signalés, validations, etc.)</li>
+    <li><strong>Histoire</strong> — Section déroulante sur l'histoire de la 352. Infanterie-Division</li>
   </ul>
-  <div class="note">💡 La barre du haut (topbar) est présente sur chaque page. Elle contient votre profil, la recherche, et les notifications.</div>
+
+  <h4>Pour les officiers / état-major :</h4>
+  <ul>
+    <li><strong>File de validation</strong> — Compteur des documents en attente de votre validation</li>
+    <li>Cartes supplémentaires : Commandement, Validation, Statistiques, Administration</li>
+  </ul>
+
+  <div class="note">💡 La carte <strong>"📖 Guide"</strong> sur le Dashboard mène à cette page !</div>
 </section>
 
-<!-- ==================== 3. SOLDBUCH ==================== -->
-<section id="soldbuch">
-  <h2>3. Soldbuch (livret militaire)</h2>
-  <p>Le Soldbuch est votre livret militaire personnel. Il contient votre identité, unité, décorations, historique de service, attestations, et équipement.</p>
+<!-- ==================== 3. NAVIGATION ==================== -->
+<section id="navigation">
+  <h2>3. 🧭 Navigation & interface</h2>
 
-  <h3>Accéder à votre Soldbuch</h3>
-  <div class="step">
-    <span class="step-num">1</span> Cliquez sur <strong>"📖 Soldbuch"</strong> depuis le Dashboard ou la liste des effectifs.
+  <h3>La barre du haut (Topbar)</h3>
+  <p>Présente sur <strong>chaque page</strong> (sauf login). Elle contient :</p>
+  <div class="icon-grid">
+    <span>👤</span> <span><strong>Profil</strong> — Cliquez pour voir votre fiche effectif</span>
+    <span>🔑</span> <span><strong>Mot de passe</strong> — Changer votre mot de passe</span>
+    <span>🔔</span> <span><strong>Notifications</strong> — Alertes non lues (pastille rouge si nouvelles)</span>
   </div>
-  <div class="step">
-    <span class="step-num">2</span> Votre Soldbuch s'ouvre en format carnet avec des pages à feuilleter.
-  </div>
+  <p>Les liens de navigation (Effectifs, Rapports, PDS, etc.) sont aussi dans la topbar.</p>
+
+  <h3>Bouton retour</h3>
+  <p>Chaque page a un bouton <strong>"← Retour"</strong> en haut à gauche. Il vous ramène à la page précédente.</p>
+
+  <h3>Recherche globale</h3>
+  <p>La page <strong>🔎 Recherche</strong> (accessible depuis le Dashboard) permet de chercher dans toutes les données : effectifs, rapports, télégrammes, affaires, etc.</p>
+
+  <h3>Sur mobile</h3>
+  <p>Le site est entièrement utilisable sur téléphone. Seuls les <strong>éditeurs de mise en page</strong> (rapports, dossiers) sont désactivés sur mobile — vous pouvez consulter mais pas éditer la mise en page.</p>
+</section>
+
+<!-- ==================== 4. EFFECTIFS ==================== -->
+<section id="effectifs">
+  <h2>4. 📋 Effectifs & fiches</h2>
+  <p>La liste des effectifs contient tous les soldats enregistrés avec leur grade, unité, et statut.</p>
+
+  <h3>Consulter un effectif</h3>
+  <p>Cliquez sur un effectif dans la liste pour voir sa fiche complète : identité, grade, unité, décorations, et accès à son Soldbuch et dossier personnel.</p>
+
+  <h3>Photo d'identité</h3>
+  <p>Les administratifs et officiers peuvent ajouter une <strong>photo d'identité</strong> à un effectif. Cette photo apparaîtra dans le Soldbuch.</p>
+  <div class="step"><span class="step-num">1</span> Ouvrez la fiche de l'effectif</div>
+  <div class="step"><span class="step-num">2</span> Cliquez sur la zone photo ou le bouton d'upload</div>
+  <div class="step"><span class="step-num">3</span> Sélectionnez une image (PNG, JPG, max 10 Mo)</div>
+
+  <h3>Créer un effectif</h3>
+  <p>Réservé aux <strong>administratifs et officiers</strong>. Depuis la liste des effectifs → <strong>"+ Nouvel effectif"</strong>.</p>
+  <p>Champs requis : prénom, nom, grade, unité. Vous pouvez aussi ajouter des décorations dès la création.</p>
+  <div class="note">💡 Les groupes de permissions (Officier, Sous-officier, etc.) sont <strong>automatiquement assignés</strong> en fonction du grade et de l'unité.</div>
 
   <h3>Description personnelle</h3>
-  <p>Vous pouvez remplir votre <strong>description physique</strong> (taille, corpulence, couleur des yeux, etc.) depuis l'onglet <strong>"Description personnelle"</strong> de votre fiche effectif.</p>
+  <p>Chaque effectif peut remplir sa <strong>description physique</strong> (taille, corpulence, couleur des yeux, cheveux, signes particuliers). Ces infos apparaissent dans le Soldbuch.</p>
+</section>
 
-  <h3>Attestations</h3>
-  <p>Les attestations (décorations, promotions, etc.) apparaissent automatiquement dans votre Soldbuch. Elles sont générées quand un officier vous attribue une décoration ou quand un événement est enregistré.</p>
+<!-- ==================== 5. SOLDBUCH ==================== -->
+<section id="soldbuch">
+  <h2>5. 📖 Soldbuch (livret militaire)</h2>
+  <p>Le Soldbuch est le <strong>document central</strong> de chaque soldat. C'est un livret au format carnet avec des pages à feuilleter.</p>
 
-  <h3>Signature</h3>
-  <p>Votre Soldbuch contient deux emplacements de signature :</p>
+  <h3>Accéder à votre Soldbuch</h3>
+  <div class="step"><span class="step-num">1</span> Dashboard → <strong>Effectifs</strong> → cliquez sur votre nom</div>
+  <div class="step"><span class="step-num">2</span> Cliquez sur <strong>"📖 Soldbuch"</strong></div>
+  <p>Vous pouvez aussi accéder au Soldbuch de n'importe quel effectif (en lecture).</p>
+
+  <h3>Contenu du Soldbuch</h3>
   <ul>
-    <li><strong>Signature du soldat</strong> — C'est VOUS qui signez (et seulement vous)</li>
-    <li><strong>Signature du référent</strong> — Un officier ou administratif signe pour valider</li>
+    <li><strong>Page 1</strong> — Couverture avec nom, grade, unité, numéro de série</li>
+    <li><strong>Page 2</strong> — Identité complète (Erkennungsmarke, groupe sanguin, date de naissance, etc.)</li>
+    <li><strong>Page 3</strong> — Attestations (décorations, promotions, événements) avec tampons officiels</li>
+    <li><strong>Page 4</strong> — Unités de campagne et affectations</li>
+    <li><strong>Page 5</strong> — Équipement et habillement</li>
+    <li><strong>Page 6</strong> — Données médicales (hospitalisations, blessures, vaccinations)</li>
+    <li><strong>Page 7</strong> — Permissions d'absence (PDS)</li>
+    <li><strong>Page 8</strong> — Remarques, demandes d'habillement, solde</li>
   </ul>
-  <div class="warning">⚠️ Les administrateurs système ne peuvent PAS signer de documents. Seuls les officiers et administratifs peuvent signer en tant que référent.</div>
 
-  <h3>Demandes d'habillement</h3>
-  <p>Depuis votre propre Soldbuch, cliquez sur <strong>"📝 Faire une demande d'habillement"</strong>. Décrivez l'équipement souhaité. Un officier validera ou refusera votre demande.</p>
-</section>
-
-<!-- ==================== 4. PDS ==================== -->
-<section id="pds">
-  <h2>4. Plan de service (PDS)</h2>
-  <p>Le PDS permet de déclarer vos heures de présence pour la semaine RP en cours.</p>
-  
-  <h3>Remplir votre PDS</h3>
-  <div class="step">
-    <span class="step-num">1</span> Allez dans <strong>"⏱️ PDS"</strong> depuis le Dashboard.
-  </div>
-  <div class="step">
-    <span class="step-num">2</span> Cliquez sur <strong>"📝 Mon PDS"</strong> pour ouvrir le formulaire de la semaine en cours.
-  </div>
-  <div class="step">
-    <span class="step-num">3</span> Indiquez vos heures par jour (formats acceptés : <code>20h-22h30</code>, <code>20:00-22:30</code>, <code>2h30</code>...).
-  </div>
-  <div class="step">
-    <span class="step-num">4</span> Cliquez sur <strong>Enregistrer</strong>.
-  </div>
-
-  <div class="warning">⚠️ Vous ne pouvez modifier que la <strong>semaine en cours</strong> (vendredi 20h → vendredi 20h). Les semaines passées sont verrouillées.</div>
-  
-  <div class="note">💡 Objectif : <strong>6 heures minimum</strong> par semaine. En dessous, votre PDS apparaîtra en ⚠️ dans le tableau du commandement.</div>
-
-  <h3>Consulter les PDS</h3>
-  <p>L'onglet <strong>"Tous les effectifs"</strong> montre les PDS de tout le monde (uniquement ceux qui ont rempli). Chaque PDS est consultable en cliquant sur la ligne.</p>
-</section>
-
-<!-- ==================== 5. RAPPORTS ==================== -->
-<section id="rapports">
-  <h2>5. Rapports</h2>
-  <p>Les rapports sont des documents officiels (rapports de mission, incidents, recommandations, etc.).</p>
-
-  <h3>Créer un rapport</h3>
-  <div class="step">
-    <span class="step-num">1</span> Allez dans <strong>"📝 Rapports"</strong>, puis <strong>"+ Nouveau rapport"</strong>.
-  </div>
-  <div class="step">
-    <span class="step-num">2</span> Choisissez le type (rapport, incident, recommandation) et remplissez les champs.
-  </div>
-  <div class="step">
-    <span class="step-num">3</span> <strong>Enregistrer</strong> = brouillon (visible que par vous). <strong>Publier</strong> = envoyé pour validation.
-  </div>
-
-  <h3>Validation</h3>
-  <p>Un officier doit valider votre rapport avant qu'il soit publié officiellement. Les rapports publiés par un officier sont auto-validés.</p>
-
-  <h3>Mise en page</h3>
-  <p>Les rapports ont un <strong>éditeur de mise en page</strong> (desktop uniquement) pour organiser le contenu visuellement avec des blocs de texte et images.</p>
-  <div class="warning">⚠️ L'éditeur de mise en page n'est disponible que sur <strong>ordinateur</strong>. Sur mobile, vous pouvez consulter mais pas éditer la mise en page.</div>
-</section>
-
-<!-- ==================== 6. TÉLÉGRAMMES ==================== -->
-<section id="telegrammes">
-  <h2>6. Télégrammes</h2>
-  <p>Les télégrammes sont des messages courts entre effectifs — l'équivalent des memos/courriers internes.</p>
-
-  <h3>Envoyer un télégramme</h3>
-  <div class="step">
-    <span class="step-num">1</span> Allez dans <strong>"⚡ Télégrammes"</strong>, puis <strong>"+ Nouveau"</strong>.
-  </div>
-  <div class="step">
-    <span class="step-num">2</span> Choisissez le(s) destinataire(s) et rédigez votre message.
-  </div>
-  <div class="step">
-    <span class="step-num">3</span> Cochez <strong>"🔒 Confidentiel"</strong> si le contenu ne doit être visible que par l'expéditeur et le(s) destinataire(s).
-  </div>
-
-  <div class="note">💡 Les télégrammes sont visibles par tous dans le tableau (date, expéditeur, destinataire). Mais si "Confidentiel" est coché, le <strong>contenu</strong> est masqué pour les autres.</div>
+  <h3>Numéro de série (Wehrnummer)</h3>
+  <p>Chaque Soldbuch a un numéro unique au format <code>UniteCode/RangGrade/NuméroEffectif</code>. Le bouton 🎲 sur la page 1 génère un numéro de série aléatoire pour l'Erkennungsmarke.</p>
 
   <h3>Signatures</h3>
-  <p>Certains télégrammes peuvent contenir des emplacements de signature. Si un télégramme vous demande de signer, un bouton <strong>"✍️ Signer"</strong> apparaîtra.</p>
+  <p>Le Soldbuch contient <strong>deux emplacements de signature</strong> :</p>
+  <ul>
+    <li><strong>Signature du soldat</strong> — Seul le propriétaire du Soldbuch peut signer</li>
+    <li><strong>Signature du référent</strong> — Un officier ou administratif valide en signant</li>
+  </ul>
+  <div class="warning">⚠️ Les <strong>administrateurs système</strong> ne peuvent PAS signer. Seuls les officiers et administratifs (recenseurs) ont ce droit.</div>
+
+  <h3>Demandes d'habillement</h3>
+  <div class="step"><span class="step-num">1</span> Ouvrez <strong>votre propre Soldbuch</strong></div>
+  <div class="step"><span class="step-num">2</span> Cliquez sur <strong>"📝 Faire une demande d'habillement"</strong> (visible uniquement sur votre propre Soldbuch)</div>
+  <div class="step"><span class="step-num">3</span> Décrivez l'équipement souhaité</div>
+  <div class="step"><span class="step-num">4</span> Un officier approuvera ou refusera votre demande</div>
+  <p>Les demandes approuvées/refusées apparaissent dans l'onglet "Remarques" du Soldbuch.</p>
+
+  <div class="note">💡 Un <a href="/docs/guide-soldbuch.html" style="color:#8bc34a">guide détaillé du Soldbuch</a> est disponible séparément avec toutes les pages expliquées.</div>
 </section>
 
-<!-- ==================== 7. DOSSIERS ==================== -->
-<section id="dossiers">
-  <h2>7. Dossiers personnels</h2>
-  <p>Chaque effectif a un dossier personnel qui regroupe toute sa carrière :</p>
+<!-- ==================== 6. PDS ==================== -->
+<section id="pds">
+  <h2>6. ⏱️ Plan de Service (PDS)</h2>
+  <p>Le PDS sert à déclarer vos <strong>heures de présence</strong> pour la semaine RP en cours.</p>
+  
+  <h3>Qu'est-ce qu'une semaine RP ?</h3>
+  <p>Une semaine RP va du <strong>vendredi 20h au vendredi suivant 20h</strong>. Le samedi est le jour de cérémonie.</p>
+
+  <h3>Remplir votre PDS</h3>
+  <div class="step"><span class="step-num">1</span> Dashboard → <strong>PDS</strong></div>
+  <div class="step"><span class="step-num">2</span> Cliquez sur <strong>"📝 Mon PDS"</strong></div>
+  <div class="step"><span class="step-num">3</span> Pour chaque jour, indiquez vos heures de présence</div>
+  <div class="step"><span class="step-num">4</span> Cliquez sur <strong>Enregistrer</strong></div>
+
+  <h3>Formats acceptés pour les heures</h3>
+  <p>Vous pouvez écrire vos heures de plusieurs façons :</p>
   <ul>
-    <li><strong>Chronologie</strong> — Historique des événements (promotions, mutations, décorations...)</li>
-    <li><strong>PDS</strong> — Historique des plans de service</li>
-    <li><strong>Rapports</strong> — Rapports liés à cet effectif</li>
-    <li><strong>Décorations</strong> — Médailles et distinctions</li>
-    <li><strong>Solde</strong> — Historique des paies et transactions</li>
+    <li><code>20h-22h30</code> — Créneau horaire (calcul automatique : 2h30)</li>
+    <li><code>20:00-22:30</code> — Format 24h avec deux-points</li>
+    <li><code>2h30</code> — Durée directe</li>
+    <li><code>2.5</code> — Durée en décimal</li>
   </ul>
-  <p>Accédez au dossier depuis la <strong>fiche effectif</strong> (cliquez sur un effectif dans la liste, puis <strong>"📁 Dossier personnel"</strong>).</p>
+
+  <div class="danger">🔒 <strong>Verrouillage :</strong> Vous ne pouvez modifier que la <strong>semaine en cours</strong>. Les semaines passées sont verrouillées (seuls les admins peuvent modifier les semaines passées).</div>
+
+  <h3>Objectif</h3>
+  <p><strong>6 heures minimum</strong> par semaine. Dans le tableau du commandement :</p>
+  <div class="icon-grid">
+    <span>✅</span> <span>PDS rempli avec ≥ 6h</span>
+    <span>⚠️</span> <span>PDS rempli mais &lt; 6h</span>
+    <span>❌</span> <span>Pas de PDS rempli</span>
+  </div>
+
+  <h3>Consulter les PDS de tous</h3>
+  <p>L'onglet <strong>"Tous les effectifs"</strong> montre un tableau avec tous ceux qui ont rempli leur PDS. Cliquez sur une ligne pour voir le détail.</p>
 </section>
 
-<!-- ==================== 8. MEDICAL ==================== -->
-<section id="medical">
-  <h2>8. Service médical</h2>
-  <p>Le module médical est principalement utilisé par le personnel <strong>Sanitäts</strong> (unité 916S).</p>
-  <ul>
-    <li><strong>Visites médicales</strong> — Examens médicaux avec validation par un officier Sanitäts</li>
-    <li><strong>Hospitalisations</strong> — Suivi des séjours à l'infirmerie</li>
-    <li><strong>Blessures</strong> — Registre des blessures au combat</li>
-    <li><strong>Vaccinations</strong> — Suivi vaccinal</li>
-    <li><strong>Soins au front</strong> — Soins d'urgence sur le terrain</li>
-  </ul>
-  <p>Depuis le Dashboard médical, vous avez une vue d'ensemble avec le <strong>rapport de service</strong> (statistiques).</p>
-</section>
+<!-- ==================== 7. RAPPORTS ==================== -->
+<section id="rapports">
+  <h2>7. 📝 Rapports</h2>
+  <p>Les rapports sont des documents officiels : comptes-rendus de mission, incidents, recommandations, etc.</p>
 
-<!-- ==================== 9. SANCTIONS ==================== -->
-<section id="sanctions">
-  <h2>9. Justice & Sanctions</h2>
-  <p>Le système judiciaire est géré par la <strong>Feldgendarmerie</strong> (254e unité).</p>
-
-  <h3>Affaires</h3>
-  <p>Une affaire est un dossier judiciaire regroupant :</p>
+  <h3>Créer un rapport</h3>
+  <div class="step"><span class="step-num">1</span> Dashboard → <strong>Rapports</strong> → <strong>"+ Nouveau rapport"</strong></div>
+  <div class="step"><span class="step-num">2</span> Choisissez le type : <strong>Rapport</strong>, <strong>Incident</strong>, ou <strong>Recommandation</strong></div>
+  <div class="step"><span class="step-num">3</span> Remplissez le titre, la date RP, et le contenu</div>
+  <div class="step"><span class="step-num">4</span> Choisissez une action :</div>
   <ul>
-    <li>Des <strong>personnes impliquées</strong> (accusé, témoin, victime...)</li>
-    <li>Des <strong>pièces jointes</strong> (preuves, témoignages...)</li>
-    <li>Des <strong>signatures</strong> (juges, accusés, témoins)</li>
+    <li><strong>Enregistrer</strong> = sauvegarde en <strong>brouillon</strong> (visible que par vous)</li>
+    <li><strong>Publier</strong> = envoie le rapport <strong>pour validation</strong> par un officier</li>
   </ul>
+
+  <h3>Cycle de vie d'un rapport</h3>
+  <p><span class="shortcut">Brouillon</span> → <span class="shortcut">Publié (en attente)</span> → <span class="shortcut">Validé ✓</span></p>
+  <ul>
+    <li>Un <strong>brouillon</strong> n'est visible que par son auteur</li>
+    <li>Un rapport <strong>publié</strong> est en attente de validation par un officier</li>
+    <li>Un rapport publié par un <strong>officier</strong> est automatiquement validé</li>
+  </ul>
+
+  <h3>Mise en page</h3>
+  <p>Les rapports disposent d'un <strong>éditeur de mise en page</strong> avec des blocs de texte et images, similaire à un éditeur de document.</p>
+  <div class="warning">⚠️ L'éditeur de mise en page n'est disponible que sur <strong>ordinateur</strong>. Sur mobile, vous pouvez lire les rapports mais pas les mettre en page.</div>
 
   <h3>Signaler un incident</h3>
-  <p>N'importe quel effectif peut rédiger un <strong>rapport d'incident</strong> (dans Rapports). La Feldgendarmerie reçoit une notification et peut ouvrir une affaire.</p>
+  <p>Créez un rapport de type <strong>"Incident"</strong>. La <strong>Feldgendarmerie</strong> recevra une notification automatique et pourra ouvrir une affaire judiciaire si nécessaire.</p>
+</section>
 
-  <h3>Interdits de front</h3>
-  <p>Un effectif peut être déclaré <strong>interdit de front</strong> — il ne peut plus participer aux combats. Géré par les officiers et la Feldgendarmerie.</p>
+<!-- ==================== 8. TÉLÉGRAMMES ==================== -->
+<section id="telegrammes">
+  <h2>8. ⚡ Télégrammes</h2>
+  <p>Les télégrammes sont des <strong>messages courts</strong> entre effectifs — l'équivalent RP des mémos internes.</p>
 
-  <h3>Avis de recherche</h3>
-  <p>La Feldgendarmerie peut publier des avis de recherche avec photo, visibles par tous.</p>
+  <h3>Envoyer un télégramme</h3>
+  <div class="step"><span class="step-num">1</span> Dashboard → <strong>Télégrammes</strong> → <strong>"+ Nouveau"</strong></div>
+  <div class="step"><span class="step-num">2</span> Tapez le nom du destinataire (auto-complétion) — vous pouvez en mettre <strong>plusieurs</strong></div>
+  <div class="step"><span class="step-num">3</span> Rédigez l'objet et le contenu</div>
+  <div class="step"><span class="step-num">4</span> Choisissez la <strong>priorité</strong> : Normal, Urgent, Flash</div>
+  <div class="step"><span class="step-num">5</span> Envoyez</div>
+
+  <h3>Confidentialité</h3>
+  <p>Cochez <strong>"🔒 Confidentiel"</strong> pour masquer le contenu. Les autres verront que le télégramme existe (date, expéditeur, destinataire) mais pas son contenu.</p>
+  <div class="note">💡 <strong>Tous les télégrammes</strong> sont visibles dans le tableau général (transparence). Seul le <strong>contenu</strong> des télégrammes confidentiels est masqué.</div>
+
+  <h3>Signatures dans les télégrammes</h3>
+  <p>Certains télégrammes contiennent des emplacements de signature. Si quelqu'un vous demande de signer via un télégramme, un bouton <strong>"✍️ Signer / Tamponner"</strong> apparaîtra.</p>
+
+  <h3>Filtres</h3>
+  <p>Utilisez les onglets pour filtrer :</p>
+  <ul>
+    <li><strong>Tous</strong> — Tous les télégrammes visibles</li>
+    <li><strong>Reçus</strong> — Ceux qui vous sont adressés</li>
+    <li><strong>Envoyés</strong> — Ceux que vous avez envoyés</li>
+    <li><strong>Archivés</strong> — Ceux que vous avez archivés</li>
+  </ul>
+</section>
+
+<!-- ==================== 9. DOSSIERS ==================== -->
+<section id="dossiers">
+  <h2>9. 📁 Dossiers personnels</h2>
+  <p>Chaque effectif a un <strong>dossier personnel</strong> qui regroupe toute sa carrière RP.</p>
+
+  <h3>Accéder à un dossier</h3>
+  <p>Depuis la fiche d'un effectif → <strong>"📁 Dossier personnel"</strong>.</p>
+
+  <h3>Contenu du dossier</h3>
+  <ul>
+    <li><strong>📅 Chronologie</strong> — Historique des événements : promotions, mutations, sanctions, décorations... Chaque entrée a une date RP et un type.</li>
+    <li><strong>⏱️ PDS</strong> — Historique de toutes les semaines de présence, cliquables pour voir le détail</li>
+    <li><strong>📝 Rapports</strong> — Tous les rapports liés à cet effectif</li>
+    <li><strong>🎖️ Décorations</strong> — Médailles et distinctions avec dates d'attribution</li>
+    <li><strong>💰 Solde</strong> — Historique des paies, primes, amendes, et dépenses</li>
+  </ul>
+
+  <h3>Ajouter un événement à la chronologie</h3>
+  <p>Les officiers et administratifs peuvent ajouter des entrées (promotion, mutation, note, etc.) au dossier de n'importe quel effectif.</p>
 </section>
 
 <!-- ==================== 10. FRONT ==================== -->
 <section id="front">
-  <h2>10. Situation du Front</h2>
-  <p>Suivi en temps réel des combats et de la situation territoriale.</p>
+  <h2>10. ⚔️ Situation du Front</h2>
+  <p>Suivi en <strong>temps réel</strong> des combats et de la situation territoriale sur les différentes cartes.</p>
+
+  <h3>Les cartes</h3>
+  <p>Le site suit 4 cartes de combat :</p>
+  <ul>
+    <li><strong>Berlin — Mur Est</strong> (système de VP non-linéaire, voir ci-dessous)</li>
+    <li><strong>Berlin — Porte de Brandebourg</strong></li>
+    <li><strong>Falaise — Bunker</strong></li>
+    <li><strong>Falaise — Maison Billy</strong></li>
+  </ul>
 
   <h3>Rapporter un événement</h3>
-  <p>Accessible aux <strong>officiers et sous-officiers</strong>.</p>
-  <div class="step">
-    <span class="step-num">1</span> Allez dans <strong>"⚔️ Situation du Front"</strong>.
-  </div>
-  <div class="step">
-    <span class="step-num">2</span> Cliquez sur une <strong>carte</strong> pour ouvrir le panneau.
-  </div>
-  <div class="step">
-    <span class="step-num">3</span> Utilisez les boutons pour signaler : début/fin de combat, attaque/défense de base, prise/perte de VP.
-  </div>
+  <p>Réservé aux <strong>officiers et sous-officiers</strong>.</p>
+  <div class="step"><span class="step-num">1</span> Cliquez sur une <strong>carte</strong> pour ouvrir le panneau</div>
+  <div class="step"><span class="step-num">2</span> Onglet <strong>"📝 Rapporter"</strong></div>
+  <div class="step"><span class="step-num">3</span> Choisissez l'heure (auto / manuel / inconnu)</div>
+  <div class="step"><span class="step-num">4</span> Appuyez sur le bouton correspondant à l'événement</div>
 
   <h3>Types d'événements</h3>
+  <div class="icon-grid">
+    <span>🔔</span> <span><strong>Début des combats</strong> — Signale le début de l'actif</span>
+    <span>🏁</span> <span><strong>Fin des combats</strong> — Signale la fin de l'actif (cessez-le-feu)</span>
+    <span>⚠️</span> <span><strong>Défense — Win ALL</strong> — Défense de base réussie (victoire partielle)</span>
+    <span>❌</span> <span><strong>Défense — Win US</strong> — Défense de base échouée (défaite)</span>
+    <span>✅</span> <span><strong>Attaque — Win ALL</strong> — Attaque de base réussie (victoire totale)</span>
+    <span>⚠️✅</span> <span><strong>Attaque — Win US</strong> — Attaque de base échouée (victoire partielle US)</span>
+    <span>🚩</span> <span><strong>Prise de VP</strong> — Un avant-poste a été capturé</span>
+    <span>🏳️</span> <span><strong>Perte de VP</strong> — Un avant-poste a été perdu</span>
+  </div>
+
+  <h3>Affichage sur les cartes</h3>
   <ul>
-    <li>🔔 <strong>Début des combats</strong> / 🏁 <strong>Fin des combats</strong></li>
-    <li>🛡️ <strong>Défense de base</strong> — ⚠️ Win ALL (victoire partielle) ou ❌ Win US (défaite)</li>
-    <li>🗡️ <strong>Attaque de base</strong> — ✅ Win ALL (victoire) ou ⚠️✅ Win US (victoire partielle US)</li>
-    <li>🚩 <strong>Prise de VP</strong> / 🏳️ <strong>Perte de VP</strong></li>
+    <li>🚩 <strong>VP tenu</strong> — Affiche la position la plus avancée du front</li>
+    <li>🏁 <strong>Cessez-le-feu</strong> — Quand le dernier événement est "Fin des combats"</li>
+    <li><strong>Aucun combat en cours</strong> — Après 3h du matin (reset automatique de l'affichage)</li>
   </ul>
 
-  <h3>Cartes spéciales</h3>
-  <div class="note">💡 <strong>Berlin Mur Est</strong> a un système non-linéaire : VP1 et VP2 sont indépendants, les deux sont nécessaires pour attaquer VP3, puis VP4 et VP5 sont indépendants. Toutes les autres cartes sont linéaires (dans l'ordre).</div>
+  <h3>⚠️ Carte spéciale : Berlin Mur Est</h3>
+  <p>Cette carte a un système <strong>non-linéaire</strong> unique :</p>
+  <div class="note" style="font-family: monospace; font-size: 0.85rem;">
+    VP1 Feldkommandantur ──┐<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── VP3 Mur Est ──┬── VP4 Village<br>
+    VP2 Marais ────────────┘&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── VP5 Poste Radio
+  </div>
+  <ul>
+    <li>VP1 et VP2 sont <strong>indépendants</strong> — on peut perdre l'un sans perdre l'autre</li>
+    <li>Il faut avoir VP1 <strong>ET</strong> VP2 pour attaquer VP3</li>
+    <li>VP3 donne accès à VP4 et VP5 (indépendants entre eux)</li>
+    <li>Les autres cartes sont <strong>linéaires</strong> : VP1 → VP2 → VP3 → VP4 → VP5 dans l'ordre</li>
+  </ul>
 
-  <h3>Historique</h3>
-  <p>L'onglet <strong>📋 Historique</strong> affiche tous les événements avec filtrage par <strong>jour</strong>, <strong>semaine</strong>, ou <strong>tout</strong>.</p>
+  <h3>Historique & rapports</h3>
+  <p>L'onglet <strong>"📋 Historique"</strong> dans le popup de carte offre :</p>
+  <ul>
+    <li><strong>📅 Jour</strong> — Événements du jour sélectionné, avec navigation ◀ Aujourd'hui ▶</li>
+    <li><strong>📆 Semaine RP</strong> — Rapport résumé de la semaine (vendredi → vendredi) avec stats complètes, téléchargeable en PNG 📥</li>
+    <li><strong>📋 Tout</strong> — Historique complet</li>
+    <li><strong>📅 Calendrier</strong> — Bouton pour ouvrir un mini-calendrier avec des <strong>points verts</strong> sur les jours qui ont des événements</li>
+  </ul>
+
+  <h3>Début des combats en retard</h3>
+  <p>Si vous oubliez d'appuyer sur "Début des combats", vous pouvez le faire en retard. L'événement se placera automatiquement <strong>en premier</strong> dans la chronologie de la journée, même s'il a été enregistré après d'autres événements.</p>
 </section>
 
-<!-- ==================== 11. DOCUMENTATION ==================== -->
+<!-- ==================== 11. MEDICAL ==================== -->
+<section id="medical">
+  <h2>11. 🏥 Service médical</h2>
+  <p>Module principalement utilisé par le personnel <strong>Sanitäts</strong> (unité 916S).</p>
+
+  <h3>Dashboard médical</h3>
+  <p>La page <strong>Médical</strong> affiche un tableau de bord avec des cartes d'accès rapide vers chaque sous-module, plus un rapport de service avec statistiques.</p>
+
+  <h3>Sous-modules</h3>
+  <ul>
+    <li><strong>🩺 Visites médicales</strong> — Examens médicaux. Un officier Sanitäts doit valider chaque visite (avec signature). Si un officier crée la visite → auto-validée.</li>
+    <li><strong>🏨 Hospitalisations</strong> — Séjours à l'infirmerie avec date d'entrée/sortie et motif</li>
+    <li><strong>🩹 Blessures</strong> — Registre des blessures au combat (type, localisation, gravité)</li>
+    <li><strong>💉 Vaccinations</strong> — Suivi vaccinal (type, date, rappels)</li>
+    <li><strong>⛑️ Soins au front</strong> — Soins d'urgence sur le terrain (3 types : premiers soins, stabilisation, évacuation)</li>
+  </ul>
+
+  <h3>Dans le Soldbuch</h3>
+  <p>Toutes les données médicales apparaissent automatiquement dans la <strong>page 6</strong> du Soldbuch de l'effectif concerné.</p>
+</section>
+
+<!-- ==================== 12. SANCTIONS ==================== -->
+<section id="sanctions">
+  <h2>12. ⚖️ Justice & Sanctions</h2>
+  <p>Le système judiciaire est géré par la <strong>Feldgendarmerie</strong> (254e unité).</p>
+
+  <h3>Affaires judiciaires</h3>
+  <p>Une affaire est un dossier complet regroupant :</p>
+  <ul>
+    <li><strong>Personnes impliquées</strong> — accusé, témoin, victime, plaignant...</li>
+    <li><strong>Pièces du dossier</strong> — preuves, témoignages, documents (chacune avec sa propre mise en page)</li>
+    <li><strong>Signatures</strong> — juges, accusés, témoins signent le dossier</li>
+  </ul>
+
+  <h3>Interdits de front</h3>
+  <p>Un effectif peut être déclaré <strong>interdit de front</strong> — il ne peut plus participer aux combats. Types :</p>
+  <ul>
+    <li><strong>Disciplinaire</strong> — sanction comportementale</li>
+    <li><strong>Médical</strong> — inapte au combat</li>
+    <li><strong>Judiciaire</strong> — en attente de jugement</li>
+  </ul>
+  <p>Un officier peut <strong>lever</strong> un interdit avec un motif.</p>
+
+  <h3>Avis de recherche</h3>
+  <p>La Feldgendarmerie peut publier des <strong>avis de recherche</strong> avec photo, visibles par tous les effectifs.</p>
+
+  <h3>Code pénal</h3>
+  <p>32 infractions classées en 5 niveaux de gravité, de l'infraction mineure à la trahison.</p>
+</section>
+
+<!-- ==================== 13. DOCUMENTATION ==================== -->
 <section id="documentation">
-  <h2>11. Documentation</h2>
-  <p>Espace pour les documents partagés (règlements, procédures, guides...).</p>
+  <h2>13. 📚 Documentation</h2>
+  <p>Espace partagé pour les règlements, procédures, guides, et documents officiels.</p>
+
+  <h3>Types de documents supportés</h3>
   <ul>
-    <li><strong>Officiers</strong> peuvent créer des dossiers et ajouter des documents directement</li>
-    <li><strong>Sous-officiers</strong> peuvent soumettre des documents pour validation</li>
-    <li>Les documents peuvent être des <strong>Google Docs/Sheets/Slides</strong> (affichés en iframe), des <strong>PDFs</strong>, ou des <strong>liens externes</strong></li>
+    <li><strong>Google Docs / Sheets / Slides</strong> — Affichés directement dans le site (iframe)</li>
+    <li><strong>PDF</strong> — Affichés dans le navigateur</li>
+    <li><strong>Liens externes</strong> — Ouverts dans un nouvel onglet</li>
   </ul>
+
+  <h3>Qui peut créer ?</h3>
+  <ul>
+    <li><strong>Officiers</strong> — Créent des dossiers et ajoutent des documents directement (auto-approuvés)</li>
+    <li><strong>Sous-officiers</strong> — Soumettent des documents pour validation par un officier</li>
+  </ul>
+
+  <h3>Organisation</h3>
+  <p>Les documents sont organisés en <strong>dossiers</strong> (répertoires). Cliquez sur un dossier pour voir son contenu.</p>
 </section>
 
-<!-- ==================== 12. COMMANDEMENT ==================== -->
+<!-- ==================== 14. SIGNATURES ==================== -->
+<section id="signatures">
+  <h2>14. ✍️ Signatures & Tampons</h2>
+  <p>Le système de signature est utilisé à plusieurs endroits : Soldbuch, rapports, affaires, télégrammes.</p>
+
+  <h3>Comment signer</h3>
+  <p>Quand un document nécessite votre signature, un bouton <strong>"✍️ Signer"</strong> apparaît. Il ouvre un popup avec :</p>
+  <ul>
+    <li><strong>Zone de dessin</strong> — Dessinez votre signature à la souris ou au doigt</li>
+    <li><strong>Tampon</strong> — Si vous avez accès à des tampons officiels, vous pouvez les appliquer</li>
+    <li><strong>Signature + Tampon</strong> — Les deux superposés</li>
+  </ul>
+
+  <h3>Qui peut signer quoi ?</h3>
+  <ul>
+    <li><strong>Slot "Soldat"</strong> — Seul le propriétaire du document peut signer</li>
+    <li><strong>Slot "Référent"</strong> — Officiers et administratifs uniquement</li>
+  </ul>
+  <div class="warning">⚠️ Les administrateurs système <strong>ne peuvent pas signer</strong>. La signature est réservée aux rôles RP (officiers, administratifs).</div>
+
+  <h3>Bibliothèque de tampons</h3>
+  <p>Les tampons officiels sont stockés dans la <strong>📚 Bibliothèque</strong>. L'accès à chaque tampon est contrôlé par permissions (par groupe ou par personne).</p>
+</section>
+
+<!-- ==================== 15. COMMANDEMENT ==================== -->
 <section id="commandement">
-  <h2>12. Commandement (officiers)</h2>
-  <p>Page réservée aux <strong>officiers, état-major et administratifs</strong>.</p>
+  <h2>15. 🎖️ Commandement (officiers)</h2>
+  <p>Page réservée aux <strong>officiers, état-major, et administratifs</strong>.</p>
+
+  <h3>Vue d'ensemble</h3>
   <ul>
-    <li><strong>Vue d'ensemble</strong> — Effectifs actifs, rapports de la semaine, validations en attente</li>
-    <li><strong>État des effectifs</strong> — Tableau avec PDS, rapports, statut par effectif</li>
-    <li><strong>Rapport du Front</strong> — Synthèse des combats par période (jour/semaine)</li>
-    <li><strong>Validation</strong> — Rapports, documents, habillements en attente</li>
+    <li><strong>Statistiques</strong> — Effectifs actifs, rapports de la semaine, validations en attente</li>
+    <li><strong>Activité récente</strong> — Dernières actions sur le site</li>
+    <li><strong>Liens rapides</strong> — Calendrier, rapports, interdits, PDS, statistiques</li>
   </ul>
+
+  <h3>État des effectifs</h3>
+  <p>Tableau complet avec colonnes : effectif, grade, unité, PDS (✅/⚠️/❌), rapports de la semaine. Filtres disponibles :</p>
+  <ul>
+    <li><strong>Tous</strong> — Tous les effectifs actifs</li>
+    <li><strong>PDS manquant</strong> — Ceux qui n'ont pas rempli leur PDS</li>
+    <li><strong>Rapport manquant</strong> — Ceux qui n'ont pas de rapport cette semaine</li>
+    <li><strong>OK</strong> — Ceux qui ont PDS + rapport</li>
+  </ul>
+
+  <h3>Rapport du Front</h3>
+  <p>Bouton <strong>"⚔️ Rapport du Front"</strong> — synthèse des combats avec :</p>
+  <ul>
+    <li>Filtrage par <strong>jour</strong> ou <strong>semaine RP</strong> (vendredi → vendredi)</li>
+    <li>Navigation intuitive ◀ Aujourd'hui ▶</li>
+    <li>Stats globales : batailles, attaques, défenses, victoires, prises/pertes VP</li>
+    <li>Détail par carte</li>
+  </ul>
+
+  <h3>Validation</h3>
+  <p>Depuis <strong>"🔔 Validation"</strong>, gérez :</p>
+  <ul>
+    <li>Rapports en attente de validation</li>
+    <li>Documents soumis par les sous-officiers</li>
+    <li>Demandes d'habillement</li>
+    <li>Médias en attente de modération</li>
+    <li>Permissions d'absence</li>
+  </ul>
+
+  <h3>Administration</h3>
+  <p>Accessible aux officiers/administratifs/état-major. Permet de :</p>
+  <ul>
+    <li>Voir et modifier les comptes utilisateurs et groupes</li>
+    <li>Consulter les logs d'activité</li>
+  </ul>
+  <div class="warning">⚠️ Les non-admins <strong>ne peuvent pas</strong> : supprimer des utilisateurs, désactiver des comptes, ni modifier les groupes Administration et État-Major.</div>
 </section>
 
-<!-- ==================== 13. ORGANIGRAMME ==================== -->
+<!-- ==================== 16. ORGANIGRAMME ==================== -->
 <section id="organigramme">
-  <h2>13. Organigramme</h2>
-  <p>Affiche la structure du régiment : unités, grades par unité, et spécialités en jeu.</p>
-  <p>Cliquez sur une <strong>unité</strong> pour voir ses grades et effectifs. Cliquez sur une <strong>spécialité</strong> pour voir les règles associées.</p>
+  <h2>16. 🗺️ Organigramme</h2>
+  <p>Affiche la <strong>structure du régiment</strong> : unités, grades, et spécialités en jeu.</p>
+  <ul>
+    <li>Cliquez sur une <strong>unité</strong> pour voir ses grades et effectifs</li>
+    <li>Cliquez sur une <strong>spécialité</strong> pour voir les règles de jeu associées</li>
+  </ul>
+  <p>L'organigramme est <strong>manuellement éditable</strong> par les officiers.</p>
 </section>
 
-<!-- ==================== 14. PERMISSIONS ==================== -->
+<!-- ==================== 17. ARCHIVES ==================== -->
+<section id="archives">
+  <h2>17. 📜 Archives</h2>
+  <p>La page Archives regroupe <strong>tous les documents validés</strong> du site en un seul endroit, triés par date :</p>
+  <ul>
+    <li>Rapports validés</li>
+    <li>Visites médicales</li>
+    <li>Affaires judiciaires</li>
+    <li>Pièces de dossier</li>
+    <li>Documentation approuvée</li>
+  </ul>
+  <p>C'est un <strong>historique consultable</strong> — pas d'action à faire ici, juste de la lecture.</p>
+</section>
+
+<!-- ==================== 18. PARTAGE ==================== -->
+<section id="partage">
+  <h2>18. 🔗 Liens de partage</h2>
+  <p>Certaines pages ont un bouton <strong>"🔗 Partager"</strong>. Le lien généré permet à n'importe qui de consulter le document <strong>sans se connecter</strong>.</p>
+  
+  <h3>Comment ça marche</h3>
+  <div class="step"><span class="step-num">1</span> Sur un rapport, Soldbuch, ou dossier → cliquez <strong>"🔗 Partager"</strong></div>
+  <div class="step"><span class="step-num">2</span> Le lien est copié dans votre presse-papier</div>
+  <div class="step"><span class="step-num">3</span> Partagez-le sur Discord, WhatsApp, etc.</div>
+  <p>La personne qui ouvre le lien obtient un <strong>accès invité automatique</strong> (lecture seule).</p>
+  
+  <div class="note">💡 Pratique pour partager un Soldbuch ou un rapport sur Discord sans que la personne ait besoin d'un compte.</div>
+</section>
+
+<!-- ==================== 19. PERMISSIONS ==================== -->
 <section id="permissions">
-  <h2>14. Rôles & Permissions</h2>
+  <h2>19. 🛡️ Rôles & Permissions</h2>
   <table class="perm-table">
     <thead>
-      <tr>
-        <th>Rôle</th>
-        <th>Peut faire</th>
-      </tr>
+      <tr><th>Rôle</th><th>Accès</th></tr>
     </thead>
     <tbody>
       <tr>
-        <td><strong>Visiteur (guest)</strong></td>
-        <td>Lecture seule — peut consulter via lien de partage</td>
+        <td><strong>👁️ Visiteur</strong></td>
+        <td>Lecture seule — peut consulter via lien de partage ou accès invité</td>
       </tr>
       <tr>
-        <td><strong>Effectif (compte)</strong></td>
-        <td>Remplir son PDS, écrire des rapports, envoyer des télégrammes, consulter les dossiers, remplir son Soldbuch</td>
+        <td><strong>🪖 Effectif</strong></td>
+        <td>Remplir son PDS, écrire des rapports, envoyer des télégrammes, consulter les dossiers, signer son Soldbuch, faire des demandes d'habillement</td>
       </tr>
       <tr>
-        <td><strong>Sous-officier</strong></td>
-        <td>+ Rapporter situation du front, soumettre documentation pour validation</td>
+        <td><strong>⭐ Sous-officier</strong></td>
+        <td>+ Rapporter la situation du front, soumettre de la documentation</td>
       </tr>
       <tr>
-        <td><strong>Officier</strong></td>
-        <td>+ Valider rapports/docs, signer en référent, créer documentation, gérer interdits de front, valider habillement, accès commandement</td>
+        <td><strong>⭐⭐ Officier</strong></td>
+        <td>+ Valider rapports/docs, signer en référent, créer documentation, gérer interdits, valider habillement, commandement, créer effectifs</td>
       </tr>
       <tr>
-        <td><strong>Administratif</strong></td>
-        <td>+ Gérer effectifs, signer en référent, accès commandement/admin (lecture)</td>
+        <td><strong>📋 Administratif</strong></td>
+        <td>+ Gérer effectifs, signer en référent, commandement, supprimer des entrées de chronologie</td>
       </tr>
       <tr>
-        <td><strong>Feldgendarmerie</strong></td>
-        <td>+ Gérer affaires/sanctions, publier avis de recherche</td>
+        <td><strong>🚔 Feldgendarmerie</strong></td>
+        <td>+ Gérer affaires/sanctions, publier avis de recherche, prendre en charge les incidents</td>
       </tr>
       <tr>
-        <td><strong>Sanitäts</strong></td>
-        <td>+ Accès complet au module médical</td>
+        <td><strong>🏥 Sanitäts</strong></td>
+        <td>+ Accès complet au module médical (visites, hospitalisations, blessures, vaccinations, soins)</td>
       </tr>
       <tr>
-        <td><strong>État-Major</strong></td>
-        <td>Équivalent administrateur (sauf suppression de comptes)</td>
+        <td><strong>🏛️ État-Major</strong></td>
+        <td>Équivalent administrateur (sauf suppression de comptes et gestion des groupes sensibles)</td>
       </tr>
       <tr>
-        <td><strong>Administrateur</strong></td>
-        <td>Accès total — gestion des comptes, groupes, configuration</td>
+        <td><strong>⚙️ Administrateur</strong></td>
+        <td>Accès total — gestion des comptes, groupes, configuration, logs</td>
       </tr>
     </tbody>
   </table>
 </section>
 
-<!-- ==================== 15. PARTAGE ==================== -->
-<section id="partage">
-  <h2>15. Liens de partage</h2>
-  <p>Certaines pages ont un bouton <strong>"🔗 Partager"</strong>. Le lien généré permet à n'importe qui de consulter le document <strong>sans se connecter</strong> (accès lecture seule).</p>
-  <div class="note">💡 Pratique pour partager un rapport ou un Soldbuch sur Discord sans que la personne ait besoin d'un compte.</div>
-</section>
-
-<!-- ==================== 16. FAQ ==================== -->
+<!-- ==================== 20. FAQ ==================== -->
 <section id="faq">
-  <h2>16. FAQ</h2>
+  <h2>20. ❓ FAQ & Dépannage</h2>
   
-  <h3>Je n'arrive pas à me connecter</h3>
-  <p>Vérifiez votre nom d'utilisateur (format <code>prenom.nom</code>). Si le problème persiste, demandez à un admin de réinitialiser votre mot de passe.</p>
+  <h3>🔐 Connexion</h3>
+  
+  <h4>Je n'arrive pas à me connecter</h4>
+  <p>Vérifiez que vous utilisez votre <strong>nom d'utilisateur</strong> (format <code>prenom.nom</code>), pas votre pseudo Discord. Le mot de passe est sensible aux majuscules/minuscules.</p>
 
-  <h3>Je ne peux pas modifier mon PDS</h3>
-  <p>Le PDS est verrouillé à la <strong>semaine en cours</strong> (vendredi 20h → vendredi 20h). Vous ne pouvez pas modifier les semaines passées.</p>
+  <h4>Mon mot de passe ne fonctionne plus</h4>
+  <p>Utilisez la fonction <strong>"🔑 Mot de passe oublié"</strong> sur la page de login. Un admin réinitialisera votre accès.</p>
 
-  <h3>Mon rapport n'apparaît pas</h3>
-  <p>Si vous avez cliqué <strong>Enregistrer</strong> (et non Publier), il est en brouillon. Retournez dans vos rapports et cliquez <strong>Publier</strong>.</p>
+  <h3>📝 Contenu</h3>
 
-  <h3>Je ne vois pas certaines sections</h3>
-  <p>Les sections visibles dépendent de votre <strong>rôle</strong>. Le commandement, par exemple, n'est accessible qu'aux officiers/état-major.</p>
+  <h4>Mon rapport n'apparaît pas dans la liste</h4>
+  <p>Si vous avez cliqué <strong>Enregistrer</strong> (et non Publier), il est en <strong>brouillon</strong>. Retournez dans Rapports, retrouvez votre brouillon, et cliquez <strong>Publier</strong>.</p>
 
-  <h3>L'éditeur de mise en page ne s'affiche pas</h3>
-  <p>L'éditeur n'est disponible que sur <strong>ordinateur</strong>. Sur mobile/tablette, seule la consultation est possible.</p>
+  <h4>Je ne peux pas modifier mon PDS</h4>
+  <p>Le PDS est verrouillé à la <strong>semaine en cours</strong> (vendredi 20h → vendredi 20h). Les semaines passées ne sont pas modifiables (sauf par un admin).</p>
 
-  <h3>Comment demander de l'équipement ?</h3>
-  <p>Ouvrez <strong>votre propre Soldbuch</strong> et cliquez sur <strong>"📝 Faire une demande d'habillement"</strong>. Un officier traitera votre demande.</p>
+  <h4>L'éditeur de mise en page ne s'affiche pas</h4>
+  <p>Il n'est disponible que sur <strong>ordinateur</strong>. Sur mobile/tablette, un message vous indique de passer sur PC.</p>
 
-  <h3>Le site ne charge pas depuis le WiFi de l'école</h3>
-  <p>Certains réseaux (WiFi école/entreprise) bloquent l'accès. Utilisez votre <strong>4G/5G</strong> à la place.</p>
+  <h3>📖 Soldbuch</h3>
+
+  <h4>Comment demander de l'équipement ?</h4>
+  <p>Ouvrez <strong>votre propre Soldbuch</strong> → <strong>"📝 Faire une demande d'habillement"</strong>. Vous ne pouvez pas faire de demande depuis le Soldbuch de quelqu'un d'autre.</p>
+
+  <h4>Ma signature ne s'enregistre pas</h4>
+  <p>Assurez-vous de bien <strong>dessiner quelque chose</strong> dans la zone de signature, puis cliquez <strong>Valider</strong>. Si l'erreur persiste, essayez de vider le cache de votre navigateur.</p>
+
+  <h3>⚔️ Situation du Front</h3>
+
+  <h4>Je ne peux pas rapporter d'événements</h4>
+  <p>Seuls les <strong>officiers et sous-officiers</strong> peuvent rapporter des événements. Si vous êtes simple soldat, demandez à un SO/officier.</p>
+
+  <h4>La carte affiche des infos anciennes</h4>
+  <p>L'affichage se <strong>réinitialise automatiquement</strong> après 3h du matin. Si c'est encore affiché, vérifiez que quelqu'un a bien appuyé sur "Fin des combats" à la fin de la session.</p>
+
+  <h3>🌐 Technique</h3>
+
+  <h4>Le site ne charge pas depuis le WiFi de l'école</h4>
+  <p>Certains réseaux (WiFi école/entreprise) bloquent l'accès. Utilisez votre <strong>4G/5G</strong> à la place. Ce n'est pas un problème du site.</p>
+
+  <h4>Je ne vois pas certaines sections du site</h4>
+  <p>Les sections visibles dépendent de votre <strong>rôle</strong>. Le commandement par exemple n'est accessible qu'aux officiers/état-major. Voir la section <a href="#permissions" style="color:#8bc34a">Permissions</a>.</p>
+
+  <h4>Les images ne s'affichent pas</h4>
+  <p>Essayez de vider le cache du navigateur (Ctrl+Shift+R ou Cmd+Shift+R). Si le problème persiste, contactez un administrateur.</p>
 </section>
+
+<hr>
+
+<div style="text-align: center; color: #8b8060; font-size: 0.8rem; margin-top: 2rem;">
+  <p>Archives du 7. Armeekorps — LaBaguetteRP</p>
+  <p style="font-size: 0.7rem; margin-top: 0.5rem;">Ce site est dédié exclusivement à la simulation RP (jeu de rôle) sur Garry's Mod.<br>Aucune affiliation avec des mouvements historiques ou politiques.</p>
+</div>
 
 <a href="/" class="back-btn">← Retour au site</a>
 
