@@ -101,6 +101,7 @@ export default function Dashboard() {
     { icon: '📸', title: 'Galerie', desc: 'Photos RP', to: '/galerie' },
     { icon: '🗺️', title: 'Organigramme', desc: 'Organisation du Korps', to: '/organigramme' },
     { icon: '📰', title: 'Journal', desc: 'Wacht am Korps', to: '/journal' },
+    { icon: '📖', title: 'Guide', desc: 'Guide d\'utilisation', href: '/docs/guide-utilisateur.html' },
   ]
 
   if (user?.isAdmin || user?.isOfficier) {
@@ -272,7 +273,13 @@ export default function Dashboard() {
 
       {/* Navigation */}
       <div className="grid grid-cols-3" style={{ gap: 'var(--space-lg)', marginBottom: 'var(--space-xl)' }}>
-        {navCards.map((card, i) => (
+        {navCards.map((card, i) => card.href ? (
+          <a href={card.href} key={i} target="_blank" rel="noopener noreferrer" className="paper-card unit-card" style={{ textAlign: 'center', textDecoration: 'none' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: 'var(--space-sm)' }}>{card.icon}</div>
+            <h3 style={{ margin: '0 0 var(--space-xs)' }}>{card.title}</h3>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>{card.desc}</p>
+          </a>
+        ) : (
           <Link to={card.to} key={i} className="paper-card unit-card" style={{ textAlign: 'center', textDecoration: 'none' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: 'var(--space-sm)' }}>{card.icon}</div>
             <h3 style={{ margin: '0 0 var(--space-xs)' }}>{card.title}</h3>

@@ -80,7 +80,9 @@ export default function SituationFront() {
   const [heureMode, setHeureMode] = useState('auto')
   const [heureManuel, setHeureManuel] = useState('')
   const [histFilter, setHistFilter] = useState('jour') // jour | semaine | all
-  const [histDate, setHistDate] = useState(new Date().toISOString().slice(0, 10))
+  const [histDate, setHistDate] = useState(() => {
+    const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  })
 
   const canReport = user?.isAdmin || user?.isOfficier || user?.isSousOfficier || user?.isEtatMajor
   const canDelete = user?.isAdmin || user?.isOfficier || user?.isEtatMajor || user?.isRecenseur
@@ -128,21 +130,28 @@ export default function SituationFront() {
 
   const sel = cartes.find(c => c.id === selected)
 
-  // Filter events for history — use local date string to avoid UTC issues
+  // Extract YYYY-MM-DD reliably (local timezone for Date objects, raw slice for strings)
+  const toDateStr = (d) => {
+    if (!d) return ''
+    if (typeof d === 'string') return d.slice(0, 10)
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  }
+
+  // Filter events for history
   const filteredEvents = events.filter(ev => {
     if (histFilter === 'all') return true
-    const evLocal = new Date(ev.date_irl).toLocaleDateString('fr-CA') // YYYY-MM-DD format
+    const evDate = toDateStr(ev.date_irl)
     if (histFilter === 'jour') {
-      return evLocal === histDate
+      return evDate === histDate
     }
     // semaine = Monday to Sunday of the week containing histDate
     const ref = new Date(histDate + 'T12:00:00')
     const day = ref.getDay() || 7 // Sunday = 7
     const monday = new Date(ref); monday.setDate(ref.getDate() - day + 1)
     const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6)
-    const monStr = monday.toLocaleDateString('fr-CA')
-    const sunStr = sunday.toLocaleDateString('fr-CA')
-    return evLocal >= monStr && evLocal <= sunStr
+    const monStr = toDateStr(monday)
+    const sunStr = toDateStr(sunday)
+    return evDate >= monStr && evDate <= sunStr
   })
 
   // Group by day
@@ -306,12 +315,16 @@ export default function SituationFront() {
                     prises: filteredEvents.filter(e => e.type_event === 'prise').length,
                     pertes: filteredEvents.filter(e => e.type_event === 'perte').length,
                   }
-                  const bat = s.att_all + s.att_us + s.def_all + s.def_us
+                  const nbAtt = s.att_all + s.att_us
+                  const nbDef = s.def_all + s.def_us
+                  const bat = nbAtt + nbDef
                   return (
                     <div className="front-rapport-summary">
                       <p className="front-section-label">📊 Résumé</p>
                       <div className="front-rapport-grid">
                         <span>⚔️ Batailles: {bat}</span>
+                        <span>🗡️ Attaques: {nbAtt}</span>
+                        <span>🛡️ Défenses: {nbDef}</span>
                         <span>✅ Win ALL att: {s.att_all}</span>
                         <span>⚠️✅ Win US att: {s.att_us}</span>
                         <span>⚠️ Win ALL déf: {s.def_all}</span>

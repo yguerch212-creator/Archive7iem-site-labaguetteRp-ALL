@@ -96,6 +96,9 @@ export default function Login() {
             onClick={() => { setShowForgot(!showForgot); setForgotMsg(null) }}>
             {showForgot ? '← Retour à la connexion' : '🔑 Mot de passe oublié ?'}
           </button>
+          <a href="/docs/guide-utilisateur.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--military-green)', textDecoration: 'underline' }}>
+            📖 Guide d'utilisation du site
+          </a>
         </div>
 
         {showForgot && (

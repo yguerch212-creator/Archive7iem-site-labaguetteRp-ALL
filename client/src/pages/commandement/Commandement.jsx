@@ -33,7 +33,9 @@ export default function Commandement() {
   const [frontStats, setFrontStats] = useState(null)
   const [showFront, setShowFront] = useState(false)
   const [frontPeriode, setFrontPeriode] = useState('semaine')
-  const [frontDate, setFrontDate] = useState(new Date().toISOString().slice(0, 10))
+  const [frontDate, setFrontDate] = useState(() => {
+    const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  })
 
   useEffect(() => {
     api.get('/commandement/dashboard').then(r => setData(r.data)).catch(() => {})
@@ -233,14 +235,17 @@ export default function Commandement() {
             <button className="popup-close" onClick={() => setShowFront(false)}>✕</button>
             <h2 style={{ marginTop: 0, textAlign: 'center' }}>⚔️ Rapport du Front</h2>
             <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
-              <select className="form-input" value={frontPeriode} onChange={e => setFrontPeriode(e.target.value)} style={{ maxWidth: 130 }}>
+              <select className="form-input" value={frontPeriode} onChange={async e => {
+                setFrontPeriode(e.target.value)
+                try { const r = await api.get(`/front/rapport?periode=${e.target.value}&date_debut=${frontDate}&date_fin=${frontDate}`); setFrontStats(r.data.data) } catch {}
+              }} style={{ maxWidth: 130 }}>
                 <option value="jour">📅 Jour</option>
                 <option value="semaine">📆 Semaine</option>
               </select>
-              <input type="date" className="form-input" value={frontDate} onChange={e => setFrontDate(e.target.value)} style={{ maxWidth: 160 }} />
-              <button className="btn btn-secondary btn-small" onClick={async () => {
-                try { const r = await api.get(`/front/rapport?periode=${frontPeriode}&date_debut=${frontDate}&date_fin=${frontDate}`); setFrontStats(r.data.data) } catch {}
-              }}>🔄</button>
+              <input type="date" className="form-input" value={frontDate} onChange={async e => {
+                setFrontDate(e.target.value)
+                try { const r = await api.get(`/front/rapport?periode=${frontPeriode}&date_debut=${e.target.value}&date_fin=${e.target.value}`); setFrontStats(r.data.data) } catch {}
+              }} style={{ maxWidth: 160 }} />
               <button className="btn btn-secondary btn-small" onClick={() => window.print()}>🖨️ Imprimer</button>
             </div>
 
@@ -251,17 +256,22 @@ export default function Commandement() {
                 def_all: acc.def_all + r.stats.def_all, def_us: acc.def_us + r.stats.def_us,
                 prises: acc.prises + r.stats.prises, pertes: acc.pertes + r.stats.pertes
               }), { att_all: 0, att_us: 0, def_all: 0, def_us: 0, prises: 0, pertes: 0 })
-              const batailles = totals.att_all + totals.att_us + totals.def_all + totals.def_us
+              const nbAttaques = totals.att_all + totals.att_us
+              const nbDefenses = totals.def_all + totals.def_us
+              const batailles = nbAttaques + nbDefenses
               const vicAll = totals.att_all + totals.def_all
               const vicUs = totals.att_us + totals.def_us
               return (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)', textAlign: 'center' }}>
                   <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.3rem', fontWeight: 700 }}>{batailles}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>⚔️ Batailles</div></div>
+                  <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.3rem', fontWeight: 700 }}>{nbAttaques}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>🗡️ Attaques</div></div>
+                  <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.3rem', fontWeight: 700 }}>{nbDefenses}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>🛡️ Défenses</div></div>
                   <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--success)' }}>{vicAll}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>🏆 Win ALL</div></div>
                   <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--danger)' }}>{vicUs}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>🏆 Win US</div></div>
+                  <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.3rem', fontWeight: 700 }}>{batailles > 0 ? Math.round(vicAll / batailles * 100) : 0}%</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>Taux victoire</div></div>
                   <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.3rem', fontWeight: 700 }}>{totals.prises}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>🚩 Prises VP</div></div>
                   <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--danger)' }}>{totals.pertes}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>🏳️ Pertes VP</div></div>
-                  <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.3rem', fontWeight: 700 }}>{batailles > 0 ? Math.round(vicAll / batailles * 100) : 0}%</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>Taux victoire</div></div>
+                  <div className="paper-card" style={{ padding: 8 }}><div style={{ fontSize: '1.3rem', fontWeight: 700 }}>{batailles > 0 ? `${Math.round(nbAttaques / batailles * 100)}/${Math.round(nbDefenses / batailles * 100)}` : '0/0'}</div><div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>% Att/Déf</div></div>
                 </div>
               )
             })()}
