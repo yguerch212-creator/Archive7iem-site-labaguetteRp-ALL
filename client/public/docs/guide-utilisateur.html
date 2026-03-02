@@ -128,6 +128,7 @@
     <li><a href="#archives">Archives</a></li>
     <li><a href="#partage">Liens de partage</a></li>
     <li><a href="#permissions">Rôles & Permissions</a></li>
+    <li><a href="#statistiques">Statistiques globales</a></li>
     <li><a href="#faq">FAQ & Dépannage</a></li>
   </ol>
 </nav>
@@ -305,6 +306,16 @@
 
   <h3>Consulter les PDS de tous</h3>
   <p>L'onglet <strong>"Tous les effectifs"</strong> montre un tableau avec tous ceux qui ont rempli leur PDS. Cliquez sur une ligne pour voir le détail.</p>
+
+  <h3>📊 Rapport PDS (officiers)</h3>
+  <p>Le bouton <strong>"📊 Rapport"</strong> ouvre un rapport complet de la semaine avec :</p>
+  <ul>
+    <li>Navigation par semaine RP (affichée en dates, pas en numéro de semaine)</li>
+    <li>Filtres par <strong>unité</strong> et <strong>statut</strong> (validé, insuffisant, non rempli, en permission)</li>
+    <li>Checkbox <strong>"Inclure HDR"</strong> — Les hommes du rang (grade &lt; Unteroffizier) sont exclus par défaut sauf s'ils ont rempli un PDS</li>
+    <li>Les <strong>généraux</strong> sont exclus sauf s'ils ont rempli un PDS</li>
+    <li>Export en <strong>PDF</strong> et <strong>CSV</strong></li>
+  </ul>
 </section>
 
 <!-- ==================== 7. RAPPORTS ==================== -->
@@ -350,20 +361,36 @@
   <div class="step"><span class="step-num">4</span> Choisissez la <strong>priorité</strong> : Normal, Urgent, Flash</div>
   <div class="step"><span class="step-num">5</span> Envoyez</div>
 
-  <h3>Confidentialité</h3>
-  <p>Cochez <strong>"🔒 Confidentiel"</strong> pour masquer le contenu. Les autres verront que le télégramme existe (date, expéditeur, destinataire) mais pas son contenu.</p>
-  <div class="note">💡 <strong>Tous les télégrammes</strong> sont visibles dans le tableau général (transparence). Seul le <strong>contenu</strong> des télégrammes confidentiels est masqué.</div>
+  <h3>Confidentialité (🔒 Privé)</h3>
+  <p>Cochez <strong>"🔒 Télégramme privé"</strong> pour masquer le contenu. Les autres verront que le télégramme existe mais :</p>
+  <ul>
+    <li>L'<strong>objet</strong> est remplacé par "Télégramme privé"</li>
+    <li>L'<strong>expéditeur et destinataire</strong> sont masqués (—)</li>
+    <li>Le <strong>contenu</strong> est invisible</li>
+    <li>Impossible d'ouvrir le télégramme</li>
+  </ul>
+  <div class="note">💡 Seuls l'expéditeur, le(s) destinataire(s), et les officiers/état-major peuvent voir le contenu d'un télégramme privé.</div>
+
+  <h3>Archiver un télégramme</h3>
+  <p>L'expéditeur ou les destinataires peuvent <strong>archiver</strong> un télégramme via le bouton 📦. Un télégramme archivé :</p>
+  <ul>
+    <li>Disparaît de l'onglet <strong>Tous</strong></li>
+    <li>Reste visible dans l'onglet <strong>Archives</strong> par tout le monde</li>
+    <li>Si le télégramme était <strong>privé</strong>, son contenu reste masqué dans les archives pour ceux qui ne sont pas concernés</li>
+  </ul>
+
+  <h3>Répondre</h3>
+  <p>Seuls les <strong>destinataires</strong> d'un télégramme peuvent y répondre (bouton ↩️). Les administrateurs ne peuvent pas répondre à un télégramme qui ne leur est pas adressé.</p>
 
   <h3>Signatures dans les télégrammes</h3>
   <p>Certains télégrammes contiennent des emplacements de signature. Si quelqu'un vous demande de signer via un télégramme, un bouton <strong>"✍️ Signer / Tamponner"</strong> apparaîtra.</p>
 
-  <h3>Filtres</h3>
-  <p>Utilisez les onglets pour filtrer :</p>
+  <h3>Onglets</h3>
   <ul>
-    <li><strong>Tous</strong> — Tous les télégrammes visibles</li>
-    <li><strong>Reçus</strong> — Ceux qui vous sont adressés</li>
-    <li><strong>Envoyés</strong> — Ceux que vous avez envoyés</li>
-    <li><strong>Archivés</strong> — Ceux que vous avez archivés</li>
+    <li><strong>Tous</strong> — Tous les télégrammes non archivés</li>
+    <li><strong>Reçus</strong> — Ceux qui vous sont adressés (hors archivés)</li>
+    <li><strong>Envoyés</strong> — Ceux que vous avez envoyés (hors archivés)</li>
+    <li><strong>Archives</strong> — Tous les télégrammes archivés (visibles par tous)</li>
   </ul>
 </section>
 
@@ -453,6 +480,17 @@
 
   <h3>Début des combats en retard</h3>
   <p>Si vous oubliez d'appuyer sur "Début des combats", vous pouvez le faire en retard. L'événement se placera automatiquement <strong>en premier</strong> dans la chronologie de la journée, même s'il a été enregistré après d'autres événements.</p>
+
+  <h3>📊 Statistiques du Front</h3>
+  <p>Accessible depuis <strong>Administration → Statistiques</strong> (en bas de page). Contient :</p>
+  <ul>
+    <li><strong>Cartes résumé</strong> — Total événements, victoires, défaites, ratio V/D</li>
+    <li><strong>Camembert</strong> — Répartition globale (prises, pertes, attaques, défenses)</li>
+    <li><strong>Graphe d'évolution</strong> — Victoires vs défaites par semaine RP (courbes)</li>
+    <li><strong>Barres empilées</strong> — Détail hebdomadaire par type d'événement</li>
+    <li><strong>Tableau par carte</strong> — Stats détaillées et ratio pour chaque carte</li>
+  </ul>
+  <div class="note">💡 Seuls les événements de combat sont comptabilisés (prises, pertes, attaques, défenses). Les "début" et "fin" des combats ne sont pas inclus dans les statistiques.</div>
 </section>
 
 <!-- ==================== 11. MEDICAL ==================== -->
@@ -469,7 +507,25 @@
     <li><strong>🏨 Hospitalisations</strong> — Séjours à l'infirmerie avec date d'entrée/sortie et motif</li>
     <li><strong>🩹 Blessures</strong> — Registre des blessures au combat (type, localisation, gravité)</li>
     <li><strong>💉 Vaccinations</strong> — Suivi vaccinal (type, date, rappels)</li>
-    <li><strong>⛑️ Soins au front</strong> — Soins d'urgence sur le terrain (3 types : premiers soins, stabilisation, évacuation)</li>
+    <li><strong>⛑️ Soins au front</strong> — Soins d'urgence sur le terrain (11 types : premiers soins, pansement, attelle, morphine, tourniquet, réanimation, évacuation, chirurgie de campagne, transfusion, désinfection, autre). Le patient est <strong>obligatoire</strong>.</li>
+  </ul>
+
+  <h3>Visites médicales — Tests</h3>
+  <p>Chaque visite inclut 4 tests notés sur <strong>/20</strong> :</p>
+  <ul>
+    <li><strong>Réflexe</strong>, <strong>Cardio</strong>, <strong>Vue</strong>, <strong>Ouïe</strong></li>
+  </ul>
+  <p>La note globale est la <strong>moyenne automatique</strong> des 4 tests.</p>
+
+  <h3>Téléchargement</h3>
+  <p>Chaque visite médicale peut être téléchargée en <strong>image PNG</strong> via le bouton 📸 en haut de la page de détail.</p>
+
+  <h3>Statistiques médicales</h3>
+  <p>La page <strong>Médical → Statistiques</strong> (accessible aux Sanitäts) affiche :</p>
+  <ul>
+    <li><strong>Camembert PDS</strong> — Heures de présence des Sanitäts, filtrable par <strong>jour / semaine / mois</strong></li>
+    <li><strong>Camembert soins</strong> — Répartition des types de soins par période</li>
+    <li><strong>Tableaux médecins/patients</strong> — Cliquables avec rapports détaillés en popup</li>
   </ul>
 
   <h3>Dans le Soldbuch</h3>
@@ -558,10 +614,13 @@
 
   <h3>Vue d'ensemble</h3>
   <ul>
-    <li><strong>Statistiques</strong> — Effectifs actifs, rapports de la semaine, validations en attente</li>
+    <li><strong>Statistiques</strong> — Effectifs actifs, rapports de la semaine, validations en attente, PDS compliance</li>
+    <li><strong>3 camemberts</strong> — PDS (heures par effectif), Rapports (par auteur), Situation du Front (types d'événements)</li>
+    <li><strong>Navigation temporelle</strong> — Filtrage par <strong>jour / semaine RP / mois</strong> avec ◀ Aujourd'hui ▶</li>
     <li><strong>Activité récente</strong> — Dernières actions sur le site</li>
-    <li><strong>Liens rapides</strong> — Calendrier, rapports, interdits, PDS, statistiques</li>
+    <li><strong>Notes de commandement</strong> — Notes privées ou partagées entre officiers</li>
   </ul>
+  <div class="note">💡 Le camembert PDS affiche les heures par personne. En mode <strong>Jour</strong>, il montre les heures de ce jour spécifique. En mode <strong>Mois</strong>, il accumule toutes les semaines du mois.</div>
 
   <h3>État des effectifs</h3>
   <p>Tableau complet avec colonnes : effectif, grade, unité, PDS (✅/⚠️/❌), rapports de la semaine. Filtres disponibles :</p>
@@ -687,9 +746,36 @@
   </table>
 </section>
 
-<!-- ==================== 20. FAQ ==================== -->
+<!-- ==================== 20. STATISTIQUES ==================== -->
+<section id="statistiques">
+  <h2>20. 📊 Statistiques globales</h2>
+  <p>Accessible depuis <strong>Administration → Statistiques</strong> (officiers, état-major, administratifs).</p>
+
+  <h3>Vue d'ensemble du site</h3>
+  <ul>
+    <li>Compteurs : effectifs, rapports, télégrammes, affaires, visites, interdits, comptes, décorations</li>
+    <li>Graphe d'activité par semaine (rapports, télégrammes, interdits, médical)</li>
+    <li>Répartition par unité et par grade</li>
+    <li>Top contributeurs (rapports)</li>
+    <li>PDS de la dernière semaine (remplis, validés, insuffisants)</li>
+    <li>Derniers rapports publiés</li>
+  </ul>
+
+  <h3>Statistiques du Front</h3>
+  <p>Intégrées en bas de la page Statistiques. Comprend :</p>
+  <ul>
+    <li><strong>4 cartes résumé</strong> — Total, victoires, défaites, ratio V/D</li>
+    <li><strong>Camembert</strong> — Répartition globale des événements de combat</li>
+    <li><strong>Courbe d'évolution</strong> — Victoires vs défaites par semaine RP</li>
+    <li><strong>Barres empilées</strong> — Détail hebdomadaire (prises, pertes, att/déf win ALL/US)</li>
+    <li><strong>Tableau par carte</strong> — Stats et ratio pour chaque carte</li>
+  </ul>
+  <div class="note">💡 La page est aussi accessible directement via <strong>/statistiques</strong> dans l'URL.</div>
+</section>
+
+<!-- ==================== 21. FAQ ==================== -->
 <section id="faq">
-  <h2>20. ❓ FAQ & Dépannage</h2>
+  <h2>21. ❓ FAQ & Dépannage</h2>
   
   <h3>🔐 Connexion</h3>
   
