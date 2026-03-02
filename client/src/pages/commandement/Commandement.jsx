@@ -186,7 +186,13 @@ export default function Commandement() {
     }
     // jour or semaine: single RP week
     const { start } = getRpWeekBounds(currentDate)
-    return [fridayToIsoWeek(start)]
+    const weeks = [fridayToIsoWeek(start)]
+    // Friday in jour mode: also fetch next week (vendredi column)
+    if (periode === 'jour' && currentDate.getDay() === 5) {
+      const nextFri = new Date(start); nextFri.setDate(nextFri.getDate() + 7)
+      weeks.push(fridayToIsoWeek(nextFri))
+    }
+    return weeks
   }, [currentDate, periode])
 
   const [pdsLabel, setPdsLabel] = useState('')
@@ -201,12 +207,26 @@ export default function Commandement() {
 
   // Reload PDS when weeks change — merge multiple weeks for month view
   useEffect(() => {
-    if (pdsWeeks.length === 1) {
+    if (pdsWeeks.length <= 2 && periode !== 'mois') {
       const dayCol = dateToPdsCol(currentDate)
       const dayLabel = JOURS_LABELS[dayCol] || dayCol
       const fmtD = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`
       setPdsLabel(periode === 'jour' ? `${dayLabel} ${fmtD(currentDate)}` : `Semaine ${weekLabel(pdsWeeks[0])}`)
-      api.get('/pds', { params: { semaine: pdsWeeks[0] } }).then(r => setPdsData(r.data.data || [])).catch(() => {})
+      if (pdsWeeks.length === 2) {
+        // Friday jour: fetch both weeks, merge vendredi from next week
+        Promise.all(pdsWeeks.map(w => api.get('/pds', { params: { semaine: w } }).then(r => r.data.data || []).catch(() => [])))
+          .then(([week1, week2]) => {
+            const map = {}
+            week1.forEach(p => { map[p.effectif_id] = { ...p } })
+            week2.forEach(p => {
+              if (!map[p.effectif_id]) map[p.effectif_id] = { ...p }
+              else map[p.effectif_id].vendredi = p.vendredi
+            })
+            setPdsData(Object.values(map))
+          })
+      } else {
+        api.get('/pds', { params: { semaine: pdsWeeks[0] } }).then(r => setPdsData(r.data.data || [])).catch(() => {})
+      }
     } else {
       const MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
       setPdsLabel(`${MOIS[currentDate.getMonth()]} ${currentDate.getFullYear()} (${pdsWeeks.length} semaines)`)

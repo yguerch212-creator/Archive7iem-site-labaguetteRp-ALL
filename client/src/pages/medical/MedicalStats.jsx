@@ -208,18 +208,39 @@ export default function MedicalStats() {
       return [...weeks]
     }
     const { start } = getRpWeekBounds(currentDate)
-    return [fridayToIsoWeek(start)]
+    const weeks = [fridayToIsoWeek(start)]
+    // Friday in jour mode: also fetch next week (vendredi column = start of next RP week)
+    if (periode === 'jour' && currentDate.getDay() === 5) {
+      const nextFri = new Date(start); nextFri.setDate(nextFri.getDate() + 7)
+      weeks.push(fridayToIsoWeek(nextFri))
+    }
+    return weeks
   }, [currentDate, periode])
 
   const [pdsLabel, setPdsLabel] = useState('')
 
   useEffect(() => {
     const wkLabel = (w) => { try { const [y,wn]=w.split('-W').map(Number); const j4=new Date(Date.UTC(y,0,4)); const dw=j4.getUTCDay()||7; const m=new Date(j4); m.setUTCDate(j4.getUTCDate()-dw+1+(wn-1)*7); const f=new Date(m); f.setUTCDate(m.getUTCDate()+4); const n=new Date(f); n.setUTCDate(f.getUTCDate()+7); const fmt=d=>`${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}`; return `${fmt(f)} → ${fmt(n)}` } catch { return w } }
-    if (pdsWeeks.length === 1) {
+    if (pdsWeeks.length <= 2 && periode !== 'mois') {
       const dayCol = dateToPdsCol(currentDate)
       const fmtD = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`
       setPdsLabel(periode === 'jour' ? `${JOURS_LABELS[dayCol]} ${fmtD(currentDate)}` : `Semaine ${wkLabel(pdsWeeks[0])}`)
-      api.get('/pds', { params: { semaine: pdsWeeks[0] } }).then(r => setPdsData(r.data.data || [])).catch(() => {})
+      // For Friday jour mode, fetch both weeks and merge vendredi columns per effectif
+      if (pdsWeeks.length === 2) {
+        Promise.all(pdsWeeks.map(w => api.get('/pds', { params: { semaine: w } }).then(r => r.data.data || []).catch(() => [])))
+          .then(([week1, week2]) => {
+            // week1 = current RP week (has vendredi_fin), week2 = next RP week (has vendredi)
+            const map = {}
+            week1.forEach(p => { map[p.effectif_id] = { ...p } })
+            week2.forEach(p => {
+              if (!map[p.effectif_id]) map[p.effectif_id] = { ...p }
+              else map[p.effectif_id].vendredi = p.vendredi // copy vendredi from next week
+            })
+            setPdsData(Object.values(map))
+          })
+      } else {
+        api.get('/pds', { params: { semaine: pdsWeeks[0] } }).then(r => setPdsData(r.data.data || [])).catch(() => {})
+      }
     } else {
       const MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
       setPdsLabel(`${MOIS[currentDate.getMonth()]} ${currentDate.getFullYear()} (${pdsWeeks.length} sem.)`)
