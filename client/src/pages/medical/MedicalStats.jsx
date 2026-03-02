@@ -173,22 +173,22 @@ export default function MedicalStats() {
   const now = new Date()
   const nowStr = now.toLocaleDateString('fr-FR') + ' ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 
-  // Sanitat effectif IDs
+  // Sanitat effectif IDs (for PDS + medecin stats)
   const sanitatIds = useMemo(() => new Set(sanitatEffectifs.map(e => e.id)), [sanitatEffectifs])
-  // All Sanitat soins (not filtered by period)
-  const sanitatSoins = useMemo(() => soins.filter(s => sanitatIds.has(s.medecin_id)), [soins, sanitatIds])
+  // ALL soins (global stats, not filtered by unit)
+  const allSoins = soins
   // Soins filtered by current period
-  const filteredSoins = useMemo(() => sanitatSoins.filter(s => isInPeriod(s.date_soin, periode, currentDate)), [sanitatSoins, periode, currentDate])
+  const filteredSoins = useMemo(() => allSoins.filter(s => isInPeriod(s.date_soin, periode, currentDate)), [allSoins, periode, currentDate])
 
   // Soins breakdown by type (ALL time, for vue d'ensemble)
   const soinsTypeCountsAll = useMemo(() => {
     const map = {}
-    sanitatSoins.forEach(s => {
+    allSoins.forEach(s => {
       const t = s.type_soin || 'Non précisé'
       map[t] = (map[t] || 0) + 1
     })
     return map
-  }, [sanitatSoins])
+  }, [allSoins])
 
   // Soins breakdown by type (filtered period, for pie chart)
   const soinsTypePie = useMemo(() => {
@@ -217,10 +217,10 @@ export default function MedicalStats() {
     }).sort((a, b) => b.value - a.value)
   }, [pdsData, sanitatEffectifs])
 
-  // Medecin stats (Sanitat only)
+  // Medecin stats (ALL medecins who performed soins)
   const medecinStats = useMemo(() => {
     const map = {}
-    sanitatSoins.forEach(s => {
+    allSoins.forEach(s => {
       const nom = s.medecin_nom || 'Inconnu'
       const id = s.medecin_id
       if (!map[id]) map[id] = { id, nom, soins: 0, patients: new Set(), entries: [], types: {} }
@@ -231,12 +231,12 @@ export default function MedicalStats() {
       map[id].types[t] = (map[id].types[t] || 0) + 1
     })
     return Object.values(map).sort((a, b) => b.soins - a.soins)
-  }, [sanitatSoins])
+  }, [allSoins])
 
-  // Patient list
+  // Patient list (all soins)
   const patientList = useMemo(() => {
     const map = {}
-    sanitatSoins.forEach(s => {
+    allSoins.forEach(s => {
       const nom = s.patient_nom || s.patient_nom_libre || 'Inconnu'
       if (nom === 'Inconnu') return
       if (!map[nom]) map[nom] = { nom, count: 0, types: {} }
@@ -245,18 +245,18 @@ export default function MedicalStats() {
       map[nom].types[t] = (map[nom].types[t] || 0) + 1
     })
     return Object.values(map).sort((a, b) => b.count - a.count)
-  }, [sanitatSoins])
+  }, [allSoins])
 
   // Global totals
   const totals = useMemo(() => ({
-    soins: sanitatSoins.length,
+    soins: allSoins.length,
     visites: visites.length,
     hosp: hospitalisations.length,
     vaccins: vaccinations.length,
     blessures: blessures.length,
-    medecins: new Set(sanitatSoins.map(s => s.medecin_id)).size,
-    patients: new Set(sanitatSoins.map(s => s.patient_nom || s.patient_nom_libre).filter(Boolean)).size
-  }), [sanitatSoins, visites, hospitalisations, vaccinations, blessures])
+    medecins: new Set(allSoins.map(s => s.medecin_id)).size,
+    patients: new Set(allSoins.map(s => s.patient_nom || s.patient_nom_libre).filter(Boolean)).size
+  }), [allSoins, visites, hospitalisations, vaccinations, blessures])
 
   const handleExportPdf = async (id, filename) => {
     setExporting(true)
