@@ -244,7 +244,8 @@ export default function Commandement() {
         <PeriodNav periode={periode} setPeriode={setPeriode} currentDate={currentDate} setCurrentDate={setCurrentDate} />
         <div style={{ display: 'flex', gap: 'var(--space-lg)', marginTop: 'var(--space-lg)', flexWrap: 'wrap', justifyContent: 'center' }}>
           <div style={{ flex: 1, minWidth: 240 }}>
-            <PieChart data={pdsPie} size={220} title="📋 PDS (SO+)" showHours />
+            <PieChart data={pdsPie} size={220} title={`📋 PDS (SO+)`} showHours />
+            <p style={{ textAlign: 'center', fontSize: '0.7rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>Semaine {weekLabel(pdsWeek)}</p>
           </div>
           <div style={{ flex: 1, minWidth: 240 }}>
             <PieChart data={rapportsPie} size={220} title="📝 Rapports" />

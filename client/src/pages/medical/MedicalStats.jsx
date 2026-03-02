@@ -418,7 +418,7 @@ export default function MedicalStats() {
           {/* PDS Sanitat pie — hours displayed */}
           <div className="paper-card" style={{ flex: 1, minWidth: 280 }}>
             <h3 style={{ marginTop: 0, textAlign: 'center', fontSize: '0.95rem' }}>📋 PDS — 916. Sanitats-Abteilung</h3>
-            <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 12px' }}>Heures de présence cette semaine</p>
+            <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 12px' }}>Semaine {(() => { try { const [y,w]=pdsWeek.split('-W').map(Number); const j4=new Date(Date.UTC(y,0,4)); const d=j4.getUTCDay()||7; const m=new Date(j4); m.setUTCDate(j4.getUTCDate()-d+1+(w-1)*7); const f=new Date(m); f.setUTCDate(m.getUTCDate()+4); const n=new Date(f); n.setUTCDate(f.getUTCDate()+7); const fmt=d=>`${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}`; return `${fmt(f)} → ${fmt(n)}` } catch { return pdsWeek } })()}</p>
             {pdsPieData.length > 0 ? (
               <PieChart
                 data={pdsPieData.map(d => ({ label: d.label, value: d.value }))}
