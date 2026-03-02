@@ -46,12 +46,7 @@ export default function DescriptionPersonnelle() {
     setSaving(false)
   }
 
-  const Field = ({ label, field, placeholder, type = 'text' }) => (
-    <div className="form-group">
-      <label className="form-label">{label}</label>
-      <input type={type} className="form-input" value={data?.[field] || ''} onChange={e => setData(d => ({ ...d, [field]: e.target.value }))} placeholder={placeholder} disabled={!canEdit} />
-    </div>
-  )
+  const handleField = (field, value) => setData(d => ({ ...d, [field]: value }))
 
   return (
     <div className="container">
@@ -77,19 +72,26 @@ export default function DescriptionPersonnelle() {
         <div className="paper-card">
           <h3 style={{ marginTop: 0 }}>Données physiques — {effectifNom}</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-md)' }}>
-            <Field label="Taille (cm)" field="taille_cm" placeholder="180" type="number" />
-            <Field label="Corpulence" field="gestalt" placeholder="Mince, Normal, Fort..." />
-            <Field label="Visage" field="gesicht" placeholder="Ovale, Rond, Carré..." />
-            <Field label="Cheveux" field="haar" placeholder="Blond, Brun, Noir..." />
-            <Field label="Barbe" field="bart" placeholder="Rasé, Moustache..." />
-            <Field label="Yeux" field="augen" placeholder="Bleus, Bruns, Verts..." />
-            <Field label="Groupe sanguin" field="blutgruppe" placeholder="A+, O-, AB+..." />
-            <Field label="Taille masque à gaz" field="gasmaskengroesse" placeholder="1, 2, 3..." />
-            <Field label="Pointure" field="schuhzeuglaenge" placeholder="42, 43..." />
+            {[
+              { label: 'Taille (cm)', field: 'taille_cm', placeholder: '180', type: 'number' },
+              { label: 'Corpulence', field: 'gestalt', placeholder: 'Mince, Normal, Fort...' },
+              { label: 'Visage', field: 'gesicht', placeholder: 'Ovale, Rond, Carré...' },
+              { label: 'Cheveux', field: 'haar', placeholder: 'Blond, Brun, Noir...' },
+              { label: 'Barbe', field: 'bart', placeholder: 'Rasé, Moustache...' },
+              { label: 'Yeux', field: 'augen', placeholder: 'Bleus, Bruns, Verts...' },
+              { label: 'Groupe sanguin', field: 'blutgruppe', placeholder: 'A+, O-, AB+...' },
+              { label: 'Taille masque à gaz', field: 'gasmaskengroesse', placeholder: '1, 2, 3...' },
+              { label: 'Pointure', field: 'schuhzeuglaenge', placeholder: '42, 43...' },
+            ].map(f => (
+              <div className="form-group" key={f.field}>
+                <label className="form-label">{f.label}</label>
+                <input type={f.type || 'text'} className="form-input" value={data[f.field] || ''} onChange={e => handleField(f.field, e.target.value)} placeholder={f.placeholder} disabled={!canEdit} />
+              </div>
+            ))}
           </div>
           <div className="form-group" style={{ marginTop: 'var(--space-md)' }}>
             <label className="form-label">Signes particuliers</label>
-            <textarea className="form-input" rows={2} value={data.besondere_kennzeichen || ''} onChange={e => setData(d => ({ ...d, besondere_kennzeichen: e.target.value }))} placeholder="Cicatrice, tatouage, marque de naissance..." disabled={!canEdit} />
+            <textarea className="form-input" rows={2} value={data.besondere_kennzeichen || ''} onChange={e => handleField('besondere_kennzeichen', e.target.value)} placeholder="Cicatrice, tatouage, marque de naissance..." disabled={!canEdit} />
           </div>
           {canEdit && (
             <button className="btn btn-primary" onClick={save} disabled={saving} style={{ marginTop: 'var(--space-md)' }}>

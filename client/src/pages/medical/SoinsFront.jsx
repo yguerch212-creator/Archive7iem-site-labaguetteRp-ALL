@@ -5,9 +5,17 @@ import BackButton from '../../components/BackButton'
 import EffectifAutocomplete from '../../components/EffectifAutocomplete'
 
 const TYPES_SOIN = [
-  'Premiers soins (terrain)',
-  'Soins en infirmerie',
-  'Évacuation'
+  'Premier soin',
+  'Soin intensif',
+  'Réanimation',
+  'Opération chirurgicale',
+  'Expérience médicale',
+  'Visite médicale',
+  'Visite psychiatrique',
+  'Enterrement',
+  'Vaccination',
+  'Don de sang',
+  'Autre'
 ]
 
 const CONTEXTES = ['Au combat', 'Hors combat']
@@ -18,7 +26,8 @@ export default function SoinsFront() {
   const [message, setMessage] = useState(null)
   const [patientText, setPatientText] = useState('')
   const [patientId, setPatientId] = useState(null)
-  const [typeSoin, setTypeSoin] = useState('Premiers soins (terrain)')
+  const [typeSoin, setTypeSoin] = useState('Premier soin')
+  const [typeSoinAutre, setTypeSoinAutre] = useState('')
   const [contexte, setContexte] = useState('Au combat')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
@@ -41,12 +50,16 @@ export default function SoinsFront() {
   }
 
   const quickLog = async () => {
+    if (!patientText && !patientId) {
+      setMessage({ type: 'error', text: 'Le nom du patient est obligatoire' }); return
+    }
     setSaving(true)
+    const finalType = typeSoin === 'Autre' ? (typeSoinAutre || 'Autre') : typeSoin
     try {
       await api.post('/medical-soldbuch/soins', {
         patient_id: patientId || null,
         patient_nom_libre: patientId ? null : (patientText || null),
-        type_soin: typeSoin,
+        type_soin: finalType,
         contexte,
         notes: notes || null
       })
@@ -92,12 +105,12 @@ export default function SoinsFront() {
           <h3 style={{ marginTop: 0 }}>⚡ Enregistrer un soin</h3>
           <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
             <div className="form-group" style={{ flex: 2, minWidth: 200 }}>
-              <label className="form-label">Patient (optionnel)</label>
+              <label className="form-label">Patient *</label>
               <EffectifAutocomplete
                 value={patientText}
                 onChange={(text, eff) => { setPatientText(text); setPatientId(eff?.id || null) }}
                 onSelect={eff => { setPatientId(eff.id); setPatientText(`${eff.prenom} ${eff.nom}`) }}
-                placeholder="Nom du patient ou laisser vide..."
+                placeholder="Nom du patient..."
               />
               {patientText && !patientId && <p style={{ fontSize: '0.7rem', color: 'var(--warning)', margin: '2px 0 0' }}>⚠️ Sera lié si créé plus tard</p>}
             </div>
@@ -112,6 +125,9 @@ export default function SoinsFront() {
               <select className="form-input" value={typeSoin} onChange={e => setTypeSoin(e.target.value)}>
                 {TYPES_SOIN.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
+              {typeSoin === 'Autre' && (
+                <input type="text" className="form-input" value={typeSoinAutre} onChange={e => setTypeSoinAutre(e.target.value)} placeholder="Précisez le type..." style={{ marginTop: 4 }} />
+              )}
             </div>
             <div className="form-group" style={{ flex: 1, minWidth: 150 }}>
               <label className="form-label">Note (optionnel)</label>

@@ -13,7 +13,7 @@ const defaultForm = {
   medecin: '', diagnostic: '', aptitude: 'Apte', restrictions: '', notes_confidentielles: '',
   poids: '', imc: '', groupe_sanguin: '', allergenes: '', antecedents_medicaux: '', antecedents_psy: '',
   conso_drogue: '', conso_alcool: '', conso_tabac: '',
-  test_vue: '', test_ouie: '', test_cardio: '', test_reflex: '', test_tir: '', score_aptitude: '', commentaire: ''
+  test_vue: '', test_ouie: '', test_cardio: '', test_reflex: '', commentaire: ''
 }
 
 export default function VisitesMedicales() {
@@ -50,7 +50,10 @@ export default function VisitesMedicales() {
   const submit = async (e) => {
     e.preventDefault()
     try {
-      await api.post('/medical', form)
+      // Compute score_aptitude as average of 4 tests
+      const vals = [form.test_reflex, form.test_cardio, form.test_vue, form.test_ouie].map(Number).filter(v => !isNaN(v) && v >= 0)
+      const score = vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : ''
+      await api.post('/medical', { ...form, score_aptitude: score })
       setShowForm(false)
       setForm({ ...defaultForm, date_visite: new Date().toISOString().slice(0, 10), medecin: user?.username || '' })
       setMessage({ type: 'success', text: 'Visite médicale enregistrée ✓' })
@@ -153,15 +156,18 @@ export default function VisitesMedicales() {
 
             {/* Tests */}
             <h4 style={{ margin: 'var(--space-md) 0 var(--space-sm)', borderBottom: '1px solid var(--border-color)', paddingBottom: 4 }}>🏋️ Tests d'aptitude</h4>
-            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
-              <div className="form-group"><label className="form-label">Score global</label><input type="text" className="form-input" value={form.score_aptitude} onChange={e => setForm(p => ({...p, score_aptitude: e.target.value}))} placeholder="/10" /></div>
-              <div className="form-group"><label className="form-label">Vue</label><input type="text" className="form-input" value={form.test_vue} onChange={e => setForm(p => ({...p, test_vue: e.target.value}))} placeholder="OK / Déficience..." /></div>
-              <div className="form-group"><label className="form-label">Ouïe</label><input type="text" className="form-input" value={form.test_ouie} onChange={e => setForm(p => ({...p, test_ouie: e.target.value}))} placeholder="OK" /></div>
-            </div>
-            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
-              <div className="form-group"><label className="form-label">Cardio (Squat)</label><input type="text" className="form-input" value={form.test_cardio} onChange={e => setForm(p => ({...p, test_cardio: e.target.value}))} placeholder="Temps..." /></div>
-              <div className="form-group"><label className="form-label">Réflexe</label><input type="text" className="form-input" value={form.test_reflex} onChange={e => setForm(p => ({...p, test_reflex: e.target.value}))} placeholder="OK" /></div>
-              <div className="form-group"><label className="form-label">Tir réussi/fail</label><input type="text" className="form-input" value={form.test_tir} onChange={e => setForm(p => ({...p, test_tir: e.target.value}))} placeholder="8/10" /></div>
+            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              <div className="form-group"><label className="form-label">Test Réflexe</label><input type="number" min="0" max="20" className="form-input" value={form.test_reflex} onChange={e => setForm(p => ({...p, test_reflex: e.target.value}))} placeholder="/20" /></div>
+              <div className="form-group"><label className="form-label">Test Cardio</label><input type="number" min="0" max="20" className="form-input" value={form.test_cardio} onChange={e => setForm(p => ({...p, test_cardio: e.target.value}))} placeholder="/20" /></div>
+              <div className="form-group"><label className="form-label">Test Vue</label><input type="number" min="0" max="20" className="form-input" value={form.test_vue} onChange={e => setForm(p => ({...p, test_vue: e.target.value}))} placeholder="/20" /></div>
+              <div className="form-group"><label className="form-label">Test Ouïe</label><input type="number" min="0" max="20" className="form-input" value={form.test_ouie} onChange={e => setForm(p => ({...p, test_ouie: e.target.value}))} placeholder="/20" /></div>
+              <div className="form-group">
+                <label className="form-label">Note globale (moyenne)</label>
+                <input type="text" className="form-input" readOnly value={(() => {
+                  const vals = [form.test_reflex, form.test_cardio, form.test_vue, form.test_ouie].map(Number).filter(v => !isNaN(v) && v >= 0)
+                  return vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) + '/20' : '—'
+                })()} style={{ background: 'var(--bg-darker)', fontWeight: 600 }} />
+              </div>
             </div>
 
             <div className="form-group">

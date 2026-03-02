@@ -29,7 +29,11 @@ export default function Commandement() {
   const [etat, setEtat] = useState(null)
   const [showEtat, setShowEtat] = useState(false)
   const [etatFilter, setEtatFilter] = useState('')
-  const [etatUnite, setEtatUnite] = useState('')
+  const [etatUnite, setEtatUnite] = useState(() => {
+    // Auto-filter to user's unit unless admin/état-major
+    if (user?.isAdmin || user?.isEtatMajor) return ''
+    return user?.unite_code || ''
+  })
   const [frontStats, setFrontStats] = useState(null)
   const [showFront, setShowFront] = useState(false)
   const [frontPeriode, setFrontPeriode] = useState('semaine')

@@ -162,27 +162,25 @@ router.put('/:effectifId/details', auth, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Vous ne pouvez modifier que votre propre Soldbuch' })
     }
 
-    const { religion, beruf, gestalt, gesicht, haar, bart, augen, besondere_kennzeichen, schuhzeuglaenge, blutgruppe, gasmaskengroesse, wehrnummer } = req.body
+    const { date_naissance, lieu_naissance, religion, beruf, gestalt, gesicht, haar, bart, augen, besondere_kennzeichen, schuhzeuglaenge, blutgruppe, gasmaskengroesse, wehrnummer } = req.body
 
     if (isOwner && !isPrivileged) {
-      // Soldier submits → mark as pending validation
       await pool.execute(`UPDATE effectifs SET
-        religion = ?, beruf = ?, gestalt = ?, gesicht = ?, haar = ?, bart = ?, augen = ?,
+        date_naissance = ?, lieu_naissance = ?, religion = ?, beruf = ?, gestalt = ?, gesicht = ?, haar = ?, bart = ?, augen = ?,
         besondere_kennzeichen = ?, schuhzeuglaenge = ?, blutgruppe = ?, gasmaskengroesse = ?, wehrnummer = ?,
         soldbuch_details_pending = 1
         WHERE id = ?`,
-        [religion || null, beruf || null, gestalt || null, gesicht || null, haar || null, bart || null, augen || null,
+        [date_naissance || null, lieu_naissance || null, religion || null, beruf || null, gestalt || null, gesicht || null, haar || null, bart || null, augen || null,
          besondere_kennzeichen || null, schuhzeuglaenge || null, blutgruppe || null, gasmaskengroesse || null, wehrnummer || null,
          effectifId])
       res.json({ success: true, message: 'Details soumis pour validation', pending: true })
     } else {
-      // Privileged user → save directly, clear pending
       await pool.execute(`UPDATE effectifs SET
-        religion = ?, beruf = ?, gestalt = ?, gesicht = ?, haar = ?, bart = ?, augen = ?,
+        date_naissance = ?, lieu_naissance = ?, religion = ?, beruf = ?, gestalt = ?, gesicht = ?, haar = ?, bart = ?, augen = ?,
         besondere_kennzeichen = ?, schuhzeuglaenge = ?, blutgruppe = ?, gasmaskengroesse = ?, wehrnummer = ?,
         soldbuch_details_pending = 0
         WHERE id = ?`,
-        [religion || null, beruf || null, gestalt || null, gesicht || null, haar || null, bart || null, augen || null,
+        [date_naissance || null, lieu_naissance || null, religion || null, beruf || null, gestalt || null, gesicht || null, haar || null, bart || null, augen || null,
          besondere_kennzeichen || null, schuhzeuglaenge || null, blutgruppe || null, gasmaskengroesse || null, wehrnummer || null,
          effectifId])
       res.json({ success: true, message: 'Details enregistres' })

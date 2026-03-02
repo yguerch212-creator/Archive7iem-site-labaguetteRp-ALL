@@ -120,6 +120,26 @@ export default function MedicalStats() {
     return t
   }, [allLog])
 
+  // Soins breakdown by type_soin
+  const soinsBreakdown = useMemo(() => {
+    const map = {}
+    soins.forEach(s => {
+      const t = s.type_soin || 'Non précisé'
+      map[t] = (map[t] || 0) + 1
+    })
+    return Object.entries(map).sort((a, b) => b[1] - a[1])
+  }, [soins])
+
+  // Top medecin by soins count
+  const topMedecinSoins = useMemo(() => {
+    const map = {}
+    soins.forEach(s => {
+      const nom = s.medecin_nom || 'Inconnu'
+      map[nom] = (map[nom] || 0) + 1
+    })
+    return Object.entries(map).sort((a, b) => b[1] - a[1])
+  }, [soins])
+
   // Build medecin patient breakdown
   const getMedecinPatients = (entries) => {
     const map = {}
@@ -179,8 +199,7 @@ export default function MedicalStats() {
                 { icon: '🏨', label: 'Hospitalisations', val: med.hosp },
                 { icon: '💉', label: 'Vaccinations', val: med.vaccins },
                 { icon: '📋', label: 'Total actes', val: med.total },
-                { icon: '👥', label: 'Patients identifiés', val: med.patients.size },
-                { icon: '👤', label: 'Soins anonymes', val: anonymeCount },
+                { icon: '👥', label: 'Patients', val: med.patients.size },
               ].map((c, i) => (
                 <div key={i} style={{ textAlign: 'center', minWidth: 80 }}>
                   <div style={{ fontSize: '1.1rem' }}>{c.icon}</div>
@@ -320,6 +339,60 @@ export default function MedicalStats() {
             ))}
           </div>
         </div>
+
+        {/* Détail des soins au front */}
+        {soins.length > 0 && (
+          <div className="paper-card" style={{ marginBottom: 'var(--space-lg)' }}>
+            <h3 style={{ marginTop: 0 }}>⚕️ Détail des soins au front</h3>
+            <div style={{ display: 'flex', gap: 'var(--space-xl)', flexWrap: 'wrap' }}>
+              {/* Breakdown by type */}
+              <div style={{ flex: 1, minWidth: 250 }}>
+                <h4 style={{ marginTop: 0, fontSize: '0.9rem' }}>Par type de soin</h4>
+                <table className="table">
+                  <thead><tr><th>Type</th><th>Nombre</th><th>%</th></tr></thead>
+                  <tbody>
+                    {soinsBreakdown.map(([type, count]) => (
+                      <tr key={type}>
+                        <td style={{ fontWeight: 600 }}>{type}</td>
+                        <td>{count}</td>
+                        <td>{(count / soins.length * 100).toFixed(0)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* Visual bar chart */}
+              <div style={{ flex: 1, minWidth: 250 }}>
+                <h4 style={{ marginTop: 0, fontSize: '0.9rem' }}>Répartition</h4>
+                {soinsBreakdown.map(([type, count]) => (
+                  <div key={type} style={{ marginBottom: 6 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: 2 }}>
+                      <span>{type}</span><span style={{ fontWeight: 700 }}>{count}</span>
+                    </div>
+                    <div style={{ height: 14, background: 'var(--bg-darker)', borderRadius: 7, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${(count / soins.length * 100)}%`, background: 'var(--military-green)', borderRadius: 7, transition: 'width 0.3s' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Top medecins soins */}
+            {topMedecinSoins.length > 0 && (
+              <div style={{ marginTop: 'var(--space-md)' }}>
+                <h4 style={{ fontSize: '0.9rem' }}>🏅 Classement soins au front</h4>
+                <div style={{ display: 'flex', gap: 'var(--space-lg)', flexWrap: 'wrap' }}>
+                  {topMedecinSoins.slice(0, 5).map(([nom, count], i) => (
+                    <div key={nom} style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '1rem' }}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '🏅'}</div>
+                      <div style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--military-green)' }}>{count}</div>
+                      <div style={{ fontSize: '0.75rem' }}>{nom}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Activité par médecin — CLICKABLE */}
         {medecinStats.length > 0 && (
