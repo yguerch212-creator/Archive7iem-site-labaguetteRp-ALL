@@ -127,14 +127,28 @@ export default function Commandement() {
   const [effectifs, setEffectifs] = useState([])
   const [frontEvents, setFrontEvents] = useState([])
 
+  // Convert currentDate to ISO week string for PDS
+  const pdsWeek = useMemo(() => {
+    const { start } = getRpWeekBounds(currentDate)
+    // Find ISO week of the RP week start (Friday)
+    const d = new Date(start); d.setUTCDate(d.getUTCDate() + 3 - ((d.getUTCDay() + 6) % 7))
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 4))
+    const weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
+    return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`
+  }, [currentDate])
+
   useEffect(() => {
     api.get('/commandement/dashboard').then(r => setData(r.data)).catch(() => {})
     loadNotes()
-    api.get('/pds').then(r => setPdsData(r.data.data || [])).catch(() => {})
     api.get('/rapports').then(r => setRapports(r.data.data || [])).catch(() => {})
     api.get('/effectifs').then(r => setEffectifs(r.data.data || r.data || [])).catch(() => {})
     api.get('/front/events').then(r => setFrontEvents(r.data.data || [])).catch(() => {})
   }, [])
+
+  // Reload PDS when week changes
+  useEffect(() => {
+    api.get('/pds', { params: { semaine: pdsWeek } }).then(r => setPdsData(r.data.data || [])).catch(() => {})
+  }, [pdsWeek])
 
   const loadNotes = () => api.get('/commandement/notes').then(r => setNotes(r.data.data)).catch(() => {})
   const addNote = async () => { if (!newNote.trim()) return; try { await api.post('/commandement/notes', { contenu: newNote, prive: notePrivate }); setNewNote(''); setNotePrivate(false); loadNotes() } catch { setMsg('Erreur') } }

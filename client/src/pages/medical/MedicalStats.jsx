@@ -161,9 +161,21 @@ export default function MedicalStats() {
         const all = r.data.data || r.data || []
         setSanitatEffectifs(all.filter(e => e.unite_code === '916S'))
       }).catch(() => {}),
-      api.get('/pds').then(r => setPdsData(r.data.data || [])).catch(() => {}),
     ])
   }, [])
+
+  // PDS week from period nav
+  const pdsWeek = useMemo(() => {
+    const { start } = getRpWeekBounds(currentDate)
+    const d = new Date(start); d.setUTCDate(d.getUTCDate() + 3 - ((d.getUTCDay() + 6) % 7))
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 4))
+    const weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
+    return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`
+  }, [currentDate])
+
+  useEffect(() => {
+    api.get('/pds', { params: { semaine: pdsWeek } }).then(r => setPdsData(r.data.data || [])).catch(() => {})
+  }, [pdsWeek])
 
   const fmt = (d) => {
     if (!d) return '—'
