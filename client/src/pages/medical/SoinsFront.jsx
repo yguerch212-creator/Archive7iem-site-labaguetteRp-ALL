@@ -141,20 +141,19 @@ export default function SoinsFront() {
       )}
 
       {/* Log table */}
-      <div className="paper-card">
+      <div className="paper-card" style={{ overflowX: 'auto' }}>
         <h3 style={{ marginTop: 0 }}>Historique des soins</h3>
-        <table className="table">
-          <thead><tr><th>Date/Heure</th><th>Médecin</th><th>Patient</th><th>Contexte</th><th>Type</th><th>Notes</th></tr></thead>
+        <table className="table" style={{ minWidth: 0 }}>
+          <thead><tr><th>Date</th><th>Médecin</th><th>Patient</th><th>Type</th><th>Notes</th></tr></thead>
           <tbody>
-            {items.length === 0 ? <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Aucun soin enregistré</td></tr> :
+            {items.length === 0 ? <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Aucun soin enregistré</td></tr> :
               items.slice(0, 100).map(s => (
                 <tr key={s.id}>
-                  <td style={{ whiteSpace: 'nowrap', fontSize: '0.8rem' }}>{fmt(s.date_soin)}</td>
-                  <td>{s.medecin_nom || '—'}</td>
-                  <td>{s.patient_nom || s.patient_nom_libre || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Anonyme</span>}</td>
-                  <td>{s.contexte || '—'}</td>
-                  <td>{s.type_soin}</td>
-                  <td style={{ fontSize: '0.8rem' }}>{s.notes || '—'}</td>
+                  <td style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{fmt(s.date_soin)}</td>
+                  <td style={{ fontSize: '0.8rem' }}>{s.medecin_nom || '—'}</td>
+                  <td style={{ fontSize: '0.8rem' }}>{s.patient_nom || s.patient_nom_libre || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Anonyme</span>}</td>
+                  <td style={{ fontSize: '0.8rem' }}>{s.type_soin}{s.contexte === 'Hors combat' ? ' 🏠' : ''}</td>
+                  <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{s.notes || '—'}</td>
                 </tr>
               ))
             }
