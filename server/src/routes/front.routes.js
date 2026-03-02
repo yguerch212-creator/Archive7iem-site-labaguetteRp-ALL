@@ -121,4 +121,18 @@ router.get('/rapport', optionalAuth, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
+// GET /api/front/events — All events (for commandement charts)
+router.get('/events', optionalAuth, async (req, res) => {
+  try {
+    const rows = await query(`
+      SELECT e.*, c.nom AS carte_nom
+      FROM situation_front_events e
+      LEFT JOIN situation_front_cartes c ON c.id = e.carte_id
+      ORDER BY e.date_irl DESC, e.heure DESC
+      LIMIT 500
+    `)
+    res.json({ success: true, data: rows })
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
+})
+
 module.exports = router

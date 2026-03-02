@@ -48,7 +48,7 @@ router.get('/', optionalAuth, async (req, res) => {
       where = "WHERE r.published = 1 AND (r.moderation_statut = 'approuve' OR r.moderation_statut IS NULL OR r.moderation_statut = 'brouillon')"
     }
     const rows = await query(`
-      SELECT r.id, r.titre, r.auteur_nom, r.auteur_grade, r.personne_renseignee_nom, r.recommande_nom, r.mise_en_cause_nom, 
+      SELECT r.id, r.titre, r.auteur_nom, r.auteur_grade, r.auteur_id, r.personne_renseignee_nom, r.recommande_nom, r.mise_en_cause_nom, 
         r.type, r.date_rp, r.date_irl, r.published, r.moderation_statut, r.a_images, r.created_at,
         r.valide, r.valide_par_nom, r.valide_at, r.auteur_rang,
         COALESCE(r.personne_renseignee_nom, r.recommande_nom, r.mise_en_cause_nom) AS personne_mentionnee,
