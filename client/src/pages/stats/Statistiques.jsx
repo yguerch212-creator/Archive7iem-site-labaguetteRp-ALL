@@ -159,7 +159,7 @@ function PieChart({ data, size = 220, title }) {
   )
 }
 
-export default function Statistiques() {
+export default function Statistiques({ embedded = false }) {
   const { user } = useAuth()
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -241,12 +241,14 @@ export default function Statistiques() {
     return { totalWins, totalLosses, total: combatEvents.length, ratio }
   }, [combatEvents])
 
-  if (loading) return <div className="container"><p style={{ textAlign: 'center', padding: 40 }}>Chargement...</p></div>
+  if (loading) return embedded ? null : <div className="container"><p style={{ textAlign: 'center', padding: 40 }}>Chargement...</p></div>
+
+  const Wrapper = embedded ? 'div' : 'div'
 
   return (
-    <div className="container" style={{ paddingBottom: 'var(--space-xxl)' }}>
-      <BackButton label="← Retour" />
-      <h1 style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>📊 Statistiques — Situation du Front</h1>
+    <div className={embedded ? '' : 'container'} style={{ paddingBottom: embedded ? 0 : 'var(--space-xxl)' }}>
+      {!embedded && <BackButton label="← Retour" />}
+      <h2 style={{ textAlign: 'center', marginBottom: 'var(--space-lg)', fontSize: embedded ? '1.1rem' : '1.5rem' }}>📊 Statistiques — Situation du Front</h2>
 
       {/* Summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--space-md)', marginBottom: 'var(--space-xl)' }}>

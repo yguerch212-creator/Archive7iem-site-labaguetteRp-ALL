@@ -14,8 +14,13 @@ function parseCreneaux(text) {
   }
   return Math.round(total * 100) / 100
 }
-const DAY_TO_PDS = { 0: 'dimanche', 1: 'lundi', 2: 'mardi', 3: 'mercredi', 4: 'jeudi', 5: 'vendredi', 6: 'samedi' }
-const JOURS_LABELS = { dimanche: 'Dimanche', lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi: 'Vendredi', samedi: 'Samedi' }
+function dateToPdsCol(date) {
+  const { start } = getRpWeekBounds(date)
+  const diffDays = Math.round((date - start) / 86400000)
+  const cols = ['vendredi', 'samedi', 'dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi_fin']
+  return cols[Math.max(0, Math.min(7, diffDays))] || 'vendredi'
+}
+const JOURS_LABELS = { dimanche: 'Dimanche', lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi: 'Vendredi', vendredi_fin: 'Vendredi', samedi: 'Samedi' }
 
 // SVG Pie Chart — labels show name + value (not %)
 function PieChart({ data, size = 240, title, showHours }) {
@@ -211,7 +216,7 @@ export default function MedicalStats() {
   useEffect(() => {
     const wkLabel = (w) => { try { const [y,wn]=w.split('-W').map(Number); const j4=new Date(Date.UTC(y,0,4)); const dw=j4.getUTCDay()||7; const m=new Date(j4); m.setUTCDate(j4.getUTCDate()-dw+1+(wn-1)*7); const f=new Date(m); f.setUTCDate(m.getUTCDate()+4); const n=new Date(f); n.setUTCDate(f.getUTCDate()+7); const fmt=d=>`${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}`; return `${fmt(f)} → ${fmt(n)}` } catch { return w } }
     if (pdsWeeks.length === 1) {
-      const dayCol = DAY_TO_PDS[currentDate.getDay()]
+      const dayCol = dateToPdsCol(currentDate)
       const fmtD = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`
       setPdsLabel(periode === 'jour' ? `${JOURS_LABELS[dayCol]} ${fmtD(currentDate)}` : `Semaine ${wkLabel(pdsWeeks[0])}`)
       api.get('/pds', { params: { semaine: pdsWeeks[0] } }).then(r => setPdsData(r.data.data || [])).catch(() => {})
@@ -272,7 +277,10 @@ export default function MedicalStats() {
 
     const getHours = (p) => {
       if (periode === 'jour') {
-        const dayCol = DAY_TO_PDS[currentDate.getDay()]
+        if (currentDate.getDay() === 5) {
+          return parseCreneaux(p.vendredi) + parseCreneaux(p.vendredi_fin)
+        }
+        const dayCol = dateToPdsCol(currentDate)
         return parseCreneaux(p[dayCol])
       }
       return parseFloat(p.total_heures) || 0

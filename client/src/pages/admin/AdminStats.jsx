@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { formatDate } from '../../utils/dates'
 import api from '../../api/client'
 import { exportCsv } from '../../utils/exportCsv'
+import Statistiques from '../stats/Statistiques'
 
 const TYPE_ICONS = { rapport: '📋', recommandation: '⭐', incident: '⚠️' }
 const BAR_COLORS = ['var(--military-green)', '#3498db', '#e74c3c', '#f39c12']
@@ -172,13 +173,15 @@ export default function AdminStats() {
         </table>
       </div>
 
-      {/* Front Stats */}
-      {frontStats && (
+      {/* Front Stats — Full graphs */}
+      <div style={{ marginTop: 'var(--space-xl)' }}>
+        <Statistiques embedded />
+      </div>
+
+      {/* Front Stats — Legacy summary */}
+      {false && frontStats && (
         <div className="paper-card" style={{ padding: 'var(--space-md)', marginTop: 'var(--space-lg)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-sm)' }}>
-            <h3 style={{ margin: 0 }}>⚔️ Situation du Front</h3>
-            <a href="/statistiques" className="btn btn-primary btn-small">📊 Statistiques détaillées</a>
-          </div>
+          <h3>⚔️ Situation du Front</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)' }}>
             <StatCard value={frontStats.prises} label="Prises" icon="🚩" />
             <StatCard value={frontStats.pertes} label="Pertes" icon="🏳️" color="var(--danger)" />

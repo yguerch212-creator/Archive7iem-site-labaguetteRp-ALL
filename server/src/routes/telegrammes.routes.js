@@ -168,9 +168,10 @@ router.put('/:id/archiver', auth, async (req, res) => {
     // Only sender, recipient, or admin can archive
     const tel = await queryOne('SELECT expediteur_id FROM telegrammes WHERE id = ?', [req.params.id])
     if (!tel) return res.status(404).json({ success: false, message: 'Introuvable' })
-    const effectifId = req.user.effectif_id
+    const effectifId = parseInt(req.user.effectif_id) || null
     const isRecipient = effectifId ? await queryOne('SELECT id FROM telegramme_destinataires WHERE telegramme_id = ? AND effectif_id = ?', [req.params.id, effectifId]) : null
-    if (!req.user.isAdmin && tel.expediteur_id !== effectifId && !isRecipient) {
+    const isSender = effectifId && parseInt(tel.expediteur_id) === effectifId
+    if (!req.user.isAdmin && !isSender && !isRecipient) {
       return res.status(403).json({ success: false, message: 'Non autorisé' })
     }
     await pool.execute('UPDATE telegrammes SET statut = "Archivé" WHERE id = ?', [req.params.id])

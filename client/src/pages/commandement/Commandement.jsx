@@ -16,9 +16,16 @@ function parseCreneaux(text) {
   return Math.round(total * 100) / 100
 }
 
-// Map JS getDay() to PDS column name
-const DAY_TO_PDS = { 0: 'dimanche', 1: 'lundi', 2: 'mardi', 3: 'mercredi', 4: 'jeudi', 5: 'vendredi', 6: 'samedi' }
-const JOURS_LABELS = { dimanche: 'Dimanche', lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi: 'Vendredi', samedi: 'Samedi' }
+// Map selected date to PDS column — RP week: Fri(start)→Sat→...→Thu→Fri(end)
+// vendredi = start Friday, vendredi_fin = end Friday
+function dateToPdsCol(date) {
+  const { start } = getRpWeekBounds(date)
+  const diffDays = Math.round((date - start) / 86400000)
+  // diffDays: 0=Fri(start), 1=Sat, 2=Sun, 3=Mon, 4=Tue, 5=Wed, 6=Thu, 7=Fri(end)
+  const cols = ['vendredi', 'samedi', 'dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi_fin']
+  return cols[Math.max(0, Math.min(7, diffDays))] || 'vendredi'
+}
+const JOURS_LABELS = { dimanche: 'Dimanche', lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi: 'Vendredi', vendredi_fin: 'Vendredi', samedi: 'Samedi' }
 
 // ── Pie Chart (reused from MedicalStats) ──
 function PieChart({ data, size = 220, title, showHours }) {
@@ -195,7 +202,7 @@ export default function Commandement() {
   // Reload PDS when weeks change — merge multiple weeks for month view
   useEffect(() => {
     if (pdsWeeks.length === 1) {
-      const dayCol = DAY_TO_PDS[currentDate.getDay()]
+      const dayCol = dateToPdsCol(currentDate)
       const dayLabel = JOURS_LABELS[dayCol] || dayCol
       const fmtD = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`
       setPdsLabel(periode === 'jour' ? `${dayLabel} ${fmtD(currentDate)}` : `Semaine ${weekLabel(pdsWeeks[0])}`)
@@ -244,7 +251,11 @@ export default function Commandement() {
 
     const getHours = (p) => {
       if (periode === 'jour') {
-        const dayCol = DAY_TO_PDS[currentDate.getDay()]
+        const dayCol = dateToPdsCol(currentDate)
+        // For Fridays, combine both vendredi columns
+        if (currentDate.getDay() === 5) {
+          return parseCreneaux(p.vendredi) + parseCreneaux(p.vendredi_fin)
+        }
         return parseCreneaux(p[dayCol])
       }
       return parseFloat(p.total_heures) || 0

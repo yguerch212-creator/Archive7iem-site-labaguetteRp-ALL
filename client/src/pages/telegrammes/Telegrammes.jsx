@@ -100,7 +100,7 @@ export default function Telegrammes() {
       <div className="container telegrammes-page">
         <div style={{ marginBottom: 'var(--space-md)', display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
           <button className="btn btn-secondary btn-small" onClick={() => setSelected(null)}>← Retour</button>
-          {hasEffectif && t.expediteur_id !== user?.effectif_id && (
+          {hasEffectif && t.expediteur_id !== user?.effectif_id && ((t.destinataires || []).some(d => d.effectif_id === user?.effectif_id) || t.destinataire_id === user?.effectif_id) && (
             <button className="btn btn-primary btn-small" onClick={() => {
               setForm({
                 destinataires: [{ effectif_id: t.expediteur_id, nom_libre: t.expediteur_nom }],
