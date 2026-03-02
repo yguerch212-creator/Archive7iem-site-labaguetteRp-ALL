@@ -7,6 +7,95 @@ const CATEGORIES = ['Reglement', 'Procedure', 'Formation', 'Lore', 'Outil', 'Aut
 const CAT_ICONS = { Reglement: '📜', Procedure: '📋', Formation: '🎓', Lore: '📖', Outil: '🔧', Autre: '📁' }
 const CAT_LABELS = { Reglement: 'Règlements', Procedure: 'Procédures', Formation: 'Formations', Lore: 'Lore & Histoire', Outil: 'Outils', Autre: 'Autre' }
 
+// Visibility popup with checkboxes
+function VisibilityPopup({ unites, groups, selectedUnites, selectedGroupes, onSave, onClose }) {
+  const [checkedUnites, setCheckedUnites] = useState(new Set(selectedUnites ? selectedUnites.split(',').filter(Boolean) : []))
+  const [checkedGroupes, setCheckedGroupes] = useState(new Set(selectedGroupes ? selectedGroupes.split(',').filter(Boolean) : []))
+
+  const toggleUnite = (code) => {
+    const s = new Set(checkedUnites)
+    s.has(code) ? s.delete(code) : s.add(code)
+    setCheckedUnites(s)
+  }
+  const toggleGroupe = (id) => {
+    const s = new Set(checkedGroupes)
+    const v = String(id)
+    s.has(v) ? s.delete(v) : s.add(v)
+    setCheckedGroupes(s)
+  }
+
+  const hasAny = checkedUnites.size > 0 || checkedGroupes.size > 0
+
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 20 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div style={{ background: '#f5f0e1', borderRadius: 8, padding: 'var(--space-xl)', maxWidth: 500, width: '100%', boxShadow: '0 4px 20px rgba(0,0,0,0.3)', maxHeight: '80vh', overflow: 'auto' }}
+        onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
+          <h3 style={{ margin: 0 }}>🔒 Visibilité du document</h3>
+          <button className="btn btn-secondary btn-small" onClick={onClose}>✕</button>
+        </div>
+
+        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 var(--space-md)' }}>
+          {hasAny ? 'Visible uniquement par les éléments cochés.' : 'Rien coché = visible par tous.'}
+        </p>
+
+        {/* Unités */}
+        <div style={{ marginBottom: 'var(--space-lg)' }}>
+          <h4 style={{ margin: '0 0 var(--space-sm)', fontSize: '0.9rem' }}>🏛️ Unités</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {unites.map(u => (
+              <label key={u.code} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '6px 10px', borderRadius: 6, background: checkedUnites.has(u.code) ? 'rgba(75,83,32,0.12)' : 'transparent', border: '1px solid ' + (checkedUnites.has(u.code) ? 'var(--military-green)' : 'var(--border-color)') }}>
+                <input type="checkbox" checked={checkedUnites.has(u.code)} onChange={() => toggleUnite(u.code)} style={{ width: 18, height: 18, accentColor: 'var(--military-green)' }} />
+                <span style={{ fontWeight: checkedUnites.has(u.code) ? 600 : 400 }}>{u.code} — {u.nom}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Groupes */}
+        <div style={{ marginBottom: 'var(--space-lg)' }}>
+          <h4 style={{ margin: '0 0 var(--space-sm)', fontSize: '0.9rem' }}>👥 Groupes</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {groups.map(g => (
+              <label key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '6px 10px', borderRadius: 6, background: checkedGroupes.has(String(g.id)) ? 'rgba(75,83,32,0.12)' : 'transparent', border: '1px solid ' + (checkedGroupes.has(String(g.id)) ? 'var(--military-green)' : 'var(--border-color)') }}>
+                <input type="checkbox" checked={checkedGroupes.has(String(g.id))} onChange={() => toggleGroupe(g.id)} style={{ width: 18, height: 18, accentColor: 'var(--military-green)' }} />
+                <span style={{ fontWeight: checkedGroupes.has(String(g.id)) ? 600 : 400 }}>{g.name || g.nom}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'flex-end' }}>
+          {hasAny && (
+            <button className="btn btn-secondary btn-small" onClick={() => { setCheckedUnites(new Set()); setCheckedGroupes(new Set()) }}>
+              Tout décocher
+            </button>
+          )}
+          <button className="btn btn-primary" onClick={() => onSave([...checkedUnites].join(','), [...checkedGroupes].join(','))}>
+            ✅ Appliquer
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Summary badge for visibility
+function VisibilityBadge({ unites, groupes, allUnites, allGroups }) {
+  if (!unites && !groupes) return <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>🌍 Tous</span>
+  const parts = []
+  if (unites) {
+    const codes = unites.split(',')
+    parts.push(...codes.map(c => { const u = allUnites.find(u => u.code === c); return u ? u.code : c }))
+  }
+  if (groupes) {
+    const ids = groupes.split(',')
+    parts.push(...ids.map(id => { const g = allGroups.find(g => String(g.id) === id); return g ? (g.name || g.nom) : `G${id}` }))
+  }
+  return <span style={{ fontSize: '0.7rem', color: 'var(--military-green)', fontWeight: 600 }}>🔒 {parts.join(', ')}</span>
+}
+
 export default function Documentation() {
   const { user } = useAuth()
   const [docs, setDocs] = useState([])
@@ -22,6 +111,7 @@ export default function Documentation() {
   const [openFolders, setOpenFolders] = useState({})
   const [search, setSearch] = useState('')
   const [filterCat, setFilterCat] = useState('')
+  const [visPopup, setVisPopup] = useState(null) // 'doc' | 'folder' | null
 
   const isOfficier = user?.isOfficier || user?.isAdmin
   const isSousOff = !isOfficier && ((user?.grade_rang && user.grade_rang >= 35) || user?.isRecenseur)
@@ -68,7 +158,7 @@ export default function Documentation() {
       await api.post('/documentation/repertoire', folderForm)
       flash('success', 'Répertoire créé ✓')
       setShowFolderForm(false)
-      setFolderForm({ titre: '', description: '', categorie: 'Autre' })
+      setFolderForm({ titre: '', description: '', categorie: 'Autre', visibilite_unites: '', visibilite_groupes: '' })
       load()
     } catch (err) { flash('error', err.response?.data?.message || 'Erreur') }
   }
@@ -98,7 +188,6 @@ export default function Documentation() {
   const looseDocs = allDocs.filter(d => !d.repertoire_id)
   const docsInFolder = (fid) => allDocs.filter(d => d.repertoire_id === fid)
 
-  // Filter
   const matchSearch = (d) => {
     if (search && !`${d.titre} ${d.description || ''}`.toLowerCase().includes(search.toLowerCase())) return false
     if (filterCat && d.categorie !== filterCat) return false
@@ -119,6 +208,22 @@ export default function Documentation() {
 
       {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}
 
+      {/* Visibility popup */}
+      {visPopup && (
+        <VisibilityPopup
+          unites={unites}
+          groups={groups}
+          selectedUnites={visPopup === 'doc' ? form.visibilite_unites : folderForm.visibilite_unites}
+          selectedGroupes={visPopup === 'doc' ? form.visibilite_groupes : folderForm.visibilite_groupes}
+          onSave={(u, g) => {
+            if (visPopup === 'doc') setForm(p => ({ ...p, visibilite_unites: u, visibilite_groupes: g }))
+            else setFolderForm(p => ({ ...p, visibilite_unites: u, visibilite_groupes: g }))
+            setVisPopup(null)
+          }}
+          onClose={() => setVisPopup(null)}
+        />
+      )}
+
       {/* Pending */}
       {pending.length > 0 && (
         <div className="paper-card" style={{ marginBottom: 'var(--space-lg)', borderLeft: '3px solid var(--warning)', padding: 'var(--space-md)' }}>
@@ -138,7 +243,7 @@ export default function Documentation() {
         </div>
       )}
 
-      {/* Forms */}
+      {/* Folder form */}
       {showFolderForm && (
         <div className="paper-card" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-lg)' }}>
           <h3 style={{ marginTop: 0 }}>📂 Nouveau répertoire</h3>
@@ -155,27 +260,18 @@ export default function Documentation() {
                 </select>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', marginTop: 'var(--space-sm)' }}>
-              <div className="form-group" style={{ flex: 1, minWidth: 200 }}>
-                <label className="form-label">🔒 Visible par (unités)</label>
-                <select className="form-input" multiple value={folderForm.visibilite_unites ? folderForm.visibilite_unites.split(',') : []} onChange={e => setFolderForm(p => ({...p, visibilite_unites: [...e.target.selectedOptions].map(o => o.value).join(',')}))} style={{ height: 80 }}>
-                  {unites.map(u => <option key={u.code} value={u.code}>{u.code} — {u.nom}</option>)}
-                </select>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Vide = visible par tous</span>
-              </div>
-              <div className="form-group" style={{ flex: 1, minWidth: 200 }}>
-                <label className="form-label">🔒 Visible par (groupes)</label>
-                <select className="form-input" multiple value={folderForm.visibilite_groupes ? folderForm.visibilite_groupes.split(',') : []} onChange={e => setFolderForm(p => ({...p, visibilite_groupes: [...e.target.selectedOptions].map(o => o.value).join(',')}))} style={{ height: 80 }}>
-                  {groups.map(g => <option key={g.id} value={g.id}>{g.name || g.nom}</option>)}
-                </select>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Vide = visible par tous</span>
-              </div>
+            <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center', marginTop: 'var(--space-sm)' }}>
+              <button type="button" className="btn btn-secondary btn-small" onClick={() => setVisPopup('folder')}>
+                🔒 Visibilité
+              </button>
+              <VisibilityBadge unites={folderForm.visibilite_unites} groupes={folderForm.visibilite_groupes} allUnites={unites} allGroups={groups} />
             </div>
-            <button type="submit" className="btn btn-primary" style={{ marginTop: 'var(--space-sm)' }}>📂 Créer</button>
+            <button type="submit" className="btn btn-primary" style={{ marginTop: 'var(--space-md)' }}>📂 Créer</button>
           </form>
         </div>
       )}
 
+      {/* Doc form */}
       {showForm && (
         <div className="paper-card" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-lg)' }}>
           <h3 style={{ marginTop: 0 }}>{editId ? '✏️ Modifier' : '📄 Ajouter un document'}</h3>
@@ -211,24 +307,14 @@ export default function Documentation() {
               <input type="text" className="form-input" value={form.description} onChange={e => setForm(p => ({...p, description: e.target.value}))} placeholder="Brève description..." />
             </div>
             {isOfficier && (
-              <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
-                <div className="form-group" style={{ flex: 1, minWidth: 200 }}>
-                  <label className="form-label">🔒 Visible par (unités)</label>
-                  <select className="form-input" multiple value={form.visibilite_unites ? form.visibilite_unites.split(',') : []} onChange={e => setForm(p => ({...p, visibilite_unites: [...e.target.selectedOptions].map(o => o.value).join(',')}))} style={{ height: 80 }}>
-                    {unites.map(u => <option key={u.code} value={u.code}>{u.code} — {u.nom}</option>)}
-                  </select>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Vide = visible par tous</span>
-                </div>
-                <div className="form-group" style={{ flex: 1, minWidth: 200 }}>
-                  <label className="form-label">🔒 Visible par (groupes)</label>
-                  <select className="form-input" multiple value={form.visibilite_groupes ? form.visibilite_groupes.split(',') : []} onChange={e => setForm(p => ({...p, visibilite_groupes: [...e.target.selectedOptions].map(o => o.value).join(',')}))} style={{ height: 80 }}>
-                    {groups.map(g => <option key={g.id} value={g.id}>{g.name || g.nom}</option>)}
-                  </select>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Vide = visible par tous</span>
-                </div>
+              <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center', marginTop: 'var(--space-xs)' }}>
+                <button type="button" className="btn btn-secondary btn-small" onClick={() => setVisPopup('doc')}>
+                  🔒 Visibilité
+                </button>
+                <VisibilityBadge unites={form.visibilite_unites} groupes={form.visibilite_groupes} allUnites={unites} allGroups={groups} />
               </div>
             )}
-            <button type="submit" className="btn btn-primary">{editId ? '💾 Modifier' : '📄 Ajouter'}</button>
+            <button type="submit" className="btn btn-primary" style={{ marginTop: 'var(--space-md)' }}>{editId ? '💾 Modifier' : '📄 Ajouter'}</button>
           </form>
         </div>
       )}
@@ -249,7 +335,6 @@ export default function Documentation() {
         </div>
       ) : (
         <>
-          {/* Folders as expandable sections */}
           {folders.filter(matchSearch).map(folder => {
             const children = docsInFolder(folder.id).filter(matchSearch)
             const isOpen = openFolders[folder.id]
@@ -258,6 +343,7 @@ export default function Documentation() {
                 <div onClick={() => toggleFolder(folder.id)} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', padding: 'var(--space-md)', cursor: 'pointer', background: isOpen ? 'rgba(79,98,68,0.05)' : '' }}>
                   <span style={{ fontSize: '1.3rem' }}>{isOpen ? '📂' : '📁'}</span>
                   <strong style={{ flex: 1 }}>{folder.titre}</strong>
+                  {(folder.visibilite_unites || folder.visibilite_groupes) && <span style={{ fontSize: '0.7rem' }}>🔒</span>}
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{children.length} doc{children.length !== 1 ? 's' : ''}</span>
                   <span>{isOpen ? '▾' : '▸'}</span>
                 </div>
@@ -274,7 +360,6 @@ export default function Documentation() {
             )
           })}
 
-          {/* Loose docs by category */}
           {(() => {
             const filtered = looseDocs.filter(matchSearch)
             if (filtered.length === 0) return null
@@ -295,7 +380,6 @@ export default function Documentation() {
   )
 }
 
-// Detect URL type for smart display
 function getUrlType(url) {
   if (!url) return 'none'
   if (url.match(/docs\.google\.com\/document/)) return 'gdoc'
@@ -307,22 +391,16 @@ function getUrlType(url) {
   return 'link'
 }
 
-// Convert Google Doc/Sheet URLs to embeddable format
 function getEmbedUrl(url) {
   if (!url) return null
-  // Google Docs → /pub for embed
   const gdocMatch = url.match(/docs\.google\.com\/document\/d\/([a-zA-Z0-9_-]+)/)
   if (gdocMatch) return `https://docs.google.com/document/d/${gdocMatch[1]}/pub?embedded=true`
-  // Google Sheets → /pubhtml
   const gsheetMatch = url.match(/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/)
   if (gsheetMatch) return `https://docs.google.com/spreadsheets/d/${gsheetMatch[1]}/pubhtml?widget=true&headers=false`
-  // Google Slides → /embed
   const gslideMatch = url.match(/docs\.google\.com\/presentation\/d\/([a-zA-Z0-9_-]+)/)
   if (gslideMatch) return `https://docs.google.com/presentation/d/${gslideMatch[1]}/embed`
-  // Google Drive file → preview
   const gdriveMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/)
   if (gdriveMatch) return `https://drive.google.com/file/d/${gdriveMatch[1]}/preview`
-  // PDF → use Google Docs viewer as fallback or direct embed
   if (url.match(/\.pdf(\?|$)/i)) return url
   return null
 }
@@ -337,11 +415,8 @@ function DocRow({ doc, isOfficier, isAdmin, onEdit, onRemove, onApprove }) {
   const canEmbed = ['gdoc', 'gsheet', 'gslide', 'gdrive', 'pdf'].includes(urlType)
 
   const handleClick = () => {
-    if (canEmbed) {
-      setShowViewer(true)
-    } else if (doc.url) {
-      window.open(doc.url, '_blank', 'noopener,noreferrer')
-    }
+    if (canEmbed) setShowViewer(true)
+    else if (doc.url) window.open(doc.url, '_blank', 'noopener,noreferrer')
   }
 
   return (
@@ -357,9 +432,7 @@ function DocRow({ doc, isOfficier, isAdmin, onEdit, onRemove, onApprove }) {
           </div>
         </div>
         <div className="doc-card-actions" onClick={e => e.stopPropagation()}>
-          {doc.url && (
-            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="btn btn-sm" title="Ouvrir dans un nouvel onglet">↗️</a>
-          )}
+          {doc.url && <a href={doc.url} target="_blank" rel="noopener noreferrer" className="btn btn-sm" title="Ouvrir dans un nouvel onglet">↗️</a>}
           {isOfficier && <button className="btn btn-sm" onClick={() => onEdit(doc)} title="Modifier">✏️</button>}
           {isAdmin && <button className="btn btn-sm" style={{ color: 'var(--danger)' }} onClick={() => onRemove(doc.id)} title="Supprimer">🗑️</button>}
         </div>
@@ -386,12 +459,7 @@ function DocRow({ doc, isOfficier, isAdmin, onEdit, onRemove, onApprove }) {
                 <img src={doc.url} alt={doc.titre} style={{ maxWidth: '100%', maxHeight: '80vh' }} />
               </div>
             ) : (
-              <iframe
-                src={embedUrl || doc.url}
-                className="doc-viewer-iframe"
-                title={doc.titre}
-                allowFullScreen
-              />
+              <iframe src={embedUrl || doc.url} className="doc-viewer-iframe" title={doc.titre} allowFullScreen />
             )}
           </div>
         </div>
