@@ -36,7 +36,7 @@ const FIELDS = [
   { key: 'wehrnummer', label: 'Wehrnummer (N° de service)', placeholder: 'Ex: Wien W/18/23/41' },
 ]
 
-export default function SoldbuchDetails({ effectifId, effectif, onSaved, onClose }) {
+export default function SoldbuchDetails({ effectifId, effectif, isSelf, onSaved, onClose }) {
   const [editing, setEditing] = useState(null) // key being edited
   const [value, setValue] = useState('')
   const [saving, setSaving] = useState(false)
@@ -86,7 +86,7 @@ export default function SoldbuchDetails({ effectifId, effectif, onSaved, onClose
   return (
     <div className="paper-card" style={{ marginTop: 'var(--space-md)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
-        <h3 style={{ margin: 0, fontFamily: 'var(--font-mono)' }}>📝 Détailler mon Soldbuch</h3>
+        <h3 style={{ margin: 0, fontFamily: 'var(--font-mono)' }}>📝 {isSelf ? 'Détailler mon Soldbuch' : `Détailler le Soldbuch de ${effectif?.prenom || ''} ${effectif?.nom || ''}`}</h3>
         <button className="btn btn-secondary btn-small" onClick={onClose}>✕ Fermer</button>
       </div>
 

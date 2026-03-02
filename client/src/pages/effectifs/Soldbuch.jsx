@@ -93,7 +93,7 @@ export default function Soldbuch() {
             onClick={() => setViewMode('book')}>📕 Soldbuch</button>
           <button className={`btn btn-small ${viewMode === 'classic' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setViewMode('classic')}>📋 Classique</button>
-          {isSelf && <button className="btn btn-secondary btn-small" onClick={() => setShowDetails(!showDetails)}>
+          {(isSelf || user?.isRecenseur || user?.isAdmin) && <button className="btn btn-secondary btn-small" onClick={() => setShowDetails(!showDetails)}>
             {showDetails ? '✕ Fermer' : '📝 Detailler'}
           </button>}
           <Link to={`/effectifs/${id}/edit`} className="btn btn-secondary btn-small">✏️ Modifier</Link>
@@ -104,16 +104,16 @@ export default function Soldbuch() {
       </div>
 
       {/* Pending validation badge */}
-      {e.soldbuch_details_pending === 1 && (user?.isAdmin || user?.isRecenseur || user?.isOfficier) && (
+      {e.soldbuch_details_pending === 1 && (isSelf || user?.isAdmin || user?.isRecenseur || user?.isOfficier) && (
         <div className="alert alert-warning" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
-          <span>⏳ Cet effectif a soumis des details de Soldbuch en attente de validation.</span>
-          <button className="btn btn-primary btn-small" onClick={async () => {
+          <span>{isSelf ? '⏳ Un administratif a modifié votre Soldbuch — vérifiez et validez.' : '⏳ Details de Soldbuch en attente de validation par le propriétaire.'}</span>
+          {isSelf && <button className="btn btn-primary btn-small" onClick={async () => {
             try {
               await apiClient.put(`/soldbuch/${id}/details/validate`)
               const res = await apiClient.get(`/soldbuch/${id}`, { noCache: true })
               setData(res.data.data)
             } catch {}
-          }}>✅ Valider</button>
+          }}>✅ Valider</button>}
         </div>
       )}
 
@@ -122,6 +122,7 @@ export default function Soldbuch() {
         <SoldbuchDetails
           effectifId={id}
           effectif={e}
+          isSelf={isSelf}
           onClose={() => setShowDetails(false)}
           onSaved={async () => {
             setShowDetails(false)

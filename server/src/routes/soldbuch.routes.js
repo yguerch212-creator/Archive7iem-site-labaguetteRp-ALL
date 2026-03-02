@@ -168,10 +168,16 @@ router.put('/:effectifId/details', auth, async (req, res) => {
     const vals = [date_naissance || null, lieu_naissance || null, religion || null, beruf || null, taille_cm ? parseInt(String(taille_cm).replace(/\D/g, '')) || null : null, gestalt || null, gesicht || null, haar || null, bart || null, augen || null,
       besondere_kennzeichen || null, schuhzeuglaenge || null, schuhzeugweite || null, blutgruppe || null, gasmaskengroesse || null, wehrnummer || null]
 
-    if (isOwner && !isPrivileged) {
-      await pool.execute(`UPDATE effectifs SET ${fields}, soldbuch_details_pending = 1 WHERE id = ?`, [...vals, effectifId])
-      res.json({ success: true, message: 'Details soumis pour validation', pending: true })
+    if (req.user.isAdmin) {
+      // Admin: direct save, no validation
+      await pool.execute(`UPDATE effectifs SET ${fields}, soldbuch_details_pending = 0 WHERE id = ?`, [...vals, effectifId])
+      res.json({ success: true, message: 'Details enregistres' })
+    } else if (!isOwner) {
+      // Someone else editing → owner must validate
+      await pool.execute(`UPDATE effectifs SET ${fields}, soldbuch_details_pending = 1, soldbuch_details_edited_by = ? WHERE id = ?`, [...vals, req.user.effectif_id || null, effectifId])
+      res.json({ success: true, message: 'Details soumis — le proprietaire doit valider', pending: true })
     } else {
+      // Owner editing own → direct save
       await pool.execute(`UPDATE effectifs SET ${fields}, soldbuch_details_pending = 0 WHERE id = ?`, [...vals, effectifId])
       res.json({ success: true, message: 'Details enregistres' })
     }
@@ -180,13 +186,15 @@ router.put('/:effectifId/details', auth, async (req, res) => {
   }
 })
 
-// PUT /api/soldbuch/:effectif_id/details/validate — Validate pending details (officier+)
+// PUT /api/soldbuch/:effectif_id/details/validate — Validate pending details (owner or officier+)
 router.put('/:effectifId/details/validate', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin && !req.user.isRecenseur && !req.user.isOfficier) {
+    const effectifId = parseInt(req.params.effectifId)
+    const isOwner = req.user.effectif_id === effectifId
+    if (!isOwner && !req.user.isAdmin && !req.user.isRecenseur && !req.user.isOfficier) {
       return res.status(403).json({ success: false, message: 'Non autorise' })
     }
-    await pool.execute('UPDATE effectifs SET soldbuch_details_pending = 0 WHERE id = ?', [req.params.effectifId])
+    await pool.execute('UPDATE effectifs SET soldbuch_details_pending = 0, soldbuch_details_edited_by = NULL WHERE id = ?', [effectifId])
     res.json({ success: true, message: 'Details valides' })
   } catch (err) {
     console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
