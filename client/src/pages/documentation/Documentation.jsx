@@ -166,7 +166,7 @@ export default function Documentation() {
               <div className="form-group" style={{ flex: 1, minWidth: 200 }}>
                 <label className="form-label">🔒 Visible par (groupes)</label>
                 <select className="form-input" multiple value={folderForm.visibilite_groupes ? folderForm.visibilite_groupes.split(',') : []} onChange={e => setFolderForm(p => ({...p, visibilite_groupes: [...e.target.selectedOptions].map(o => o.value).join(',')}))} style={{ height: 80 }}>
-                  {groups.map(g => <option key={g.id} value={g.id}>{g.nom}</option>)}
+                  {groups.map(g => <option key={g.id} value={g.id}>{g.name || g.nom}</option>)}
                 </select>
                 <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Vide = visible par tous</span>
               </div>
@@ -222,7 +222,7 @@ export default function Documentation() {
                 <div className="form-group" style={{ flex: 1, minWidth: 200 }}>
                   <label className="form-label">🔒 Visible par (groupes)</label>
                   <select className="form-input" multiple value={form.visibilite_groupes ? form.visibilite_groupes.split(',') : []} onChange={e => setForm(p => ({...p, visibilite_groupes: [...e.target.selectedOptions].map(o => o.value).join(',')}))} style={{ height: 80 }}>
-                    {groups.map(g => <option key={g.id} value={g.id}>{g.nom}</option>)}
+                    {groups.map(g => <option key={g.id} value={g.id}>{g.name || g.nom}</option>)}
                   </select>
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Vide = visible par tous</span>
                 </div>
