@@ -175,7 +175,10 @@ export default function AdminStats() {
       {/* Front Stats */}
       {frontStats && (
         <div className="paper-card" style={{ padding: 'var(--space-md)', marginTop: 'var(--space-lg)' }}>
-          <h3>⚔️ Situation du Front</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-sm)' }}>
+            <h3 style={{ margin: 0 }}>⚔️ Situation du Front</h3>
+            <a href="/statistiques" className="btn btn-primary btn-small">📊 Statistiques détaillées</a>
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)' }}>
             <StatCard value={frontStats.prises} label="Prises" icon="🚩" />
             <StatCard value={frontStats.pertes} label="Pertes" icon="🏳️" color="var(--danger)" />

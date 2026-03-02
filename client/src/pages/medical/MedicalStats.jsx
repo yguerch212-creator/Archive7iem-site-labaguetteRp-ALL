@@ -479,7 +479,8 @@ export default function MedicalStats() {
           {/* PDS Sanitat pie — hours displayed */}
           <div className="paper-card" style={{ flex: 1, minWidth: 280 }}>
             <h3 style={{ marginTop: 0, textAlign: 'center', fontSize: '0.95rem' }}>📋 PDS — 916. Sanitats-Abteilung</h3>
-            <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 12px' }}>{pdsLabel}</p>
+            <PeriodNav periode={periode} setPeriode={setPeriode} currentDate={currentDate} setCurrentDate={setCurrentDate} />
+            <p style={{ textAlign: 'center', fontSize: '0.7rem', color: 'var(--text-muted)', margin: '8px 0 12px' }}>{pdsLabel}</p>
             {pdsPieData.length > 0 ? (
               <PieChart
                 data={pdsPieData.map(d => ({ label: d.label, value: d.value }))}

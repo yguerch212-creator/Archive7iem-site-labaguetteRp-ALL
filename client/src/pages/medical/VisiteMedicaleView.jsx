@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
+import html2canvas from 'html2canvas'
 
 export default function VisiteMedicaleView() {
   const { id } = useParams()
@@ -24,9 +25,24 @@ export default function VisiteMedicaleView() {
   const v = data
   const fmtDate = d => { if (!d) return '—'; try { const s = String(d).slice(0,10); return new Date(s + 'T00:00').toLocaleDateString('fr-FR') } catch { return '—' } }
 
+  const exportPng = async () => {
+    const el = document.getElementById('visite-paper')
+    if (!el) return
+    try {
+      const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#f5f0e1', logging: false, useCORS: true })
+      const link = document.createElement('a')
+      link.download = `Visite_${v.effectif_nom}_${v.effectif_prenom}_${String(v.date_visite).slice(0,10)}.png`
+      link.href = canvas.toDataURL('image/png')
+      link.click()
+    } catch (e) { console.error(e) }
+  }
+
   return (
     <div className="container" style={{ maxWidth: 800, paddingBottom: 'var(--space-xxl)' }}>
-      <BackButton label="← Retour" />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+        <BackButton label="← Retour" />
+        <button className="btn btn-secondary btn-small" onClick={exportPng}>📸 Télécharger (PNG)</button>
+      </div>
 
       <div className="document-paper" id="visite-paper" style={{ marginTop: 'var(--space-lg)' }}>
         {/* Header */}

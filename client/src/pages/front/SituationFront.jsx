@@ -308,10 +308,7 @@ export default function SituationFront() {
 
   return (
     <div className="container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-        <BackButton />
-        <a href="/statistiques" style={{ fontSize: '0.8rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>📊 Statistiques</a>
-      </div>
+      <BackButton />
       <h2>⚔️ Situation du Front</h2>
 
       <div className="front-grid">
