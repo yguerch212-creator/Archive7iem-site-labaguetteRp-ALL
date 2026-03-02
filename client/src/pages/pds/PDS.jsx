@@ -397,13 +397,14 @@ function RapportSemaine({ semaine, setSemaine, semaineActuelle, setView, user, f
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [filterStatut, setFilterStatut] = useState('tous') // 'tous', 'valide', 'insuffisant', 'absent'
+  const [includeHDR, setIncludeHDR] = useState(false)
 
   useEffect(() => {
     setLoading(true)
-    api.get('/pds/recap', { params: { semaine } })
+    api.get('/pds/recap', { params: { semaine, includeHDR: includeHDR ? '1' : '0' } })
       .then(r => { setData(r.data.data); setLoading(false) })
       .catch(() => setLoading(false))
-  }, [semaine])
+  }, [semaine, includeHDR])
 
   if (loading) return <div className="pds-page"><p style={{ textAlign: 'center' }}>Chargement...</p></div>
   if (!data) return <div className="pds-page"><p style={{ textAlign: 'center' }}>Erreur de chargement</p></div>
@@ -461,7 +462,7 @@ function RapportSemaine({ semaine, setSemaine, semaineActuelle, setView, user, f
       </div>
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
         <select value={filterUnite} onChange={e => setFilterUnite(e.target.value)} className="form-input" style={{ maxWidth: 200 }}>
           <option value="">Toutes les unités</option>
           {unites.map(u => <option key={u} value={u}>{u}</option>)}
@@ -473,6 +474,10 @@ function RapportSemaine({ semaine, setSemaine, semaineActuelle, setView, user, f
           <option value="absent">⬜ Non rempli ({absentCount})</option>
           <option value="permission">🏖️ En permission ({permCount})</option>
         </select>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          <input type="checkbox" checked={includeHDR} onChange={e => setIncludeHDR(e.target.checked)} />
+          Inclure HDR
+        </label>
       </div>
 
       {/* Rapport table */}

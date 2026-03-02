@@ -194,8 +194,15 @@ router.get('/recap', auth, async (req, res) => {
       ORDER BY u.code, COALESCE(g.rang, 0) DESC, e.nom
     `, [semaine])
 
-    // HDR (rang < 35) only appear if they filled PDS
-    const rows = allRows.filter(r => (r.grade_rang || 0) >= 35 || r.pds_id)
+    // HDR (rang < 35) only appear if they filled PDS — unless includeHDR
+    const includeHDR = req.query.includeHDR === '1'
+    // Generals (rang > 100) excluded unless they filled PDS
+    const rows = allRows.filter(r => {
+      const rang = r.grade_rang || 0
+      if (rang > 100 && !r.pds_id) return false // generals without PDS excluded
+      if (!includeHDR && rang < 35 && !r.pds_id) return false // HDR without PDS excluded by default
+      return true
+    })
 
     // Permissions active this week — compute week date range for filtering
     const [yr, wn2] = semaine.split('-W').map(Number)
