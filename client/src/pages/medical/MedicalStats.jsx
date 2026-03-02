@@ -4,6 +4,19 @@ import api from '../../api/client'
 import BackButton from '../../components/BackButton'
 import { exportToPdf } from '../../utils/exportPdf'
 
+function parseCreneaux(text) {
+  if (!text || text.trim().toUpperCase() === 'X' || text.trim() === '') return 0
+  let total = 0
+  const normalized = text.replace(/[Hh]/g, 'h').replace(/\s*-\s*/g, '-')
+  for (const slot of normalized.split(',').map(s => s.trim()).filter(Boolean)) {
+    const m = slot.match(/(\d{1,2})(?:h(\d{0,2}))?\s*-\s*(\d{1,2})(?:h(\d{0,2}))?/)
+    if (m) { const s = parseInt(m[1]) + (parseInt(m[2] || 0) / 60), e = parseInt(m[3]) + (parseInt(m[4] || 0) / 60); if (e > s) total += (e - s) }
+  }
+  return Math.round(total * 100) / 100
+}
+const DAY_TO_PDS = { 0: 'dimanche', 1: 'lundi', 2: 'mardi', 3: 'mercredi', 4: 'jeudi', 5: 'vendredi', 6: 'samedi' }
+const JOURS_LABELS = { dimanche: 'Dimanche', lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi: 'Vendredi', samedi: 'Samedi' }
+
 // SVG Pie Chart — labels show name + value (not %)
 function PieChart({ data, size = 240, title, showHours }) {
   const total = data.reduce((s, d) => s + d.value, 0)
@@ -198,7 +211,9 @@ export default function MedicalStats() {
   useEffect(() => {
     const wkLabel = (w) => { try { const [y,wn]=w.split('-W').map(Number); const j4=new Date(Date.UTC(y,0,4)); const dw=j4.getUTCDay()||7; const m=new Date(j4); m.setUTCDate(j4.getUTCDate()-dw+1+(wn-1)*7); const f=new Date(m); f.setUTCDate(m.getUTCDate()+4); const n=new Date(f); n.setUTCDate(f.getUTCDate()+7); const fmt=d=>`${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}`; return `${fmt(f)} → ${fmt(n)}` } catch { return w } }
     if (pdsWeeks.length === 1) {
-      setPdsLabel(`Semaine ${wkLabel(pdsWeeks[0])}`)
+      const dayCol = DAY_TO_PDS[currentDate.getDay()]
+      const fmtD = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`
+      setPdsLabel(periode === 'jour' ? `${JOURS_LABELS[dayCol]} ${fmtD(currentDate)}` : `Semaine ${wkLabel(pdsWeeks[0])}`)
       api.get('/pds', { params: { semaine: pdsWeeks[0] } }).then(r => setPdsData(r.data.data || [])).catch(() => {})
     } else {
       const MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
@@ -213,7 +228,7 @@ export default function MedicalStats() {
           setPdsData(Object.values(map))
         })
     }
-  }, [pdsWeeks])
+  }, [pdsWeeks, periode, currentDate])
 
   const fmt = (d) => {
     if (!d) return '—'
@@ -253,10 +268,20 @@ export default function MedicalStats() {
   // PDS pie data for Sanitat effectifs — show hours not %
   const pdsPieData = useMemo(() => {
     const sanitatIdSet = new Set(sanitatEffectifs.map(e => e.id))
-    const sanitPds = pdsData.filter(p => sanitatIdSet.has(p.effectif_id) && parseFloat(p.total_heures) > 0)
+    const sanitPds = pdsData.filter(p => sanitatIdSet.has(p.effectif_id))
+
+    const getHours = (p) => {
+      if (periode === 'jour') {
+        const dayCol = DAY_TO_PDS[currentDate.getDay()]
+        return parseCreneaux(p[dayCol])
+      }
+      return parseFloat(p.total_heures) || 0
+    }
+
     return sanitPds.map(p => {
       const eff = sanitatEffectifs.find(e => e.id === p.effectif_id)
-      const hours = parseFloat(p.total_heures) || 0
+      const hours = getHours(p)
+      if (hours <= 0) return null
       const mins = Math.round(hours * 60)
       const h = Math.floor(mins / 60)
       const m = mins % 60
@@ -265,8 +290,8 @@ export default function MedicalStats() {
         value: mins,
         displayTime: `${h}h${m > 0 ? String(m).padStart(2, '0') : ''}`
       }
-    }).sort((a, b) => b.value - a.value)
-  }, [pdsData, sanitatEffectifs])
+    }).filter(Boolean).sort((a, b) => b.value - a.value)
+  }, [pdsData, sanitatEffectifs, periode, currentDate])
 
   // Medecin stats (ALL medecins who performed soins)
   const medecinStats = useMemo(() => {

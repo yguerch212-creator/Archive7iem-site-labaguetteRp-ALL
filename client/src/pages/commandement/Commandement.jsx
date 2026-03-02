@@ -4,6 +4,22 @@ import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import BackButton from '../../components/BackButton'
 
+// ── Helpers ──
+function parseCreneaux(text) {
+  if (!text || text.trim().toUpperCase() === 'X' || text.trim() === '') return 0
+  let total = 0
+  const normalized = text.replace(/[Hh]/g, 'h').replace(/\s*-\s*/g, '-')
+  for (const slot of normalized.split(',').map(s => s.trim()).filter(Boolean)) {
+    const m = slot.match(/(\d{1,2})(?:h(\d{0,2}))?\s*-\s*(\d{1,2})(?:h(\d{0,2}))?/)
+    if (m) { const s = parseInt(m[1]) + (parseInt(m[2] || 0) / 60), e = parseInt(m[3]) + (parseInt(m[4] || 0) / 60); if (e > s) total += (e - s) }
+  }
+  return Math.round(total * 100) / 100
+}
+
+// Map JS getDay() to PDS column name
+const DAY_TO_PDS = { 0: 'dimanche', 1: 'lundi', 2: 'mardi', 3: 'mercredi', 4: 'jeudi', 5: 'vendredi', 6: 'samedi' }
+const JOURS_LABELS = { dimanche: 'Dimanche', lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi: 'Vendredi', samedi: 'Samedi' }
+
 // ── Pie Chart (reused from MedicalStats) ──
 function PieChart({ data, size = 220, title, showHours }) {
   const total = data.reduce((s, d) => s + d.value, 0)
@@ -179,7 +195,10 @@ export default function Commandement() {
   // Reload PDS when weeks change — merge multiple weeks for month view
   useEffect(() => {
     if (pdsWeeks.length === 1) {
-      setPdsLabel(`Semaine ${weekLabel(pdsWeeks[0])}`)
+      const dayCol = DAY_TO_PDS[currentDate.getDay()]
+      const dayLabel = JOURS_LABELS[dayCol] || dayCol
+      const fmtD = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`
+      setPdsLabel(periode === 'jour' ? `${dayLabel} ${fmtD(currentDate)}` : `Semaine ${weekLabel(pdsWeeks[0])}`)
       api.get('/pds', { params: { semaine: pdsWeeks[0] } }).then(r => setPdsData(r.data.data || [])).catch(() => {})
     } else {
       const MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
@@ -195,7 +214,7 @@ export default function Commandement() {
           setPdsData(Object.values(map))
         })
     }
-  }, [pdsWeeks])
+  }, [pdsWeeks, periode, currentDate])
 
   const loadNotes = () => api.get('/commandement/notes').then(r => setNotes(r.data.data)).catch(() => {})
   const addNote = async () => { if (!newNote.trim()) return; try { await api.post('/commandement/notes', { contenu: newNote, prive: notePrivate }); setNewNote(''); setNotePrivate(false); loadNotes() } catch { setMsg('Erreur') } }
@@ -218,16 +237,27 @@ export default function Commandement() {
   const soEffectifs = useMemo(() => unitEffectifs.filter(e => e.grade_rang >= 35 && e.grade_rang < 90), [unitEffectifs])
 
   // PDS pie: SO+ who filled + HDR who also filled
+  // In "jour" mode: show hours for that specific day
   const pdsPie = useMemo(() => {
     const soIds = new Set(soEffectifs.map(e => e.id))
     const filled = pdsData.filter(p => (soIds.has(p.effectif_id) || parseFloat(p.total_heures) > 0) && unitEffectifs.some(e => e.id === p.effectif_id))
-    return filled.filter(p => parseFloat(p.total_heures) > 0).map(p => {
+
+    const getHours = (p) => {
+      if (periode === 'jour') {
+        const dayCol = DAY_TO_PDS[currentDate.getDay()]
+        return parseCreneaux(p[dayCol])
+      }
+      return parseFloat(p.total_heures) || 0
+    }
+
+    return filled.map(p => {
       const eff = effectifs.find(e => e.id === p.effectif_id)
-      const hours = parseFloat(p.total_heures) || 0
+      const hours = getHours(p)
+      if (hours <= 0) return null
       const mins = Math.round(hours * 60)
       return { label: eff ? `${eff.prenom} ${eff.nom}` : `#${p.effectif_id}`, value: mins }
-    }).sort((a, b) => b.value - a.value)
-  }, [pdsData, soEffectifs, unitEffectifs, effectifs])
+    }).filter(Boolean).sort((a, b) => b.value - a.value)
+  }, [pdsData, soEffectifs, unitEffectifs, effectifs, periode, currentDate])
 
   // Rapports pie by author (filtered period)
   const rapportsPie = useMemo(() => {
