@@ -87,6 +87,10 @@ export default function PDS() {
     try {
       const res = await api.get('/pds', { params: { semaine } })
       setAllData(res.data.data); setStats(res.data.stats); setSemaineActuelle(res.data.semaineActuelle)
+      // On first load, if our local week doesn't match server's current RP week, correct it
+      if (!semaineActuelle && res.data.semaineActuelle && semaine !== res.data.semaineActuelle) {
+        setSemaine(res.data.semaineActuelle)
+      }
     } catch {}
   }, [semaine])
 
@@ -321,7 +325,7 @@ export default function PDS() {
         </span>
         <button className="btn btn-secondary btn-small" onClick={() => setSemaine(nextWeek(semaine))}>▶</button>
         {semaine !== semaineActuelle && (
-          <button className="btn btn-sm" onClick={() => setSemaine(getWeekString())}>Actuelle</button>
+          <button className="btn btn-sm" onClick={() => setSemaine(semaineActuelle)}>Actuelle</button>
         )}
       </div>
 

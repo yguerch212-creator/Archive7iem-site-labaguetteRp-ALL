@@ -62,7 +62,6 @@ const GRADES = {
     { nom: 'Sanitäts Obersoldat', abbr: 'SanOSdt.', cat: 'HDR', role: 'Infirmier confirmé' },
     { nom: 'Gefreiter', abbr: 'Gefr.', cat: 'HDR', role: 'Caporal médical' },
     { nom: 'Obergefreiter', abbr: 'OGefr.', cat: 'HDR', role: 'Caporal-chef médical' },
-    { nom: 'Stabsgefreiter', abbr: 'StGefr.', cat: 'HDR', role: 'Caporal-chef supérieur' },
     { nom: 'Unteroffizier', abbr: 'Uffz.', cat: 'SO', role: 'Sous-officier médical' },
     { nom: 'Unterfeldwebel', abbr: 'UFw.', cat: 'SO', role: 'Adjoint chef de section médicale' },
     { nom: 'Feldwebel', abbr: 'Fw.', cat: 'SO', role: 'Chef de section médicale' },
