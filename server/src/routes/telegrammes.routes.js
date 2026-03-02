@@ -66,8 +66,10 @@ router.get('/', optionalAuth, async (req, res) => {
       rows = rows.filter(t => t.expediteur_id === effectifId && t.statut !== 'Archivé')
     } else if (tab === 'archive') {
       rows = rows.filter(t => t.statut === 'Archivé')
+    } else {
+      // "tous" excludes archived
+      rows = rows.filter(t => t.statut !== 'Archivé')
     }
-    // "tous" = everything including archived (no filter needed)
 
     // Unread count
     let unread = 0
