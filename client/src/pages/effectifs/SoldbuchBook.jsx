@@ -7,8 +7,9 @@ import './soldbuch-book.css'
 const NB = '\u00A0'
 const Ink = ({children,small}) => (children||children===0) ? <span className={`sb-ink${small?' sb-ink-sm':''}`}>{children}</span> : null
 const PageNum = ({n}) => <div className="sb-pagenum">— {n} —</div>
-const R = ({l,v}) => <tr><td className="sb-lbl-cell">{l||NB}</td><td className="sb-val-cell">{v?<Ink>{v}</Ink>:NB}</td></tr>
-const R4 = ({a,b,c,d}) => <tr><td className="sb-lbl-cell">{a||NB}</td><td className="sb-val-cell">{b?<Ink>{b}</Ink>:NB}</td><td className="sb-lbl-cell">{c||NB}</td><td className="sb-val-cell">{d?<Ink>{d}</Ink>:NB}</td></tr>
+const Ph = ({children}) => <span style={{color:'var(--text-muted)',fontSize:'.55rem',opacity:.4,fontStyle:'italic'}}>{children}</span>
+const R = ({l,v,ph}) => <tr><td className="sb-lbl-cell">{l||NB}</td><td className="sb-val-cell">{v?<Ink>{v}</Ink>:(ph?<Ph>{ph}</Ph>:NB)}</td></tr>
+const R4 = ({a,b,c,d,phB,phD}) => <tr><td className="sb-lbl-cell">{a||NB}</td><td className="sb-val-cell">{b?<Ink>{b}</Ink>:(phB?<Ph>{phB}</Ph>:NB)}</td><td className="sb-lbl-cell">{c||NB}</td><td className="sb-val-cell">{d?<Ink>{d}</Ink>:(phD?<Ph>{phD}</Ph>:NB)}</td></tr>
 const ER = ({cols,n}) => <>{Array.from({length:n},(_,i)=><tr key={i}>{Array.from({length:cols},(_,j)=><td key={j}>{NB}</td>)}</tr>)}</>
 
 function getTheme(c){if(!c)return'heer';c=String(c).toLowerCase();return{['009']:'luftwaffe',['254']:'feld',['130']:'panzer',['916s']:'sanit',['001']:'marine'}[c]||'heer'}
@@ -331,18 +332,18 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
   S.push(<div className="sb-spread" key="s1">
     <div className="sb-page sb-page-l">
       <div className="sb-photo">{e.photo?<img src={e.photo} alt=""/>:<span className="sb-photo-empty">Photo</span>}</div>
-      <table className="sb-t"><tbody><R l="Né le" v={e.date_naissance}/><R l="à" v={e.lieu_naissance}/></tbody></table>
+      <table className="sb-t"><tbody><R l="Né le" v={e.date_naissance} ph="15. März 1920"/><R l="à" v={e.lieu_naissance} ph="München, Bayern"/></tbody></table>
       <p className="sb-center sb-xs">(Lieu, canton)</p>
-      <table className="sb-t"><tbody><R4 a="Religion" b={e.religion} c="Profession" d={e.beruf}/></tbody></table>
+      <table className="sb-t"><tbody><R4 a="Religion" b={e.religion} c="Profession" d={e.beruf} phB="kath./ev." phD="Bäcker"/></tbody></table>
       <h4 className="sb-center">Description personnelle</h4>
       <table className="sb-t"><tbody>
-        <R4 a="Taille" b={e.taille_cm?`${e.taille_cm}cm`:''} c="Corpulence" d={e.gestalt}/>
-        <R4 a="Visage" b={e.gesicht} c="Cheveux" d={e.haar}/>
-        <R4 a="Barbe" b={e.bart} c="Yeux" d={e.augen}/>
+        <R4 a="Taille" b={e.taille_cm?`${e.taille_cm} cm`:''} c="Corpulence" d={e.gestalt} phB="175 cm" phD="mittel"/>
+        <R4 a="Visage" b={e.gesicht} c="Cheveux" d={e.haar} phB="oval" phD="braun"/>
+        <R4 a="Barbe" b={e.bart} c="Yeux" d={e.augen} phB="rasiert" phD="blau"/>
       </tbody></table>
       <table className="sb-t"><tbody>
-        <R l="Signes particuliers" v={e.besondere_kennzeichen}/>
-        <R4 a="Pointure" b={e.schuhzeuglaenge} c="Largeur" d=""/>
+        <R l="Signes particuliers" v={e.besondere_kennzeichen} ph="Narbe, Tätowierung..."/>
+        <R4 a="Pointure (cm)" b={e.schuhzeuglaenge} c="Largeur (1-5)" d={e.schuhzeugweite} phB="26 cm" phD="3"/>
       </tbody></table>
       <div className="sb-spacer"/>
       <SigSlot data={e.signature_soldat} slot="soldat" label="(Signature du détenteur)" canSign={canSignSoldat}/>
@@ -886,8 +887,8 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
           {tampons.length === 0 && <p>Aucun tampon dans la bibliothèque.</p>}
           <div className="sb-stamp-grid">
             {tampons.map(t => (
-              <div key={t.id} className="sb-stamp-option" onClick={() => handleStamp(t.image_path || t.url)}>
-                <img src={t.image_path || t.url} alt={t.nom || 'Tampon'}/>
+              <div key={t.id} className="sb-stamp-option" onClick={() => handleStamp(t.image_data)}>
+                <img src={t.image_data} alt={t.nom || 'Tampon'}/>
                 <span>{t.nom || `Tampon #${t.id}`}</span>
               </div>
             ))}

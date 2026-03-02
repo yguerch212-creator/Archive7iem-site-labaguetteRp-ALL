@@ -162,27 +162,17 @@ router.put('/:effectifId/details', auth, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Vous ne pouvez modifier que votre propre Soldbuch' })
     }
 
-    const { date_naissance, lieu_naissance, religion, beruf, gestalt, gesicht, haar, bart, augen, besondere_kennzeichen, schuhzeuglaenge, blutgruppe, gasmaskengroesse, wehrnummer } = req.body
+    const { date_naissance, lieu_naissance, religion, beruf, taille_cm, gestalt, gesicht, haar, bart, augen, besondere_kennzeichen, schuhzeuglaenge, schuhzeugweite, blutgruppe, gasmaskengroesse, wehrnummer } = req.body
+
+    const fields = 'date_naissance = ?, lieu_naissance = ?, religion = ?, beruf = ?, taille_cm = ?, gestalt = ?, gesicht = ?, haar = ?, bart = ?, augen = ?, besondere_kennzeichen = ?, schuhzeuglaenge = ?, schuhzeugweite = ?, blutgruppe = ?, gasmaskengroesse = ?, wehrnummer = ?'
+    const vals = [date_naissance || null, lieu_naissance || null, religion || null, beruf || null, taille_cm ? parseInt(String(taille_cm).replace(/\D/g, '')) || null : null, gestalt || null, gesicht || null, haar || null, bart || null, augen || null,
+      besondere_kennzeichen || null, schuhzeuglaenge || null, schuhzeugweite || null, blutgruppe || null, gasmaskengroesse || null, wehrnummer || null]
 
     if (isOwner && !isPrivileged) {
-      await pool.execute(`UPDATE effectifs SET
-        date_naissance = ?, lieu_naissance = ?, religion = ?, beruf = ?, gestalt = ?, gesicht = ?, haar = ?, bart = ?, augen = ?,
-        besondere_kennzeichen = ?, schuhzeuglaenge = ?, blutgruppe = ?, gasmaskengroesse = ?, wehrnummer = ?,
-        soldbuch_details_pending = 1
-        WHERE id = ?`,
-        [date_naissance || null, lieu_naissance || null, religion || null, beruf || null, gestalt || null, gesicht || null, haar || null, bart || null, augen || null,
-         besondere_kennzeichen || null, schuhzeuglaenge || null, blutgruppe || null, gasmaskengroesse || null, wehrnummer || null,
-         effectifId])
+      await pool.execute(`UPDATE effectifs SET ${fields}, soldbuch_details_pending = 1 WHERE id = ?`, [...vals, effectifId])
       res.json({ success: true, message: 'Details soumis pour validation', pending: true })
     } else {
-      await pool.execute(`UPDATE effectifs SET
-        date_naissance = ?, lieu_naissance = ?, religion = ?, beruf = ?, gestalt = ?, gesicht = ?, haar = ?, bart = ?, augen = ?,
-        besondere_kennzeichen = ?, schuhzeuglaenge = ?, blutgruppe = ?, gasmaskengroesse = ?, wehrnummer = ?,
-        soldbuch_details_pending = 0
-        WHERE id = ?`,
-        [date_naissance || null, lieu_naissance || null, religion || null, beruf || null, gestalt || null, gesicht || null, haar || null, bart || null, augen || null,
-         besondere_kennzeichen || null, schuhzeuglaenge || null, blutgruppe || null, gasmaskengroesse || null, wehrnummer || null,
-         effectifId])
+      await pool.execute(`UPDATE effectifs SET ${fields}, soldbuch_details_pending = 0 WHERE id = ?`, [...vals, effectifId])
       res.json({ success: true, message: 'Details enregistres' })
     }
   } catch (err) {

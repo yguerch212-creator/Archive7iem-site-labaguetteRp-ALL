@@ -1,21 +1,39 @@
 import React, { useState } from 'react'
 import apiClient from '../../api/client'
 
+const RELIGION_OPTIONS = [
+  { value: '', label: '— Choisir —' },
+  { value: 'kath.', label: 'kath. (katholisch — catholique)' },
+  { value: 'r.k.', label: 'r.k. (römisch-katholisch)' },
+  { value: 'ev.', label: 'ev. (evangelisch — protestant luthérien)' },
+  { value: 'gttgl.', label: 'gttgl. (gottgläubig — croyant sans religion)' },
+  { value: 'gttls.', label: 'gttls. (gottlos — athée)' },
+]
+
 const FIELDS = [
-  { key: 'date_naissance', label: 'Date de naissance', placeholder: 'Ex: 15. März 1920' },
-  { key: 'lieu_naissance', label: 'Lieu de naissance', placeholder: 'Ex: München, Bayern' },
-  { key: 'religion', label: 'Religion', placeholder: 'Ex: Katholisch, Evangelisch, ...' },
-  { key: 'beruf', label: 'Profession civile', placeholder: 'Ex: Bäcker, Mechaniker, Student...' },
-  { key: 'gestalt', label: 'Corpulence', placeholder: 'Ex: schlank, mittel, kräftig' },
-  { key: 'gesicht', label: 'Visage', placeholder: 'Ex: oval, rund, länglich' },
-  { key: 'haar', label: 'Cheveux', placeholder: 'Ex: blond, braun, schwarz' },
-  { key: 'bart', label: 'Barbe', placeholder: 'Ex: rasiert, Schnurrbart, ...' },
-  { key: 'augen', label: 'Yeux', placeholder: 'Ex: blau, grün, braun' },
-  { key: 'besondere_kennzeichen', label: 'Signes particuliers', placeholder: 'Ex: Brillenträger, Narbe am Kinn, ...' },
-  { key: 'schuhzeuglaenge', label: 'Pointure', placeholder: 'Ex: 42' },
-  { key: 'blutgruppe', label: 'Groupe sanguin', placeholder: 'Ex: A, B, AB, O' },
-  { key: 'gasmaskengroesse', label: 'Taille masque à gaz', placeholder: 'Ex: 2' },
-  { key: 'wehrnummer', label: 'Numéro de service', placeholder: 'Ex: Wien W/18/23/41' },
+  { key: 'date_naissance', label: 'Geburtstag (Date de naissance)', placeholder: 'Ex: 15. März 1920' },
+  { key: 'lieu_naissance', label: 'Geburtsort (Lieu de naissance)', placeholder: 'Ex: München, Bayern' },
+  { key: 'religion', label: 'Religion', placeholder: 'Ex: kath., ev., gttgl.', type: 'select', options: RELIGION_OPTIONS },
+  { key: 'beruf', label: 'Beruf (Profession civile)', placeholder: 'Ex: Bäcker, Mechaniker, Student...' },
+  { key: 'taille_cm', label: 'Größe (Taille)', placeholder: 'Ex: 175 (en cm)' },
+  { key: 'gestalt', label: 'Gestalt (Corpulence)', placeholder: 'Ex: schlank, mittel, kräftig' },
+  { key: 'gesicht', label: 'Gesichtsform (Visage)', placeholder: 'Ex: oval, rund, länglich' },
+  { key: 'haar', label: 'Haar (Cheveux)', placeholder: 'Ex: blond, braun, schwarz' },
+  { key: 'bart', label: 'Bart (Barbe)', placeholder: 'Ex: rasiert, Schnurrbart' },
+  { key: 'augen', label: 'Augen (Yeux)', placeholder: 'Ex: blau, grün, braun' },
+  { key: 'besondere_kennzeichen', label: 'Besondere Kennzeichen (Signes particuliers)', placeholder: 'Ex: Narbe (cicatrice), Tätowierung (tatouage), Brillenträger (porte lunettes)' },
+  { key: 'schuhzeuglaenge', label: 'Schuhzeuglänge (Pointure en cm)', placeholder: 'Ex: 26 (en cm, pas la taille)' },
+  { key: 'schuhzeugweite', label: 'Schuhzeugweite (Largeur du pied)', placeholder: '1 à 5 (5 = le plus fin)', type: 'select', options: [
+    { value: '', label: '— Choisir —' },
+    { value: '1', label: '1 (très large)' },
+    { value: '2', label: '2 (large)' },
+    { value: '3', label: '3 (normal)' },
+    { value: '4', label: '4 (étroit)' },
+    { value: '5', label: '5 (très étroit)' },
+  ]},
+  { key: 'blutgruppe', label: 'Blutgruppe (Groupe sanguin)', placeholder: 'Ex: A, B, AB, O' },
+  { key: 'gasmaskengroesse', label: 'Gasmaskengrößse (Taille masque à gaz)', placeholder: 'Ex: 2' },
+  { key: 'wehrnummer', label: 'Wehrnummer (N° de service)', placeholder: 'Ex: Wien W/18/23/41' },
 ]
 
 export default function SoldbuchDetails({ effectifId, effectif, onSaved, onClose }) {
@@ -83,13 +101,17 @@ export default function SoldbuchDetails({ effectifId, effectif, onSaved, onClose
           <tr><th style={{ width: '30%' }}>Champ</th><th>Valeur</th><th style={{ width: 80 }}></th></tr>
         </thead>
         <tbody>
-          {FIELDS.map(({ key, label, placeholder }) => (
+          {FIELDS.map(({ key, label, placeholder, type, options }) => (
             <tr key={key}>
               <td style={{ fontWeight: 600 }}>{label}</td>
               <td>
                 {editing === key ? (
                   <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    {key === 'besondere_kennzeichen' ? (
+                    {type === 'select' ? (
+                      <select className="form-input" value={value} onChange={e => setValue(e.target.value)} style={{ flex: 1 }} autoFocus>
+                        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    ) : key === 'besondere_kennzeichen' ? (
                       <textarea className="form-textarea" value={value} onChange={e => setValue(e.target.value)} placeholder={placeholder} rows={2} style={{ flex: 1 }} />
                     ) : (
                       <input className="form-input" value={value} onChange={e => setValue(e.target.value)} placeholder={placeholder} style={{ flex: 1 }} autoFocus />
