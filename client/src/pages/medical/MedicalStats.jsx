@@ -203,10 +203,11 @@ export default function MedicalStats() {
   // PDS pie data for Sanitat effectifs — show hours not %
   const pdsPieData = useMemo(() => {
     const sanitatIdSet = new Set(sanitatEffectifs.map(e => e.id))
-    const sanitPds = pdsData.filter(p => sanitatIdSet.has(p.effectif_id) && p.heures_totales > 0)
+    const sanitPds = pdsData.filter(p => sanitatIdSet.has(p.effectif_id) && parseFloat(p.total_heures) > 0)
     return sanitPds.map(p => {
       const eff = sanitatEffectifs.find(e => e.id === p.effectif_id)
-      const mins = p.heures_totales || 0
+      const hours = parseFloat(p.total_heures) || 0
+      const mins = Math.round(hours * 60)
       const h = Math.floor(mins / 60)
       const m = mins % 60
       return {

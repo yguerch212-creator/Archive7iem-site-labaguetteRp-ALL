@@ -159,10 +159,11 @@ export default function Commandement() {
   // PDS pie: SO+ who filled + HDR who also filled
   const pdsPie = useMemo(() => {
     const soIds = new Set(soEffectifs.map(e => e.id))
-    const filled = pdsData.filter(p => (soIds.has(p.effectif_id) || p.heures_totales > 0) && unitEffectifs.some(e => e.id === p.effectif_id))
-    return filled.filter(p => p.heures_totales > 0).map(p => {
+    const filled = pdsData.filter(p => (soIds.has(p.effectif_id) || parseFloat(p.total_heures) > 0) && unitEffectifs.some(e => e.id === p.effectif_id))
+    return filled.filter(p => parseFloat(p.total_heures) > 0).map(p => {
       const eff = effectifs.find(e => e.id === p.effectif_id)
-      const mins = p.heures_totales || 0
+      const hours = parseFloat(p.total_heures) || 0
+      const mins = Math.round(hours * 60)
       return { label: eff ? `${eff.prenom} ${eff.nom}` : `#${p.effectif_id}`, value: mins }
     }).sort((a, b) => b.value - a.value)
   }, [pdsData, soEffectifs, unitEffectifs, effectifs])
@@ -179,15 +180,16 @@ export default function Commandement() {
     return Object.entries(map).sort((a, b) => b[1] - a[1]).map(([label, value]) => ({ label, value }))
   }, [rapports, unitEffectifs, periode, currentDate])
 
-  // Front events pie by type (filtered period)
+  // Front events pie by type (filtered period) — only combat events
   const frontPie = useMemo(() => {
-    const filtered = frontEvents.filter(e => isInPeriod(e.date_irl || e.created_at, periode, currentDate))
+    const COMBAT_TYPES = ['prise', 'perte', 'attaque', 'defense']
+    const filtered = frontEvents.filter(e => isInPeriod(e.date_irl || e.created_at, periode, currentDate) && COMBAT_TYPES.includes(e.type_event))
     const map = {}
     filtered.forEach(e => {
       let label = e.type_event === 'prise' ? '🚩 Prise VP' : e.type_event === 'perte' ? '🏳️ Perte VP'
-        : e.type_event === 'attaque' ? (e.camp_vainqueur === 'allemand' ? '✅ Att. Win ALL' : '⚠️ Att. Win US')
+        : e.type_event === 'attaque' ? (e.camp_vainqueur === 'allemand' ? '✅ Win ALL' : '⚠️ Win US')
         : e.type_event === 'defense' ? (e.camp_vainqueur === 'allemand' ? '⚠️ Déf. Win ALL' : '❌ Déf. Win US')
-        : e.type_event === 'debut' ? '🔔 Début' : e.type_event === 'fin' ? '🔕 Fin' : e.type_event
+        : e.type_event
       map[label] = (map[label] || 0) + 1
     })
     return Object.entries(map).sort((a, b) => b[1] - a[1]).map(([label, value]) => ({ label, value }))

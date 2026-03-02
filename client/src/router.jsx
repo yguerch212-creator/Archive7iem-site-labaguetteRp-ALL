@@ -53,6 +53,7 @@ import Commandement from './pages/commandement/Commandement'
 import Gazette from './pages/gazette/Gazette'
 import Organigramme from './pages/effectifs/Organigramme'
 import SituationFront from './pages/front/SituationFront'
+import Statistiques from './pages/stats/Statistiques'
 import JournalList from './pages/journal/JournalList'
 import JournalView from './pages/journal/JournalView'
 import JournalEdit from './pages/journal/JournalEdit'
@@ -129,6 +130,7 @@ function AppRouter() {
       <Route path="/journal/:id/edit" element={<ProtectedRoute><JournalEdit /></ProtectedRoute>} />
       <Route path="/organigramme" element={<ProtectedRoute><Organigramme /></ProtectedRoute>} />
       <Route path="/front" element={<ProtectedRoute><SituationFront /></ProtectedRoute>} />
+      <Route path="/statistiques" element={<ProtectedRoute><Statistiques /></ProtectedRoute>} />
       <Route path="/habillement" element={<ProtectedRoute><DemandesHabillement /></ProtectedRoute>} />
       
       {/* Search */}
