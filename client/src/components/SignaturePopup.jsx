@@ -42,10 +42,12 @@ export default function SignaturePopup({ onClose, onSign, onRequestSent, documen
       const ctx = canvas.getContext('2d')
 
       const loadImg = (src) => new Promise((res) => {
+        if (!src) return res(null)
         const img = new Image()
-        img.crossOrigin = 'anonymous'
+        // Don't set crossOrigin for data URIs — causes failures on some browsers
+        if (!src.startsWith('data:')) img.crossOrigin = 'anonymous'
         img.onload = () => res(img)
-        img.onerror = () => res(null)
+        img.onerror = () => { console.warn('SignaturePopup: image load failed'); res(null) }
         img.src = src
       })
 
@@ -73,7 +75,8 @@ export default function SignaturePopup({ onClose, onSign, onRequestSent, documen
   }
 
   const handleSignSelf = async (signatureData) => {
-    if (user?.effectif_id && signatureData) {
+    if (!signatureData) { setMessage({ type: 'error', text: 'Erreur: signature vide. Réessayez.' }); return }
+    if (user?.effectif_id) {
       api.put(`/effectifs/${user.effectif_id}/signature`, { signature_data: signatureData }).catch(() => {})
       setMySignature(signatureData)
     }
@@ -85,24 +88,28 @@ export default function SignaturePopup({ onClose, onSign, onRequestSent, documen
   }
 
   const handleStampOnly = () => {
-    if (!selectedTampon) return
+    if (!selectedTampon?.image_data) { setMessage({ type: 'error', text: 'Tampon non chargé. Réessayez.' }); return }
     if (onSign) onSign(selectedTampon.image_data)
   }
 
   const handleBoth = async (signatureData) => {
-    if (!selectedTampon) return
-    if (user?.effectif_id && signatureData) {
+    if (!selectedTampon?.image_data || !signatureData) { setMessage({ type: 'error', text: 'Signature ou tampon manquant. Réessayez.' }); return }
+    if (user?.effectif_id) {
       api.put(`/effectifs/${user.effectif_id}/signature`, { signature_data: signatureData }).catch(() => {})
       setMySignature(signatureData)
     }
-    const composite = await compositeImage(signatureData, selectedTampon.image_data)
-    if (onSign) onSign(composite)
+    try {
+      const composite = await compositeImage(signatureData, selectedTampon.image_data)
+      if (onSign) onSign(composite)
+    } catch { setMessage({ type: 'error', text: 'Erreur lors de la composition. Réessayez.' }) }
   }
 
   const handleBothSaved = async () => {
-    if (!selectedTampon || !mySignature) return
-    const composite = await compositeImage(mySignature, selectedTampon.image_data)
-    if (onSign) onSign(composite)
+    if (!selectedTampon?.image_data || !mySignature) { setMessage({ type: 'error', text: 'Signature ou tampon manquant.' }); return }
+    try {
+      const composite = await compositeImage(mySignature, selectedTampon.image_data)
+      if (onSign) onSign(composite)
+    } catch { setMessage({ type: 'error', text: 'Erreur lors de la composition. Réessayez.' }) }
   }
 
   const handleSendRequest = async () => {
