@@ -87,7 +87,6 @@ export default function Dashboard() {
     { icon: '📝', title: 'Rapports', desc: 'Rapports officiels', to: '/rapports' },
     { icon: '⏱️', title: 'PDS', desc: 'Prise De Service', to: '/pds' },
     { icon: '⚔️', title: 'Situation du Front', desc: 'Avant-postes & batailles', to: '/front' },
-    { icon: '📊', title: 'Statistiques Front', desc: 'Graphiques & évolution', to: '/statistiques' },
     { icon: '🚫', title: 'Interdits de front', desc: 'Sanctions & restrictions', to: '/interdits' },
     { icon: '🏥', title: 'Médical', desc: 'Visites médicales', to: '/medical' },
     { icon: '📁', title: 'Dossiers', desc: 'Dossiers & enquêtes', to: '/dossiers' },
