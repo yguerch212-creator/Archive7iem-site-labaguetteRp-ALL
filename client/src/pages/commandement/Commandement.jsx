@@ -127,17 +127,46 @@ export default function Commandement() {
   const [effectifs, setEffectifs] = useState([])
   const [frontEvents, setFrontEvents] = useState([])
 
-  // Convert currentDate to ISO week string for PDS — mirrors backend getCurrentWeek() logic
-  const pdsWeek = useMemo(() => {
-    const { start } = getRpWeekBounds(currentDate)
-    // start is the Friday. Compute ISO week of that Friday (same as backend).
-    const fri = new Date(Date.UTC(start.getFullYear(), start.getMonth(), start.getDate()))
-    const dayNum = fri.getUTCDay() || 7
-    const ref = new Date(fri); ref.setUTCDate(fri.getUTCDate() + 4 - dayNum)
+  // Compute ISO week from a Friday date (mirrors backend getCurrentWeek)
+  const fridayToIsoWeek = (fri) => {
+    const d = new Date(Date.UTC(fri.getFullYear(), fri.getMonth(), fri.getDate()))
+    const dayNum = d.getUTCDay() || 7
+    const ref = new Date(d); ref.setUTCDate(d.getUTCDate() + 4 - dayNum)
     const yearStart = new Date(Date.UTC(ref.getUTCFullYear(), 0, 1))
     const weekNo = Math.ceil((((ref - yearStart) / 86400000) + 1) / 7)
     return `${ref.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`
-  }, [currentDate])
+  }
+
+  // Compute which ISO weeks to fetch based on period
+  const pdsWeeks = useMemo(() => {
+    if (periode === 'mois') {
+      // All RP weeks that overlap with the selected month
+      const y = currentDate.getFullYear(), m = currentDate.getMonth()
+      const weeks = new Set()
+      // Check each Friday in/near this month
+      const d = new Date(y, m, 1)
+      // Go back to find first Friday before month start
+      while (d.getDay() !== 5) d.setDate(d.getDate() - 1)
+      // Iterate Fridays until we pass the month
+      while (true) {
+        const rpEnd = new Date(d); rpEnd.setDate(rpEnd.getDate() + 7)
+        // RP week overlaps month if Friday < end-of-month AND rpEnd > start-of-month
+        const monthStart = new Date(y, m, 1)
+        const monthEnd = new Date(y, m + 1, 0, 23, 59, 59)
+        if (d <= monthEnd && rpEnd >= monthStart) {
+          weeks.add(fridayToIsoWeek(d))
+        }
+        d.setDate(d.getDate() + 7)
+        if (d > monthEnd) break
+      }
+      return [...weeks]
+    }
+    // jour or semaine: single RP week
+    const { start } = getRpWeekBounds(currentDate)
+    return [fridayToIsoWeek(start)]
+  }, [currentDate, periode])
+
+  const [pdsLabel, setPdsLabel] = useState('')
 
   useEffect(() => {
     api.get('/commandement/dashboard').then(r => setData(r.data)).catch(() => {})
@@ -147,10 +176,26 @@ export default function Commandement() {
     api.get('/front/events').then(r => setFrontEvents(r.data.data || [])).catch(() => {})
   }, [])
 
-  // Reload PDS when week changes
+  // Reload PDS when weeks change — merge multiple weeks for month view
   useEffect(() => {
-    api.get('/pds', { params: { semaine: pdsWeek } }).then(r => setPdsData(r.data.data || [])).catch(() => {})
-  }, [pdsWeek])
+    if (pdsWeeks.length === 1) {
+      setPdsLabel(`Semaine ${weekLabel(pdsWeeks[0])}`)
+      api.get('/pds', { params: { semaine: pdsWeeks[0] } }).then(r => setPdsData(r.data.data || [])).catch(() => {})
+    } else {
+      const MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
+      setPdsLabel(`${MOIS[currentDate.getMonth()]} ${currentDate.getFullYear()} (${pdsWeeks.length} semaines)`)
+      Promise.all(pdsWeeks.map(w => api.get('/pds', { params: { semaine: w } }).then(r => r.data.data || []).catch(() => [])))
+        .then(results => {
+          // Merge: sum total_heures per effectif
+          const map = {}
+          results.flat().forEach(p => {
+            if (!map[p.effectif_id]) map[p.effectif_id] = { ...p, total_heures: '0' }
+            map[p.effectif_id].total_heures = String(parseFloat(map[p.effectif_id].total_heures) + parseFloat(p.total_heures || 0))
+          })
+          setPdsData(Object.values(map))
+        })
+    }
+  }, [pdsWeeks])
 
   const loadNotes = () => api.get('/commandement/notes').then(r => setNotes(r.data.data)).catch(() => {})
   const addNote = async () => { if (!newNote.trim()) return; try { await api.post('/commandement/notes', { contenu: newNote, prive: notePrivate }); setNewNote(''); setNotePrivate(false); loadNotes() } catch { setMsg('Erreur') } }
@@ -245,7 +290,7 @@ export default function Commandement() {
         <div style={{ display: 'flex', gap: 'var(--space-lg)', marginTop: 'var(--space-lg)', flexWrap: 'wrap', justifyContent: 'center' }}>
           <div style={{ flex: 1, minWidth: 240 }}>
             <PieChart data={pdsPie} size={220} title={`📋 PDS (SO+)`} showHours />
-            <p style={{ textAlign: 'center', fontSize: '0.7rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>Semaine {weekLabel(pdsWeek)}</p>
+            <p style={{ textAlign: 'center', fontSize: '0.7rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>{pdsLabel}</p>
           </div>
           <div style={{ flex: 1, minWidth: 240 }}>
             <PieChart data={rapportsPie} size={220} title="📝 Rapports" />

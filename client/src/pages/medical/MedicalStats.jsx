@@ -164,20 +164,56 @@ export default function MedicalStats() {
     ])
   }, [])
 
-  // PDS week from period nav — mirrors backend getCurrentWeek() logic
-  const pdsWeek = useMemo(() => {
-    const { start } = getRpWeekBounds(currentDate)
-    const fri = new Date(Date.UTC(start.getFullYear(), start.getMonth(), start.getDate()))
-    const dayNum = fri.getUTCDay() || 7
-    const ref = new Date(fri); ref.setUTCDate(fri.getUTCDate() + 4 - dayNum)
+  // Compute ISO week from a Friday date
+  const fridayToIsoWeek = (fri) => {
+    const d = new Date(Date.UTC(fri.getFullYear(), fri.getMonth(), fri.getDate()))
+    const dayNum = d.getUTCDay() || 7
+    const ref = new Date(d); ref.setUTCDate(d.getUTCDate() + 4 - dayNum)
     const yearStart = new Date(Date.UTC(ref.getUTCFullYear(), 0, 1))
     const weekNo = Math.ceil((((ref - yearStart) / 86400000) + 1) / 7)
     return `${ref.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`
-  }, [currentDate])
+  }
+
+  const pdsWeeks = useMemo(() => {
+    if (periode === 'mois') {
+      const y = currentDate.getFullYear(), m = currentDate.getMonth()
+      const weeks = new Set()
+      const d = new Date(y, m, 1)
+      while (d.getDay() !== 5) d.setDate(d.getDate() - 1)
+      while (true) {
+        const rpEnd = new Date(d); rpEnd.setDate(rpEnd.getDate() + 7)
+        const monthEnd = new Date(y, m + 1, 0, 23, 59, 59)
+        if (d <= monthEnd && rpEnd >= new Date(y, m, 1)) weeks.add(fridayToIsoWeek(d))
+        d.setDate(d.getDate() + 7)
+        if (d > monthEnd) break
+      }
+      return [...weeks]
+    }
+    const { start } = getRpWeekBounds(currentDate)
+    return [fridayToIsoWeek(start)]
+  }, [currentDate, periode])
+
+  const [pdsLabel, setPdsLabel] = useState('')
 
   useEffect(() => {
-    api.get('/pds', { params: { semaine: pdsWeek } }).then(r => setPdsData(r.data.data || [])).catch(() => {})
-  }, [pdsWeek])
+    const wkLabel = (w) => { try { const [y,wn]=w.split('-W').map(Number); const j4=new Date(Date.UTC(y,0,4)); const dw=j4.getUTCDay()||7; const m=new Date(j4); m.setUTCDate(j4.getUTCDate()-dw+1+(wn-1)*7); const f=new Date(m); f.setUTCDate(m.getUTCDate()+4); const n=new Date(f); n.setUTCDate(f.getUTCDate()+7); const fmt=d=>`${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}`; return `${fmt(f)} → ${fmt(n)}` } catch { return w } }
+    if (pdsWeeks.length === 1) {
+      setPdsLabel(`Semaine ${wkLabel(pdsWeeks[0])}`)
+      api.get('/pds', { params: { semaine: pdsWeeks[0] } }).then(r => setPdsData(r.data.data || [])).catch(() => {})
+    } else {
+      const MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
+      setPdsLabel(`${MOIS[currentDate.getMonth()]} ${currentDate.getFullYear()} (${pdsWeeks.length} sem.)`)
+      Promise.all(pdsWeeks.map(w => api.get('/pds', { params: { semaine: w } }).then(r => r.data.data || []).catch(() => [])))
+        .then(results => {
+          const map = {}
+          results.flat().forEach(p => {
+            if (!map[p.effectif_id]) map[p.effectif_id] = { ...p, total_heures: '0' }
+            map[p.effectif_id].total_heures = String(parseFloat(map[p.effectif_id].total_heures) + parseFloat(p.total_heures || 0))
+          })
+          setPdsData(Object.values(map))
+        })
+    }
+  }, [pdsWeeks])
 
   const fmt = (d) => {
     if (!d) return '—'
@@ -418,7 +454,7 @@ export default function MedicalStats() {
           {/* PDS Sanitat pie — hours displayed */}
           <div className="paper-card" style={{ flex: 1, minWidth: 280 }}>
             <h3 style={{ marginTop: 0, textAlign: 'center', fontSize: '0.95rem' }}>📋 PDS — 916. Sanitats-Abteilung</h3>
-            <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 12px' }}>Semaine {(() => { try { const [y,w]=pdsWeek.split('-W').map(Number); const j4=new Date(Date.UTC(y,0,4)); const d=j4.getUTCDay()||7; const m=new Date(j4); m.setUTCDate(j4.getUTCDate()-d+1+(w-1)*7); const f=new Date(m); f.setUTCDate(m.getUTCDate()+4); const n=new Date(f); n.setUTCDate(f.getUTCDate()+7); const fmt=d=>`${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}`; return `${fmt(f)} → ${fmt(n)}` } catch { return pdsWeek } })()}</p>
+            <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 12px' }}>{pdsLabel}</p>
             {pdsPieData.length > 0 ? (
               <PieChart
                 data={pdsPieData.map(d => ({ label: d.label, value: d.value }))}
