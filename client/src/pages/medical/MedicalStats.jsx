@@ -4,11 +4,11 @@ import api from '../../api/client'
 import BackButton from '../../components/BackButton'
 import { exportToPdf } from '../../utils/exportPdf'
 
-// SVG Pie Chart component
-function PieChart({ data, size = 220, title }) {
+// SVG Pie Chart — labels show name + value (not %)
+function PieChart({ data, size = 240, title, showHours }) {
   const total = data.reduce((s, d) => s + d.value, 0)
   if (total === 0) return <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>Aucune donnée</p>
-  const COLORS = ['#4B5320', '#8B4513', '#2E5090', '#C19A6B', '#708090', '#556B2F', '#8B0000', '#DAA520', '#4682B4', '#6B8E23', '#CD853F', '#A0522D']
+  const COLORS = ['#4B5320', '#8B4513', '#2E5090', '#C19A6B', '#708090', '#556B2F', '#8B0000', '#DAA520', '#4682B4', '#6B8E23', '#CD853F', '#A0522D', '#2F4F4F', '#B8860B']
   let angle = 0
   const slices = data.map((d, i) => {
     const pct = d.value / total
@@ -25,7 +25,14 @@ function PieChart({ data, size = 220, title }) {
     const midAngle = (startAngle + endAngle) / 2
     const lx = cx + (r * 0.65) * Math.cos((midAngle - 90) * Math.PI / 180)
     const ly = cy + (r * 0.65) * Math.sin((midAngle - 90) * Math.PI / 180)
-    return { ...d, pct, startAngle, endAngle, largeArc, x1, y1, x2, y2, lx, ly, r, cx, cy, color: COLORS[i % COLORS.length] }
+    // Format display value
+    let displayVal = String(d.value)
+    if (showHours) {
+      const h = Math.floor(d.value / 60)
+      const m = d.value % 60
+      displayVal = `${h}:${String(m).padStart(2, '0')}`
+    }
+    return { ...d, pct, startAngle, endAngle, largeArc, x1, y1, x2, y2, lx, ly, r, cx, cy, color: COLORS[i % COLORS.length], displayVal }
   })
 
   return (
@@ -34,24 +41,98 @@ function PieChart({ data, size = 220, title }) {
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         {slices.map((s, i) => {
           if (s.pct >= 0.999) return <circle key={i} cx={s.cx} cy={s.cy} r={s.r} fill={s.color} />
-          return <path key={i} d={`M${s.cx},${s.cy} L${s.x1},${s.y1} A${s.r},${s.r} 0 ${s.largeArc},1 ${s.x2},${s.y2} Z`} fill={s.color} stroke="#f5f0e1" strokeWidth="1" />
+          return <path key={i} d={`M${s.cx},${s.cy} L${s.x1},${s.y1} A${s.r},${s.r} 0 ${s.largeArc},1 ${s.x2},${s.y2} Z`} fill={s.color} stroke="#f5f0e1" strokeWidth="1.5" />
         })}
-        {slices.filter(s => s.pct >= 0.05).map((s, i) => (
-          <text key={i} x={s.lx} y={s.ly} textAnchor="middle" dominantBaseline="central" fill="white" fontSize="9" fontWeight="700" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
-            {(s.pct * 100).toFixed(0)}%
+        {slices.filter(s => s.pct >= 0.06).map((s, i) => (
+          <text key={i} x={s.lx} y={s.ly} textAnchor="middle" dominantBaseline="central" fill="white" fontSize="10" fontWeight="700" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
+            {s.displayVal}
           </text>
         ))}
       </svg>
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '6px 14px', marginTop: 8 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '6px 16px', marginTop: 10 }}>
         {slices.map((s, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.7rem' }}>
-            <span style={{ width: 10, height: 10, borderRadius: 2, background: s.color, display: 'inline-block', flexShrink: 0 }} />
-            <span>{s.label} ({s.value})</span>
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.75rem' }}>
+            <span style={{ width: 12, height: 12, borderRadius: 2, background: s.color, display: 'inline-block', flexShrink: 0 }} />
+            <span><strong>{s.label}</strong> — {showHours ? s.displayVal : s.value}</span>
           </div>
         ))}
       </div>
     </div>
   )
+}
+
+// Period navigation with readable labels
+function PeriodNav({ periode, setPeriode, currentDate, setCurrentDate }) {
+  const MOIS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+
+  const fmtShort = (d) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
+
+  const getLabel = () => {
+    const d = currentDate
+    if (periode === 'jour') return fmtShort(d) + `/${d.getFullYear()}`
+    if (periode === 'mois') return `${MOIS[d.getMonth()]} ${d.getFullYear()}`
+    // Semaine RP (Fri 20h → Fri 20h)
+    const { start, end } = getRpWeekBounds(d)
+    return `${fmtShort(start)} — ${fmtShort(end)}`
+  }
+
+  const navigate = (dir) => {
+    const d = new Date(currentDate)
+    if (periode === 'jour') d.setDate(d.getDate() + dir)
+    else if (periode === 'mois') d.setMonth(d.getMonth() + dir)
+    else d.setDate(d.getDate() + dir * 7)
+    setCurrentDate(d)
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+        {[{ key: 'jour', label: '📅 Jour' }, { key: 'semaine', label: '📆 Semaine' }, { key: 'mois', label: '🗓️ Mois' }].map(p => (
+          <button key={p.key} className={`btn ${periode === p.key ? 'btn-primary' : 'btn-secondary'}`}
+            style={{ fontSize: '0.75rem', padding: '4px 12px' }}
+            onClick={() => { setPeriode(p.key); setCurrentDate(new Date()) }}>
+            {p.label}
+          </button>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
+        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.85rem' }} onClick={() => navigate(-1)}>◀</button>
+        <span style={{ fontWeight: 600, fontSize: '0.9rem', minWidth: 160, textAlign: 'center' }}>{getLabel()}</span>
+        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.85rem' }} onClick={() => navigate(1)}>▶</button>
+        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.75rem' }} onClick={() => setCurrentDate(new Date())}>Aujourd'hui</button>
+      </div>
+    </div>
+  )
+}
+
+function getRpWeekBounds(date) {
+  const d = new Date(date)
+  const day = d.getDay(), hour = d.getHours()
+  let start = new Date(d)
+  if (day === 5 && hour >= 20) {
+    start.setHours(20, 0, 0, 0)
+  } else {
+    const daysBack = day === 5 ? 7 : (day >= 5 ? day - 5 : day + 2)
+    start.setDate(d.getDate() - daysBack)
+    start.setHours(20, 0, 0, 0)
+  }
+  const end = new Date(start); end.setDate(end.getDate() + 7)
+  return { start, end }
+}
+
+function isInPeriod(dateStr, periode, currentDate) {
+  if (!dateStr) return false
+  const d = new Date(dateStr)
+  const c = currentDate
+  if (periode === 'jour') {
+    return d.toDateString() === c.toDateString()
+  }
+  if (periode === 'mois') {
+    return d.getMonth() === c.getMonth() && d.getFullYear() === c.getFullYear()
+  }
+  // semaine RP
+  const { start, end } = getRpWeekBounds(c)
+  return d >= start && d < end
 }
 
 export default function MedicalStats() {
@@ -64,6 +145,7 @@ export default function MedicalStats() {
   const [pdsData, setPdsData] = useState([])
   const [sanitatEffectifs, setSanitatEffectifs] = useState([])
   const [periode, setPeriode] = useState('semaine')
+  const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedMedecin, setSelectedMedecin] = useState(null)
   const [selectedEffectif, setSelectedEffectif] = useState(null)
   const [exporting, setExporting] = useState(false)
@@ -75,12 +157,10 @@ export default function MedicalStats() {
       api.get('/medical-soldbuch/hospitalisations').then(r => setHospitalisations(r.data.data || [])).catch(() => {}),
       api.get('/medical-soldbuch/vaccinations').then(r => setVaccinations(r.data.data || [])).catch(() => {}),
       api.get('/medical-soldbuch/blessures').then(r => setBlessures(r.data.data || [])).catch(() => {}),
-      // Fetch Sanitat effectifs
       api.get('/effectifs').then(r => {
         const all = r.data.data || r.data || []
         setSanitatEffectifs(all.filter(e => e.unite_code === '916S'))
       }).catch(() => {}),
-      // Fetch PDS data for current week
       api.get('/pds').then(r => setPdsData(r.data.data || [])).catch(() => {}),
     ])
   }, [])
@@ -93,73 +173,49 @@ export default function MedicalStats() {
   const now = new Date()
   const nowStr = now.toLocaleDateString('fr-FR') + ' ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 
-  // RP week key (Fri 20h → Fri 20h)
-  const getRpWeekKey = (dateStr) => {
-    const d = new Date(dateStr)
-    const day = d.getDay(), hour = d.getHours()
-    let fridayStart = new Date(d)
-    if (day === 5 && hour >= 20) {
-      fridayStart.setHours(20, 0, 0, 0)
-    } else {
-      const daysBack = day === 5 ? 7 : (day >= 5 ? day - 5 : day + 2)
-      fridayStart.setDate(d.getDate() - daysBack)
-      fridayStart.setHours(20, 0, 0, 0)
-    }
-    const fridayEnd = new Date(fridayStart); fridayEnd.setDate(fridayEnd.getDate() + 7)
-    return `${fridayStart.toLocaleDateString('fr-FR')} → ${fridayEnd.toLocaleDateString('fr-FR')}`
-  }
-  const getKey = (dateStr) => {
-    if (!dateStr) return 'Inconnu'
-    const d = new Date(dateStr)
-    if (periode === 'jour') return d.toLocaleDateString('fr-FR')
-    if (periode === 'mois') { const m = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']; return `${m[d.getMonth()]} ${d.getFullYear()}` }
-    return getRpWeekKey(dateStr)
-  }
-
-  // Only Sanitat medecins soins
+  // Sanitat effectif IDs
   const sanitatIds = useMemo(() => new Set(sanitatEffectifs.map(e => e.id)), [sanitatEffectifs])
+  // All Sanitat soins (not filtered by period)
   const sanitatSoins = useMemo(() => soins.filter(s => sanitatIds.has(s.medecin_id)), [soins, sanitatIds])
+  // Soins filtered by current period
+  const filteredSoins = useMemo(() => sanitatSoins.filter(s => isInPeriod(s.date_soin, periode, currentDate)), [sanitatSoins, periode, currentDate])
 
-  // PDS data for Sanitat effectifs (pie chart)
-  const pdsSanitat = useMemo(() => {
-    const sanitatIdSet = new Set(sanitatEffectifs.map(e => e.id))
-    return pdsData.filter(p => sanitatIdSet.has(p.effectif_id))
-  }, [pdsData, sanitatEffectifs])
-
-  const pdsPieData = useMemo(() => {
-    return pdsSanitat.filter(p => p.heures_totales > 0).map(p => {
-      const eff = sanitatEffectifs.find(e => e.id === p.effectif_id)
-      const h = Math.floor((p.heures_totales || 0) / 60)
-      const m = (p.heures_totales || 0) % 60
-      return {
-        label: eff ? `${eff.prenom} ${eff.nom}` : `Effectif #${p.effectif_id}`,
-        value: p.heures_totales || 0,
-        display: `${h}h${m > 0 ? String(m).padStart(2, '0') : ''}`
-      }
-    }).sort((a, b) => b.value - a.value)
-  }, [pdsSanitat, sanitatEffectifs])
-
-  // Soins breakdown by type
-  const soinsBreakdownAll = useMemo(() => {
+  // Soins breakdown by type (ALL time, for vue d'ensemble)
+  const soinsTypeCountsAll = useMemo(() => {
     const map = {}
     sanitatSoins.forEach(s => {
       const t = s.type_soin || 'Non précisé'
       map[t] = (map[t] || 0) + 1
     })
-    return Object.entries(map).sort((a, b) => b[1] - a[1]).map(([label, value]) => ({ label, value }))
+    return map
   }, [sanitatSoins])
 
-  // Soins by period
-  const soinsBreakdownFiltered = useMemo(() => {
-    const currentKey = getKey(new Date().toISOString())
-    const filtered = sanitatSoins.filter(s => getKey(s.date_soin) === currentKey)
+  // Soins breakdown by type (filtered period, for pie chart)
+  const soinsTypePie = useMemo(() => {
     const map = {}
-    filtered.forEach(s => {
+    filteredSoins.forEach(s => {
       const t = s.type_soin || 'Non précisé'
       map[t] = (map[t] || 0) + 1
     })
     return Object.entries(map).sort((a, b) => b[1] - a[1]).map(([label, value]) => ({ label, value }))
-  }, [sanitatSoins, periode])
+  }, [filteredSoins])
+
+  // PDS pie data for Sanitat effectifs — show hours not %
+  const pdsPieData = useMemo(() => {
+    const sanitatIdSet = new Set(sanitatEffectifs.map(e => e.id))
+    const sanitPds = pdsData.filter(p => sanitatIdSet.has(p.effectif_id) && p.heures_totales > 0)
+    return sanitPds.map(p => {
+      const eff = sanitatEffectifs.find(e => e.id === p.effectif_id)
+      const mins = p.heures_totales || 0
+      const h = Math.floor(mins / 60)
+      const m = mins % 60
+      return {
+        label: eff ? `${eff.prenom} ${eff.nom}` : `#${p.effectif_id}`,
+        value: mins,
+        displayTime: `${h}h${m > 0 ? String(m).padStart(2, '0') : ''}`
+      }
+    }).sort((a, b) => b.value - a.value)
+  }, [pdsData, sanitatEffectifs])
 
   // Medecin stats (Sanitat only)
   const medecinStats = useMemo(() => {
@@ -174,19 +230,10 @@ export default function MedicalStats() {
       const t = s.type_soin || 'Autre'
       map[id].types[t] = (map[id].types[t] || 0) + 1
     })
-    // Add visite counts
-    visites.forEach(v => {
-      const creatorId = v.created_by
-      // Match by medecin name with sanitatEffectifs
-      const eff = sanitatEffectifs.find(e => v.medecin?.includes(e.nom) || v.created_by_nom?.includes(e.nom))
-      if (!eff) return
-      if (!map[eff.id]) map[eff.id] = { id: eff.id, nom: `${eff.prenom} ${eff.nom}`, soins: 0, patients: new Set(), entries: [], types: {} }
-      map[eff.id].types['Visite médicale'] = (map[eff.id].types['Visite médicale'] || 0) + 1
-    })
     return Object.values(map).sort((a, b) => b.soins - a.soins)
-  }, [sanitatSoins, visites, sanitatEffectifs])
+  }, [sanitatSoins])
 
-  // Patient list from soins
+  // Patient list
   const patientList = useMemo(() => {
     const map = {}
     sanitatSoins.forEach(s => {
@@ -200,7 +247,7 @@ export default function MedicalStats() {
     return Object.values(map).sort((a, b) => b.count - a.count)
   }, [sanitatSoins])
 
-  // Totals for Sanitat
+  // Global totals
   const totals = useMemo(() => ({
     soins: sanitatSoins.length,
     visites: visites.length,
@@ -218,7 +265,7 @@ export default function MedicalStats() {
     setExporting(false)
   }
 
-  // Medecin detail popup
+  // Medecin popup
   const renderMedecinPopup = () => {
     if (!selectedMedecin) return null
     const med = selectedMedecin
@@ -228,8 +275,8 @@ export default function MedicalStats() {
         <div id="medecin-report" style={{ maxWidth: 900, width: '100%', background: '#f5f0e1', borderRadius: 8, padding: 'var(--space-xl)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
           <div style={{ textAlign: 'center', borderBottom: '2px solid var(--military-green)', paddingBottom: 'var(--space-md)', marginBottom: 'var(--space-lg)' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', letterSpacing: 2, textTransform: 'uppercase' }}>Sanitätsdienst — 916. Sanitats-Abteilung</div>
-            <h2 style={{ margin: 'var(--space-sm) 0', fontSize: '1.4rem' }}>📋 Rapport d'activité médicale</h2>
-            <h3 style={{ margin: 0, color: 'var(--military-green)', fontSize: '1.2rem' }}>{med.nom}</h3>
+            <h2 style={{ margin: 'var(--space-sm) 0', fontSize: '1.4rem' }}>📋 Rapport d'activité</h2>
+            <h3 style={{ margin: 0, color: 'var(--military-green)' }}>{med.nom}</h3>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 'var(--space-xs)' }}>Généré le {nowStr}</div>
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-sm)', marginBottom: 'var(--space-lg)' }}>
@@ -238,20 +285,17 @@ export default function MedicalStats() {
             </button>
             <button className="btn btn-secondary" onClick={() => setSelectedMedecin(null)}>✕</button>
           </div>
-          {/* Stats */}
           <div className="paper-card" style={{ marginBottom: 'var(--space-lg)', background: 'rgba(75,83,32,0.05)' }}>
             <div style={{ display: 'flex', gap: 'var(--space-xl)', flexWrap: 'wrap', justifyContent: 'center' }}>
               <div style={{ textAlign: 'center' }}><div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--military-green)' }}>{med.soins}</div><div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Soins au front</div></div>
-              <div style={{ textAlign: 'center' }}><div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--military-green)' }}>{med.patients.size}</div><div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Patients traités</div></div>
+              <div style={{ textAlign: 'center' }}><div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--military-green)' }}>{med.patients.size}</div><div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Patients</div></div>
             </div>
           </div>
-          {/* Type breakdown pie */}
           {Object.keys(med.types).length > 0 && (
             <div className="paper-card" style={{ marginBottom: 'var(--space-lg)' }}>
               <PieChart data={Object.entries(med.types).map(([label, value]) => ({ label, value }))} title="Répartition des actes" size={200} />
             </div>
           )}
-          {/* Entries table */}
           <div className="paper-card">
             <h4 style={{ marginTop: 0 }}>🕐 Journal des soins</h4>
             <table className="table">
@@ -270,14 +314,14 @@ export default function MedicalStats() {
             </table>
           </div>
           <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-            Archives 7e Armeekorps — Sanitätsdienst — Rapport généré automatiquement
+            Archives 7e Armeekorps — Sanitätsdienst
           </div>
         </div>
       </div>
     )
   }
 
-  // Patient detail popup
+  // Patient popup
   const renderEffectifPopup = () => {
     if (!selectedEffectif) return null
     const p = selectedEffectif
@@ -291,8 +335,9 @@ export default function MedicalStats() {
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--space-md)' }}>
             <button className="btn btn-secondary" onClick={() => setSelectedEffectif(null)}>✕</button>
           </div>
-          <div style={{ display: 'flex', gap: 'var(--space-lg)', justifyContent: 'center', marginBottom: 'var(--space-lg)' }}>
-            <div style={{ textAlign: 'center' }}><div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--military-green)' }}>{p.count}</div><div style={{ fontSize: '0.7rem' }}>Soins reçus</div></div>
+          <div style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--military-green)' }}>{p.count}</div>
+            <div style={{ fontSize: '0.7rem' }}>Soins reçus</div>
           </div>
           {Object.keys(p.types).length > 0 && (
             <div className="paper-card" style={{ marginBottom: 'var(--space-lg)' }}>
@@ -316,9 +361,9 @@ export default function MedicalStats() {
       {renderEffectifPopup()}
 
       <div id="medical-report">
-        {/* Totaux globaux */}
+        {/* Vue d'ensemble */}
         <div className="paper-card" style={{ marginBottom: 'var(--space-lg)' }}>
-          <h3 style={{ marginTop: 0, textAlign: 'center' }}>Vue d'ensemble Sanitätsdienst</h3>
+          <h3 style={{ marginTop: 0, textAlign: 'center' }}>Vue d'ensemble</h3>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-xl)', flexWrap: 'wrap' }}>
             {[
               { icon: '⚕️', label: 'Soins au front', val: totals.soins },
@@ -336,48 +381,55 @@ export default function MedicalStats() {
               </div>
             ))}
           </div>
+
+          {/* Soins breakdown line under header */}
+          {Object.keys(soinsTypeCountsAll).length > 0 && (
+            <div style={{ marginTop: 'var(--space-md)', paddingTop: 'var(--space-md)', borderTop: '1px solid var(--border-color)' }}>
+              <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 'var(--space-xs)' }}>Détail des soins au front</div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+                {Object.entries(soinsTypeCountsAll).sort((a, b) => b[1] - a[1]).map(([type, count]) => (
+                  <div key={type} style={{ textAlign: 'center', minWidth: 60 }}>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--military-green)' }}>{count}</div>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', maxWidth: 80, lineHeight: 1.2 }}>{type}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Two pie charts side by side */}
+        {/* Two pie charts */}
         <div style={{ display: 'flex', gap: 'var(--space-lg)', marginBottom: 'var(--space-lg)', flexWrap: 'wrap' }}>
-          {/* PDS Sanitat pie */}
+          {/* PDS Sanitat pie — hours displayed */}
           <div className="paper-card" style={{ flex: 1, minWidth: 280 }}>
             <h3 style={{ marginTop: 0, textAlign: 'center', fontSize: '0.95rem' }}>📋 PDS — 916. Sanitats-Abteilung</h3>
             <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 12px' }}>Heures de présence cette semaine</p>
             {pdsPieData.length > 0 ? (
               <PieChart
-                data={pdsPieData.map(d => ({ label: `${d.label} (${d.display})`, value: d.value }))}
-                size={240}
+                data={pdsPieData.map(d => ({ label: d.label, value: d.value }))}
+                size={250}
+                showHours
               />
             ) : (
               <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>Aucune donnée PDS cette semaine</p>
             )}
           </div>
 
-          {/* Soins type pie */}
+          {/* Soins type pie — with date navigation */}
           <div className="paper-card" style={{ flex: 1, minWidth: 280 }}>
             <h3 style={{ marginTop: 0, textAlign: 'center', fontSize: '0.95rem' }}>⚕️ Types de soins effectués</h3>
-            <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center', marginBottom: 12 }}>
-              {[{ key: 'jour', label: 'Jour' }, { key: 'semaine', label: 'Semaine' }, { key: 'mois', label: 'Mois' }].map(p => (
-                <button key={p.key} className={`btn ${periode === p.key ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ fontSize: '0.7rem', padding: '3px 10px' }}
-                  onClick={() => setPeriode(p.key)}>
-                  {p.label}
-                </button>
-              ))}
+            <PeriodNav periode={periode} setPeriode={setPeriode} currentDate={currentDate} setCurrentDate={setCurrentDate} />
+            <div style={{ marginTop: 16 }}>
+              {soinsTypePie.length > 0 ? (
+                <PieChart data={soinsTypePie} size={250} />
+              ) : (
+                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', padding: '20px 0' }}>Aucun soin sur cette période</p>
+              )}
             </div>
-            {soinsBreakdownFiltered.length > 0 ? (
-              <PieChart data={soinsBreakdownFiltered} size={240} />
-            ) : (
-              <>
-                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0 0 8px' }}>Aucun soin cette période — Affichage total :</p>
-                <PieChart data={soinsBreakdownAll} size={240} />
-              </>
-            )}
           </div>
         </div>
 
-        {/* Médecins Sanitat — clickable */}
+        {/* Médecins Sanitat */}
         {medecinStats.length > 0 && (
           <div className="paper-card" style={{ marginBottom: 'var(--space-lg)' }}>
             <h3 style={{ marginTop: 0 }}>👨‍⚕️ Médecins Sanitat — Cliquez pour le rapport</h3>
@@ -400,7 +452,7 @@ export default function MedicalStats() {
           </div>
         )}
 
-        {/* Patients traités — clickable */}
+        {/* Patients */}
         {patientList.length > 0 && (
           <div className="paper-card" style={{ marginBottom: 'var(--space-lg)' }}>
             <h3 style={{ marginTop: 0 }}>👥 Patients traités — Cliquez pour la fiche</h3>
@@ -422,7 +474,7 @@ export default function MedicalStats() {
           </div>
         )}
 
-        {/* Effectifs Sanitat list */}
+        {/* Effectifs Sanitat */}
         <div className="paper-card" style={{ marginBottom: 'var(--space-lg)' }}>
           <h3 style={{ marginTop: 0 }}>🏥 Effectifs 916. Sanitats-Abteilung</h3>
           {sanitatEffectifs.length > 0 ? (
@@ -447,7 +499,7 @@ export default function MedicalStats() {
         {/* Export */}
         <div style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>
           <button className="btn btn-primary" disabled={exporting} onClick={() => handleExportPdf('medical-report', 'statistiques-sanitat')}>
-            {exporting ? '⏳ Export en cours...' : '📄 Exporter en PDF'}
+            {exporting ? '⏳ Export...' : '📄 Exporter en PDF'}
           </button>
         </div>
       </div>
