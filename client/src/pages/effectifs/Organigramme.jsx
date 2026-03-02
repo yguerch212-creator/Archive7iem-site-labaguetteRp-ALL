@@ -11,13 +11,13 @@ const UNIT_COLORS = {
   '001': { bg: '#1a1a2e', dot: '⚫', label: '001. Marine Pionier Bataillon' },
   '919': { bg: '#6b4c2a', dot: '🟤', label: '919. Logistik-Abteilung' },
   '130': { bg: '#6b2d8b', dot: '🟣', label: '130. Panzer Lehr' },
-  '009': { bg: '#b8a000', dot: '🟡', label: '009. Fallschirmjaeger-Regiment' },
+  '009': { bg: '#b8a000', dot: '🟡', label: '009. Fallschirmjager-Regiment' },
 }
 
 /* ─── Grades par régiment ─── */
 const GRADES = {
   '916': [
-    { nom: 'Schuetze', abbr: 'Schtz.', cat: 'HDR', role: 'Soldat de base, fantassin' },
+    { nom: 'Schutze', abbr: 'Schtz.', cat: 'HDR', role: 'Soldat de base, fantassin' },
     { nom: 'Oberschütze', abbr: 'OSchtz.', cat: 'HDR', role: 'Soldat confirmé' },
     { nom: 'Gefreiter', abbr: 'Gefr.', cat: 'HDR', role: 'Caporal, chef de binôme' },
     { nom: 'Obergefreiter', abbr: 'OGefr.', cat: 'HDR', role: 'Caporal-chef' },
@@ -58,8 +58,8 @@ const GRADES = {
     { nom: 'Oberst', abbr: 'Obst.', cat: 'OFF', role: 'Commandant' },
   ],
   '916S': [
-    { nom: 'Sanitaetssoldat', abbr: 'SanSdt.', cat: 'HDR', role: 'Infirmier de base' },
-    { nom: 'Sanitaets Obersoldat', abbr: 'SanOSdt.', cat: 'HDR', role: 'Infirmier confirmé' },
+    { nom: 'Sanitatssoldat', abbr: 'SanSdt.', cat: 'HDR', role: 'Infirmier de base' },
+    { nom: 'Sanitats Obersoldat', abbr: 'SanOSdt.', cat: 'HDR', role: 'Infirmier confirmé' },
     { nom: 'Gefreiter', abbr: 'Gefr.', cat: 'HDR', role: 'Caporal médical' },
     { nom: 'Obergefreiter', abbr: 'OGefr.', cat: 'HDR', role: 'Caporal-chef médical' },
     { nom: 'Unteroffizier', abbr: 'Uffz.', cat: 'SO', role: 'Sous-officier médical' },
@@ -89,10 +89,10 @@ const GRADES = {
     { nom: 'Stabsoberbootsmann', abbr: 'StOBtsm.', cat: 'SO', role: 'Major de la flotte' },
     { nom: 'Leutnant zur See', abbr: 'LtzS.', cat: 'OFF', role: 'Enseigne de vaisseau' },
     { nom: 'Oberleutnant zur See', abbr: 'OLtzS.', cat: 'OFF', role: 'Lieutenant de vaisseau' },
-    { nom: 'Kapitaenleutnant', abbr: 'KptLt.', cat: 'OFF', role: 'Capitaine de corvette' },
-    { nom: 'Korvettenkapitaen', abbr: 'KKpt.', cat: 'OFF', role: 'Commandant adjoint' },
-    { nom: 'Fregattenkapitaen', abbr: 'FKpt.', cat: 'OFF', role: 'Capitaine de frégate' },
-    { nom: 'Kapitaen zur See', abbr: 'KzS.', cat: 'OFF', role: 'Capitaine de vaisseau' },
+    { nom: 'Kapitanleutnant', abbr: 'KptLt.', cat: 'OFF', role: 'Capitaine de corvette' },
+    { nom: 'Korvettenkapitan', abbr: 'KKpt.', cat: 'OFF', role: 'Commandant adjoint' },
+    { nom: 'Fregattenkapitan', abbr: 'FKpt.', cat: 'OFF', role: 'Capitaine de frégate' },
+    { nom: 'Kapitan zur See', abbr: 'KzS.', cat: 'OFF', role: 'Capitaine de vaisseau' },
   ],
   '919': [
     { nom: 'Kraftfahrer', abbr: 'Kf.', cat: 'HDR', role: 'Conducteur de base' },
@@ -112,7 +112,7 @@ const GRADES = {
     { nom: 'Oberst', abbr: 'Obst.', cat: 'OFF', role: 'Commandant' },
   ],
   '130': [
-    { nom: 'Schuetze', abbr: 'Schtz.', cat: 'HDR', role: 'Recrue blindée' },
+    { nom: 'Schutze', abbr: 'Schtz.', cat: 'HDR', role: 'Recrue blindée' },
     { nom: 'Oberschütze', abbr: 'OSchtz.', cat: 'HDR', role: 'Soldat confirmé' },
     { nom: 'Gefreiter', abbr: 'Gefr.', cat: 'HDR', role: 'Caporal blindé' },
     { nom: 'Obergefreiter', abbr: 'OGefr.', cat: 'HDR', role: 'Caporal-chef' },
@@ -130,7 +130,7 @@ const GRADES = {
     { nom: 'Oberst', abbr: 'Obst.', cat: 'OFF', role: 'Commandant' },
   ],
   '009': [
-    { nom: 'Fallschirmjaeger', abbr: 'FsJg.', cat: 'HDR', role: 'Parachutiste de base' },
+    { nom: 'Fallschirmjager', abbr: 'FsJg.', cat: 'HDR', role: 'Parachutiste de base' },
     { nom: 'Oberflieger', abbr: 'OFlg.', cat: 'HDR', role: 'Parachutiste confirmé' },
     { nom: 'Gefreiter', abbr: 'Gefr.', cat: 'HDR', role: 'Caporal parachutiste' },
     { nom: 'Obergefreiter', abbr: 'OGefr.', cat: 'HDR', role: 'Caporal-chef' },

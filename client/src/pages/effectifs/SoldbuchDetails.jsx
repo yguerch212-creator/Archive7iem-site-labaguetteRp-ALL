@@ -57,7 +57,7 @@ export default function SoldbuchDetails({ effectifId, effectif, onSaved, onClose
       // Update local effectif data
       if (effectif) effectif[key] = value || null
       setEditing(null)
-      setTimeout(() => { if (onSaved) onSaved() }, 1200)
+      setTimeout(() => setMsg(null), 3000)
     } catch (err) {
       setMsg({ type: 'error', text: err.response?.data?.message || 'Erreur' })
     } finally {

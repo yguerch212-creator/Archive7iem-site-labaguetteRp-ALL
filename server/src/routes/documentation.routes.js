@@ -12,7 +12,7 @@ function canSubmit(user) { return user.isAdmin || user.isOfficier || user.isRece
 // Helper: can approve (admin or officier)
 function canApprove(user) { return user.isAdmin || user.isOfficier }
 
-// GET /api/documentation — all docs + folders
+// GET /api/documentation — all docs + folders (filtered by visibility)
 router.get('/', optionalAuth, async (req, res) => {
   try {
     const showAll = canApprove(req.user) && req.query.all === '1'
@@ -24,7 +24,29 @@ router.get('/', optionalAuth, async (req, res) => {
        ${where}
        ORDER BY d.is_repertoire DESC, d.categorie, d.ordre, d.titre`
     )
-    res.json({ success: true, data: rows })
+    // Filter by visibility (unit + group) unless admin/officier viewing all
+    const userUnite = req.user?.unite_code || null
+    const isPriv = req.user?.isAdmin || req.user?.isOfficier || req.user?.isEtatMajor
+    // Get user's group IDs
+    let userGroupIds = []
+    if (req.user?.id) {
+      const ugs = await query('SELECT group_id FROM user_groups WHERE user_id = ?', [req.user.id])
+      userGroupIds = ugs.map(g => g.group_id)
+    }
+    const filtered = (showAll || isPriv) ? rows : rows.filter(d => {
+      if (!d.visibilite_unites && !d.visibilite_groupes) return true
+      let match = false
+      if (d.visibilite_unites) {
+        const units = d.visibilite_unites.split(',').map(s => s.trim())
+        if (userUnite && units.includes(userUnite)) match = true
+      }
+      if (d.visibilite_groupes) {
+        const gids = d.visibilite_groupes.split(',').map(s => parseInt(s.trim()))
+        if (userGroupIds.some(g => gids.includes(g))) match = true
+      }
+      return match
+    })
+    res.json({ success: true, data: filtered })
   } catch (err) {
     console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
@@ -51,11 +73,11 @@ router.get('/pending', auth, async (req, res) => {
 router.post('/repertoire', auth, async (req, res) => {
   try {
     if (!canWrite(req.user)) return res.status(403).json({ success: false, message: 'Réservé aux officiers' })
-    const { titre, description, categorie } = req.body
+    const { titre, description, categorie, visibilite_unites, visibilite_groupes } = req.body
     if (!titre) return res.status(400).json({ success: false, message: 'Titre requis' })
     const [result] = await pool.execute(
-      'INSERT INTO documentation (titre, description, categorie, is_repertoire, statut, created_by) VALUES (?, ?, ?, 1, ?, ?)',
-      [titre, description || null, categorie || 'Autre', 'approuve', req.user.id]
+      'INSERT INTO documentation (titre, description, categorie, is_repertoire, statut, created_by, visibilite_unites, visibilite_groupes) VALUES (?, ?, ?, 1, ?, ?, ?, ?)',
+      [titre, description || null, categorie || 'Autre', 'approuve', req.user.id, visibilite_unites || null, visibilite_groupes || null]
     )
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {
@@ -67,15 +89,15 @@ router.post('/repertoire', auth, async (req, res) => {
 router.post('/', auth, async (req, res) => {
   try {
     if (!canSubmit(req.user)) return res.status(403).json({ success: false, message: 'Non autorisé' })
-    const { titre, description, url, categorie, ordre, repertoire_id } = req.body
+    const { titre, description, url, categorie, ordre, repertoire_id, visibilite_unites, visibilite_groupes } = req.body
     if (!titre) return res.status(400).json({ success: false, message: 'Titre requis' })
     
     // Officiers/admin → auto-approved; sous-officiers → en_attente
     const statut = canWrite(req.user) ? 'approuve' : 'en_attente'
     
     const [result] = await pool.execute(
-      'INSERT INTO documentation (titre, description, url, categorie, ordre, repertoire_id, statut, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [titre, description || null, url || null, categorie || 'Autre', ordre || 0, repertoire_id || null, statut, req.user.id]
+      'INSERT INTO documentation (titre, description, url, categorie, ordre, repertoire_id, statut, created_by, visibilite_unites, visibilite_groupes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [titre, description || null, url || null, categorie || 'Autre', ordre || 0, repertoire_id || null, statut, req.user.id, visibilite_unites || null, visibilite_groupes || null]
     )
     res.json({ success: true, data: { id: result.insertId, statut } })
   } catch (err) {
@@ -101,10 +123,10 @@ router.put('/:id/approve', auth, async (req, res) => {
 router.put('/:id', auth, async (req, res) => {
   try {
     if (!canWrite(req.user)) return res.status(403).json({ success: false, message: 'Réservé aux officiers' })
-    const { titre, description, url, categorie, ordre, visible, repertoire_id } = req.body
+    const { titre, description, url, categorie, ordre, visible, repertoire_id, visibilite_unites, visibilite_groupes } = req.body
     await pool.execute(
-      'UPDATE documentation SET titre=?, description=?, url=?, categorie=?, ordre=?, visible=?, repertoire_id=? WHERE id=?',
-      [titre, description || null, url || null, categorie || 'Autre', ordre || 0, visible !== false ? 1 : 0, repertoire_id || null, req.params.id]
+      'UPDATE documentation SET titre=?, description=?, url=?, categorie=?, ordre=?, visible=?, repertoire_id=?, visibilite_unites=?, visibilite_groupes=? WHERE id=?',
+      [titre, description || null, url || null, categorie || 'Autre', ordre || 0, visible !== false ? 1 : 0, repertoire_id || null, visibilite_unites || null, visibilite_groupes || null, req.params.id]
     )
     res.json({ success: true })
   } catch (err) {

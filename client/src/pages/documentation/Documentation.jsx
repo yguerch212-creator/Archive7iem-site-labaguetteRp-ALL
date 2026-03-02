@@ -14,8 +14,10 @@ export default function Documentation() {
   const [showForm, setShowForm] = useState(false)
   const [showFolderForm, setShowFolderForm] = useState(false)
   const [editId, setEditId] = useState(null)
-  const [form, setForm] = useState({ titre: '', description: '', url: '', categorie: 'Autre', ordre: 0, repertoire_id: '' })
-  const [folderForm, setFolderForm] = useState({ titre: '', description: '', categorie: 'Autre' })
+  const [form, setForm] = useState({ titre: '', description: '', url: '', categorie: 'Autre', ordre: 0, repertoire_id: '', visibilite_unites: '', visibilite_groupes: '' })
+  const [folderForm, setFolderForm] = useState({ titre: '', description: '', categorie: 'Autre', visibilite_unites: '', visibilite_groupes: '' })
+  const [unites, setUnites] = useState([])
+  const [groups, setGroups] = useState([])
   const [message, setMessage] = useState(null)
   const [openFolders, setOpenFolders] = useState({})
   const [search, setSearch] = useState('')
@@ -25,7 +27,11 @@ export default function Documentation() {
   const isSousOff = !isOfficier && ((user?.grade_rang && user.grade_rang >= 35) || user?.isRecenseur)
   const canAdd = isOfficier || isSousOff
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    api.get('/unites').then(r => setUnites(r.data.data || [])).catch(() => {})
+    api.get('/admin/groups').then(r => setGroups(r.data.data || [])).catch(() => {})
+  }, [])
 
   const load = async () => {
     try {
@@ -51,7 +57,7 @@ export default function Documentation() {
         flash('success', res.data.data?.statut === 'en_attente' ? '📩 Soumis — en attente de validation' : 'Document ajouté ✓')
       }
       setShowForm(false); setEditId(null)
-      setForm({ titre: '', description: '', url: '', categorie: 'Autre', ordre: 0, repertoire_id: '' })
+      setForm({ titre: '', description: '', url: '', categorie: 'Autre', ordre: 0, repertoire_id: '', visibilite_unites: '', visibilite_groupes: '' })
       load()
     } catch (err) { flash('error', err.response?.data?.message || 'Erreur') }
   }
@@ -68,7 +74,7 @@ export default function Documentation() {
   }
 
   const startEdit = (doc) => {
-    setForm({ titre: doc.titre, description: doc.description || '', url: doc.url || '', categorie: doc.categorie, ordre: doc.ordre, repertoire_id: doc.repertoire_id || '' })
+    setForm({ titre: doc.titre, description: doc.description || '', url: doc.url || '', categorie: doc.categorie, ordre: doc.ordre, repertoire_id: doc.repertoire_id || '', visibilite_unites: doc.visibilite_unites || '', visibilite_groupes: doc.visibilite_groupes || '' })
     setEditId(doc.id); setShowForm(true); setShowFolderForm(false)
   }
 
@@ -105,7 +111,7 @@ export default function Documentation() {
         <BackButton label="← Tableau de bord" />
         <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
           {isOfficier && <button className="btn btn-secondary btn-small" onClick={() => { setShowFolderForm(!showFolderForm); setShowForm(false) }}>{showFolderForm ? '✕' : '📂 Répertoire'}</button>}
-          {canAdd && <button className="btn btn-primary btn-small" onClick={() => { setShowForm(!showForm); setShowFolderForm(false); setEditId(null); setForm({ titre: '', description: '', url: '', categorie: 'Autre', ordre: 0, repertoire_id: '' }) }}>{showForm ? '✕ Annuler' : '+ Document'}</button>}
+          {canAdd && <button className="btn btn-primary btn-small" onClick={() => { setShowForm(!showForm); setShowFolderForm(false); setEditId(null); setForm({ titre: '', description: '', url: '', categorie: 'Autre', ordre: 0, repertoire_id: '', visibilite_unites: '', visibilite_groupes: '' }) }}>{showForm ? '✕ Annuler' : '+ Document'}</button>}
         </div>
       </div>
 
@@ -149,6 +155,22 @@ export default function Documentation() {
                 </select>
               </div>
             </div>
+            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', marginTop: 'var(--space-sm)' }}>
+              <div className="form-group" style={{ flex: 1, minWidth: 200 }}>
+                <label className="form-label">🔒 Visible par (unités)</label>
+                <select className="form-input" multiple value={folderForm.visibilite_unites ? folderForm.visibilite_unites.split(',') : []} onChange={e => setFolderForm(p => ({...p, visibilite_unites: [...e.target.selectedOptions].map(o => o.value).join(',')}))} style={{ height: 80 }}>
+                  {unites.map(u => <option key={u.code} value={u.code}>{u.code} — {u.nom}</option>)}
+                </select>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Vide = visible par tous</span>
+              </div>
+              <div className="form-group" style={{ flex: 1, minWidth: 200 }}>
+                <label className="form-label">🔒 Visible par (groupes)</label>
+                <select className="form-input" multiple value={folderForm.visibilite_groupes ? folderForm.visibilite_groupes.split(',') : []} onChange={e => setFolderForm(p => ({...p, visibilite_groupes: [...e.target.selectedOptions].map(o => o.value).join(',')}))} style={{ height: 80 }}>
+                  {groups.map(g => <option key={g.id} value={g.id}>{g.nom}</option>)}
+                </select>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Vide = visible par tous</span>
+              </div>
+            </div>
             <button type="submit" className="btn btn-primary" style={{ marginTop: 'var(--space-sm)' }}>📂 Créer</button>
           </form>
         </div>
@@ -188,6 +210,24 @@ export default function Documentation() {
               <label className="form-label">Description</label>
               <input type="text" className="form-input" value={form.description} onChange={e => setForm(p => ({...p, description: e.target.value}))} placeholder="Brève description..." />
             </div>
+            {isOfficier && (
+              <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+                <div className="form-group" style={{ flex: 1, minWidth: 200 }}>
+                  <label className="form-label">🔒 Visible par (unités)</label>
+                  <select className="form-input" multiple value={form.visibilite_unites ? form.visibilite_unites.split(',') : []} onChange={e => setForm(p => ({...p, visibilite_unites: [...e.target.selectedOptions].map(o => o.value).join(',')}))} style={{ height: 80 }}>
+                    {unites.map(u => <option key={u.code} value={u.code}>{u.code} — {u.nom}</option>)}
+                  </select>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Vide = visible par tous</span>
+                </div>
+                <div className="form-group" style={{ flex: 1, minWidth: 200 }}>
+                  <label className="form-label">🔒 Visible par (groupes)</label>
+                  <select className="form-input" multiple value={form.visibilite_groupes ? form.visibilite_groupes.split(',') : []} onChange={e => setForm(p => ({...p, visibilite_groupes: [...e.target.selectedOptions].map(o => o.value).join(',')}))} style={{ height: 80 }}>
+                    {groups.map(g => <option key={g.id} value={g.id}>{g.nom}</option>)}
+                  </select>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Vide = visible par tous</span>
+                </div>
+              </div>
+            )}
             <button type="submit" className="btn btn-primary">{editId ? '💾 Modifier' : '📄 Ajouter'}</button>
           </form>
         </div>
@@ -309,7 +349,7 @@ function DocRow({ doc, isOfficier, isAdmin, onEdit, onRemove, onApprove }) {
       <div className="doc-card" onClick={handleClick}>
         <div className="doc-card-icon">{URL_TYPE_ICONS[urlType]}</div>
         <div className="doc-card-content">
-          <div className="doc-card-title">{doc.titre}</div>
+          <div className="doc-card-title">{doc.titre}{(doc.visibilite_unites || doc.visibilite_groupes) ? <span style={{ fontSize: '0.7rem', marginLeft: 6 }} title={`Restreint: ${[doc.visibilite_unites, doc.visibilite_groupes].filter(Boolean).join(', ')}`}>🔒</span> : ''}</div>
           {doc.description && <div className="doc-card-desc">{doc.description}</div>}
           <div className="doc-card-meta">
             <span className="doc-type-badge">{URL_TYPE_LABELS[urlType]}</span>
