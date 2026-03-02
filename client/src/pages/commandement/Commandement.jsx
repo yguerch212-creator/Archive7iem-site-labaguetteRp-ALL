@@ -127,14 +127,16 @@ export default function Commandement() {
   const [effectifs, setEffectifs] = useState([])
   const [frontEvents, setFrontEvents] = useState([])
 
-  // Convert currentDate to ISO week string for PDS
+  // Convert currentDate to ISO week string for PDS — mirrors backend getCurrentWeek() logic
   const pdsWeek = useMemo(() => {
     const { start } = getRpWeekBounds(currentDate)
-    // Find ISO week of the RP week start (Friday)
-    const d = new Date(start); d.setUTCDate(d.getUTCDate() + 3 - ((d.getUTCDay() + 6) % 7))
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 4))
-    const weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
-    return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`
+    // start is the Friday. Compute ISO week of that Friday (same as backend).
+    const fri = new Date(Date.UTC(start.getFullYear(), start.getMonth(), start.getDate()))
+    const dayNum = fri.getUTCDay() || 7
+    const ref = new Date(fri); ref.setUTCDate(fri.getUTCDate() + 4 - dayNum)
+    const yearStart = new Date(Date.UTC(ref.getUTCFullYear(), 0, 1))
+    const weekNo = Math.ceil((((ref - yearStart) / 86400000) + 1) / 7)
+    return `${ref.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`
   }, [currentDate])
 
   useEffect(() => {
