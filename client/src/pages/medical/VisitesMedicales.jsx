@@ -64,7 +64,13 @@ export default function VisitesMedicales() {
     }
   }
 
-  const fmtDate = d => d ? new Date(d + 'T00:00').toLocaleDateString('fr-FR') : '—'
+  const fmtDate = d => {
+    if (!d) return '—'
+    try {
+      const s = String(d).slice(0, 10)
+      return new Date(s + 'T00:00').toLocaleDateString('fr-FR')
+    } catch { return '—' }
+  }
 
   const filtered = visites.filter(v => {
     if (effectifFilter && v.effectif_id !== parseInt(effectifFilter)) return false

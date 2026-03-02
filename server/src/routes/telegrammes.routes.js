@@ -48,12 +48,16 @@ router.get('/', optionalAuth, async (req, res) => {
       t.destinataire_nom = t.destinataires.map(d => d.nom_libre || `${d.prenom || ''} ${d.nom || ''}`.trim()).join(', ') || t.destinataire_nom
     }
 
-    // Filter confidential: only show if user is sender or recipient
-    if (effectifId) {
-      rows = rows.filter(t => canSeeConfidential(t, t.destinataires, effectifId))
-    } else if (!isPrivileged) {
-      rows = rows.filter(t => !t.prive)
-    }
+    // Confidential: mask content for non-sender/non-recipient instead of hiding
+    rows.forEach(t => {
+      const canSee = isPrivileged || (effectifId && canSeeConfidential(t, t.destinataires, effectifId))
+      if (t.prive && !canSee) {
+        t.contenu = null
+        t.objet_masque = true
+        t.expediteur_nom = '—'
+        t.destinataire_nom = '—'
+      }
+    })
 
     // Tab filter
     if (tab === 'recu' && effectifId) {

@@ -113,7 +113,7 @@ export default function Telegrammes() {
               setShowForm(true)
             }}>↩️ Répondre</button>
           )}
-          {(t.expediteur_id === user?.effectif_id || t.destinataire_id === user?.effectif_id) && (
+          {(t.expediteur_id === user?.effectif_id || t.destinataire_id === user?.effectif_id || (t.destinataires || []).some(d => d.effectif_id === user?.effectif_id)) && (
             <button className="btn btn-secondary btn-small" onClick={() => archiver(t.id)}>📦 Archiver</button>
           )}
           {user?.isAdmin && (
@@ -283,9 +283,10 @@ export default function Telegrammes() {
             </thead>
             <tbody>
               {telegrammes.map(t => {
-                const isUnread = t.destinataire_id === user?.effectif_id && (t.statut === 'Envoyé' || t.statut === 'Reçu')
+                const isRecipient = t.destinataire_id === user?.effectif_id || (t.destinataires || []).some(d => d.effectif_id === user?.effectif_id)
+                const isUnread = isRecipient && (t.statut === 'Envoyé' || t.statut === 'Reçu')
                 const isPrive = !!t.prive
-                const canView = !isPrive || t.expediteur_id === user?.effectif_id || t.destinataire_id === user?.effectif_id || isPrivileged
+                const canView = !isPrive || t.expediteur_id === user?.effectif_id || isRecipient || isPrivileged
 
                 return (
                   <tr key={t.id}
@@ -311,7 +312,7 @@ export default function Telegrammes() {
                     <td style={td}>{isPrive && !canView ? '—' : t.destinataire_nom}</td>
                     <td style={td}>
                       {isPrive && <span style={{ fontSize: '0.7rem', marginRight: 4 }}>🔒</span>}
-                      {isPrive && !canView ? <em style={{ color: 'var(--text-muted)' }}>Télégramme privé</em> : t.objet}
+                      {(isPrive && !canView) || t.objet_masque ? <em style={{ color: 'var(--text-muted)' }}>Télégramme privé</em> : t.objet}
                     </td>
                     <td style={{ ...td, whiteSpace: 'nowrap', fontSize: '0.8rem' }}>{formatDate(t.created_at)}</td>
                     <td style={td}>

@@ -35,26 +35,29 @@ export default function SignaturePopup({ onClose, onSign, onRequestSent, documen
 
   // Compose stamp+signature into a single image
   const compositeImage = (signatureData, tamponData) => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const canvas = document.createElement('canvas')
-      canvas.width = 300
-      canvas.height = 150
+      canvas.width = 400
+      canvas.height = 200
       const ctx = canvas.getContext('2d')
 
       const loadImg = (src) => new Promise((res) => {
         if (!src) return res(null)
         const img = new Image()
-        // Don't set crossOrigin for data URIs — causes failures on some browsers
-        if (!src.startsWith('data:')) img.crossOrigin = 'anonymous'
         img.onload = () => res(img)
-        img.onerror = () => { console.warn('SignaturePopup: image load failed'); res(null) }
-        img.src = src
+        img.onerror = (e) => { console.warn('SignaturePopup: image load failed', e); res(null) }
+        // Set src AFTER onload/onerror to avoid race condition
+        setTimeout(() => { img.src = src }, 0)
       })
 
       Promise.all([
-        tamponData ? loadImg(tamponData) : null,
-        signatureData ? loadImg(signatureData) : null
+        tamponData ? loadImg(tamponData) : Promise.resolve(null),
+        signatureData ? loadImg(signatureData) : Promise.resolve(null)
       ]).then(([stampImg, sigImg]) => {
+        if (!stampImg && !sigImg) {
+          reject(new Error('Aucune image chargée'))
+          return
+        }
         if (stampImg) {
           const scale = Math.min(canvas.width / stampImg.width, canvas.height / stampImg.height, 1)
           const w = stampImg.width * scale
@@ -70,7 +73,7 @@ export default function SignaturePopup({ onClose, onSign, onRequestSent, documen
           ctx.drawImage(sigImg, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h)
         }
         resolve(canvas.toDataURL('image/png'))
-      })
+      }).catch(reject)
     })
   }
 

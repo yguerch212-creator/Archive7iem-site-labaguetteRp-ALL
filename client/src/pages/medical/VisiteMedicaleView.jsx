@@ -22,7 +22,7 @@ export default function VisiteMedicaleView() {
   if (!data) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Visite introuvable</div>
 
   const v = data
-  const fmtDate = d => d ? new Date(d + 'T00:00').toLocaleDateString('fr-FR') : '—'
+  const fmtDate = d => { if (!d) return '—'; try { const s = String(d).slice(0,10); return new Date(s + 'T00:00').toLocaleDateString('fr-FR') } catch { return '—' } }
 
   return (
     <div className="container" style={{ maxWidth: 800, paddingBottom: 'var(--space-xxl)' }}>
