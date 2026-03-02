@@ -9,25 +9,26 @@ const { optionalAuth } = require('../middleware/auth')
 // Si on est vendredi après 20h ou samedi-jeudi, on est dans la semaine ISO suivante côté RP.
 function getCurrentWeek() {
   const now = new Date()
-  const utcDay = now.getUTCDay() // 0=dim, 5=ven
+  const utcDay = now.getUTCDay() // 0=dim, 1=lun, ..., 5=ven, 6=sam
   const utcHour = now.getUTCHours()
   
-  // Si vendredi >= 20h UTC ou samedi-jeudi → semaine RP = semaine ISO courante + ajustement
-  // On calcule la semaine ISO du vendredi de début de cette semaine RP
-  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()))
+  // Find the Friday that started the current RP week (Fri 20h → Fri 20h)
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
   
-  // Si on est vendredi < 20h, on est encore dans la semaine RP précédente
-  if (utcDay === 5 && utcHour < 20) {
-    d.setUTCDate(d.getUTCDate() - 7) // vendredi dernier
-  } else if (utcDay < 5) {
-    // Lun-Jeu: le vendredi de début était la semaine dernière
-    d.setUTCDate(d.getUTCDate() - ((utcDay + 2) % 7)) // reculer au vendredi
+  if (utcDay === 5) {
+    // Friday: if before 20h UTC, still previous RP week
+    if (utcHour < 20) d.setUTCDate(d.getUTCDate() - 7)
+    // else: this Friday is the start
+  } else if (utcDay === 6) {
+    // Saturday: Friday was yesterday
+    d.setUTCDate(d.getUTCDate() - 1)
+  } else {
+    // Sun(0), Mon(1), Tue(2), Wed(3), Thu(4): go back to last Friday
+    const daysBack = (utcDay + 2) % 7 // Sun→2, Mon→3, Tue→4, Wed→5, Thu→6
+    d.setUTCDate(d.getUTCDate() - daysBack)
   }
-  // Si samedi ou dimanche, le vendredi était hier ou avant-hier → OK, d est déjà bon ou ajuster
-  if (utcDay === 0) d.setUTCDate(d.getUTCDate() - 2) // dimanche → vendredi
-  if (utcDay === 6) d.setUTCDate(d.getUTCDate() - 1) // samedi → vendredi
   
-  // Calculer la semaine ISO de ce vendredi de référence
+  // d is now the Friday that started this RP week. Compute its ISO week.
   const ref = new Date(d)
   const dayNum = ref.getUTCDay() || 7
   ref.setUTCDate(ref.getUTCDate() + 4 - dayNum)
@@ -179,7 +180,7 @@ router.get('/recap', auth, async (req, res) => {
     }
     const semaine = req.query.semaine || getCurrentWeek()
 
-    const rows = await query(`
+    const allRows = await query(`
       SELECT e.id AS effectif_id, e.nom, e.prenom, e.fonction,
              g.nom_complet AS grade_nom, g.rang AS grade_rang,
              u.nom AS unite_nom, u.code AS unite_code,
@@ -193,14 +194,34 @@ router.get('/recap', auth, async (req, res) => {
       ORDER BY u.code, COALESCE(g.rang, 0) DESC, e.nom
     `, [semaine])
 
-    // Permissions active this week
+    // HDR (rang < 35) only appear if they filled PDS
+    const rows = allRows.filter(r => (r.grade_rang || 0) >= 35 || r.pds_id)
+
+    // Permissions active this week — compute week date range for filtering
+    const [yr, wn2] = semaine.split('-W').map(Number)
+    const jan4p = new Date(Date.UTC(yr, 0, 4))
+    const dowp = jan4p.getUTCDay() || 7
+    const monp = new Date(jan4p)
+    monp.setUTCDate(jan4p.getUTCDate() - dowp + 1 + (wn2 - 1) * 7)
+    const frip = new Date(monp); frip.setUTCDate(monp.getUTCDate() + 4) // Friday
+    const fripEnd = new Date(frip); fripEnd.setUTCDate(frip.getUTCDate() + 7) // Next Friday
+    const weekStartStr = frip.toISOString().slice(0, 10)
+    const weekEndStr = fripEnd.toISOString().slice(0, 10)
+
     const perms = await query(`
-      SELECT pa.*, e.prenom, e.nom AS eff_nom, g.nom_complet AS grade_nom
+      SELECT pa.*, e.id AS effectif_id, e.prenom, e.nom AS eff_nom, g.nom_complet AS grade_nom
       FROM permissions_absence pa
       JOIN effectifs e ON e.id = pa.effectif_id
       LEFT JOIN grades g ON g.id = e.grade_id
       WHERE pa.statut = 'Approuvee'
-    `)
+        AND pa.date_debut <= ? AND pa.date_fin >= ?
+    `, [weekEndStr, weekStartStr])
+
+    // Build a set of effectif_ids with active permissions this week
+    const permMap = {}
+    perms.forEach(p => { permMap[p.effectif_id] = p.raison || 'En permission' })
+    // Attach permission info to rows
+    rows.forEach(r => { if (permMap[r.effectif_id]) r.en_permission = permMap[r.effectif_id] })
 
     const total = rows.length
     const remplis = rows.filter(r => r.pds_id).length

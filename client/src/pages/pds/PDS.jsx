@@ -412,11 +412,13 @@ function RapportSemaine({ semaine, setSemaine, semaineActuelle, setView, user, f
   if (filterUnite) filtered = filtered.filter(r => r.unite_code === filterUnite)
   if (filterStatut === 'valide') filtered = filtered.filter(r => r.pds_id && r.valide)
   else if (filterStatut === 'insuffisant') filtered = filtered.filter(r => r.pds_id && !r.valide)
-  else if (filterStatut === 'absent') filtered = filtered.filter(r => !r.pds_id)
+  else if (filterStatut === 'absent') filtered = filtered.filter(r => !r.pds_id && !r.en_permission)
+  else if (filterStatut === 'permission') filtered = filtered.filter(r => r.en_permission)
 
   const validCount = filtered.filter(r => r.pds_id && r.valide).length
   const insuffCount = filtered.filter(r => r.pds_id && !r.valide).length
-  const absentCount = filtered.filter(r => !r.pds_id).length
+  const absentCount = filtered.filter(r => !r.pds_id && !r.en_permission).length
+  const permCount = filtered.filter(r => r.en_permission).length
 
   return (
     <div className="pds-page">
@@ -465,6 +467,7 @@ function RapportSemaine({ semaine, setSemaine, semaineActuelle, setView, user, f
           <option value="valide">✅ Validés ({validCount})</option>
           <option value="insuffisant">❌ Insuffisants ({insuffCount})</option>
           <option value="absent">⬜ Non rempli ({absentCount})</option>
+          <option value="permission">🏖️ En permission ({permCount})</option>
         </select>
       </div>
 
@@ -508,7 +511,8 @@ function RapportSemaine({ semaine, setSemaine, semaineActuelle, setView, user, f
                     )}
                   </td>
                   <td style={{ ...tdS, textAlign: 'center' }}>
-                    {!hasPds ? <span className="badge" style={{ background: '#888', color: '#fff', fontSize: '0.7rem' }}>Non rempli</span>
+                    {eff.en_permission ? <span className="badge" style={{ background: '#2c5f7c', color: '#fff', fontSize: '0.7rem' }}>🏖️ Permission</span>
+                      : !hasPds ? <span className="badge" style={{ background: '#888', color: '#fff', fontSize: '0.7rem' }}>Non rempli</span>
                       : eff.valide ? <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>✅ Validé</span>
                       : <span className="badge badge-red" style={{ fontSize: '0.7rem' }}>❌ &lt; 6h</span>}
                   </td>
