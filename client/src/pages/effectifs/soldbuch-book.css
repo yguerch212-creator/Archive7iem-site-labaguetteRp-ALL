@@ -300,10 +300,10 @@
 .sb-stamp-img { max-height: 50px; max-width: 50px; opacity: 0.55; }
 .sb-stamp-clickable { cursor: pointer; font-size: 0.6rem; opacity: 0.35; border: 1px dashed rgba(0,0,0,0.2); padding: 3px 6px; border-radius: 3px; }
 .sb-stamp-clickable:hover { opacity: 0.6; }
-.sb-stamp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 6px; margin: 0.4rem 0; }
-.sb-stamp-option { cursor: pointer; text-align: center; border: 1px solid rgba(0,0,0,0.12); border-radius: 3px; padding: 3px; font-size: 0.5rem; }
-.sb-stamp-option:hover { background: rgba(0,0,0,0.06); }
-.sb-stamp-option img { max-height: 45px; max-width: 100%; }
+.sb-stamp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin: 0.5rem 0; }
+.sb-stamp-option { cursor: pointer; text-align: center; border: 2px solid rgba(0,0,0,0.15); border-radius: 5px; padding: 8px; font-size: 0.65rem; }
+.sb-stamp-option:hover { background: rgba(0,0,0,0.08); border-color: var(--military-green, #556b2f); }
+.sb-stamp-option img { max-height: 80px; max-width: 100%; display: block; margin: 0 auto 4px; }
 .sb-stamp-overlay { position: absolute; opacity: 0.35; max-height: 90px; max-width: 90px; pointer-events: none; z-index: 10; filter: saturate(0.7); }
 .sb-att-stamp { max-height: 16px; max-width: 35px; opacity: 0.65; vertical-align: middle; }
 .sb-att-wrap { flex: 1; overflow: auto; }
