@@ -13,7 +13,7 @@ export default function Vaccinations() {
   const [message, setMessage] = useState(null)
   const [search, setSearch] = useState('')
   const autoLot = () => `VAC-${new Date().getFullYear()}-${String(Math.floor(Math.random()*9000)+1000)}`
-  const [form, setForm] = useState({ effectif_id: '', effectif_nom: '', effectif_nom_libre: '', type_vaccin: 'Typhus', date_vaccination: '', date_rappel: '', medecin_nom: user?.username || '', lot: autoLot(), notes: '' })
+  const [form, setForm] = useState({ effectif_id: '', effectif_nom: '', effectif_nom_libre: '', type_vaccin: 'Typhus', date_vaccination: '', medecin_nom: user?.username || '', lot: autoLot(), notes: '' })
 
   const canCreate = user?.isAdmin || user?.isRecenseur || user?.unite_code === '916S'
 
@@ -28,7 +28,7 @@ export default function Vaccinations() {
     try {
       await api.post('/medical-soldbuch/vaccinations', form)
       setShowForm(false)
-      setForm({ effectif_id: '', effectif_nom: '', type_vaccin: 'Typhus', date_vaccination: '', date_rappel: '', medecin_nom: user?.username || '', lot: autoLot(), notes: '' })
+      setForm({ effectif_id: '', effectif_nom: '', type_vaccin: 'Typhus', date_vaccination: '', medecin_nom: user?.username || '', lot: autoLot(), notes: '' })
       setMessage({ type: 'success', text: 'Vaccination enregistrée ✓' })
       setTimeout(() => setMessage(null), 3000)
       load()
@@ -80,7 +80,6 @@ export default function Vaccinations() {
                 </select>
               </div>
               <div className="form-group" style={{ flex: 1 }}><label className="form-label">Date *</label><input type="date" className="form-input" value={form.date_vaccination} onChange={e => setForm(p => ({ ...p, date_vaccination: e.target.value }))} required /></div>
-              <div className="form-group" style={{ flex: 1 }}><label className="form-label">Rappel</label><input type="date" className="form-input" value={form.date_rappel} onChange={e => setForm(p => ({ ...p, date_rappel: e.target.value }))} /></div>
             </div>
             <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
               <div className="form-group" style={{ flex: 1 }}><label className="form-label">Médecin</label><input type="text" className="form-input" value={form.medecin_nom} readOnly style={{ opacity: 0.7 }} /></div>
@@ -94,7 +93,7 @@ export default function Vaccinations() {
 
       <div className="paper-card">
         <table className="table">
-          <thead><tr><th>Effectif</th><th>Vaccin</th><th>Date</th><th>Rappel</th><th>Médecin</th><th>Lot</th>{canCreate && <th></th>}</tr></thead>
+          <thead><tr><th>Effectif</th><th>Vaccin</th><th>Date</th><th>Médecin</th><th>Lot</th>{canCreate && <th></th>}</tr></thead>
           <tbody>
             {filtered.length === 0 ? <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Aucune vaccination</td></tr> :
               filtered.map(v => (
@@ -102,7 +101,6 @@ export default function Vaccinations() {
                   <td>{v.effectif_nom}</td>
                   <td>{v.type_vaccin}</td>
                   <td>{fmt(v.date_vaccination)}</td>
-                  <td>{fmt(v.date_rappel)}</td>
                   <td>{v.medecin_nom || '—'}</td>
                   <td>{v.lot || '—'}</td>
                   {canCreate && <td><button onClick={() => remove(v.id)} className="btn btn-sm btn-secondary" style={{ color: 'var(--danger)' }}>🗑️</button></td>}
