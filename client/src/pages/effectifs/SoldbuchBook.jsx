@@ -410,7 +410,6 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       </div>
       <PageNum n={3}/>
       </div>{/* sb-land */}
-        style={{top:'50%', right:'20px', transform:'rotate(-3deg)', opacity:0.35}}/>}
     </div>
   </div>)
 
