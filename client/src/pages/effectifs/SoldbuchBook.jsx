@@ -368,7 +368,8 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
                 <td><Ink small>{a.page||''}</Ink></td>
                 <td><Ink small>{fmtD(a.date_attestation)}</Ink></td>
                 <td>
-                  {a.signature_data?<Ink small>✓</Ink>
+                  {a.signature_data?<img src={a.signature_data} alt="Sig" style={{maxHeight:25,maxWidth:60,display:'inline-block'}}/>
+
                   :a.signe_par_nom?<Ink small>{a.signe_par_nom}</Ink>
                   :(canSignAttestation && !a.barre?<span className="sb-sig-clickable" style={{cursor:'pointer',fontSize:'.55rem',color:'var(--military-green)'}} onClick={()=>setSigPopup({slot:'attestation',attestationId:a.id})}>✍️</span>:NB)}
                   {!a.barre && canSignAttestation && <span style={{cursor:'pointer',fontSize:'.5rem',marginLeft:3,color:'#8b0000'}} title="Barrer" onClick={async()=>{
@@ -410,6 +411,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       </div>
       <PageNum n={3}/>
       </div>{/* sb-land */}
+      {e.stamp_path && <img src={e.stamp_path} alt="Tampon" style={{position:'absolute',bottom:'30px',right:'20px',maxHeight:'80px',opacity:0.4,transform:'rotate(-3deg)',pointerEvents:'none'}}/>}
     </div>
   </div>)
 
