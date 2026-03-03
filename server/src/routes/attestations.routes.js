@@ -30,7 +30,12 @@ router.post('/:effectifId', auth, async (req, res) => {
 
     const effectifId = parseInt(req.params.effectifId)
     const nextNum = await getNextNumero(effectifId)
-    const dt = date_attestation || new Date().toISOString().slice(0, 10)
+    // Convert FR date (DD/MM/YYYY) to ISO (YYYY-MM-DD) if needed
+    let dt = date_attestation || new Date().toISOString().slice(0, 10)
+    if (dt.includes('/')) {
+      const parts = dt.split('/')
+      if (parts.length === 3) dt = `${parts[2]}-${parts[1]}-${parts[0]}`
+    }
 
     const [result] = await pool.execute(
       `INSERT INTO soldbuch_attestations (effectif_id, numero, modification, page, date_attestation, source, created_by)
