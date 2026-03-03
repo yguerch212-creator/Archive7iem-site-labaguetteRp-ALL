@@ -25,7 +25,7 @@ router.post('/:effectifId', auth, async (req, res) => {
     if (!req.user.isOfficier && !req.user.isRecenseur && !req.user.isAdmin) {
       return res.status(403).json({ success: false, message: 'Réservé aux officiers et administratifs' })
     }
-    const { modification, page, date_attestation } = req.body
+    const { modification, page, date_attestation, signature_data } = req.body
     if (!modification) return res.status(400).json({ success: false, message: 'Description requise' })
 
     const effectifId = parseInt(req.params.effectifId)
@@ -38,9 +38,9 @@ router.post('/:effectifId', auth, async (req, res) => {
     }
 
     const [result] = await pool.execute(
-      `INSERT INTO soldbuch_attestations (effectif_id, numero, modification, page, date_attestation, source, created_by)
-       VALUES (?, ?, ?, ?, ?, 'manual', ?)`,
-      [effectifId, nextNum, modification, page || null, dt, req.user.id]
+      `INSERT INTO soldbuch_attestations (effectif_id, numero, modification, page, date_attestation, source, created_by, signe_par, signature_data)
+       VALUES (?, ?, ?, ?, ?, 'manual', ?, ?, ?)`,
+      [effectifId, nextNum, modification, page || null, dt, req.user.id, signature_data ? (req.user.effectif_id || null) : null, signature_data || null]
     )
     res.json({ success: true, data: { id: result.insertId, numero: nextNum } })
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }

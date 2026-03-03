@@ -410,8 +410,6 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       </div>
       <PageNum n={3}/>
       </div>{/* sb-land */}
-      {/* Stamp overlay — show the soldbuch stamp once on attestation page if set */}
-      {e.stamp_path && <img src={e.stamp_path} alt="Tampon" className="sb-stamp-overlay"
         style={{top:'50%', right:'20px', transform:'rotate(-3deg)', opacity:0.35}}/>}
     </div>
   </div>)
