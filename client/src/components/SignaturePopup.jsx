@@ -24,7 +24,9 @@ export default function SignaturePopup({ onClose, onSign, onRequestSent, documen
   useEffect(() => {
     if (user?.effectif_id) {
       api.get(`/effectifs/${user.effectif_id}/signature`).then(r => {
-        if (r.data?.signature_data) setMySignature(r.data.signature_data)
+        // Prefer clean_signature (without baked-in stamp) over signature_data (may be composite)
+        if (r.data?.clean_signature) setMySignature(r.data.clean_signature)
+        else if (r.data?.signature_data) setMySignature(r.data.signature_data)
       }).catch(() => {})
     }
     // Load available tampons
@@ -80,7 +82,7 @@ export default function SignaturePopup({ onClose, onSign, onRequestSent, documen
   const handleSignSelf = async (signatureData) => {
     if (!signatureData) { setMessage({ type: 'error', text: 'Erreur: signature vide. Réessayez.' }); return }
     if (user?.effectif_id) {
-      api.put(`/effectifs/${user.effectif_id}/signature`, { signature_data: signatureData }).catch(() => {})
+      api.put(`/effectifs/${user.effectif_id}/signature`, { signature_data: signatureData, clean_signature: signatureData }).catch(() => {})
       setMySignature(signatureData)
     }
     if (onSign) onSign(signatureData)
@@ -98,7 +100,7 @@ export default function SignaturePopup({ onClose, onSign, onRequestSent, documen
   const handleBoth = async (signatureData) => {
     if (!selectedTampon?.image_data || !signatureData) { setMessage({ type: 'error', text: 'Signature ou tampon manquant. Réessayez.' }); return }
     if (user?.effectif_id) {
-      api.put(`/effectifs/${user.effectif_id}/signature`, { signature_data: signatureData }).catch(() => {})
+      api.put(`/effectifs/${user.effectif_id}/signature`, { signature_data: signatureData, clean_signature: signatureData }).catch(() => {})
       setMySignature(signatureData)
     }
     try {

@@ -279,8 +279,8 @@ router.put('/:id/layout', auth, async (req, res) => {
 // GET /api/effectifs/:id/signature — Get saved personal signature
 router.get('/:id/signature', optionalAuth, async (req, res) => {
   try {
-    const row = await queryOne('SELECT signature_data FROM signatures_effectifs WHERE effectif_id = ?', [req.params.id])
-    res.json(row || { signature_data: null })
+    const row = await queryOne('SELECT signature_data, clean_signature FROM signatures_effectifs WHERE effectif_id = ?', [req.params.id])
+    res.json(row || { signature_data: null, clean_signature: null })
   } catch (err) { console.error(err); res.status(500).json({ error: 'Erreur serveur' }) }
 })
 
@@ -290,11 +290,11 @@ router.put('/:id/signature', auth, async (req, res) => {
     if (parseInt(req.params.id) !== req.user.effectif_id && !req.user.isAdmin) {
       return res.status(403).json({ error: 'Vous ne pouvez sauvegarder que votre propre signature' })
     }
-    const { signature_data } = req.body
+    const { signature_data, clean_signature } = req.body
     await query(
-      `INSERT INTO signatures_effectifs (effectif_id, signature_data) VALUES (?, ?)
-       ON DUPLICATE KEY UPDATE signature_data = ?`,
-      [req.params.id, signature_data, signature_data]
+      `INSERT INTO signatures_effectifs (effectif_id, signature_data, clean_signature) VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE signature_data = ?, clean_signature = COALESCE(?, clean_signature)`,
+      [req.params.id, signature_data, clean_signature || signature_data, signature_data, clean_signature]
     )
     res.json({ success: true })
   } catch (err) { console.error(err); res.status(500).json({ error: 'Erreur serveur' }) }
