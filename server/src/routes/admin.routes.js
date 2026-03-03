@@ -80,10 +80,37 @@ router.post('/users', auth, privileged, async (req, res) => {
     const hash = await bcrypt.hash(password, 10)
     const username = `${eff.prenom.toLowerCase()}.${eff.nom.toLowerCase()}`.replace(/\s/g, '')
     
-    await pool.execute(
+    const [insertResult] = await pool.execute(
       'INSERT INTO users (nom, prenom, username, password_hash, unite_id, grade_id, effectif_id, role_level, must_change_password, active) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, 1)',
       [eff.nom, eff.prenom, username, hash, eff.unite_id, eff.grade_id, eff.id]
     )
+    const newUserId = insertResult.insertId
+
+    // Auto-assign groups based on unite and grade
+    const unite = await queryOne('SELECT code FROM unites WHERE id = ?', [eff.unite_id])
+    const grade = await queryOne('SELECT rang, categorie FROM grades WHERE id = ?', [eff.grade_id])
+    const autoGroups = []
+
+    // Sanitats group for 916S members who are sous-officier+ (rang >= 30)
+    if (unite?.code === '916S' && grade?.rang >= 30) {
+      autoGroups.push('Sanitats')
+    }
+    // Sous-officier group for rang >= 30 and < 60
+    if (grade?.rang >= 30 && grade?.rang < 60) {
+      autoGroups.push('Sous-officier')
+    }
+    // Officier group for rang >= 60
+    if (grade?.rang >= 60) {
+      autoGroups.push('Officier')
+    }
+
+    for (const gName of autoGroups) {
+      const grp = await queryOne('SELECT id FROM `groups` WHERE name = ?', [gName])
+      if (grp) {
+        await pool.execute('INSERT IGNORE INTO user_groups (user_id, group_id) VALUES (?, ?)', [newUserId, grp.id])
+      }
+    }
+
     res.json({ success: true, message: `Compte créé pour ${eff.prenom} ${eff.nom} (${username})` })
   } catch (err) {
     console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
