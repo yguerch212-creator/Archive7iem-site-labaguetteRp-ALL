@@ -376,7 +376,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
                     if(!motif) return
                     try{await api.put(`/attestations/${a.id}/barrer`,{motif});if(onUpdate) await onUpdate()}catch(err){console.error('Barrer attestation error:',err);alert('Erreur: '+(err?.response?.data?.message||err.message))}
                   }}>✕</span>}
-                  {isAdmin && <span style={{cursor:'pointer',fontSize:'.5rem',marginLeft:3,color:'#e74c3c'}} title="Supprimer" onClick={async()=>{
+                  {(isAdmin || user?.isEtatMajor) && <span style={{cursor:'pointer',fontSize:'.5rem',marginLeft:3,color:'#e74c3c'}} title="Supprimer" onClick={async()=>{
                     if(!confirm('Supprimer cette attestation ?')) return
                     try{await api.delete(`/attestations/${a.id}`);if(onUpdate) await onUpdate()}catch(err){console.error('Delete attestation error:',err);alert('Erreur: '+(err?.response?.data?.message||err.message))}
                   }}>🗑</span>}

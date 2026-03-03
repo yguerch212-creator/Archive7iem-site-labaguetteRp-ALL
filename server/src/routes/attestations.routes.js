@@ -173,7 +173,7 @@ async function createAutoAttestation(effectifId, modification, source, sourceId,
 // DELETE /api/attestations/:id — Admin only
 router.delete('/:id', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin) return res.status(403).json({ success: false, message: 'Réservé aux administrateurs' })
+    if (!req.user.isAdmin && !req.user.isEtatMajor) return res.status(403).json({ success: false, message: 'Réservé aux administrateurs et Etat-Major' })
     await pool.execute('DELETE FROM soldbuch_attestations WHERE id = ?', [req.params.id])
     res.json({ success: true })
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
