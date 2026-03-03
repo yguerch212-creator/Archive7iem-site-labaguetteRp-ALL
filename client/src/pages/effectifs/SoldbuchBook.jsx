@@ -112,7 +112,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
   const[isOpen,setIsOpen]=useState(false)
   const[spread,setSpread]=useState(0)
   const[sigPopup,setSigPopup]=useState(null)
-  const[stampPicker,setStampPicker]=useState(false)
+  const[stampPicker,setStampPicker]=useState(null) // null or { attestationId } or true (for page2)
   const[tampons,setTampons]=useState([])
   const[saving,setSaving]=useState(false)
   const[cells,setCells]=useState(initCells||{})
@@ -201,7 +201,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
     if (stampPicker) {
       api.get('/bibliotheque?type=tampon').then(r => setTampons(r.data?.data || r.data || [])).catch(() => {})
     }
-  }, [stampPicker])
+  }, [!!stampPicker])
 
   // Sign handler
   const handleSign = async (signatureData) => {
@@ -232,11 +232,17 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
     setSaving(false)
   }
 
-  // Stamp handler
+  // Stamp handler — stamps the Soldbuch page 2 OR a specific attestation
   const handleStamp = async (stampPath) => {
     setSaving(true)
     try {
-      await api.put(`/soldbuch/${e.id}/stamp`, { stamp_path: stampPath })
+      if (stampPicker.attestationId) {
+        // Stamp a specific attestation row
+        await api.put(`/attestations/${stampPicker.attestationId}/stamp`, { stamp_data: stampPath })
+      } else {
+        // Stamp the Soldbuch (page 2)
+        await api.put(`/soldbuch/${e.id}/stamp`, { stamp_path: stampPath })
+      }
       setStampPicker(false)
       if (onUpdate) onUpdate()
     } catch (err) {
@@ -358,7 +364,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       <div className="sb-land">
       <div className="sb-att-wrap">
         <table className="sb-t">
-          <thead><tr><th>N°</th><th>Modification</th><th>Page</th><th>Date</th><th>Signature</th></tr></thead>
+          <thead><tr><th>N°</th><th>Modification</th><th>Page</th><th>Date</th><th>Sig.</th><th>Tamp.</th></tr></thead>
           <tbody>
             {attestations.map((a)=>{
               const barreStyle = a.barre ? { textDecoration:'line-through', opacity:0.5 } : {}
@@ -367,9 +373,8 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
                 <td><Ink small>{a.modification}</Ink>{a.barre && <span style={{fontSize:'.5rem',color:'#8b0000',display:'block',textDecoration:'none',opacity:1}}>({a.motif_barre})</span>}</td>
                 <td><Ink small>{a.page||''}</Ink></td>
                 <td><Ink small>{fmtD(a.date_attestation)}</Ink></td>
-                <td>
-                  {a.signature_data?<img src={a.signature_data} alt="Sig" style={{maxHeight:25,maxWidth:60,display:'inline-block'}}/>
-
+                <td style={{position:'relative'}}>
+                  {a.signature_data?<img src={a.signature_data} alt="Sig" style={{maxHeight:22,maxWidth:50}}/>
                   :a.signe_par_nom?<Ink small>{a.signe_par_nom}</Ink>
                   :(canSignAttestation && !a.barre?<span className="sb-sig-clickable" style={{cursor:'pointer',fontSize:'.55rem',color:'var(--military-green)'}} onClick={()=>setSigPopup({slot:'attestation',attestationId:a.id})}>✍️</span>:NB)}
                   {!a.barre && canSignAttestation && <span style={{cursor:'pointer',fontSize:'.5rem',marginLeft:3,color:'#8b0000'}} title="Barrer" onClick={async()=>{
@@ -381,6 +386,10 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
                     if(!confirm('Supprimer cette attestation ?')) return
                     try{await api.delete(`/attestations/${a.id}`);if(onUpdate) await onUpdate()}catch(err){console.error('Delete attestation error:',err);alert('Erreur: '+(err?.response?.data?.message||err.message))}
                   }}>🗑</span>}
+                </td>
+                <td style={{position:'relative'}}>
+                  {a.stamp_data?<img src={a.stamp_data} alt="Tampon" style={{maxHeight:35,maxWidth:50,position:'relative',top:'-5px',opacity:0.8,transform:`rotate(${-3+(a.numero%3)*2}deg)`}}/>
+                  :(canSignAttestation && !a.barre?<span style={{cursor:'pointer',fontSize:'.55rem',color:'var(--military-green)'}} onClick={()=>setStampPicker({attestationId:a.id})}>🔏</span>:NB)}
                 </td>
               </tr>
             })}
@@ -404,6 +413,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
                     ;['mod','page','date'].forEach(f=>api.put(`/soldbuch/${e.id}/book-cells`,{cellId:`att-${rowN}-${f}`,value:''}).catch(()=>{}))
                   }}>✕</span>}
                 </> : NB}</td>
+                <td></td>
               </tr>
             })}
           </tbody>
@@ -411,7 +421,7 @@ export default function SoldbuchBook({effectif,decorations=[],hospitalisations=[
       </div>
       <PageNum n={3}/>
       </div>{/* sb-land */}
-      {e.stamp_path && <img src={e.stamp_path} alt="Tampon" style={{position:'absolute',bottom:'30px',right:'20px',maxHeight:'80px',opacity:0.4,transform:'rotate(-3deg)',pointerEvents:'none'}}/>}
+      {/* Stamp overlays removed — stamps are now inline per attestation row */}
     </div>
   </div>)
 

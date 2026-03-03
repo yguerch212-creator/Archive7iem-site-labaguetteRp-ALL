@@ -46,6 +46,22 @@ router.post('/:effectifId', auth, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
+// Stamp an attestation
+router.put('/:attestationId/stamp', auth, async (req, res) => {
+  try {
+    if (!req.user.isOfficier && !req.user.isRecenseur && !req.user.isAdmin) {
+      return res.status(403).json({ success: false, message: 'Seuls les officiers et administratifs peuvent tamponner' })
+    }
+    const { stamp_data } = req.body
+    if (!stamp_data) return res.status(400).json({ success: false, message: 'Tampon requis' })
+    await pool.execute(
+      'UPDATE soldbuch_attestations SET stamp_data = ? WHERE id = ?',
+      [stamp_data, req.params.attestationId]
+    )
+    res.json({ success: true })
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
+})
+
 // Sign an attestation
 router.put('/:attestationId/sign', auth, async (req, res) => {
   try {
