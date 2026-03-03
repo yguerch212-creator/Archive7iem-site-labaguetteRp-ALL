@@ -93,7 +93,7 @@ router.post('/users', auth, privileged, async (req, res) => {
 
     // Sanitats group for 916S members who are sous-officier+ (rang >= 30)
     if (unite?.code === '916S' && grade?.rang >= 30) {
-      autoGroups.push('Sanitats')
+      autoGroups.push('Sanitaets')
     }
     // Sous-officier group for rang >= 30 and < 60
     if (grade?.rang >= 30 && grade?.rang < 60) {
@@ -121,6 +121,7 @@ router.post('/users', auth, privileged, async (req, res) => {
 router.put('/users/:id/group', auth, privileged, async (req, res) => {
   try {
     const { action, group } = req.body // action: 'add'|'remove', group: 'Administration'|'Administratif'|etc.
+    console.log('GROUP TOGGLE:', req.params.id, action, group)
     const groupName = group || 'Administration'
     // Non-admins cannot modify admin-level groups
     const restrictedGroups = ['Administration', 'Etat-Major']
@@ -137,7 +138,7 @@ router.put('/users/:id/group', auth, privileged, async (req, res) => {
     }
     res.json({ success: true })
   } catch (err) {
-    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
+    console.error('Group toggle error:', err.message, err.code, err.sqlMessage); res.status(500).json({ success: false, message: err.sqlMessage || err.message || "Erreur serveur" })
   }
 })
 
