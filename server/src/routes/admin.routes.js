@@ -31,7 +31,7 @@ router.get('/users', auth, privileged, async (req, res) => {
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
               WHERE ug.user_id = u.id AND gp.name = 'Feldgendarmerie') > 0 AS is_feldgendarmerie,
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
-              WHERE ug.user_id = u.id AND gp.name = 'Sanitaets') > 0 AS is_sanitaets,
+              WHERE ug.user_id = u.id AND gp.name = 'Sanitat') > 0 AS is_sanitaets,
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
               WHERE ug.user_id = u.id AND gp.name = 'Etat-Major') > 0 AS is_etatmajor
       FROM users u
@@ -93,7 +93,7 @@ router.post('/users', auth, privileged, async (req, res) => {
 
     // Sanitats group for 916S members who are sous-officier+ (rang >= 30)
     if (unite?.code === '916S' && grade?.rang >= 30) {
-      autoGroups.push('Sanitaets')
+      autoGroups.push('Sanitat')
     }
     // Sous-officier group for rang >= 30 and < 60
     if (grade?.rang >= 30 && grade?.rang < 60) {

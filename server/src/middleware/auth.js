@@ -25,7 +25,7 @@ async function auth(req, res, next) {
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
               WHERE ug.user_id = u.id AND gp.name = 'Feldgendarmerie') > 0 AS isFeldgendarmerie,
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
-              WHERE ug.user_id = u.id AND gp.name = 'Sanitaets') > 0 AS isSanitaets,
+              WHERE ug.user_id = u.id AND gp.name = 'Sanitat') > 0 AS isSanitaets,
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
               WHERE ug.user_id = u.id AND gp.name = 'Etat-Major') > 0 AS isEtatMajor
       FROM users u

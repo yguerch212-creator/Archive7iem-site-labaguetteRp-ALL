@@ -260,7 +260,7 @@ function hasPermission(resolved, salon) {
 
 /**
  * Check if user has specific roles (for combined requirements)
- * e.g., requiresRoles(['Sanitaets', 'Sous-officier']) = must have BOTH
+ * e.g., requiresRoles(['Sanitat', 'Sous-officier']) = must have BOTH
  */
 function hasAllRoles(resolved, requiredRoleNames) {
   if (resolved.global.administrator) return true

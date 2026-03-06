@@ -36,7 +36,7 @@ export default function Bibliotheque() {
       setGroups([
         { id: 1, name: 'Administration' }, { id: 2, name: 'Administratif' },
         { id: 3, name: 'Officier' }, { id: 4, name: 'Sous-officier' },
-        { id: 5, name: 'Feldgendarmerie' }, { id: 6, name: 'Sanitaets' },
+        { id: 5, name: 'Feldgendarmerie' }, { id: 6, name: 'Sanitat' },
         { id: 7, name: 'Etat-Major' }
       ])
     })

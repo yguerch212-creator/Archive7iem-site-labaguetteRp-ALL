@@ -8,7 +8,7 @@ import api from '../../api/client'
 const ROLE_ICONS = {
   'Administration': '👑', 'Etat-Major': '⭐', 'Officier': '🎖️',
   'Administratif': '📋', 'Feldgendarmerie': '🛡️', 'Sous-officier': '🪖',
-  'Sanitaets': '🏥', 'Militaire du rang': '👤', 'Invite': '👁️',
+  'Sanitat': '🏥', 'Militaire du rang': '👤', 'Invite': '👁️',
   'Officier Referent': '🔗',
 }
 // Kommandeur icons auto-generated
