@@ -125,6 +125,9 @@ export default function AdminUsers() {
   const [expandedSalons, setExpandedSalons] = useState({})
   const [regTab, setRegTab] = useState('effectifs')
   const [pwdRequests, setPwdRequests] = useState([])
+  const [requirements, setRequirements] = useState({}) // { salon: [{id, role_id, role_name}] }
+  const [reqSalon, setReqSalon] = useState('')
+  const [reqRoles, setReqRoles] = useState([]) // selected role ids for new requirement
 
   useEffect(() => { fetchAll() }, [])
 
@@ -154,6 +157,12 @@ export default function AdminUsers() {
         if (regRes.data.success) setRegimentEffectifs(regRes.data.data)
         setTransfers(trRes.data.data || [])
         setDismissals(diRes.data.data || [])
+      } catch {}
+
+      // Fetch requirements
+      try {
+        const reqRes = await api.get('/roles/requirements/list')
+        if (reqRes.data.success) setRequirements(reqRes.data.data)
       } catch {}
 
       // Fetch pwd requests
@@ -656,6 +665,71 @@ export default function AdminUsers() {
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ═══════════ REQUIREMENTS (combined permissions) inside roles tab ═══════════ */}
+        {tab === 'roles' && (
+          <div className="paper-card" style={{ marginTop: 'var(--space-lg)', padding: 'var(--space-lg)' }}>
+            <h3 style={{ fontSize: '1rem', marginBottom: 'var(--space-md)' }}>🔗 Permissions combinées <span style={{ fontWeight: 400, fontSize: '0.75rem', color: 'var(--text-muted)' }}>— Exiger plusieurs rôles pour accéder à un salon</span></h3>
+            
+            {/* Existing requirements */}
+            {Object.keys(requirements).length > 0 ? Object.entries(requirements).map(([salon, reqs]) => (
+              <div key={salon} style={{ marginBottom: 'var(--space-sm)', padding: '6px 10px', background: 'rgba(45,74,52,0.04)', borderRadius: 'var(--border-radius)', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, minWidth: 180 }}>{SALON_SHORT[salon] || salon}</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>requiert</span>
+                {reqs.map(r => (
+                  <span key={r.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 8px', borderRadius: 8, background: `${r.role_color}20`, color: r.role_color, fontWeight: 600, fontSize: '0.7rem' }}>
+                    {ROLE_ICONS[r.role_name] || '🔹'} {r.role_name}
+                    <button onClick={async () => {
+                      await api.delete(`/roles/requirements/${r.id}`)
+                      fetchAll()
+                    }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8B0000', fontSize: '0.7rem', padding: 0, marginLeft: 2 }}>✕</button>
+                  </span>
+                ))}
+              </div>
+            )) : <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Aucune permission combinée configurée</p>}
+
+            {/* Add new requirement */}
+            <div style={{ marginTop: 'var(--space-md)', padding: '10px', background: 'rgba(201,168,76,0.08)', borderRadius: 'var(--border-radius)', border: '1px solid rgba(201,168,76,0.3)' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: 6 }}>➕ Ajouter une exigence</div>
+              <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                <div>
+                  <label style={{ fontSize: '0.7rem', display: 'block', marginBottom: 2 }}>Salon</label>
+                  <select className="form-input" style={{ fontSize: '0.75rem', padding: '4px 6px', minWidth: 200 }} value={reqSalon} onChange={e => setReqSalon(e.target.value)}>
+                    <option value="">— Choisir —</option>
+                    {Object.entries(SALON_GROUPS).map(([group, salons]) => (
+                      <optgroup key={group} label={group}>
+                        {salons.map(s => <option key={s} value={s}>{SALON_SHORT[s] || s}</option>)}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.7rem', display: 'block', marginBottom: 2 }}>Rôles requis (cocher tous)</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    {roles.filter(r => !r.name.startsWith('Kommandeur') && r.name !== 'Administration' && r.name !== 'Invite').map(r => (
+                      <label key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: '0.7rem', cursor: 'pointer', padding: '2px 6px', borderRadius: 6, background: reqRoles.includes(r.id) ? `${r.color || '#8B4513'}20` : 'transparent', border: `1px solid ${reqRoles.includes(r.id) ? r.color || '#8B4513' : 'var(--border-color)'}` }}>
+                        <input type="checkbox" checked={reqRoles.includes(r.id)} onChange={() => setReqRoles(prev => prev.includes(r.id) ? prev.filter(x => x !== r.id) : [...prev, r.id])} style={{ width: 12, height: 12 }} />
+                        {ROLE_ICONS[r.name] || '🔹'} {r.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <button disabled={!reqSalon || reqRoles.length < 2} onClick={async () => {
+                  for (const roleId of reqRoles) {
+                    await api.post('/roles/requirements', { salon: reqSalon, role_id: roleId })
+                  }
+                  setReqSalon(''); setReqRoles([]); fetchAll()
+                  flash('success', 'Exigence ajoutée')
+                }} style={{ padding: '4px 12px', fontSize: '0.75rem', background: reqSalon && reqRoles.length >= 2 ? '#4a7c3f' : '#ccc', color: '#fff', border: 'none', borderRadius: 6, cursor: reqSalon && reqRoles.length >= 2 ? 'pointer' : 'default' }}>
+                  Ajouter
+                </button>
+              </div>
+              <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 4, marginBottom: 0 }}>
+                L'utilisateur devra avoir <strong>TOUS</strong> les rôles cochés pour accéder à ce salon. Min 2 rôles.
+              </p>
+            </div>
           </div>
         )}
 

@@ -266,4 +266,57 @@ router.get('/me/permissions', auth, async (req, res) => {
   }
 })
 
+// ═══════════ SALON ROLE REQUIREMENTS (combined/additive permissions) ═══════════
+
+// GET /api/roles/requirements — List all salon requirements
+router.get('/requirements/list', auth, async (req, res) => {
+  try {
+    const rows = await query(`
+      SELECT sr.id, sr.salon, sr.role_id, r.name AS role_name, r.color AS role_color
+      FROM salon_role_requirements sr
+      JOIN roles r ON r.id = sr.role_id
+      ORDER BY sr.salon, r.level
+    `)
+    // Group by salon
+    const grouped = {}
+    for (const row of rows) {
+      if (!grouped[row.salon]) grouped[row.salon] = []
+      grouped[row.salon].push({ id: row.id, role_id: row.role_id, role_name: row.role_name, role_color: row.role_color })
+    }
+    res.json({ success: true, data: grouped })
+  } catch (err) {
+    console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' })
+  }
+})
+
+// POST /api/roles/requirements — Add a requirement
+router.post('/requirements', auth, async (req, res) => {
+  try {
+    const userPerms = await resolvePermissions(req.user.id)
+    if (!userPerms.global.administrator && !userPerms.global.manage_roles) {
+      return res.status(403).json({ success: false, message: 'Permission refusée' })
+    }
+    const { salon, role_id } = req.body
+    if (!salon || !role_id) return res.status(400).json({ success: false, message: 'salon et role_id requis' })
+    await query('INSERT IGNORE INTO salon_role_requirements (salon, role_id, created_by) VALUES (?, ?, ?)', [salon, role_id, req.user.id])
+    res.json({ success: true, message: 'Exigence ajoutée' })
+  } catch (err) {
+    console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' })
+  }
+})
+
+// DELETE /api/roles/requirements/:id — Remove a requirement
+router.delete('/requirements/:id', auth, async (req, res) => {
+  try {
+    const userPerms = await resolvePermissions(req.user.id)
+    if (!userPerms.global.administrator && !userPerms.global.manage_roles) {
+      return res.status(403).json({ success: false, message: 'Permission refusée' })
+    }
+    await query('DELETE FROM salon_role_requirements WHERE id = ?', [req.params.id])
+    res.json({ success: true, message: 'Exigence supprimée' })
+  } catch (err) {
+    console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' })
+  }
+})
+
 module.exports = router
