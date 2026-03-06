@@ -56,7 +56,7 @@ router.get('/', optionalAuth, async (req, res) => {
         r.affaire_id, r.pris_par_nom, r.pris_at
       FROM rapports r
       LEFT JOIN effectifs e ON e.id = r.auteur_id
-      LEFT JOIN unites u ON u.id = e.unite_id
+      LEFT JOIN unites u ON u.id = COALESCE(e.unite_id, r.unite_id)
       ${where}
       ORDER BY r.created_at DESC
     `)
