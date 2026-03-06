@@ -4,6 +4,7 @@ const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
 const { optionalAuth } = require('../middleware/auth')
 const recenseur = require('../middleware/recenseur')
+const { checkPermission } = require('../utils/permissions')
 
 // GET /api/medical — Toutes les visites
 router.get('/', optionalAuth, async (req, res) => {
@@ -64,14 +65,9 @@ router.get('/:id', optionalAuth, async (req, res) => {
   }
 })
 
-// POST /api/medical — Créer une visite (recenseur/admin + Sanitäts)
-router.post('/', auth, async (req, res) => {
+// POST /api/medical — Créer une visite (checkPermission enforces combined roles)
+router.post('/', auth, checkPermission('medical.visites.create'), async (req, res) => {
   try {
-    // Admin, recenseur, or Sanitäts (916S) can create
-    const isSanitats = req.user.unite_code === '916S' || req.user.unite_nom?.includes('Sanit')
-    if (!req.user.isAdmin && !req.user.isRecenseur && !isSanitats) {
-      return res.status(403).json({ success: false, message: 'Accès réservé — Sanitäts, recenseurs ou administrateurs' })
-    }
 
     const { effectif_id, date_visite, medecin, diagnostic, aptitude, restrictions, notes_confidentielles,
       poids, imc, groupe_sanguin, allergenes, antecedents_medicaux, antecedents_psy,
@@ -107,7 +103,7 @@ router.post('/', auth, async (req, res) => {
 })
 
 // PUT /api/medical/:id
-router.put('/:id', auth, recenseur, async (req, res) => {
+router.put('/:id', auth, checkPermission('medical.visites.edit'), async (req, res) => {
   try {
     const { date_visite, medecin, diagnostic, aptitude, restrictions, notes_confidentielles } = req.body
     await pool.execute(
@@ -120,10 +116,9 @@ router.put('/:id', auth, recenseur, async (req, res) => {
   }
 })
 
-// DELETE /api/medical/:id (admin only)
-router.delete('/:id', auth, async (req, res) => {
+// DELETE /api/medical/:id
+router.delete('/:id', auth, checkPermission('medical.visites.delete'), async (req, res) => {
   try {
-    if (!req.user.isAdmin) return res.status(403).json({ success: false, message: 'Admin uniquement' })
     await pool.execute('DELETE FROM visites_medicales WHERE id = ?', [req.params.id])
     res.json({ success: true })
   } catch (err) {
@@ -131,13 +126,8 @@ router.delete('/:id', auth, async (req, res) => {
   }
 })
 
-// PUT /api/medical/:id/valider — validate visite (officier sanitäts or admin)
-router.put('/:id/valider', auth, async (req, res) => {
-  // Only officier Sanitäts or admin can validate
-  const canValidateMedical = (req.user.isSanitaets && req.user.isOfficier) || req.user.isAdmin
-  if (!canValidateMedical) {
-    return res.status(403).json({ success: false, message: 'Seul un officier Sanitäts peut valider' })
-  }
+// PUT /api/medical/:id/valider — validate visite
+router.put('/:id/valider', auth, checkPermission('medical.visites.validate'), async (req, res) => {
   const { signature_data } = req.body
   try {
     await pool.execute(
@@ -159,10 +149,7 @@ router.put('/:id/valider', auth, async (req, res) => {
 })
 
 // GET /api/medical/pending — list unvalidated visites
-router.get('/pending/list', auth, async (req, res) => {
-  if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isSanitaets) {
-    return res.status(403).json({ success: false, message: 'Non autorisé' })
-  }
+router.get('/pending/list', auth, checkPermission('medical.visites'), async (req, res) => {
   try {
     const [rows] = await pool.execute(`
       SELECT v.id, v.date_visite, v.diagnostic, v.aptitude, v.created_at,
@@ -192,15 +179,10 @@ router.get('/my-signature', auth, async (req, res) => {
 })
 
 // PUT /api/medical/:id/sign — Sign a visite médicale
-router.put('/:id/sign', auth, async (req, res) => {
+router.put('/:id/sign', auth, checkPermission('medical.visites.sign'), async (req, res) => {
   try {
     const { signature_data } = req.body
     if (!signature_data) return res.status(400).json({ success: false, message: 'Signature requise' })
-
-    // Only Sanitäts officier or admin
-    if (!req.user.isSanitaets && !req.user.isOfficier && !req.user.isAdmin) {
-      return res.status(403).json({ success: false, message: 'Seul un médecin ou officier peut signer' })
-    }
 
     await pool.execute('UPDATE visites_medicales SET signature_medecin = ? WHERE id = ?', [signature_data, req.params.id])
 

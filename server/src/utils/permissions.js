@@ -267,8 +267,31 @@ function hasAllRoles(resolved, requiredRoleNames) {
   return requiredRoleNames.every(name => resolved.roleNames.includes(name))
 }
 
+// Cache for salon requirements (reload every 60s)
+let _reqCache = null, _reqCacheTime = 0
+async function getSalonRequirements() {
+  if (_reqCache && Date.now() - _reqCacheTime < 60000) return _reqCache
+  const rows = await query(`
+    SELECT sr.salon, r.name AS role_name
+    FROM salon_role_requirements sr
+    JOIN roles r ON r.id = sr.role_id
+    ORDER BY sr.salon
+  `)
+  const grouped = {}
+  for (const row of rows) {
+    if (!grouped[row.salon]) grouped[row.salon] = []
+    grouped[row.salon].push(row.role_name)
+  }
+  _reqCache = grouped
+  _reqCacheTime = Date.now()
+  return grouped
+}
+
 /**
- * Middleware factory
+ * Middleware factory — checks:
+ * 1. Admin bypass
+ * 2. Salon permission (from role_salon_permissions)
+ * 3. Combined role requirements (from salon_role_requirements)
  */
 function checkPermission(salon) {
   return async (req, res, next) => {
@@ -278,11 +301,25 @@ function checkPermission(salon) {
       }
       if (req.userPermissions.global.administrator) return next()
       
-      // Check if salon permission exists
+      // Check if salon permission exists in user's roles
       const perms = req.userPermissions.salons[salon]
-      if (perms && Object.values(perms).some(v => v === 'allow')) return next()
+      if (!perms || !Object.values(perms).some(v => v === 'allow')) {
+        return res.status(403).json({ success: false, message: 'Permission insuffisante' })
+      }
+
+      // Check combined role requirements
+      const requirements = await getSalonRequirements()
+      const required = requirements[salon]
+      if (required && required.length > 0) {
+        if (!hasAllRoles(req.userPermissions, required)) {
+          return res.status(403).json({ 
+            success: false, 
+            message: `Cette action nécessite les rôles : ${required.join(' + ')}` 
+          })
+        }
+      }
       
-      return res.status(403).json({ success: false, message: 'Permission insuffisante' })
+      return next()
     } catch (err) {
       console.error('Permission check error:', err)
       return res.status(500).json({ success: false, message: 'Erreur serveur' })
