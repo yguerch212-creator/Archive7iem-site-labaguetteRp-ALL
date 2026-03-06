@@ -454,14 +454,10 @@ export default function AdminUsers() {
                     <td style={td}>{u.grade_nom || '—'}{u.unite_nom && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{u.unite_nom}</div>}</td>
                     <td style={td}>
                       <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-                        {u.is_admin && <RoleBadge name="Admin" color="#e74c3c" />}
-                        {u.is_etatmajor && <RoleBadge name="É-M" color="#f39c12" />}
-                        {u.is_officier && <RoleBadge name="Officier" color="#f39c12" />}
-                        {u.is_recenseur && <RoleBadge name="Administratif" color="#3498db" />}
-                        {u.is_feldgendarmerie && <RoleBadge name="Feld" color="#8e44ad" />}
-                        {u.is_sanitaets && <RoleBadge name="Sanit." color="#1abc9c" />}
-                        {u.is_sousofficier && <RoleBadge name="SO" color="#27ae60" />}
-                        {!u.is_admin && !u.is_recenseur && !u.is_officier && !u.is_sousofficier && !u.is_feldgendarmerie && !u.is_sanitaets && !u.is_etatmajor && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>—</span>}
+                        {u.role_names ? u.role_names.split(', ').map(name => {
+                          const role = roles.find(r => r.name === name)
+                          return <RoleBadge key={name} name={name.replace('Kommandeur Adjoint ', 'Adj ').replace('Kommandeur ', 'Kdr ').replace('Kommandeur der 7e Armee', '🦅 Kdr 7e')} color={role?.color || '#8B4513'} />
+                        }) : <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>—</span>}
                       </div>
                     </td>
                     <td style={td}>

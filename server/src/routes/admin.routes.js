@@ -20,20 +20,21 @@ router.get('/users', auth, privileged, async (req, res) => {
     const users = await query(`
       SELECT u.id, u.nom, u.prenom, u.username, u.role_level, u.must_change_password, u.active,
              g.nom_complet AS grade_nom, un.nom AS unite_nom,
-             (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
-              WHERE ug.user_id = u.id AND gp.name = 'Administration') > 0 AS is_admin,
-             (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
-              WHERE ug.user_id = u.id AND gp.name = 'Administratif') > 0 AS is_recenseur,
-             (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
-              WHERE ug.user_id = u.id AND gp.name = 'Officier') > 0 AS is_officier,
-             (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
-              WHERE ug.user_id = u.id AND gp.name = 'Sous-officier') > 0 AS is_sousofficier,
-             (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
-              WHERE ug.user_id = u.id AND gp.name = 'Feldgendarmerie') > 0 AS is_feldgendarmerie,
-             (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
-              WHERE ug.user_id = u.id AND gp.name = 'Sanitat') > 0 AS is_sanitaets,
-             (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
-              WHERE ug.user_id = u.id AND gp.name = 'Etat-Major') > 0 AS is_etatmajor
+             (SELECT GROUP_CONCAT(r.name SEPARATOR ', ') FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = u.id) AS role_names,
+             (SELECT COUNT(*) FROM user_roles ur JOIN roles r ON r.id = ur.role_id 
+              WHERE ur.user_id = u.id AND r.name = 'Administration') > 0 AS is_admin,
+             (SELECT COUNT(*) FROM user_roles ur JOIN roles r ON r.id = ur.role_id 
+              WHERE ur.user_id = u.id AND r.name = 'Administratif') > 0 AS is_recenseur,
+             (SELECT COUNT(*) FROM user_roles ur JOIN roles r ON r.id = ur.role_id 
+              WHERE ur.user_id = u.id AND r.name = 'Officier') > 0 AS is_officier,
+             (SELECT COUNT(*) FROM user_roles ur JOIN roles r ON r.id = ur.role_id 
+              WHERE ur.user_id = u.id AND r.name = 'Sous-officier') > 0 AS is_sousofficier,
+             (SELECT COUNT(*) FROM user_roles ur JOIN roles r ON r.id = ur.role_id 
+              WHERE ur.user_id = u.id AND r.name = 'Feldgendarmerie') > 0 AS is_feldgendarmerie,
+             (SELECT COUNT(*) FROM user_roles ur JOIN roles r ON r.id = ur.role_id 
+              WHERE ur.user_id = u.id AND r.name = 'Sanitat') > 0 AS is_sanitaets,
+             (SELECT COUNT(*) FROM user_roles ur JOIN roles r ON r.id = ur.role_id 
+              WHERE ur.user_id = u.id AND r.name = 'Etat-Major') > 0 AS is_etatmajor
       FROM users u
       LEFT JOIN grades g ON g.id = u.grade_id
       LEFT JOIN unites un ON un.id = u.unite_id
