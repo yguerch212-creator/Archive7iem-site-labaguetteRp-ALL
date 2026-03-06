@@ -8,7 +8,13 @@ import api from '../../api/client'
 const ROLE_ICONS = {
   'Administration': '👑', 'Etat-Major': '⭐', 'Officier': '🎖️',
   'Administratif': '📋', 'Feldgendarmerie': '🛡️', 'Sous-officier': '🪖',
-  'Sanitaets': '🏥', 'Militaire du rang': '👤', 'Invite': '👁️'
+  'Sanitaets': '🏥', 'Militaire du rang': '👤', 'Invite': '👁️',
+  'Officier Referent': '🔗',
+}
+// Kommandeur icons auto-generated
+for (const code of ['916','130','001','254','919','009','716']) {
+  ROLE_ICONS[`Kommandeur ${code}`] = '⚔️'
+  ROLE_ICONS[`Kommandeur Adjoint ${code}`] = '🗡️'
 }
 
 /* ─── Salon groups for display (grouped by category) ─── */
@@ -36,7 +42,7 @@ const SALON_GROUPS = {
   '📁 Dossiers': ['dossiers', 'dossiers.create', 'dossiers.edit', 'dossiers.delete'],
   '🎗️ Décorations': ['decorations', 'decorations.create', 'decorations.delete'],
   '👔 Habillement': ['habillement', 'habillement.create', 'habillement.validate'],
-  '💰 Solde': ['solde', 'solde.credit', 'solde.debit', 'solde.payday'],
+  '💰 Solde': ['solde'],
   '📖 Bibliothèque': ['bibliotheque', 'bibliotheque.create', 'bibliotheque.delete', 'bibliotheque.permissions'],
   '🏛️ Organigramme': ['organigramme', 'organigramme.edit'],
   '📜 Ordres': ['ordres', 'ordres.create', 'ordres.delete'],
@@ -281,20 +287,6 @@ export default function AdminUsers() {
     try {
       const { data } = await api.delete(`/roles/${selectedRole.id}`)
       if (data.success) { flash('success', 'Rôle supprimé'); setSelectedRole(null); setRoleForm(null); fetchAll() }
-      else flash('error', data.message)
-    } catch (e) { flash('error', e.response?.data?.message || 'Erreur') }
-  }
-
-  const applyDefaultPerms = async (role) => {
-    const defaults = DEFAULT_ROLE_SALONS[role.name]
-    if (!defaults) { flash('error', 'Pas de permissions par défaut pour ce rôle'); return }
-    try {
-      const { data } = await api.put(`/roles/${role.id}`, {
-        name: role.name, color: role.color, level: role.level,
-        permissions_global: role.permissions_global,
-        salon_permissions: defaults
-      })
-      if (data.success) { flash('success', `Permissions par défaut appliquées à ${role.name}`); openRole(role); fetchAll() }
       else flash('error', data.message)
     } catch (e) { flash('error', e.response?.data?.message || 'Erreur') }
   }
@@ -658,9 +650,6 @@ export default function AdminUsers() {
 
                     <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center', flexWrap: 'wrap' }}>
                       <button className="btn btn-primary btn-small" onClick={() => startEditRole(selectedRole)}>✏️ Modifier</button>
-                      {selectedRole.is_system && DEFAULT_ROLE_SALONS[selectedRole.name] && (
-                        <button className="btn btn-secondary btn-small" onClick={() => applyDefaultPerms(selectedRole)}>📋 Appliquer défauts</button>
-                      )}
                       <button className="btn btn-secondary btn-small" onClick={() => setSelectedRole(null)}>Fermer</button>
                     </div>
                   </>
