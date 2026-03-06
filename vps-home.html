@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VPS Dev — Yanis</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f0f23; color: #e0e0e0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+.container { max-width: 700px; width: 90%; }
+h1 { font-size: 2rem; margin-bottom: 0.5rem; color: #fff; }
+h1 span { color: #00d4aa; }
+.subtitle { color: #888; margin-bottom: 2rem; font-size: 0.95rem; }
+.projects { display: flex; flex-direction: column; gap: 1rem; }
+.card { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 12px; padding: 1.5rem; text-decoration: none; color: inherit; transition: all 0.2s; display: block; }
+.card:hover { border-color: #00d4aa; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,212,170,0.1); }
+.card h2 { font-size: 1.1rem; margin-bottom: 0.4rem; color: #fff; }
+.card p { font-size: 0.85rem; color: #999; line-height: 1.5; }
+.card .badge { display: inline-block; font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; margin-top: 0.5rem; font-weight: 600; }
+.badge-live { background: #0a3d2a; color: #00d4aa; }
+.badge-dev { background: #3d2a0a; color: #d4a000; }
+.footer { margin-top: 2rem; text-align: center; color: #555; font-size: 0.8rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🖥️ VPS <span>Dev</span> — Yanis</h1>
+  <p class="subtitle">Environnement de développement • 76.13.43.180</p>
+  
+  <div class="projects">
+    <a href="/login" class="card">
+      <h2>📁 Archives 7e Armeekorps</h2>
+      <p>Plateforme d'archives militaires RP pour le serveur Garry's Mod "Axe | LaBaguetteRP". React + Express + MySQL.</p>
+      <span class="badge badge-live">✅ PRODUCTION — archives-7earmekorps.com</span>
+    </a>
+    
+    <a href="http://76.13.43.180:8080/" class="card">
+      <h2>🌿 ECOES Environnement</h2>
+      <p>Site vitrine de l'entreprise ECOES — services environnementaux au Maroc. Migration depuis WordPress/Nindohost.</p>
+      <span class="badge badge-dev">🔧 DEV — en cours de reprise</span>
+    </a>
+    
+    <a href="https://github.com/yguerch212-creator/Projet_fil_rouge" class="card" target="_blank">
+      <h2>🎮 Projet Fil Rouge</h2>
+      <p>Addon Garry's Mod — RP Construction System. Infrastructure Docker (serveur GMod + MySQL).</p>
+      <span class="badge badge-live">✅ TERMINÉ — Steam Workshop #3664157203</span>
+    </a>
+  </div>
+  
+  <div class="footer">
+    <p>Hébergé sur Hostinger VPS • Ubuntu 24.04 • Projets B3 Cybersécurité + Stage</p>
+  </div>
+</div>
+</body>
+</html>

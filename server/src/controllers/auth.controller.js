@@ -29,6 +29,18 @@ async function login(req, res) {
     if (!user.active) {
       logActivity(req, 'login_blocked', 'user', user.id, `Compte désactivé: ${username}`)
       devLog.logAuth('login', username, false, req.ip, 'account disabled')
+      // Check if dismissed
+      const dismissalInfo = await queryOne('SELECT dismissed_at, dismissal_motif, dismissed_by_name FROM users WHERE id = ?', [user.id])
+      if (dismissalInfo && dismissalInfo.dismissed_at) {
+        return res.status(403).json({
+          success: false,
+          dismissed: true,
+          message: 'Vous avez été relevé de vos fonctions',
+          motif: dismissalInfo.dismissal_motif,
+          date: dismissalInfo.dismissed_at,
+          decided_by: dismissalInfo.dismissed_by_name
+        })
+      }
       return res.status(401).json({ success: false, message: 'Compte désactivé' })
     }
 

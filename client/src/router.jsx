@@ -44,6 +44,8 @@ import AvisRecherche from './pages/sanctions/AvisRecherche'
 import DemandesHabillement from './pages/effectifs/DemandesHabillement'
 import DossierLayout from './pages/dossiers/DossierLayout'
 import AdminStats from './pages/admin/AdminStats'
+import AdminRoles from './pages/admin/AdminRoles'
+import AdminRegiment from './pages/admin/AdminRegiment'
 import Moderation from './pages/admin/Moderation'
 import Calendrier from './pages/calendrier/Calendrier'
 import OrdresList from './pages/ordres/OrdresList'
@@ -141,6 +143,8 @@ function AppRouter() {
       <Route path="/admin/logs" element={<ProtectedRoute><AdminLogs /></ProtectedRoute>} />
       <Route path="/admin/stats" element={<ProtectedRoute><AdminStats /></ProtectedRoute>} />
       <Route path="/admin/moderation" element={<ProtectedRoute><Moderation /></ProtectedRoute>} />
+      <Route path="/admin/roles" element={<ProtectedRoute><AdminRoles /></ProtectedRoute>} />
+      <Route path="/admin/regiment" element={<ProtectedRoute><AdminRegiment /></ProtectedRoute>} />
       
       <Route path="/" element={<Navigate to={user && !user.isGuest ? "/dashboard" : "/login"} replace />} />
       <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />

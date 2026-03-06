@@ -43,9 +43,20 @@ export function AuthProvider({ children }) {
       
       return { success: true, mustChangePassword: !!mustChangePassword }
     } catch (error) {
+      const data = error.response?.data
+      if (data?.dismissed) {
+        return {
+          success: false,
+          dismissed: true,
+          motif: data.motif,
+          date: data.date,
+          decided_by: data.decided_by,
+          error: data.message
+        }
+      }
       return {
         success: false,
-        error: error.response?.data?.message || 'Erreur de connexion'
+        error: data?.message || 'Erreur de connexion'
       }
     }
   }

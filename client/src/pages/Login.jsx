@@ -12,6 +12,7 @@ export default function Login() {
   const [forgotForm, setForgotForm] = useState({ username: '', discord_id: '', message: '' })
   const [forgotMsg, setForgotMsg] = useState(null)
   const [forgotLoading, setForgotLoading] = useState(false)
+  const [dismissal, setDismissal] = useState(null)
   const { login, loginAsGuest } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -25,6 +26,8 @@ export default function Login() {
     setLoading(false)
     if (result.success) {
       navigate(result.mustChangePassword ? '/change-password' : redirectTo)
+    } else if (result.dismissed) {
+      setDismissal({ motif: result.motif, date: result.date, decided_by: result.decided_by })
     } else {
       setError(result.error)
     }
@@ -44,6 +47,76 @@ export default function Login() {
       setForgotMsg({ type: 'error', text: err.response?.data?.message || 'Erreur lors de l\'envoi' })
     }
     setForgotLoading(false)
+  }
+
+  // Dismissal screen
+  if (dismissal) {
+    return (
+      <div className="login-page">
+        <div style={{
+          background: 'var(--paper-bg)', border: '3px solid #8B0000',
+          borderRadius: 'var(--border-radius)', padding: '40px',
+          maxWidth: 500, width: '90%', position: 'relative',
+          boxShadow: 'var(--shadow-heavy)', fontFamily: "'Courier New', monospace",
+          overflow: 'hidden'
+        }}>
+          {/* RÉVOQUÉ watermark */}
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%) rotate(-35deg)',
+            fontSize: '4.5rem', color: 'rgba(139, 0, 0, 0.10)',
+            fontWeight: 'bold', letterSpacing: '1rem',
+            pointerEvents: 'none', whiteSpace: 'nowrap', userSelect: 'none'
+          }}>RÉVOQUÉ</div>
+
+          <div style={{
+            textAlign: 'center', color: '#8B0000', fontSize: '1.3rem',
+            textTransform: 'uppercase', letterSpacing: '3px',
+            borderBottom: '2px solid #8B0000', paddingBottom: '10px',
+            marginBottom: '20px'
+          }}>
+            ╋ ACCÈS REFUSÉ ╋
+          </div>
+
+          <p style={{ textAlign: 'center', fontSize: '0.9rem', lineHeight: 1.6, margin: '0 0 20px' }}>
+            Vous avez été relevé de vos fonctions<br/>au sein du <strong>7e Armeekorps</strong>.
+          </p>
+
+          <div style={{
+            borderLeft: '3px solid #8B0000', paddingLeft: '15px',
+            margin: '20px 0', fontStyle: 'italic', color: '#5a0000'
+          }}>
+            <div style={{ fontSize: '0.75rem', color: '#8B0000', fontWeight: 700, marginBottom: 4 }}>MOTIF :</div>
+            <div style={{ fontSize: '0.9rem' }}>« {dismissal.motif || 'Non spécifié'} »</div>
+          </div>
+
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '15px 0' }}>
+            {dismissal.date && <div>Date : {new Date(dismissal.date).toLocaleDateString('fr-FR')}</div>}
+            {dismissal.decided_by && <div>Décision de : {dismissal.decided_by}</div>}
+          </div>
+
+          <div style={{ borderTop: '1px solid #8B0000', paddingTop: '15px', marginTop: '20px', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            Si vous contestez cette décision,<br/>adressez-vous à l'État-Major.
+          </div>
+
+          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+            <button className="btn btn-secondary" onClick={() => setDismissal(null)} style={{ fontSize: '0.8rem' }}>
+              ← Retour
+            </button>
+          </div>
+        </div>
+
+        <style>{`
+          .login-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-md);
+          }
+        `}</style>
+      </div>
+    )
   }
 
   return (

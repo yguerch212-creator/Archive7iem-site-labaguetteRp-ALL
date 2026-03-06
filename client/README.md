@@ -44,3 +44,4 @@ src/
 ├── utils/          # Helpers (dates, export PDF/CSV)
 └── router.jsx      # Routes de l'application
 ```
+# Post-build: copy vps-home.html to dist

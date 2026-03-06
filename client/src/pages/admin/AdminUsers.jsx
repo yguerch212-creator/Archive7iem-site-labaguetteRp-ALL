@@ -114,6 +114,8 @@ export default function AdminUsers() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
         <BackButton label="← Tableau de bord" />
         <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+          <Link to="/admin/roles" className="btn btn-secondary btn-small">🔐 Rôles</Link>
+          <Link to="/admin/regiment" className="btn btn-secondary btn-small">🏛️ Régiment</Link>
           <Link to="/admin/logs" className="btn btn-secondary btn-small">📊 Logs</Link>
           <Link to="/admin/stats" className="btn btn-secondary btn-small">📈 Stats</Link>
           <button className="btn btn-primary btn-small" onClick={() => setShowCreate(!showCreate)}>
