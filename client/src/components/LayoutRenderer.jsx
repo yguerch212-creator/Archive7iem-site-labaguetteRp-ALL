@@ -24,26 +24,26 @@ export default function LayoutRenderer({ html, blocks = [], width = 800, minHeig
 
   if (!blocks || blocks.length === 0) return null
 
-  // Auto-calculate height from blocks
-  const autoHeight = Math.max(minHeight, ...blocks.map(b => (b.y || 0) + (b.h || 0) + 40))
+  // Sort blocks by Y position for flow layout (avoids text overlap)
+  const sorted = [...blocks].sort((a, b) => (a.y || 0) - (b.y || 0))
 
   return (
     <div style={{
-      position: 'relative', width, minHeight: autoHeight, margin: '0 auto',
+      position: 'relative', width, minHeight, margin: '0 auto',
+      padding: '20px 0',
       background: 'var(--paper-bg, #faf6ef)',
       fontFamily: "'IBM Plex Mono', monospace",
       backgroundImage: 'repeating-linear-gradient(transparent, transparent 28px, rgba(180,170,140,0.1) 28px, rgba(180,170,140,0.1) 29px)',
     }}>
-      {blocks.map(block => (
+      {sorted.map(block => (
         <div
           key={block.id}
           style={{
-            position: 'absolute',
-            left: block.x,
-            top: block.y,
+            position: 'relative',
+            marginLeft: block.x || 0,
             width: block.w,
             minHeight: block.h,
-            overflow: 'visible',
+            marginBottom: 4,
             ...(block.style || {}),
           }}
         >
