@@ -8,79 +8,85 @@ import api from '../../api/client'
 const ROLE_ICONS = {
   'Administration': '👑', 'Etat-Major': '⭐', 'Officier': '🎖️',
   'Administratif': '📋', 'Feldgendarmerie': '🛡️', 'Sous-officier': '🪖',
-  'Sanitaets': '🏥', 'Homme du rang': '👤'
+  'Sanitaets': '🏥', 'Militaire du rang': '👤', 'Invite': '👁️'
 }
 
-const SALON_LABELS = {
-  effectifs: '👥 Effectifs', rapports: '📄 Rapports', documentation: '📚 Documentation',
-  journal: '📰 Journal', telegrammes: '📨 Télégrammes', medical: '🏥 Médical',
-  sanctions: '⚖️ Sanctions', front: '🗺️ Front', pds: '⏰ PDS',
-  commandement: '🎖️ Commandement', bibliotheque: '📖 Bibliothèque', organigramme: '🏛️ Organigramme',
-  admin: '⚙️ Administration', dossiers: '📁 Dossiers', habillement: '👔 Habillement',
-  solde: '💰 Solde', interdits: '🚫 Interdits', archives: '🗄️ Archives'
+/* ─── Salon groups for display (grouped by category) ─── */
+const SALON_GROUPS = {
+  '👥 Effectifs': ['effectifs', 'effectifs.create', 'effectifs.edit', 'effectifs.photo', 'effectifs.delete', 'effectifs.reserve'],
+  '📖 Soldbuch': ['soldbuch', 'soldbuch.edit', 'soldbuch.details', 'soldbuch.sign', 'soldbuch.stamp'],
+  '📜 Attestations': ['attestations', 'attestations.create', 'attestations.validate', 'attestations.delete'],
+  '📄 Rapports': ['rapports', 'rapports.create', 'rapports.edit', 'rapports.publish', 'rapports.validate', 'rapports.sign', 'rapports.delete'],
+  '📚 Documentation': ['documentation', 'documentation.create', 'documentation.edit', 'documentation.approve', 'documentation.delete'],
+  '📰 Journal': ['journal', 'journal.create', 'journal.edit', 'journal.validate', 'journal.delete'],
+  '📨 Télégrammes': ['telegrammes', 'telegrammes.create', 'telegrammes.archive', 'telegrammes.delete'],
+  '🏥 Visites médicales': ['medical.visites', 'medical.visites.create', 'medical.visites.edit', 'medical.visites.validate', 'medical.visites.sign', 'medical.visites.delete'],
+  '💊 Soins': ['medical.soins', 'medical.soins.create'],
+  '🏨 Hospitalisations': ['medical.hospitalisations', 'medical.hospitalisations.create', 'medical.hospitalisations.delete'],
+  '💉 Vaccinations': ['medical.vaccinations', 'medical.vaccinations.create', 'medical.vaccinations.delete'],
+  '🩹 Blessures': ['medical.blessures', 'medical.blessures.create', 'medical.blessures.delete'],
+  '📊 Médical (autre)': ['medical.description', 'medical.stats', 'medical.reconcile'],
+  '⚖️ Sanctions': ['sanctions', 'sanctions.create', 'sanctions.edit', 'sanctions.delete'],
+  '📋 Affaires': ['affaires', 'affaires.create', 'affaires.edit', 'affaires.pieces', 'affaires.sign', 'affaires.delete'],
+  '🔍 Avis de recherche': ['avis_recherche', 'avis_recherche.create', 'avis_recherche.delete'],
+  '🚫 Interdits': ['interdits', 'interdits.create', 'interdits.lever', 'interdits.delete'],
+  '⏰ PDS': ['pds', 'pds.edit', 'pds.permissions', 'pds.delete'],
+  '🎖️ Commandement': ['commandement', 'commandement.notes'],
+  '🗺️ Front': ['front', 'front.create', 'front.delete'],
+  '📁 Dossiers': ['dossiers', 'dossiers.create', 'dossiers.edit', 'dossiers.delete'],
+  '🎗️ Décorations': ['decorations', 'decorations.create', 'decorations.delete'],
+  '👔 Habillement': ['habillement', 'habillement.create', 'habillement.validate'],
+  '💰 Solde': ['solde', 'solde.credit', 'solde.debit', 'solde.payday'],
+  '📖 Bibliothèque': ['bibliotheque', 'bibliotheque.create', 'bibliotheque.delete', 'bibliotheque.permissions'],
+  '🏛️ Organigramme': ['organigramme', 'organigramme.edit'],
+  '📜 Ordres': ['ordres', 'ordres.create', 'ordres.delete'],
+  '📅 Calendrier': ['calendrier', 'calendrier.create', 'calendrier.delete'],
+  '🖼️ Galerie': ['galerie', 'galerie.create', 'galerie.approve', 'galerie.delete'],
+  '⚙️ Administration': ['admin.users', 'admin.logs', 'admin.roles', 'admin.regiment', 'admin.moderation', 'admin.stats'],
+  '🗄️ Autre': ['archives', 'search'],
 }
 
-const PERM_LABELS = {
-  view: 'Voir', create: 'Créer', edit: 'Modifier', edit_others: 'Mod. autres',
-  delete: 'Supprimer', delete_others: 'Supp. autres', validate: 'Valider', sign: 'Signer', export: 'Exporter'
+// Human-readable labels for individual salons
+const SALON_SHORT = {
+  'effectifs': 'Voir', 'effectifs.create': 'Créer', 'effectifs.edit': 'Modifier', 'effectifs.photo': 'Photo', 'effectifs.delete': 'Supprimer', 'effectifs.reserve': 'Réserve',
+  'soldbuch': 'Voir', 'soldbuch.edit': 'Modifier', 'soldbuch.details': 'Détails', 'soldbuch.sign': 'Signer', 'soldbuch.stamp': 'Tampon',
+  'attestations': 'Voir', 'attestations.create': 'Créer', 'attestations.validate': 'Valider', 'attestations.delete': 'Supprimer',
+  'rapports': 'Voir', 'rapports.create': 'Créer', 'rapports.edit': 'Modifier', 'rapports.publish': 'Publier', 'rapports.validate': 'Valider', 'rapports.sign': 'Signer', 'rapports.delete': 'Supprimer',
+  'documentation': 'Voir', 'documentation.create': 'Créer', 'documentation.edit': 'Modifier', 'documentation.approve': 'Approuver', 'documentation.delete': 'Supprimer',
+  'journal': 'Voir', 'journal.create': 'Créer', 'journal.edit': 'Modifier', 'journal.validate': 'Valider', 'journal.delete': 'Supprimer',
+  'telegrammes': 'Voir', 'telegrammes.create': 'Créer', 'telegrammes.archive': 'Archiver', 'telegrammes.delete': 'Supprimer',
+  'medical.visites': 'Voir', 'medical.visites.create': 'Créer', 'medical.visites.edit': 'Modifier', 'medical.visites.validate': 'Valider', 'medical.visites.sign': 'Signer', 'medical.visites.delete': 'Supprimer',
+  'medical.soins': 'Voir', 'medical.soins.create': 'Créer',
+  'medical.hospitalisations': 'Voir', 'medical.hospitalisations.create': 'Créer', 'medical.hospitalisations.delete': 'Supprimer',
+  'medical.vaccinations': 'Voir', 'medical.vaccinations.create': 'Créer', 'medical.vaccinations.delete': 'Supprimer',
+  'medical.blessures': 'Voir', 'medical.blessures.create': 'Créer', 'medical.blessures.delete': 'Supprimer',
+  'medical.description': 'Description', 'medical.stats': 'Stats', 'medical.reconcile': 'Réconcilier',
+  'sanctions': 'Voir', 'sanctions.create': 'Créer', 'sanctions.edit': 'Modifier', 'sanctions.delete': 'Supprimer',
+  'affaires': 'Voir', 'affaires.create': 'Créer', 'affaires.edit': 'Modifier', 'affaires.pieces': 'Pièces', 'affaires.sign': 'Signer', 'affaires.delete': 'Supprimer',
+  'avis_recherche': 'Voir', 'avis_recherche.create': 'Créer', 'avis_recherche.delete': 'Supprimer',
+  'interdits': 'Voir', 'interdits.create': 'Créer', 'interdits.lever': 'Lever', 'interdits.delete': 'Supprimer',
+  'pds': 'Voir', 'pds.edit': 'Saisir', 'pds.permissions': 'Permissions', 'pds.delete': 'Supprimer',
+  'commandement': 'Dashboard', 'commandement.notes': 'Notes',
+  'front': 'Voir', 'front.create': 'Créer', 'front.delete': 'Supprimer',
+  'dossiers': 'Voir', 'dossiers.create': 'Créer', 'dossiers.edit': 'Modifier', 'dossiers.delete': 'Supprimer',
+  'decorations': 'Voir', 'decorations.create': 'Attribuer', 'decorations.delete': 'Retirer',
+  'habillement': 'Voir', 'habillement.create': 'Demander', 'habillement.validate': 'Valider',
+  'solde': 'Voir', 'solde.credit': 'Créditer', 'solde.debit': 'Débiter', 'solde.payday': 'Paie auto',
+  'bibliotheque': 'Voir', 'bibliotheque.create': 'Ajouter', 'bibliotheque.delete': 'Supprimer', 'bibliotheque.permissions': 'Permissions',
+  'organigramme': 'Voir', 'organigramme.edit': 'Modifier',
+  'ordres': 'Voir', 'ordres.create': 'Créer', 'ordres.delete': 'Supprimer',
+  'calendrier': 'Voir', 'calendrier.create': 'Créer', 'calendrier.delete': 'Supprimer',
+  'galerie': 'Voir', 'galerie.create': 'Uploader', 'galerie.approve': 'Approuver', 'galerie.delete': 'Supprimer',
+  'admin.users': 'Utilisateurs', 'admin.logs': 'Logs', 'admin.roles': 'Rôles', 'admin.regiment': 'Régiment', 'admin.moderation': 'Modération', 'admin.stats': 'Stats',
+  'archives': 'Archives', 'search': 'Recherche',
 }
 
 const GLOBAL_PERM_LABELS = {
-  manage_roles: 'Gérer les rôles', manage_regiment_effectifs: 'Gérer effectifs (régiment)',
-  manage_all_effectifs: 'Gérer tous les effectifs', view_logs: 'Voir les logs',
-  manage_users: 'Gérer les utilisateurs', moderate: 'Modérer', manage_notifications: 'Notifications',
-  bypass_validation: 'Contourner validations', administrator: '👑 Administrateur'
-}
-
-/* ─── Default salon permissions per system role ─── */
-const DEFAULT_ROLE_SALONS = {
-  'Administration': {}, // administrator bypass
-  'Etat-Major': {
-    effectifs: { view: 'allow', create: 'allow', edit: 'allow', edit_others: 'allow', delete: 'allow', validate: 'allow', sign: 'allow', export: 'allow' },
-    rapports: { view: 'allow', create: 'allow', edit: 'allow', validate: 'allow', sign: 'allow', export: 'allow' },
-    commandement: { view: 'allow', create: 'allow', edit: 'allow', validate: 'allow' },
-    admin: { view: 'allow' }
-  },
-  'Officier': {
-    effectifs: { view: 'allow', create: 'allow', edit: 'allow', export: 'allow' },
-    rapports: { view: 'allow', create: 'allow', edit: 'allow', validate: 'allow', sign: 'allow', export: 'allow' },
-    documentation: { view: 'allow', create: 'allow', edit: 'allow' },
-    commandement: { view: 'allow' },
-    interdits: { view: 'allow', create: 'allow' }
-  },
-  'Administratif': {
-    effectifs: { view: 'allow', create: 'allow', edit: 'allow', edit_others: 'allow', export: 'allow' },
-    rapports: { view: 'allow', create: 'allow', edit: 'allow', export: 'allow' },
-    documentation: { view: 'allow', create: 'allow', edit: 'allow' },
-    dossiers: { view: 'allow', create: 'allow', edit: 'allow' },
-    habillement: { view: 'allow', create: 'allow', validate: 'allow' },
-    admin: { view: 'allow' }
-  },
-  'Feldgendarmerie': {
-    sanctions: { view: 'allow', create: 'allow', edit: 'allow', validate: 'allow' },
-    interdits: { view: 'allow', create: 'allow', edit: 'allow' },
-    rapports: { view: 'allow', create: 'allow', edit: 'allow' },
-    effectifs: { view: 'allow' }
-  },
-  'Sous-officier': {
-    effectifs: { view: 'allow' },
-    rapports: { view: 'allow', create: 'allow', edit: 'allow' },
-    pds: { view: 'allow', edit: 'allow' },
-    documentation: { view: 'allow' },
-    telegrammes: { view: 'allow', create: 'allow' }
-  },
-  'Sanitaets': {
-    medical: { view: 'allow', create: 'allow', edit: 'allow', edit_others: 'allow', validate: 'allow', export: 'allow' },
-    effectifs: { view: 'allow' },
-    rapports: { view: 'allow', create: 'allow' }
-  },
-  'Homme du rang': {
-    effectifs: { view: 'allow' },
-    rapports: { view: 'allow' },
-    pds: { view: 'allow', edit: 'allow' },
-    documentation: { view: 'allow' },
-    telegrammes: { view: 'allow' }
-  }
+  administrator: '👑 Administrateur',
+  manage_roles: 'Gérer les rôles',
+  manage_regiment_effectifs: 'Gérer effectifs (régiment)',
+  manage_all_effectifs: 'Gérer tous les effectifs',
+  bypass_validation: 'Contourner validations',
 }
 
 export default function AdminUsers() {
@@ -525,30 +531,66 @@ export default function AdminUsers() {
                       </div>
                     </div>
 
-                    {/* Salon perms */}
+                    {/* Salon perms - grouped */}
                     <div style={{ marginBottom: 'var(--space-md)' }}>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: 6 }}>📋 Permissions par salon <span style={{ fontWeight: 400, fontSize: '0.7rem', color: 'var(--text-muted)' }}>— Cliquer pour dérouler, cycler ✅/❌/➖</span></div>
-                      <div style={{ maxHeight: 350, overflow: 'auto', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius)' }}>
-                        {salonsData?.salons?.map(salon => (
-                          <div key={salon}>
-                            <div onClick={() => setExpandedSalons(p => ({ ...p, [salon]: !p[salon] }))}
-                              style={{ padding: '6px 10px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600, borderBottom: '1px solid var(--border-color)', background: expandedSalons[salon] ? 'rgba(45,74,52,0.06)' : '' }}>
-                              <span>{SALON_LABELS[salon] || salon}</span>
-                              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
-                                {Object.keys(roleForm.salon_permissions[salon] || {}).length > 0 ? `${Object.keys(roleForm.salon_permissions[salon]).length} override(s)` : '—'}
-                                {' '}{expandedSalons[salon] ? '▲' : '▼'}
-                              </span>
-                            </div>
-                            {expandedSalons[salon] && (
-                              <div style={{ padding: '6px 10px', display: 'flex', flexWrap: 'wrap', gap: 4, borderBottom: '1px solid var(--border-color)', background: 'rgba(45,74,52,0.03)' }}>
-                                {Object.entries(PERM_LABELS).map(([perm, label]) => {
-                                  const state = roleForm.salon_permissions[salon]?.[perm] || 'inherit'
-                                  return <TriStateChip key={perm} label={label} state={state} onClick={() => cycleSalonPerm(salon, perm)} />
-                                })}
+                      <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: 6 }}>📋 Permissions par section <span style={{ fontWeight: 400, fontSize: '0.7rem', color: 'var(--text-muted)' }}>— Cliquer pour dérouler, cliquer un salon pour cycler ✅/❌</span></div>
+                      <div style={{ maxHeight: 400, overflow: 'auto', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius)' }}>
+                        {Object.entries(SALON_GROUPS).map(([groupName, salons]) => {
+                          const activeCount = salons.filter(s => roleForm.salon_permissions[s] && Object.values(roleForm.salon_permissions[s]).some(v => v === 'allow')).length
+                          return (
+                            <div key={groupName}>
+                              <div onClick={() => setExpandedSalons(p => ({ ...p, [groupName]: !p[groupName] }))}
+                                style={{ padding: '6px 10px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600, borderBottom: '1px solid var(--border-color)', background: expandedSalons[groupName] ? 'rgba(45,74,52,0.06)' : '' }}>
+                                <span>{groupName}</span>
+                                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                                  {activeCount > 0 ? <span style={{ color: '#4a7c3f' }}>{activeCount}/{salons.length}</span> : '—'}
+                                  {' '}{expandedSalons[groupName] ? '▲' : '▼'}
+                                </span>
                               </div>
-                            )}
-                          </div>
-                        ))}
+                              {expandedSalons[groupName] && (
+                                <div style={{ padding: '6px 10px', display: 'flex', flexWrap: 'wrap', gap: 4, borderBottom: '1px solid var(--border-color)', background: 'rgba(45,74,52,0.03)' }}>
+                                  {/* Tout autoriser / Tout refuser shortcuts */}
+                                  <button onClick={() => {
+                                    setRoleForm(prev => {
+                                      const sp = { ...prev.salon_permissions }
+                                      salons.forEach(s => { sp[s] = { view: 'allow' } })
+                                      return { ...prev, salon_permissions: sp }
+                                    })
+                                  }} style={{ fontSize: '0.6rem', padding: '1px 6px', background: '#4a7c3f', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}>✅ Tout</button>
+                                  <button onClick={() => {
+                                    setRoleForm(prev => {
+                                      const sp = { ...prev.salon_permissions }
+                                      salons.forEach(s => { delete sp[s] })
+                                      return { ...prev, salon_permissions: sp }
+                                    })
+                                  }} style={{ fontSize: '0.6rem', padding: '1px 6px', background: '#8B0000', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}>❌ Rien</button>
+                                  <span style={{ width: '100%', height: 0 }} />
+                                  {salons.map(salon => {
+                                    const isAllowed = roleForm.salon_permissions[salon] && Object.values(roleForm.salon_permissions[salon]).some(v => v === 'allow')
+                                    return (
+                                      <button key={salon} onClick={() => {
+                                        setRoleForm(prev => {
+                                          const sp = { ...prev.salon_permissions }
+                                          if (isAllowed) { delete sp[salon] }
+                                          else { sp[salon] = { view: 'allow' } }
+                                          return { ...prev, salon_permissions: sp }
+                                        })
+                                      }} style={{
+                                        padding: '3px 8px', fontSize: '0.68rem', borderRadius: 8, cursor: 'pointer',
+                                        background: isAllowed ? '#4a7c3f' : 'transparent',
+                                        color: isAllowed ? '#fff' : 'var(--text-muted)',
+                                        border: `1px solid ${isAllowed ? '#4a7c3f' : 'var(--border-color)'}`,
+                                        fontFamily: 'var(--font-mono)', transition: 'all 0.1s'
+                                      }}>
+                                        {isAllowed ? '✅' : '○'} {SALON_SHORT[salon] || salon}
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
 
@@ -580,22 +622,24 @@ export default function AdminUsers() {
                       </div>
                     </div>
 
-                    {/* Salon overrides */}
+                    {/* Salon permissions - grouped view */}
                     {Object.keys(selectedRole.salon_permissions || {}).length > 0 && (
                       <div style={{ marginBottom: 'var(--space-md)' }}>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: 4 }}>📋 Overrides par salon</div>
-                        {Object.entries(selectedRole.salon_permissions).map(([salon, perms]) => (
-                          <div key={salon} style={{ marginBottom: 6 }}>
-                            <div style={{ fontSize: '0.75rem', fontWeight: 600 }}>{SALON_LABELS[salon] || salon}</div>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                              {Object.entries(perms).map(([p, v]) => (
-                                <span key={p} style={{ ...chipStyle(v === 'allow' ? '#4a7c3f' : '#8B0000'), fontSize: '0.6rem' }}>
-                                  {v === 'allow' ? '✅' : '❌'} {PERM_LABELS[p] || p}
-                                </span>
-                              ))}
+                        <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: 4 }}>📋 Permissions par section</div>
+                        {Object.entries(SALON_GROUPS).map(([groupName, salons]) => {
+                          const activeSalons = salons.filter(s => selectedRole.salon_permissions[s] && Object.values(selectedRole.salon_permissions[s]).some(v => v === 'allow'))
+                          if (!activeSalons.length) return null
+                          return (
+                            <div key={groupName} style={{ marginBottom: 6 }}>
+                              <div style={{ fontSize: '0.75rem', fontWeight: 600 }}>{groupName}</div>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                                {activeSalons.map(s => (
+                                  <span key={s} style={{ ...chipStyle('#4a7c3f'), fontSize: '0.6rem' }}>✅ {SALON_SHORT[s] || s}</span>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     )}
 
