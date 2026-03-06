@@ -675,7 +675,9 @@ export default function AdminUsers() {
             {/* Existing requirements */}
             {Object.keys(requirements).length > 0 ? Object.entries(requirements).map(([salon, reqs]) => (
               <div key={salon} style={{ marginBottom: 'var(--space-sm)', padding: '6px 10px', background: 'rgba(45,74,52,0.04)', borderRadius: 'var(--border-radius)', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, minWidth: 180 }}>{SALON_SHORT[salon] || salon}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, minWidth: 220 }}>
+                  {Object.entries(SALON_GROUPS).find(([_, s]) => s.includes(salon))?.[0] || ''} › {SALON_SHORT[salon] || salon}
+                </span>
                 <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>requiert</span>
                 {reqs.map(r => (
                   <span key={r.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 8px', borderRadius: 8, background: `${r.role_color}20`, color: r.role_color, fontWeight: 600, fontSize: '0.7rem' }}>
