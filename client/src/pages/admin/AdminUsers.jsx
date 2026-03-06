@@ -42,7 +42,6 @@ const SALON_GROUPS = {
   '📁 Dossiers': ['dossiers', 'dossiers.create', 'dossiers.edit', 'dossiers.delete'],
   '🎗️ Décorations': ['decorations', 'decorations.create', 'decorations.delete'],
   '👔 Habillement': ['habillement', 'habillement.create', 'habillement.validate'],
-  '💰 Solde': ['solde'],
   '📖 Bibliothèque': ['bibliotheque', 'bibliotheque.create', 'bibliotheque.delete', 'bibliotheque.permissions'],
   '🏛️ Organigramme': ['organigramme', 'organigramme.edit'],
   '📜 Ordres': ['ordres', 'ordres.create', 'ordres.delete'],
