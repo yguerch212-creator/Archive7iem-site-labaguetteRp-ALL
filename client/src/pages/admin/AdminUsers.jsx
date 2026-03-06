@@ -10,9 +10,10 @@ const ROLE_ICONS = {
   'Administratif': '📋', 'Feldgendarmerie': '🛡️', 'Sous-officier': '🪖',
   'Sanitat': '🏥', 'Militaire du rang': '👤', 'Invite': '👁️',
   'Officier Referent': '🔗',
+  'Kommandeur der 7e Armee': '🦅',
 }
 // Kommandeur icons auto-generated
-for (const code of ['916','130','001','254','919','009','716']) {
+for (const code of ['916','130','001','254','919','009']) {
   ROLE_ICONS[`Kommandeur ${code}`] = '⚔️'
   ROLE_ICONS[`Kommandeur Adjoint ${code}`] = '🗡️'
 }
@@ -881,7 +882,7 @@ export default function AdminUsers() {
                       <div style={{ fontSize: '0.8rem', fontWeight: 600, color: has ? (r.color || '#8B4513') : 'var(--text-primary)' }}>{r.name}</div>
                       <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Niveau {r.level}{r.is_system ? ' · Système' : ''}</div>
                     </div>
-                    <Toggle active={has} color={r.color || '#8B4513'} />
+                    <span style={{ fontSize: '1.1rem', minWidth: 24 }}>{has ? '✅' : '○'}</span>
                   </div>
                 )
               })}
