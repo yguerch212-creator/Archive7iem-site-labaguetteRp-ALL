@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guide des Rôles & Permissions — Archives du 7e Armeekorps</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    background: #1a1814;
+    color: #d4c5a0;
+    line-height: 1.7;
+    padding: 0 0 3rem;
+  }
+  .header {
+    background: linear-gradient(180deg, #2a2520, #1a1814);
+    border-bottom: 2px solid rgba(139,128,96,0.4);
+    padding: 2rem 1rem;
+    text-align: center;
+  }
+  .header h1 { font-size: 1.6rem; color: #e8dcc0; margin-bottom: 0.3rem; }
+  .header p { color: #8b8060; font-size: 0.9rem; }
+  .container { max-width: 850px; margin: 0 auto; padding: 1.5rem 1rem; }
+  .toc {
+    background: rgba(30,28,24,0.8);
+    border: 1px solid rgba(139,128,96,0.3);
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .toc h2 { font-size: 1rem; color: #e8dcc0; margin-bottom: 0.5rem; }
+  .toc ol { padding-left: 1.5rem; }
+  .toc li { margin: 0.3rem 0; }
+  .toc a { color: #8bc34a; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  section { margin-bottom: 2.5rem; }
+  h2 {
+    font-size: 1.3rem; color: #e8dcc0;
+    border-bottom: 2px solid rgba(139,128,96,0.4);
+    padding-bottom: 0.4rem; margin-bottom: 1rem;
+  }
+  h3 { font-size: 1.05rem; color: #c9a84c; margin: 1.2rem 0 0.5rem; }
+  p { margin-bottom: 0.8rem; }
+  .box {
+    background: rgba(30,28,24,0.8);
+    border: 1px solid rgba(139,128,96,0.3);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin: 0.8rem 0;
+  }
+  .box.warning {
+    border-color: rgba(201,168,76,0.5);
+    background: rgba(201,168,76,0.08);
+  }
+  .box.danger {
+    border-color: rgba(139,0,0,0.5);
+    background: rgba(139,0,0,0.08);
+  }
+  .box.success {
+    border-color: rgba(74,124,63,0.5);
+    background: rgba(74,124,63,0.08);
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin: 2px 3px;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 0.8rem 0; font-size: 0.85rem; }
+  th { text-align: left; padding: 8px 10px; border-bottom: 2px solid rgba(139,128,96,0.4); color: #e8dcc0; }
+  td { padding: 6px 10px; border-bottom: 1px solid rgba(139,128,96,0.15); }
+  tr:hover { background: rgba(139,128,96,0.05); }
+  code { background: rgba(139,128,96,0.15); padding: 1px 5px; border-radius: 3px; font-size: 0.85em; }
+  .role-card {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 8px; margin: 3px;
+    font-weight: 600; font-size: 0.85rem;
+  }
+  .steps { counter-reset: step; list-style: none; padding: 0; }
+  .steps li { counter-increment: step; padding: 0.5rem 0 0.5rem 2.5rem; position: relative; border-left: 2px solid rgba(139,128,96,0.3); margin-left: 1rem; }
+  .steps li::before {
+    content: counter(step);
+    position: absolute; left: -13px; top: 0.5rem;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #2a2520; border: 2px solid #c9a84c;
+    color: #c9a84c; text-align: center; line-height: 20px;
+    font-size: 0.75rem; font-weight: 700;
+  }
+  .perm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 4px; }
+  .perm-chip {
+    padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; text-align: center;
+    background: rgba(74,124,63,0.15); color: #8bc34a; border: 1px solid rgba(74,124,63,0.3);
+  }
+  .perm-chip.denied { background: rgba(139,0,0,0.15); color: #e57373; border-color: rgba(139,0,0,0.3); }
+  a { color: #8bc34a; }
+  .screenshot { text-align: center; margin: 1rem 0; color: #8b8060; font-style: italic; font-size: 0.8rem; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📋 Guide des Rôles & Permissions</h1>
+  <p>Administration — Archives du 7<sup>e</sup> Armeekorps</p>
+</div>
+
+<div class="container">
+
+<div class="toc">
+  <h2>Sommaire</h2>
+  <ol>
+    <li><a href="#principes">Principes généraux</a></li>
+    <li><a href="#roles">Les rôles</a></li>
+    <li><a href="#hierarchy">Hiérarchie des rôles</a></li>
+    <li><a href="#salons">Les permissions par salon</a></li>
+    <li><a href="#combined">Permissions combinées (ET)</a></li>
+    <li><a href="#gestion">Gérer les rôles</a></li>
+    <li><a href="#assigner">Assigner un rôle</a></li>
+    <li><a href="#kommandeur">Rôles de commandement</a></li>
+    <li><a href="#invite">Rôle Invité</a></li>
+    <li><a href="#faq">Questions fréquentes</a></li>
+  </ol>
+</div>
+
+<!-- ═══════════ PRINCIPES ═══════════ -->
+<section id="principes">
+  <h2>1. Principes généraux</h2>
+  <p>Le système de permissions des Archives repose sur trois piliers :</p>
+
+  <div class="box">
+    <strong>🎭 Rôles</strong> — Chaque utilisateur peut avoir un ou plusieurs rôles (ex : Sous-officier + Sanitat). Les rôles déterminent ce que l'utilisateur peut voir et faire.
+  </div>
+
+  <div class="box">
+    <strong>📋 Salons</strong> — Chaque action du site est un « salon » avec sa propre permission. Par exemple, <code>rapports.create</code> = droit de créer un rapport, <code>medical.visites.edit</code> = droit de modifier une visite médicale.
+  </div>
+
+  <div class="box">
+    <strong>🔗 Combinaisons</strong> — Certaines actions nécessitent d'avoir <strong>plusieurs rôles simultanément</strong>. Par exemple, créer une visite médicale requiert d'être <em>à la fois</em> Sous-officier ET Sanitat.
+  </div>
+
+  <div class="box warning">
+    <strong>⚠️ Règle d'or :</strong> Le rôle <span class="badge" style="background:#c9a84c20;color:#c9a84c;">👑 Administration</span> contourne <strong>toutes</strong> les permissions. Un administrateur peut tout faire, toujours.
+  </div>
+</section>
+
+<!-- ═══════════ ROLES ═══════════ -->
+<section id="roles">
+  <h2>2. Les rôles</h2>
+  <p>Il existe deux types de rôles :</p>
+
+  <h3>Rôles système (non-supprimables)</h3>
+  <table>
+    <thead><tr><th>Rôle</th><th>Niveau</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><span class="role-card" style="background:#c9a84c15;color:#c9a84c;">👑 Administration</span></td><td>0</td><td>Accès total — contourne toutes les permissions</td></tr>
+      <tr><td><span class="role-card" style="background:#c9a84c15;color:#c9a84c;">🦅 Kommandeur der 7e Armee</span></td><td>0</td><td>Commandant suprême — même niveau qu'Administration</td></tr>
+      <tr><td><span class="role-card" style="background:#c9a84c15;color:#c9a84c;">⭐ Etat-Major</span></td><td>1</td><td>Haut commandement — quasi toutes les permissions</td></tr>
+      <tr><td><span class="role-card" style="background:#8B735515;color:#8B7355;">🎖️ Officier</span></td><td>2</td><td>Officiers — validation, signatures, commandement</td></tr>
+      <tr><td><span class="role-card" style="background:#6b8e5e15;color:#6b8e5e;">📋 Administratif</span></td><td>3</td><td>Recenseurs — gestion effectifs, soldbuch, habillement</td></tr>
+      <tr><td><span class="role-card" style="background:#4a4a4a15;color:#aaa;">🛡️ Feldgendarmerie</span></td><td>4</td><td>Police militaire — sanctions, affaires, interdits</td></tr>
+      <tr><td><span class="role-card" style="background:#5a7d3f15;color:#5a7d3f;">🪖 Sous-officier</span></td><td>5</td><td>Cadres — rapports, PDS, front</td></tr>
+      <tr><td><span class="role-card" style="background:#8B000015;color:#cd5c5c;">🏥 Sanitat</span></td><td>5</td><td>Service médical — visites, soins, hospitalisations</td></tr>
+      <tr><td><span class="role-card" style="background:#7f8c8d15;color:#7f8c8d;">👤 Militaire du rang</span></td><td>7</td><td>Soldat de base — consultation et permissions minimales</td></tr>
+      <tr><td><span class="role-card" style="background:#95a5a615;color:#95a5a6;">👁️ Invité</span></td><td>99</td><td>Visiteur — lecture seule</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Rôles personnalisés</h3>
+  <p>Les officiers et administrateurs peuvent créer des rôles personnalisés pour des besoins spécifiques. Un rôle personnalisé ne peut pas être de niveau supérieur à celui de son créateur.</p>
+</section>
+
+<!-- ═══════════ HIERARCHY ═══════════ -->
+<section id="hierarchy">
+  <h2>3. Hiérarchie des rôles</h2>
+  <p>Le <strong>niveau</strong> d'un rôle détermine sa place dans la hiérarchie. Plus le nombre est bas, plus le rôle est élevé :</p>
+
+  <div class="box">
+    <pre style="font-size:0.85rem; line-height:1.8;">
+Niveau 0  │  👑 Administration / 🦅 Kommandeur der 7e Armee
+Niveau 1  │  ⭐ Etat-Major
+Niveau 2  │  🎖️ Officier / ⚔️ Kommandeur (régiment)
+Niveau 3  │  📋 Administratif / 🗡️ Kommandeur Adjoint / 🔗 Officier Référent
+Niveau 4  │  🛡️ Feldgendarmerie
+Niveau 5  │  🪖 Sous-officier / 🏥 Sanitat
+Niveau 7  │  👤 Militaire du rang
+Niveau 99 │  👁️ Invité</pre>
+  </div>
+
+  <div class="box warning">
+    <strong>Règle de hiérarchie :</strong> Un utilisateur ne peut pas attribuer un rôle de niveau supérieur ou égal au sien. Seul un administrateur peut attribuer le rôle Administration.
+  </div>
+</section>
+
+<!-- ═══════════ SALONS ═══════════ -->
+<section id="salons">
+  <h2>4. Les permissions par salon</h2>
+  <p>Chaque fonctionnalité du site est découpée en « salons » granulaires. Un salon = une action précise.</p>
+
+  <h3>Exemple : Section Médicale</h3>
+  <div class="perm-grid">
+    <div class="perm-chip">🏥 Visites — Voir</div>
+    <div class="perm-chip">🏥 Visites — Créer</div>
+    <div class="perm-chip">🏥 Visites — Modifier</div>
+    <div class="perm-chip">🏥 Visites — Valider</div>
+    <div class="perm-chip">🏥 Visites — Signer</div>
+    <div class="perm-chip">🏥 Visites — Supprimer</div>
+    <div class="perm-chip">💊 Soins — Voir</div>
+    <div class="perm-chip">💊 Soins — Créer</div>
+    <div class="perm-chip">🏨 Hospit. — Voir</div>
+    <div class="perm-chip">🏨 Hospit. — Créer</div>
+    <div class="perm-chip">💉 Vaccins — Voir</div>
+    <div class="perm-chip">💉 Vaccins — Créer</div>
+    <div class="perm-chip">🩹 Blessures — Voir</div>
+    <div class="perm-chip">🩹 Blessures — Créer</div>
+    <div class="perm-chip">📊 Stats médicales</div>
+  </div>
+
+  <p style="margin-top:1rem;">Chaque rôle a des permissions par défaut sur ces salons. L'administrateur peut les ajuster depuis l'onglet <strong>🔐 Rôles & Permissions</strong>.</p>
+
+  <h3>Comment lire les permissions</h3>
+  <div class="box">
+    <p><span class="perm-chip">✅ Voir</span> = L'utilisateur a accès à cette action</p>
+    <p><span class="perm-chip denied">○ Non coché</span> = L'utilisateur n'a <strong>pas</strong> accès</p>
+    <p>Les permissions s'additionnent entre les rôles. Si un utilisateur a les rôles Sous-officier + Sanitat, il cumule les permissions des deux.</p>
+  </div>
+</section>
+
+<!-- ═══════════ COMBINED ═══════════ -->
+<section id="combined">
+  <h2>5. Permissions combinées (ET)</h2>
+  <p>Certaines actions sensibles nécessitent d'avoir <strong>plusieurs rôles en même temps</strong>.</p>
+
+  <div class="box danger">
+    <strong>Exemple concret :</strong> Pour <em>créer une visite médicale</em>, il faut être :<br>
+    <span class="role-card" style="background:#5a7d3f15;color:#5a7d3f;">🪖 Sous-officier</span>
+    <strong>+</strong>
+    <span class="role-card" style="background:#8B000015;color:#cd5c5c;">🏥 Sanitat</span>
+    <br><br>
+    Un Sanitat seul ne peut pas créer de visite. Un Sous-officier seul non plus. Il faut les <strong>deux</strong>.
+  </div>
+
+  <h3>Configurer une permission combinée</h3>
+  <ol class="steps">
+    <li>Aller dans <strong>Administration → 🔐 Rôles & Permissions</strong></li>
+    <li>Descendre jusqu'à la section <strong>🔗 Permissions combinées</strong></li>
+    <li>Sélectionner le <strong>salon</strong> concerné dans le menu déroulant (ex : Visites médicales › Créer)</li>
+    <li>Cocher les <strong>rôles requis</strong> (minimum 2)</li>
+    <li>Cliquer sur <strong>Ajouter</strong></li>
+  </ol>
+
+  <div class="box success">
+    <strong>💡 Astuce :</strong> Les permissions combinées sont appliquées en temps réel (cache de 60 secondes). Pas besoin de redémarrer quoi que ce soit.
+  </div>
+
+  <h3>Permissions combinées actives par défaut</h3>
+  <table>
+    <thead><tr><th>Action</th><th>Rôles requis</th></tr></thead>
+    <tbody>
+      <tr><td>Visites médicales — Créer</td><td>🪖 Sous-officier + 🏥 Sanitat</td></tr>
+      <tr><td>Visites médicales — Modifier</td><td>🪖 Sous-officier + 🏥 Sanitat</td></tr>
+      <tr><td>Visites médicales — Valider</td><td>🪖 Sous-officier + 🏥 Sanitat</td></tr>
+      <tr><td>Visites médicales — Signer</td><td>🪖 Sous-officier + 🏥 Sanitat</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════ GESTION ═══════════ -->
+<section id="gestion">
+  <h2>6. Gérer les rôles</h2>
+
+  <h3>Modifier les permissions d'un rôle</h3>
+  <ol class="steps">
+    <li>Aller dans <strong>Administration → 🔐 Rôles & Permissions</strong></li>
+    <li>Cliquer sur le rôle dans la liste de gauche</li>
+    <li>Cliquer sur <strong>✏️ Modifier</strong></li>
+    <li>Les permissions sont groupées par section (Effectifs, Rapports, Médical, etc.). Cliquer sur une section pour la dérouler.</li>
+    <li>Cliquer sur un salon pour activer (✅) ou désactiver (○) la permission</li>
+    <li>Utiliser <strong>✅ Tout</strong> ou <strong>❌ Rien</strong> pour configurer rapidement une section entière</li>
+    <li>Cliquer sur <strong>💾 Sauvegarder</strong></li>
+  </ol>
+
+  <h3>Créer un rôle personnalisé</h3>
+  <ol class="steps">
+    <li>Cliquer sur <strong>✨ Nouveau rôle</strong></li>
+    <li>Renseigner le nom, la couleur et le niveau</li>
+    <li>Configurer les permissions par salon</li>
+    <li>Sauvegarder</li>
+  </ol>
+
+  <div class="box warning">
+    <strong>⚠️ Les rôles système</strong> (Administration, Etat-Major, etc.) ne peuvent pas être supprimés. Leurs permissions peuvent être ajustées, mais leur nom et leur statut sont protégés.
+  </div>
+</section>
+
+<!-- ═══════════ ASSIGNER ═══════════ -->
+<section id="assigner">
+  <h2>7. Assigner un rôle à un utilisateur</h2>
+  <ol class="steps">
+    <li>Aller dans <strong>Administration → 👥 Utilisateurs</strong></li>
+    <li>Cliquer sur l'utilisateur</li>
+    <li>Dans la section <strong>🔐 Rôles</strong>, cliquer sur un rôle pour l'activer (✅) ou le désactiver (○)</li>
+    <li>Le changement est immédiat — pas besoin de sauvegarder</li>
+  </ol>
+
+  <div class="box">
+    <strong>Un utilisateur peut avoir plusieurs rôles.</strong> Ses permissions sont le cumul de tous ses rôles. Par exemple, un utilisateur avec Sous-officier + Sanitat aura toutes les permissions des deux rôles.
+  </div>
+</section>
+
+<!-- ═══════════ KOMMANDEUR ═══════════ -->
+<section id="kommandeur">
+  <h2>8. Rôles de commandement</h2>
+  <p>Chaque régiment possède un rôle <strong>Kommandeur</strong> et un rôle <strong>Kommandeur Adjoint</strong>.</p>
+
+  <table>
+    <thead><tr><th>Régiment</th><th>Kommandeur</th><th>Adjoint</th></tr></thead>
+    <tbody>
+      <tr><td>916 — Grenadier</td><td>⚔️ Kommandeur 916</td><td>🗡️ Kdr Adjoint 916</td></tr>
+      <tr><td>130 — Panzer Lehr</td><td>⚔️ Kommandeur 130</td><td>🗡️ Kdr Adjoint 130</td></tr>
+      <tr><td>001 — Marine Pionier</td><td>⚔️ Kommandeur 001</td><td>🗡️ Kdr Adjoint 001</td></tr>
+      <tr><td>254 — Feldgendarmerie</td><td>⚔️ Kommandeur 254</td><td>🗡️ Kdr Adjoint 254</td></tr>
+      <tr><td>919 — Logistik</td><td>⚔️ Kommandeur 919</td><td>🗡️ Kdr Adjoint 919</td></tr>
+      <tr><td>009 — Fallschirmjaeger</td><td>⚔️ Kommandeur 009</td><td>🗡️ Kdr Adjoint 009</td></tr>
+    </tbody>
+  </table>
+
+  <div class="box">
+    <strong>Kommandeur</strong> — Toutes les permissions sur son régiment, y compris transferts, renvois, suppressions et administration du régiment.
+  </div>
+  <div class="box">
+    <strong>Kommandeur Adjoint</strong> — Mêmes permissions que le Kommandeur, sauf la suppression d'effectifs et certaines actions administratives.
+  </div>
+  <div class="box">
+    <strong>🔗 Officier Référent</strong> — Officier rattaché au régiment d'un effectif. Permissions de niveau officier, scopées au régiment.
+  </div>
+</section>
+
+<!-- ═══════════ INVITE ═══════════ -->
+<section id="invite">
+  <h2>9. Rôle Invité</h2>
+  <p>Le rôle <span class="role-card" style="background:#95a5a615;color:#95a5a6;">👁️ Invité</span> est automatiquement attribué aux utilisateurs qui n'ont aucun autre rôle.</p>
+
+  <div class="box">
+    <strong>Permissions Invité :</strong> Lecture seule sur les effectifs, soldbuch, rapports, documentation, journal, front, organigramme, archives et recherche. Aucune permission de création, modification ou suppression.
+  </div>
+</section>
+
+<!-- ═══════════ FAQ ═══════════ -->
+<section id="faq">
+  <h2>10. Questions fréquentes</h2>
+
+  <h3>Un utilisateur ne peut pas accéder à une page — pourquoi ?</h3>
+  <div class="box">
+    Vérifiez ses rôles dans Administration → Utilisateurs. S'il n'a que le rôle Invité ou Militaire du rang, il n'a probablement pas les permissions nécessaires. Assignez-lui le rôle approprié.
+  </div>
+
+  <h3>J'ai configuré une permission combinée mais ça ne marche pas</h3>
+  <div class="box">
+    Les permissions combinées ont un cache de <strong>60 secondes</strong>. Attendez une minute et réessayez. Vérifiez aussi que l'utilisateur possède bien <strong>tous</strong> les rôles requis (pas juste un seul).
+  </div>
+
+  <h3>Comment retirer tous les accès à un utilisateur ?</h3>
+  <div class="box">
+    Deux options :<br>
+    • <strong>Désactiver le compte</strong> — L'utilisateur ne peut plus se connecter<br>
+    • <strong>Renvoyer l'effectif</strong> — Via le bouton 🚪 Renvoyer dans la fiche effectif ou l'onglet Régiment
+  </div>
+
+  <h3>Quelle différence entre « Permission insuffisante » et « Cette action nécessite les rôles X + Y » ?</h3>
+  <div class="box">
+    • <strong>Permission insuffisante</strong> = L'utilisateur n'a pas du tout la permission salon<br>
+    • <strong>Nécessite les rôles X + Y</strong> = L'utilisateur a la permission salon, mais il lui manque un des rôles requis par la permission combinée
+  </div>
+</section>
+
+<div style="text-align:center; margin-top:3rem; padding-top:1.5rem; border-top:1px solid rgba(139,128,96,0.3);">
+  <p style="color:#8b8060; font-size:0.8rem;">Guide des Rôles & Permissions — Archives du 7<sup>e</sup> Armeekorps<br>Dernière mise à jour : Mars 2026</p>
+</div>
+
+</div>
+</body>
+</html>

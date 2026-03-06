@@ -478,7 +478,10 @@ export default function AdminUsers() {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-sm)' }}>
                 <h3 style={{ margin: 0, fontSize: '0.9rem' }}>Rôles</h3>
-                <button className="btn btn-primary btn-small" style={{ fontSize: '0.75rem' }} onClick={startCreateRole}>+ Nouveau</button>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <a href="/docs/guide-permissions.html" target="_blank" rel="noopener" className="btn btn-secondary btn-small" style={{ fontSize: '0.7rem', textDecoration: 'none' }}>❓ Guide</a>
+                  <button className="btn btn-primary btn-small" style={{ fontSize: '0.75rem' }} onClick={startCreateRole}>+ Nouveau</button>
+                </div>
               </div>
 
               {/* System roles */}
