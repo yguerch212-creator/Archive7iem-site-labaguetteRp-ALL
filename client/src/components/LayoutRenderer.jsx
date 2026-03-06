@@ -1,13 +1,13 @@
+import React, { useRef, useState, useEffect, useCallback } from 'react'
 import DOMPurify from 'dompurify'
 
 const sanitize = (html) => DOMPurify.sanitize(html, { ALLOWED_TAGS: ['b','i','u','em','strong','br','p','div','span','h1','h2','h3','h4','ul','ol','li','a','table','tr','td','th','thead','tbody','hr','img','blockquote','pre','code','sup','sub','s','mark'], ALLOWED_ATTR: ['href','src','alt','style','class','colspan','rowspan','width','height','target'] })
 
 /**
- * LayoutRenderer — renders saved layout HTML or blocks.
- * If `html` is provided, renders it directly. Otherwise renders blocks as positioned elements.
+ * LayoutRenderer — renders saved layout blocks with automatic Y-offset
+ * adjustment when text content overflows its original height.
  */
 export default function LayoutRenderer({ html, blocks = [], width = 800, minHeight = 600 }) {
-  // If raw HTML is provided (from publish), render it directly
   if (html) {
     return (
       <div
@@ -24,32 +24,110 @@ export default function LayoutRenderer({ html, blocks = [], width = 800, minHeig
 
   if (!blocks || blocks.length === 0) return null
 
-  // Sort blocks by Y position for flow layout (avoids text overlap)
   const sorted = [...blocks].sort((a, b) => (a.y || 0) - (b.y || 0))
 
+  return <LayoutFlow blocks={sorted} width={width} minHeight={minHeight} />
+}
+
+function LayoutFlow({ blocks, width, minHeight }) {
+  const containerRef = useRef(null)
+  const blockRefs = useRef({})
+  const [adjustedPositions, setAdjustedPositions] = useState(null)
+
+  const recalc = useCallback(() => {
+    if (!containerRef.current) return
+
+    // Measure actual rendered heights
+    const measured = {}
+    for (const b of blocks) {
+      const el = blockRefs.current[b.id]
+      if (el) {
+        measured[b.id] = el.scrollHeight
+      }
+    }
+
+    // Recalculate Y positions: when a block's actual height exceeds its
+    // stored height, shift all blocks below it down by the difference.
+    // Group blocks at same Y to handle side-by-side blocks (e.g. remarks + signature).
+    const positions = {}
+    let yShift = 0
+
+    // Group blocks by original Y
+    const yGroups = []
+    let currentY = null
+    let currentGroup = []
+    for (const b of blocks) {
+      const by = b.y || 0
+      if (currentY !== null && by !== currentY) {
+        yGroups.push({ y: currentY, blocks: currentGroup })
+        currentGroup = []
+      }
+      currentY = by
+      currentGroup.push(b)
+    }
+    if (currentGroup.length > 0) {
+      yGroups.push({ y: currentY, blocks: currentGroup })
+    }
+
+    for (const group of yGroups) {
+      let maxOverflow = 0
+      for (const b of group.blocks) {
+        positions[b.id] = (b.y || 0) + yShift
+        const actualH = measured[b.id] || b.h || 0
+        const overflow = Math.max(0, actualH - (b.h || 0))
+        if (overflow > maxOverflow) maxOverflow = overflow
+      }
+      yShift += maxOverflow
+    }
+
+    // Calculate total height
+    let totalH = minHeight
+    for (const b of blocks) {
+      const bBottom = (positions[b.id] || 0) + Math.max(b.h || 0, measured[b.id] || 0)
+      if (bBottom + 40 > totalH) totalH = bBottom + 40
+    }
+
+    setAdjustedPositions({ positions, totalH })
+  }, [blocks, minHeight])
+
+  useEffect(() => {
+    // Initial calc after first render
+    const timer = setTimeout(recalc, 50)
+    return () => clearTimeout(timer)
+  }, [recalc])
+
+  const totalH = adjustedPositions?.totalH || Math.max(minHeight, ...blocks.map(b => (b.y || 0) + (b.h || 0) + 40))
+
   return (
-    <div style={{
-      position: 'relative', width, minHeight, margin: '0 auto',
-      padding: '20px 0',
-      background: 'var(--paper-bg, #faf6ef)',
-      fontFamily: "'IBM Plex Mono', monospace",
-      backgroundImage: 'repeating-linear-gradient(transparent, transparent 28px, rgba(180,170,140,0.1) 28px, rgba(180,170,140,0.1) 29px)',
-    }}>
-      {sorted.map(block => (
-        <div
-          key={block.id}
-          style={{
-            position: 'relative',
-            marginLeft: block.x || 0,
-            width: block.w,
-            minHeight: block.h,
-            marginBottom: 4,
-            ...(block.style || {}),
-          }}
-        >
-          <BlockContent block={block} />
-        </div>
-      ))}
+    <div
+      ref={containerRef}
+      style={{
+        position: 'relative', width, minHeight: totalH, margin: '0 auto',
+        background: 'var(--paper-bg, #faf6ef)',
+        fontFamily: "'IBM Plex Mono', monospace",
+        backgroundImage: 'repeating-linear-gradient(transparent, transparent 28px, rgba(180,170,140,0.1) 28px, rgba(180,170,140,0.1) 29px)',
+      }}
+    >
+      {blocks.map(block => {
+        const adjustedY = adjustedPositions?.positions?.[block.id] ?? (block.y || 0)
+        return (
+          <div
+            key={block.id}
+            ref={el => { if (el) blockRefs.current[block.id] = el }}
+            style={{
+              position: 'absolute',
+              left: block.x || 0,
+              top: adjustedY,
+              width: block.w,
+              minHeight: block.h,
+              overflow: 'visible',
+              ...(block.style || {}),
+            }}
+          >
+            <BlockContent block={block} />
+          </div>
+        )
+      })}
     </div>
   )
 }
