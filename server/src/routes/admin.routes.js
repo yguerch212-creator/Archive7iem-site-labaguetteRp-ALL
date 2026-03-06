@@ -185,7 +185,8 @@ router.get('/logs', auth, privileged, async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 50, 200)
     const rows = await query(
-      `SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT ${limit}`
+      `SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT ?`,
+      [limit]
     )
     res.json({ success: true, data: rows })
   } catch (err) {

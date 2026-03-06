@@ -15,7 +15,7 @@ router.get('/pending', auth, async (req, res) => {
              u.username AS created_by_nom
       FROM documentation d
       JOIN users u ON u.id = d.created_by
-      WHERE d.visible = 0 AND EXISTS (SELECT 1 FROM moderation_queue mq WHERE mq.item_id = d.id AND mq.item_type = 'documentation' AND mq.statut = 'En attente')
+      WHERE d.visible = 0 AND EXISTS (SELECT 1 FROM moderation_queue mq WHERE mq.record_id = d.id AND mq.type = 'documentation' AND mq.statut = 'en_attente')
       ORDER BY d.created_at DESC
     `).catch(() => [])
 
@@ -33,7 +33,7 @@ router.get('/pending', auth, async (req, res) => {
 
     // Recent rapports (last 7 days, for review)
     const rapports = await query(`
-      SELECT r.id, r.numero, r.titre, r.type, r.auteur_nom, r.created_at,
+      SELECT r.id, r.titre, r.type, r.auteur_nom, r.created_at,
              r.date_irl
       FROM rapports r
       WHERE r.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
