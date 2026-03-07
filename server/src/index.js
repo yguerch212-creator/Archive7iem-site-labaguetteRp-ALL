@@ -226,7 +226,7 @@ app.get('/api/stats', auth, async (req, res) => {
 app.get('/api/stats/archives', auth, async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 30, 100)
-    const limitValue = parseInt(limit)
+    const limitValue = Math.max(1, Math.min(limit, 100)) // Ensure valid integer
     const rows = await query(`
       (SELECT 'rapport' as type, CAST(id AS CHAR) as doc_id, CONCAT(UPPER(LEFT(type,1)), SUBSTRING(type,2), ' — ', titre) as label, auteur_nom as auteur, CAST(date_irl AS CHAR) as date_doc, created_at FROM rapports)
       UNION ALL
