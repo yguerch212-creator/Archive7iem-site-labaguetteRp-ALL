@@ -226,9 +226,8 @@ app.get('/api/stats', auth, async (req, res) => {
 app.get('/api/stats/archives', auth, async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 30, 100)
-    const limitValue = Math.max(1, Math.min(limit, 100)) // Ensure valid integer
     const rows = await query(`
-      (SELECT 'rapport' as type, CAST(id AS CHAR) as doc_id, CONCAT(UPPER(LEFT(type,1)), SUBSTRING(type,2), ' — ', titre) as label, auteur_nom as auteur, CAST(date_irl AS CHAR) as date_doc, created_at FROM rapports)
+      (SELECT 'rapport' as type, CAST(id AS CHAR) as doc_id, CONCAT(UPPER(LEFT(type,1)), SUBSTRING(type,2), ' — ', titre) as label, auteur_nom as auteur, CAST(date_irl AS CHAR) as date_doc, created_at FROM rapports WHERE published = 1)
       UNION ALL
       (SELECT 'visite_medicale', CAST(vm.id AS CHAR), CONCAT('Visite — ', IFNULL(CONCAT(e.prenom,' ',e.nom), 'Inconnu')), vm.medecin, CAST(vm.date_visite AS CHAR), vm.created_at FROM visites_medicales vm LEFT JOIN effectifs e ON e.id = vm.effectif_id)
       UNION ALL
@@ -238,8 +237,8 @@ app.get('/api/stats/archives', auth, async (req, res) => {
       UNION ALL
       (SELECT 'documentation', CAST(d.id AS CHAR), d.titre, CONCAT(u.prenom,' ',u.nom), NULL, d.created_at FROM documentation d LEFT JOIN users u ON u.id = d.created_by WHERE d.statut = 'approuve' AND d.is_repertoire = 0)
       ORDER BY created_at DESC
-      LIMIT ?
-    `, [limitValue])
+      LIMIT ${limit}
+    `)
 
     res.json({ success: true, data: rows })
   } catch (err) {
