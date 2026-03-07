@@ -291,10 +291,15 @@ router.put('/:id/signature', auth, async (req, res) => {
       return res.status(403).json({ error: 'Vous ne pouvez sauvegarder que votre propre signature' })
     }
     const { signature_data, clean_signature } = req.body
+    // Convert undefined to null to avoid database binding errors
+    const safeSignatureData = signature_data || null
+    const safeCleanSignature = clean_signature || null
+    const fallbackCleanSignature = safeCleanSignature || safeSignatureData
+    
     await query(
       `INSERT INTO signatures_effectifs (effectif_id, signature_data, clean_signature) VALUES (?, ?, ?)
        ON DUPLICATE KEY UPDATE signature_data = ?, clean_signature = COALESCE(?, clean_signature)`,
-      [req.params.id, signature_data, clean_signature || signature_data, signature_data, clean_signature]
+      [req.params.id, safeSignatureData, fallbackCleanSignature, safeSignatureData, safeCleanSignature]
     )
     res.json({ success: true })
   } catch (err) { console.error(err); res.status(500).json({ error: 'Erreur serveur' }) }
