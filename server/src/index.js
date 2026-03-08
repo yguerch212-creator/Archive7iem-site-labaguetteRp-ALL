@@ -56,7 +56,7 @@ const generalLimiter = rateLimit({ windowMs: 1 * 60 * 1000, max: 300, validate: 
 
 // Middlewares
 app.use(helmet({ crossOriginResourcePolicy: false }))
-const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://localhost:5173,https://archives-7earmekorps.com').split(',')
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://localhost:5173,https://archives-7earmekorps.com,https://www.archives-7earmekorps.com').split(',')
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) cb(null, true)
