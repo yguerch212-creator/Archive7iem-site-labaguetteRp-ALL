@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" rx="38" fill="#1a1510"/>
+  <rect x="16" y="16" width="160" height="160" rx="26" fill="none" stroke="#c8a45a" stroke-width="2" opacity=".4"/>
+  <!-- Balkenkreuz simplified -->
+  <g transform="translate(96,80)" fill="none" stroke="#c8a45a" stroke-width="4" opacity=".8">
+    <line x1="0" y1="-28" x2="0" y2="28"/>
+    <line x1="-28" y1="0" x2="28" y2="0"/>
+    <rect x="-6" y="-28" width="12" height="56" rx="1" fill="#c8a45a" opacity=".15"/>
+    <rect x="-28" y="-6" width="56" height="12" rx="1" fill="#c8a45a" opacity=".15"/>
+  </g>
+  <!-- 7e text -->
+  <text x="96" y="145" text-anchor="middle" fill="#c8a45a" font-family="Georgia,serif" font-size="28" font-weight="700" letter-spacing="2">7e AK</text>
+  <text x="96" y="165" text-anchor="middle" fill="#c8a45a" font-family="Georgia,serif" font-size="12" opacity=".5" letter-spacing="4">ARCHIVES</text>
+</svg>

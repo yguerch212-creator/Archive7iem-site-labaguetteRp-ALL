@@ -1,0 +1,25 @@
+{
+  "name": "Archives du 7e Armeekorps",
+  "short_name": "Archives 7e",
+  "description": "Archives militaires du 7e Armeekorps — LaBaguetteRP",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1a1510",
+  "theme_color": "#2c2416",
+  "icons": [
+    {
+      "src": "/pwa-icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
