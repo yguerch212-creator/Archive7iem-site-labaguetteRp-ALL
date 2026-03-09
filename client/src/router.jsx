@@ -46,6 +46,7 @@ import DossierLayout from './pages/dossiers/DossierLayout'
 import AdminStats from './pages/admin/AdminStats'
 // AdminRoles and AdminRegiment are now tabs inside AdminUsers
 import Moderation from './pages/admin/Moderation'
+import GuideAdministratif from './pages/admin/GuideAdministratif'
 import Calendrier from './pages/calendrier/Calendrier'
 import OrdresList from './pages/ordres/OrdresList'
 import OrdreView from './pages/ordres/OrdreView'
@@ -142,6 +143,7 @@ function AppRouter() {
       <Route path="/admin/logs" element={<ProtectedRoute><AdminLogs /></ProtectedRoute>} />
       <Route path="/admin/stats" element={<ProtectedRoute><AdminStats /></ProtectedRoute>} />
       <Route path="/admin/moderation" element={<ProtectedRoute><Moderation /></ProtectedRoute>} />
+      <Route path="/admin/guide-administratif" element={<ProtectedRoute><GuideAdministratif /></ProtectedRoute>} />
       <Route path="/admin/roles" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
       <Route path="/admin/regiment" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
       

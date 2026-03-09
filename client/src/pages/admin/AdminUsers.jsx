@@ -357,6 +357,7 @@ export default function AdminUsers() {
           <Link to="/admin/logs" className="btn btn-secondary btn-small">📊 Logs</Link>
           <Link to="/admin/stats" className="btn btn-secondary btn-small">📈 Stats</Link>
           <Link to="/admin/moderation" className="btn btn-secondary btn-small">✅ Modération</Link>
+          <Link to="/admin/guide-administratif" className="btn btn-secondary btn-small">📋 Guide Administratif</Link>
         </div>
       </div>
 
