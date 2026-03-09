@@ -191,7 +191,7 @@ export default function RapportView() {
       {R.published && !R.valide && (
         <div className="paper-card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-md)', background: '#fdf8e8', borderLeft: '3px solid var(--warning)' }}>
           <strong>⏳ En attente de validation</strong> — 
-          {(R.auteur_rang || 0) < 35 ? ' Un sous-officier ou officier doit valider ce rapport.' : ' Un officier doit valider ce rapport.'}
+          {' Un administratif doit valider ce rapport. Un officier pourra ensuite l\'approuver.'}
         </div>
       )}
 

@@ -443,8 +443,8 @@ router.put('/:id/forward', auth, async (req, res) => {
     // Send telegramme
     const nextNum = await queryOne('SELECT COALESCE(MAX(numero),0)+1 AS n FROM telegrammes')
     await pool.execute(
-      `INSERT INTO telegrammes (numero, expediteur_id, expediteur_nom, destinataire_id, destinataire_nom, objet, contenu, priorite)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'Urgent')`,
+      `INSERT INTO telegrammes (numero, expediteur_id, expediteur_nom, destinataire_id, destinataire_nom, objet, contenu, priorite, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'Urgent', ?)`,
       [
         nextNum.n,
         req.user.effectif_id || null,
@@ -452,7 +452,8 @@ router.put('/:id/forward', auth, async (req, res) => {
         officier.id,
         officierNom,
         `📋 Rapport à approuver — "${rapport.titre}"`,
-        `Le rapport "${rapport.titre}" (N°${req.params.id}) a été vérifié et validé.\n\nVotre approbation est demandée.\n\nLien : ${req.headers.origin || ''}/rapports/${req.params.id}`
+        `Le rapport "${rapport.titre}" (N°${req.params.id}) a été vérifié et validé.\n\nVotre approbation est demandée.\n\nLien : ${req.headers.origin || ''}/rapports/${req.params.id}`,
+        req.user.id
       ]
     )
 
