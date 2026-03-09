@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import apiClient from '../../api/client'
 import EffectifAutocomplete from '../../components/EffectifAutocomplete'
+import SignatureCanvas from '../../components/SignatureCanvas'
 
 const DRAFT_KEY = 'rapport_draft'
 
@@ -43,6 +44,18 @@ export default function RapportNew() {
   }
 
   const [form, setForm] = useState(() => loadDraft() || defaultForm)
+  const [signatureImage, setSignatureImage] = useState(null)
+  const [showSigCanvas, setShowSigCanvas] = useState(false)
+
+  // Load saved personal signature
+  useEffect(() => {
+    if (user?.effectif_id) {
+      apiClient.get(`/effectifs/${user.effectif_id}/signature`).then(r => {
+        const sig = r.data?.clean_signature || r.data?.signature_data
+        if (sig) setSignatureImage(sig)
+      }).catch(() => {})
+    }
+  }, [user])
 
   // Auto-save draft
   const saveTimer = useRef(null)
@@ -110,17 +123,21 @@ export default function RapportNew() {
     }
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const handleSave = async (publish = false) => {
     setError('')
+    if (!form.titre) { setError('Le titre est requis'); return }
+    if (form.type === 'rapport' && !form.resume) { setError('Le résumé est requis'); return }
+    if (form.type === 'recommandation' && !form.raison_1) { setError('Les motifs sont requis'); return }
+    if (form.type === 'incident' && !form.compte_rendu) { setError('Le compte rendu est requis'); return }
     try {
-      const res = await apiClient.post('/rapports', { ...form, numero })
+      const payload = { ...form, numero, signature_image: signatureImage || null }
+      const res = await apiClient.post('/rapports', payload)
       localStorage.removeItem(DRAFT_KEY)
       const id = res.data.data?.id
-      if (id) {
-        const isMobile = window.innerWidth <= 768
-        navigate(isMobile ? `/rapports/${id}` : `/rapports/${id}/layout`)
+      if (id && publish) {
+        await apiClient.put(`/rapports/${id}/publish`)
       }
+      if (id) navigate(`/rapports/${id}`)
       else navigate('/rapports')
     } catch (err) {
       setError(err.response?.data?.message || 'Erreur')
@@ -168,7 +185,7 @@ export default function RapportNew() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="paper-card">
+      <form onSubmit={e => e.preventDefault()} className="paper-card">
         {/* Type selector — big buttons */}
         <div className="form-group">
           <label className="form-label">Type de rapport</label>
@@ -369,10 +386,62 @@ export default function RapportNew() {
           </div>
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)' }}>
-          <button className="btn btn-primary btn-large" type="submit">
-            {typeInfo.icon} Créer le rapport
-          </button>
+        {/* Drawn signature */}
+        <div className="form-group">
+          <label className="form-label">Signature manuscrite</label>
+          {signatureImage && !showSigCanvas ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+              <div style={{ background: '#f9f6f0', border: '1px solid var(--border-color, #ccc)', borderRadius: 6, padding: 8, textAlign: 'center', flex: '0 0 auto' }}>
+                <img src={signatureImage} alt="Ma signature" style={{ maxHeight: 60, maxWidth: 250 }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <button type="button" className="btn btn-secondary btn-small" onClick={() => { setShowSigCanvas(true); setSignatureImage(null) }}>
+                  🔄 Redessiner
+                </button>
+                <button type="button" className="btn btn-secondary btn-small" onClick={() => setSignatureImage(null)} style={{ fontSize: '0.75rem', color: 'var(--error, #c33)' }}>
+                  ✕ Supprimer
+                </button>
+              </div>
+            </div>
+          ) : showSigCanvas ? (
+            <div>
+              <SignatureCanvas
+                onDone={(dataUrl) => {
+                  setSignatureImage(dataUrl)
+                  setShowSigCanvas(false)
+                  // Also save as personal signature
+                  if (user?.effectif_id) {
+                    apiClient.put(`/effectifs/${user.effectif_id}/signature`, { signature_data: dataUrl, clean_signature: dataUrl }).catch(() => {})
+                  }
+                }}
+                onCancel={() => setShowSigCanvas(false)}
+                width={Math.min(480, window.innerWidth - 80)}
+                height={160}
+              />
+            </div>
+          ) : (
+            <button type="button" className="btn btn-secondary" onClick={() => setShowSigCanvas(true)} style={{ padding: '12px 20px' }}>
+              ✍️ Dessiner ma signature
+            </button>
+          )}
+        </div>
+
+        <hr style={{ border: 'none', borderTop: '1px dashed var(--border)', margin: '1.5rem 0' }} />
+
+        {/* Save / Publish buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button type="button" className="btn btn-secondary btn-large" onClick={() => handleSave(false)}>
+              💾 Sauvegarder
+            </button>
+            <button type="button" className="btn btn-primary btn-large" onClick={() => handleSave(true)}>
+              📜 Publier
+            </button>
+          </div>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center', maxWidth: 500, margin: 0, lineHeight: 1.4 }}>
+            💾 <strong>Sauvegarder</strong> enregistre le rapport en brouillon — vous pourrez le modifier plus tard.
+            <br/>📜 <strong>Publier</strong> rend le rapport visible et l'envoie aux officiers pour validation.
+          </p>
         </div>
       </form>
     </div>

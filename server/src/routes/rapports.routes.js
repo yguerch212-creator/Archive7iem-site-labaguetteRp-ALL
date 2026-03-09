@@ -86,15 +86,15 @@ router.post('/', auth, async (req, res) => {
         unite_id, grade_id, contexte, resume, bilan, remarques,
         recommande_nom, recommande_grade, raison_1, recompense,
         intro_nom, intro_grade, mise_en_cause_nom, mise_en_cause_grade,
-        lieu_incident, compte_rendu, signature_nom, signature_grade,
+        lieu_incident, compte_rendu, signature_nom, signature_grade, signature_image,
         date_rp, date_irl)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [f.type || 'rapport', f.titre, f.auteur_nom || null, f.auteur_grade || null, f.auteur_id || null,
        f.personne_renseignee_nom || null, f.unite_id || null, f.grade_id || null,
        f.contexte || null, f.resume || null, f.bilan || null, f.remarques || null,
        f.recommande_nom || null, f.recommande_grade || null, f.raison_1 || null, f.recompense || null,
        f.intro_nom || null, f.intro_grade || null, f.mise_en_cause_nom || null, f.mise_en_cause_grade || null,
-       f.lieu_incident || null, f.compte_rendu || null, f.signature_nom || null, f.signature_grade || null,
+       f.lieu_incident || null, f.compte_rendu || null, f.signature_nom || null, f.signature_grade || null, f.signature_image || null,
        f.date_rp || null, convertDateFR(f.date_irl)]
     )
     const rapportId = result.insertId
@@ -176,9 +176,9 @@ router.put('/:id/publish', auth, async (req, res) => {
         if (saved) sigData = saved.signature_data
       }
       await pool.execute(
-        `UPDATE rapports SET published = 1, valide = 1, valide_par = ?, valide_par_nom = ?, valide_signature = ?, valide_at = NOW(),
-         signature_image = COALESCE(?, signature_image) WHERE id = ?`,
-        [req.user.id, validatorName, sigData || 'Auto-validé (Officier)', sigData, req.params.id]
+        `UPDATE rapports SET published = 1, valide = 1, valide_par = ?, valide_par_nom = ?, valide_signature = ?, valide_at = NOW()
+         WHERE id = ?`,
+        [req.user.id, validatorName, sigData || 'Auto-validé (Officier)', req.params.id]
       )
     } else {
       // Just mark as submitted (published=1, awaiting validation)

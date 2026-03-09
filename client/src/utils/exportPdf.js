@@ -52,3 +52,31 @@ export async function exportToPdf(elementId, filename = 'document') {
 
   pdf.save(`${filename}.pdf`)
 }
+
+/**
+ * Export a DOM element as a PNG image
+ * @param {string} elementId - ID of the DOM element to capture
+ * @param {string} filename - Output filename (without .png)
+ */
+export async function exportToImage(elementId, filename = 'document') {
+  const element = document.getElementById(elementId)
+  if (!element) return alert('Élément introuvable')
+
+  const origMaxWidth = element.style.maxWidth
+  element.style.maxWidth = 'none'
+
+  const canvas = await html2canvas(element, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: '#f5f0e1',
+    logging: false,
+    windowWidth: 900,
+  })
+
+  element.style.maxWidth = origMaxWidth
+
+  const link = document.createElement('a')
+  link.download = `${filename}.png`
+  link.href = canvas.toDataURL('image/png')
+  link.click()
+}
