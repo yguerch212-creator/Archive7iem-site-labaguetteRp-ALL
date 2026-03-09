@@ -191,11 +191,25 @@ export default function GuideAdministratif() {
           </ul>
         </div>
 
-        <div style={{ textAlign: 'center', padding: 16, background: '#f5f0e1', borderRadius: 8, border: '1px dashed #999' }}>
-          <p style={{ fontSize: '0.85rem', fontStyle: 'italic', color: '#666' }}>
-            📸 Photo du bureau de recensement en jeu
-          </p>
-          <p style={{ fontSize: '0.75rem', color: '#999' }}>(Image à venir)</p>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <div style={{ flex: '1 1 300px', maxWidth: 420 }}>
+            <img src="/assets/bureau-admin-1.jpg" alt="Bureau administratif — vue intérieure" style={{ width: '100%', borderRadius: 8, border: '2px solid var(--border-color, #ccc)' }} />
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: 4 }}>Vue intérieure — bureau, chaises, rangements</p>
+          </div>
+          <div style={{ flex: '1 1 300px', maxWidth: 420 }}>
+            <img src="/assets/bureau-admin-2.jpg" alt="Bureau administratif — vue extérieure" style={{ width: '100%', borderRadius: 8, border: '2px solid var(--border-color, #ccc)' }} />
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: 4 }}>Vue extérieure — tente "Wachposten" avec paravent photo d'identité</p>
+          </div>
+        </div>
+        <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(75,83,32,0.05)', borderRadius: 6, fontSize: '0.85rem' }}>
+          <strong>Éléments du bureau :</strong>
+          <ul style={{ margin: '6px 0 0', paddingLeft: 18 }}>
+            <li><strong>Bureau</strong> — pour remplir les documents et accueillir les soldats</li>
+            <li><strong>Chaises</strong> — pour le recenseur et le soldat en face</li>
+            <li><strong>Rangements</strong> — pour les dossiers et papiers administratifs</li>
+            <li><strong>Paravent / fond</strong> — pour les photos d'identité des effectifs</li>
+            <li><strong>Panneau "Wachposten"</strong> — signalétique du poste</li>
+          </ul>
         </div>
       </Section>
 
