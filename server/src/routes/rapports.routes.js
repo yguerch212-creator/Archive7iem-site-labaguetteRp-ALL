@@ -384,7 +384,7 @@ router.put('/:id/validate', auth, async (req, res) => {
     }
 
     // Get validator's saved signature/stamp or use the provided ones
-    const { signature_data, stamp_data, forward_to_officier } = req.body
+    const { signature_data, stamp_data } = req.body
     let sigData = signature_data
     if (!sigData && req.user.effectif_id) {
       const saved = await queryOne('SELECT signature_data FROM signatures_effectifs WHERE effectif_id = ?', [req.user.effectif_id])
@@ -414,43 +414,59 @@ router.put('/:id/validate', auth, async (req, res) => {
       ).catch(() => {})
     }
 
-    // If forwarding to a specific officier for approval
-    if (forward_to_officier && req.body.officier_effectif_id) {
-      try {
-        const officier = await queryOne(
-          `SELECT e.id, e.prenom, e.nom, u.id as user_id FROM effectifs e LEFT JOIN users u ON u.effectif_id = e.id WHERE e.id = ?`,
-          [req.body.officier_effectif_id]
-        )
-        if (officier) {
-          const officierNom = `${officier.prenom} ${officier.nom}`
-          const nextNum = await queryOne('SELECT COALESCE(MAX(numero),0)+1 AS n FROM telegrammes')
-          await pool.execute(
-            `INSERT INTO telegrammes (numero, expediteur_id, expediteur_nom, destinataire_id, destinataire_nom, objet, contenu, priorite)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'Urgent')`,
-            [
-              nextNum.n,
-              req.user.effectif_id || null,
-              validatorName,
-              officier.id,
-              officierNom,
-              `📋 Rapport à approuver — "${rapport.titre}"`,
-              `Le rapport "${rapport.titre}" (N°${req.params.id}) a été vérifié par le Bataillon Administratif (${validatorName}).\n\nVotre approbation est demandée.\n\nLien : ${req.headers.origin || ''}/rapports/${req.params.id}`
-            ]
-          )
-          // Also create a notification
-          if (officier.user_id) {
-            await pool.execute(
-              `INSERT INTO notifications (user_id, type, titre, message, lien, created_at)
-               VALUES (?, 'rapport', '📋 Rapport à approuver', ?, ?, NOW())`,
-              [officier.user_id, `"${rapport.titre}" — vérifié par ${validatorName}`, `/rapports/${req.params.id}`]
-            ).catch(() => {})
-          }
-        }
-      } catch (e) { console.warn('Forward telegramme failed:', e.message) }
-    }
-
     logActivity(req, 'validate_rapport', 'rapport', req.params.id, `Validé par ${validatorLabel}`)
     res.json({ success: true, validatorLabel })
+  } catch (err) {
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
+  }
+})
+
+// PUT /api/rapports/:id/forward — Send validated rapport to an officer for approval
+router.put('/:id/forward', auth, async (req, res) => {
+  try {
+    const rapport = await queryOne('SELECT * FROM rapports WHERE id = ?', [req.params.id])
+    if (!rapport) return res.status(404).json({ success: false, message: 'Rapport introuvable' })
+    if (!rapport.valide) return res.status(400).json({ success: false, message: 'Le rapport doit d\'abord être validé' })
+
+    const { officier_effectif_id } = req.body
+    if (!officier_effectif_id) return res.status(400).json({ success: false, message: 'Officier requis' })
+
+    const officier = await queryOne(
+      `SELECT e.id, e.prenom, e.nom, u.id as user_id FROM effectifs e LEFT JOIN users u ON u.effectif_id = e.id WHERE e.id = ?`,
+      [officier_effectif_id]
+    )
+    if (!officier) return res.status(404).json({ success: false, message: 'Officier introuvable' })
+
+    const senderName = `${req.user.prenom || ''} ${req.user.nom || req.user.username}`.trim()
+    const officierNom = `${officier.prenom} ${officier.nom}`
+
+    // Send telegramme
+    const nextNum = await queryOne('SELECT COALESCE(MAX(numero),0)+1 AS n FROM telegrammes')
+    await pool.execute(
+      `INSERT INTO telegrammes (numero, expediteur_id, expediteur_nom, destinataire_id, destinataire_nom, objet, contenu, priorite)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'Urgent')`,
+      [
+        nextNum.n,
+        req.user.effectif_id || null,
+        senderName,
+        officier.id,
+        officierNom,
+        `📋 Rapport à approuver — "${rapport.titre}"`,
+        `Le rapport "${rapport.titre}" (N°${req.params.id}) a été vérifié et validé.\n\nVotre approbation est demandée.\n\nLien : ${req.headers.origin || ''}/rapports/${req.params.id}`
+      ]
+    )
+
+    // Notification
+    if (officier.user_id) {
+      await pool.execute(
+        `INSERT INTO notifications (user_id, type, titre, message, lien, created_at)
+         VALUES (?, 'rapport', '📋 Rapport à approuver', ?, ?, NOW())`,
+        [officier.user_id, `"${rapport.titre}" — envoyé par ${senderName}`, `/rapports/${req.params.id}`]
+      ).catch(() => {})
+    }
+
+    logActivity(req, 'forward_rapport', 'rapport', req.params.id, `Envoyé à ${officierNom} par ${senderName}`)
+    res.json({ success: true })
   } catch (err) {
     console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }

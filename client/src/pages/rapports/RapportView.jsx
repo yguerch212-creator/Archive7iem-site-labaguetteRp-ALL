@@ -62,29 +62,20 @@ export default function RapportView() {
   const [showApprovePopup, setShowApprovePopup] = useState(false)
   const [showApproveSign, setShowApproveSign] = useState(false)
   const [approveComment, setApproveComment] = useState('')
-  const [officiers, setOfficiers] = useState([])
-  const [selectedOfficier, setSelectedOfficier] = useState(null)
-  const [officierSearch, setOfficierSearch] = useState('')
-
-  // Load officiers list for forwarding
-  useEffect(() => {
-    apiClient.get('/effectifs/all').then(r => {
-      const offs = (r.data.data || []).filter(e => (e.grade_rang || 0) >= 60)
-      setOfficiers(offs)
-    }).catch(() => {})
-  }, [])
+  const [showForwardPopup, setShowForwardPopup] = useState(false)
+  const [forwardTarget, setForwardTarget] = useState(null)
+  const [forwardText, setForwardText] = useState('')
 
   const canApprove = rapport && rapport.valide && !rapport.approuve_par && (
     user?.isOfficier || user?.isEtatMajor
   )
 
-  const validateRapport = async (signatureData, forwardToOfficier = false, stampData = null) => {
+  const canForward = rapport && rapport.valide && !rapport.approuve_par && !canApprove
+
+  const validateRapport = async (signatureData) => {
     try {
       const res = await apiClient.put(`/rapports/${id}/validate`, {
-        signature_data: signatureData || mySignature || null,
-        stamp_data: stampData || validateStamp?.image_data || null,
-        forward_to_officier: forwardToOfficier,
-        officier_effectif_id: selectedOfficier?.id || null
+        signature_data: signatureData || mySignature || null
       })
       if (signatureData && user?.effectif_id) {
         await apiClient.put(`/effectifs/${user.effectif_id}/signature`, { signature_data: signatureData }).catch(() => {})
@@ -93,13 +84,23 @@ export default function RapportView() {
       setShowValidateSign(false)
       setValidateStamp(null)
       const label = res.data?.validatorLabel || ''
-      const officierNom = selectedOfficier ? `${selectedOfficier.prenom} ${selectedOfficier.nom}` : ''
-      const successMsg = forwardToOfficier
-        ? `✅ Rapport validé — envoyé à ${officierNom} pour approbation`
-        : `✅ Rapport validé par ${label}`
-      setMessage({ type: 'success', text: successMsg })
-      setSelectedOfficier(null)
+      setMessage({ type: 'success', text: `✅ Rapport validé par ${label}` })
       load()
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur' })
+    }
+  }
+
+  const forwardToOfficier = async () => {
+    if (!forwardTarget) return
+    try {
+      await apiClient.put(`/rapports/${id}/forward`, {
+        officier_effectif_id: forwardTarget.id
+      })
+      setShowForwardPopup(false)
+      setForwardTarget(null)
+      setForwardText('')
+      setMessage({ type: 'success', text: `📨 Rapport envoyé à ${forwardTarget.prenom} ${forwardTarget.nom} pour approbation` })
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur' })
     }
@@ -124,30 +125,7 @@ export default function RapportView() {
     }
   }
 
-  const [showForwardChoice, setShowForwardChoice] = useState(false)
-  const [pendingForward, setPendingForward] = useState(false)
-  const [forwardStep, setForwardStep] = useState('choice') // 'choice' | 'select-officier'
-
   const handleValidateClick = () => {
-    setForwardStep('choice')
-    setShowForwardChoice(true)
-  }
-
-  const handleValidateWithChoice = (forward) => {
-    if (forward) {
-      // Show officer selection
-      setForwardStep('select-officier')
-    } else {
-      setShowForwardChoice(false)
-      setPendingForward(false)
-      setShowValidateSign(true)
-    }
-  }
-
-  const handleOfficierSelected = () => {
-    if (!selectedOfficier) return
-    setShowForwardChoice(false)
-    setPendingForward(true)
     setShowValidateSign(true)
   }
 
@@ -377,82 +355,11 @@ export default function RapportView() {
         </div>
       )}
 
-      {/* Validation choice popup */}
-      {showForwardChoice && (
-        <div className="popup-overlay" onClick={() => setShowForwardChoice(false)}>
-          <div className="popup-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
-            <button className="popup-close" onClick={() => setShowForwardChoice(false)}>✕</button>
-
-            {forwardStep === 'choice' && (
-              <>
-                <h3 style={{ margin: '0 0 12px' }}>📋 Validation du rapport</h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 16 }}>
-                  Vous vérifiez la forme du rapport (pas de contenu inapproprié). Souhaitez-vous aussi l'envoyer à un officier pour approbation du fond ?
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <button className="btn btn-primary" onClick={() => handleValidateWithChoice(false)} style={{ padding: '12px 20px' }}>
-                    ✅ Valider uniquement
-                  </button>
-                  <button className="btn btn-secondary" onClick={() => handleValidateWithChoice(true)} style={{ padding: '12px 20px' }}>
-                    ✅📨 Valider + Envoyer à un officier
-                  </button>
-                </div>
-              </>
-            )}
-
-            {forwardStep === 'select-officier' && (
-              <>
-                <h3 style={{ margin: '0 0 12px' }}>📨 Choisir un officier</h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 12 }}>
-                  Sélectionnez l'officier qui recevra le rapport pour approbation.
-                </p>
-                <input
-                  className="form-input"
-                  placeholder="Rechercher un officier..."
-                  value={officierSearch}
-                  onChange={e => setOfficierSearch(e.target.value)}
-                  style={{ marginBottom: 8 }}
-                />
-                <div style={{ maxHeight: 200, overflow: 'auto', border: '1px solid var(--border-color, #ccc)', borderRadius: 6 }}>
-                  {officiers.filter(o => {
-                    const q = officierSearch.toLowerCase()
-                    return !q || `${o.prenom} ${o.nom} ${o.grade_nom || ''}`.toLowerCase().includes(q)
-                  }).map(o => (
-                    <div key={o.id}
-                      onClick={() => setSelectedOfficier(o)}
-                      style={{
-                        padding: '10px 12px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between',
-                        background: selectedOfficier?.id === o.id ? 'rgba(75,83,32,0.15)' : 'transparent',
-                        borderBottom: '1px solid var(--border-color, #eee)'
-                      }}>
-                      <span><strong>{o.prenom} {o.nom}</strong></span>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{o.grade_nom || ''}</span>
-                    </div>
-                  ))}
-                  {officiers.filter(o => {
-                    const q = officierSearch.toLowerCase()
-                    return !q || `${o.prenom} ${o.nom} ${o.grade_nom || ''}`.toLowerCase().includes(q)
-                  }).length === 0 && (
-                    <div style={{ padding: 12, color: 'var(--text-muted)', textAlign: 'center' }}>Aucun officier trouvé</div>
-                  )}
-                </div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                  <button className="btn btn-secondary" onClick={() => setForwardStep('choice')}>← Retour</button>
-                  <button className="btn btn-primary" onClick={handleOfficierSelected} disabled={!selectedOfficier}>
-                    ✅📨 Valider et envoyer à {selectedOfficier ? `${selectedOfficier.prenom} ${selectedOfficier.nom}` : '...'}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Signature popup for validation (with stamp support) */}
       {showValidateSign && (
         <SignaturePopup
-          onClose={() => { setShowValidateSign(false); setPendingForward(false) }}
-          onSign={(signatureData) => validateRapport(signatureData, pendingForward)}
+          onClose={() => setShowValidateSign(false)}
+          onSign={(signatureData) => validateRapport(signatureData)}
           documentType="rapport"
           documentId={id}
           documentLabel={`Rapport: ${R.titre}`}
@@ -463,10 +370,47 @@ export default function RapportView() {
 
       {/* Officer approve button */}
       {canApprove && (
-        <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+        <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', display: 'flex', gap: 8, justifyContent: 'center' }}>
           <button className="btn btn-primary" onClick={() => setShowApprovePopup(true)}>
-            ⭐ Approuver ce rapport (officier)
+            ⭐ Approuver ce rapport
           </button>
+        </div>
+      )}
+
+      {/* Forward to officer button (non-officers only, after validation) */}
+      {canForward && (
+        <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', display: 'flex', gap: 8, justifyContent: 'center' }}>
+          <button className="btn btn-secondary" onClick={() => setShowForwardPopup(true)}>
+            📨 Envoyer à un officier pour approbation
+          </button>
+        </div>
+      )}
+
+      {/* Forward to officer popup */}
+      {showForwardPopup && (
+        <div className="popup-overlay" onClick={() => setShowForwardPopup(false)}>
+          <div className="popup-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 480 }}>
+            <button className="popup-close" onClick={() => setShowForwardPopup(false)}>✕</button>
+            <h3 style={{ margin: '0 0 12px' }}>📨 Envoyer à un officier</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 12 }}>
+              L'officier recevra un télégramme + notification avec un lien vers ce rapport.
+            </p>
+            <div className="form-group">
+              <label className="form-label">Officier destinataire</label>
+              <EffectifAutocomplete
+                value={forwardText}
+                onChange={(text, eff) => { setForwardText(text); if (eff) setForwardTarget(eff) }}
+                onSelect={(eff) => { setForwardTarget(eff); setForwardText(`${eff.prenom} ${eff.nom}`) }}
+                placeholder="Rechercher un officier..."
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <button className="btn btn-secondary" onClick={() => setShowForwardPopup(false)}>Annuler</button>
+              <button className="btn btn-primary" onClick={forwardToOfficier} disabled={!forwardTarget}>
+                📨 Envoyer
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
