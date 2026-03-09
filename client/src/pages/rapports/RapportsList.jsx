@@ -69,6 +69,15 @@ export default function RapportsList() {
           </select>
         </div>
 
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 20px', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 8, padding: '0 4px' }}>
+          <span>📝 Brouillon</span>
+          <span>📜⏳ Publié, en attente</span>
+          <span>📜✅ Validé (administratif)</span>
+          <span>📜⭐ Approuvé (officier)</span>
+          <span>⚖️ Affaire liée</span>
+          <span>⚠️ Incident sans affaire</span>
+        </div>
+
         <div className="paper-card" style={{ overflow: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
             <thead>
@@ -97,8 +106,11 @@ export default function RapportsList() {
                   <td style={td}>{r.personne_mentionnee || '—'}</td>
                   <td style={td}><span className={`tag ${TYPE_CLASSES[r.type]}`}>{TYPE_LABELS[r.type]}</span></td>
                   <td style={td}>
-                    {r.valide ? <span style={{ color: 'var(--success)' }}>✅ Validé</span> : <span style={{ color: 'var(--warning)' }}>⏳</span>}
-                    {' '}{r.published ? '📜' : '📝'}
+                    {r.approuve_par ? <span style={{ color: 'var(--success)' }}>⭐</span>
+                      : r.valide ? <span style={{ color: 'var(--success)' }}>✅</span>
+                      : r.published ? <span style={{ color: 'var(--warning)' }}>⏳</span>
+                      : <span>📝</span>}
+                    {' '}{r.published ? '📜' : ''}
                     {r.type === 'incident' && r.affaire_id && <span style={{ color: 'var(--success)', fontSize: '0.75rem' }}> ⚖️</span>}
                     {r.type === 'incident' && !r.affaire_id && r.published && <span style={{ color: '#e65100', fontSize: '0.75rem' }}> ⚠️</span>}
                   </td>
