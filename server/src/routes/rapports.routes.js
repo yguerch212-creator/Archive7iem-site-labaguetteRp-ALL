@@ -383,8 +383,8 @@ router.put('/:id/validate', auth, async (req, res) => {
       }
     }
 
-    // Get validator's saved signature or use the provided one
-    const { signature_data, forward_to_officier } = req.body
+    // Get validator's saved signature/stamp or use the provided ones
+    const { signature_data, stamp_data, forward_to_officier } = req.body
     let sigData = signature_data
     if (!sigData && req.user.effectif_id) {
       const saved = await queryOne('SELECT signature_data FROM signatures_effectifs WHERE effectif_id = ?', [req.user.effectif_id])
@@ -397,14 +397,12 @@ router.put('/:id/validate', auth, async (req, res) => {
       ? `Bataillon Administratif ${validatorName}`
       : validatorName
 
-    // Validate AND auto-publish — signature goes on document
+    // Validate AND auto-publish — validator signature goes in valide_* fields ONLY
+    // Do NOT overwrite the author's signature_image/signature_nom/signature_grade
     await pool.execute(
-      `UPDATE rapports SET valide = 1, published = 1, valide_par = ?, valide_par_nom = ?, valide_signature = ?, valide_at = NOW(),
-       signature_image = COALESCE(?, signature_image),
-       signature_nom = COALESCE(signature_nom, ?),
-       signature_grade = COALESCE(signature_grade, ?)
+      `UPDATE rapports SET valide = 1, published = 1, valide_par = ?, valide_par_nom = ?, valide_signature = ?, valide_stamp = ?, valide_at = NOW()
        WHERE id = ?`,
-      [req.user.id, validatorLabel, sigData || null, sigData, validatorName, req.user.grade || '', req.params.id]
+      [req.user.id, validatorLabel, sigData || null, stamp_data || null, req.params.id]
     )
 
     // Save signature if new

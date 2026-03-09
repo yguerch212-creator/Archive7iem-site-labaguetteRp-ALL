@@ -7,7 +7,6 @@ import { useAuth } from '../../auth/useAuth'
 import apiClient from '../../api/client'
 import { exportToPdf } from '../../utils/exportPdf'
 import EffectifAutocomplete from '../../components/EffectifAutocomplete'
-import SignatureCanvas from '../../components/SignatureCanvas'
 import SignaturePopup from '../../components/SignaturePopup'
 
 const TYPE_LABELS = { rapport: 'Rapport Journalier', recommandation: 'Recommandation', incident: 'Rapport d\'Incident' }
@@ -59,10 +58,13 @@ export default function RapportView() {
     (rapport.auteur_rang >= 35 && rapport.auteur_rang < 60 && (user?.grade_rang >= 60 || user?.isOfficier))
   )
 
-  const validateRapport = async (signatureData, forwardToOfficier = false) => {
+  const [validateStamp, setValidateStamp] = useState(null)
+
+  const validateRapport = async (signatureData, forwardToOfficier = false, stampData = null) => {
     try {
       const res = await apiClient.put(`/rapports/${id}/validate`, {
         signature_data: signatureData || mySignature || null,
+        stamp_data: stampData || validateStamp?.image_data || null,
         forward_to_officier: forwardToOfficier
       })
       // Save signature if new
@@ -71,6 +73,7 @@ export default function RapportView() {
         setMySignature(signatureData)
       }
       setShowValidateSign(false)
+      setValidateStamp(null)
       const label = res.data?.validatorLabel || ''
       const successMsg = forwardToOfficier
         ? '✅ Rapport validé — télégramme envoyé à un officier pour confirmation'
@@ -83,27 +86,18 @@ export default function RapportView() {
   }
 
   const [showForwardChoice, setShowForwardChoice] = useState(false)
+  const [pendingForward, setPendingForward] = useState(false)
 
   const handleValidateClick = () => {
-    // If administratif (not officier), show choice to forward to officier
-    if (user?.isRecenseur && !user?.isOfficier) {
-      setShowForwardChoice(true)
-    } else if (mySignature) {
-      validateRapport(mySignature)
-    } else {
-      setShowValidateSign(true)
-    }
+    // Show choice popup: validate only, or validate + forward to officier
+    setShowForwardChoice(true)
   }
 
-  const handleAdminValidate = (forward) => {
+  const handleValidateWithChoice = (forward) => {
     setShowForwardChoice(false)
-    if (mySignature) {
-      validateRapport(mySignature, forward)
-    } else {
-      // Store forward choice for when signature is done
-      window._forwardToOfficier = forward
-      setShowValidateSign(true)
-    }
+    setPendingForward(forward)
+    // Open SignaturePopup (supports stamp + signature)
+    setShowValidateSign(true)
   }
 
   if (loading) return <div className="container" style={{ textAlign: 'center', marginTop: '4rem' }}>Chargement...</div>
@@ -257,13 +251,16 @@ export default function RapportView() {
         {R.valide && R.valide_par_nom && (
           <div style={{ marginTop: 'var(--space-xl)', paddingTop: 'var(--space-md)', borderTop: '1px dashed #999' }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <div style={{ textAlign: 'center', minWidth: 250 }}>
+              <div style={{ textAlign: 'center', minWidth: 250, position: 'relative' }}>
                 <div style={{ fontSize: '0.75rem', color: '#666', fontStyle: 'italic', marginBottom: 4 }}>
                   Lu et approuvé le {R.valide_at ? new Date(R.valide_at).toLocaleString('fr-FR') : ''}
                 </div>
-                <div style={{ borderBottom: '1px solid #333', height: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 4 }}>
+                <div style={{ position: 'relative', borderBottom: '1px solid #333', height: 60, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 4 }}>
+                  {R.valide_stamp && (
+                    <img src={R.valide_stamp} alt="Tampon" style={{ position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%) rotate(-5deg)', maxHeight: 70, maxWidth: 200, opacity: 0.6, zIndex: 0 }} />
+                  )}
                   {R.valide_signature && R.valide_signature !== 'Auto-validé (Officier)' && (
-                    <img src={R.valide_signature} alt="Signature" style={{ maxHeight: 45, maxWidth: 220 }} />
+                    <img src={R.valide_signature} alt="Signature" style={{ maxHeight: 50, maxWidth: 220, position: 'relative', zIndex: 1 }} />
                   )}
                 </div>
                 <div style={{ fontSize: '0.8rem', fontWeight: 600, marginTop: 4 }}>{R.valide_par_nom}</div>
@@ -290,26 +287,25 @@ export default function RapportView() {
       {canValidate && (
         <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button className="btn btn-primary" onClick={handleValidateClick}>
-            {mySignature ? '✅ Valider & Signer' : '✍️ Dessiner signature & Valider'}
+            ✅ Valider ce rapport
           </button>
-          {mySignature && <button className="btn btn-secondary" onClick={() => setShowValidateSign(true)}>🔄 Redessiner</button>}
         </div>
       )}
 
-      {/* Administratif forward choice popup */}
+      {/* Validation choice popup: validate only or forward to officier */}
       {showForwardChoice && (
         <div className="popup-overlay" onClick={() => setShowForwardChoice(false)}>
           <div className="popup-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 480 }}>
             <button className="popup-close" onClick={() => setShowForwardChoice(false)}>✕</button>
-            <h3 style={{ margin: '0 0 12px' }}>📋 Validation administrative</h3>
+            <h3 style={{ margin: '0 0 12px' }}>📋 Validation du rapport</h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 16 }}>
-              En tant qu'administratif, vous pouvez valider ce rapport. Souhaitez-vous également le transmettre à un officier pour confirmation ?
+              Vous allez valider ce rapport avec votre signature et tampon. Souhaitez-vous également le transmettre à un officier pour confirmation ?
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <button className="btn btn-primary" onClick={() => handleAdminValidate(false)} style={{ padding: '12px 20px' }}>
+              <button className="btn btn-primary" onClick={() => handleValidateWithChoice(false)} style={{ padding: '12px 20px' }}>
                 ✅ Valider uniquement
               </button>
-              <button className="btn btn-secondary" onClick={() => handleAdminValidate(true)} style={{ padding: '12px 20px' }}>
+              <button className="btn btn-secondary" onClick={() => handleValidateWithChoice(true)} style={{ padding: '12px 20px' }}>
                 ✅📨 Valider + Transmettre à un officier
               </button>
             </div>
@@ -317,15 +313,17 @@ export default function RapportView() {
         </div>
       )}
 
-      {/* Signature canvas for validation */}
+      {/* Signature popup for validation (with stamp support) */}
       {showValidateSign && (
-        <div className="popup-overlay" onClick={() => setShowValidateSign(false)}>
-          <div className="popup-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 550 }}>
-            <button className="popup-close" onClick={() => setShowValidateSign(false)}>✕</button>
-            <h3 style={{ margin: '0 0 16px' }}>✍️ Signer pour valider</h3>
-            <SignatureCanvas onSave={(dataUrl) => validateRapport(dataUrl, window._forwardToOfficier || false)} width={480} height={200} />
-          </div>
-        </div>
+        <SignaturePopup
+          onClose={() => { setShowValidateSign(false); setPendingForward(false) }}
+          onSign={(signatureData) => validateRapport(signatureData, pendingForward)}
+          documentType="rapport"
+          documentId={id}
+          documentLabel={`Rapport: ${R.titre}`}
+          slotLabel="Signature de validation"
+          hideRequest={true}
+        />
       )}
 
       {/* Signature popup for author */}
