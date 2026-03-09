@@ -414,27 +414,87 @@ router.put('/:id/validate', auth, async (req, res) => {
       ).catch(() => {})
     }
 
-    // If administratif wants to forward to an officier for confirmation
-    if (forward_to_officier && isAdministratif) {
-      // Send a telegramme to notify an officier
+    // If forwarding to a specific officier for approval
+    if (forward_to_officier && req.body.officier_effectif_id) {
       try {
-        const nextNum = await queryOne('SELECT COALESCE(MAX(numero),0)+1 AS n FROM telegrammes')
-        await pool.execute(
-          `INSERT INTO telegrammes (numero, expediteur_id, expediteur_nom, objet, contenu, priorite)
-           VALUES (?, ?, ?, ?, ?, 'Normal')`,
-          [
-            nextNum.n,
-            req.user.effectif_id || null,
-            validatorName,
-            `📋 Rapport validé — confirmation demandée`,
-            `Le rapport "${rapport.titre}" (ID: ${req.params.id}) a été validé par le Bataillon Administratif (${validatorName}).\n\nUne confirmation officier est demandée.\n\nLien : ${req.headers.origin || ''}/rapports/${req.params.id}`
-          ]
+        const officier = await queryOne(
+          `SELECT e.id, e.prenom, e.nom, u.id as user_id FROM effectifs e LEFT JOIN users u ON u.effectif_id = e.id WHERE e.id = ?`,
+          [req.body.officier_effectif_id]
         )
+        if (officier) {
+          const officierNom = `${officier.prenom} ${officier.nom}`
+          const nextNum = await queryOne('SELECT COALESCE(MAX(numero),0)+1 AS n FROM telegrammes')
+          await pool.execute(
+            `INSERT INTO telegrammes (numero, expediteur_id, expediteur_nom, destinataire_id, destinataire_nom, objet, contenu, priorite)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'Urgent')`,
+            [
+              nextNum.n,
+              req.user.effectif_id || null,
+              validatorName,
+              officier.id,
+              officierNom,
+              `📋 Rapport à approuver — "${rapport.titre}"`,
+              `Le rapport "${rapport.titre}" (N°${req.params.id}) a été vérifié par le Bataillon Administratif (${validatorName}).\n\nVotre approbation est demandée.\n\nLien : ${req.headers.origin || ''}/rapports/${req.params.id}`
+            ]
+          )
+          // Also create a notification
+          if (officier.user_id) {
+            await pool.execute(
+              `INSERT INTO notifications (user_id, type, titre, message, lien, created_at)
+               VALUES (?, 'rapport', '📋 Rapport à approuver', ?, ?, NOW())`,
+              [officier.user_id, `"${rapport.titre}" — vérifié par ${validatorName}`, `/rapports/${req.params.id}`]
+            ).catch(() => {})
+          }
+        }
       } catch (e) { console.warn('Forward telegramme failed:', e.message) }
     }
 
     logActivity(req, 'validate_rapport', 'rapport', req.params.id, `Validé par ${validatorLabel}`)
     res.json({ success: true, validatorLabel })
+  } catch (err) {
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
+  }
+})
+
+// PUT /api/rapports/:id/approve — Officer approves a validated rapport (fond)
+router.put('/:id/approve', auth, async (req, res) => {
+  try {
+    if (!req.user.isOfficier && !req.user.isAdmin && !req.user.isEtatMajor) {
+      return res.status(403).json({ success: false, message: 'Seul un officier peut approuver un rapport' })
+    }
+    const rapport = await queryOne('SELECT * FROM rapports WHERE id = ?', [req.params.id])
+    if (!rapport) return res.status(404).json({ success: false, message: 'Rapport introuvable' })
+    if (!rapport.valide) return res.status(400).json({ success: false, message: 'Le rapport doit d\'abord être validé par un administratif' })
+    if (rapport.approuve_par) return res.status(400).json({ success: false, message: 'Rapport déjà approuvé' })
+
+    const { signature_data, stamp_data, commentaire } = req.body
+    let sigData = signature_data
+    if (!sigData && req.user.effectif_id) {
+      const saved = await queryOne('SELECT signature_data FROM signatures_effectifs WHERE effectif_id = ?', [req.user.effectif_id])
+      if (saved) sigData = saved.signature_data
+    }
+
+    const approverName = `${req.user.prenom || ''} ${req.user.nom || req.user.username}`.trim()
+    const gradeNom = req.user.grade_nom || ''
+    const approverLabel = gradeNom ? `${gradeNom} ${approverName}` : approverName
+
+    await pool.execute(
+      `UPDATE rapports SET approuve_par = ?, approuve_par_nom = ?, approuve_signature = ?, approuve_stamp = ?, approuve_at = NOW(), approuve_commentaire = ?
+       WHERE id = ?`,
+      [req.user.id, approverLabel, sigData || null, stamp_data || null, commentaire || null, req.params.id]
+    )
+
+    // Save signature
+    if (sigData && req.user.effectif_id) {
+      await query(
+        `INSERT INTO signatures_effectifs (effectif_id, signature_data) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE signature_data = VALUES(signature_data)`,
+        [req.user.effectif_id, sigData]
+      ).catch(() => {})
+    }
+
+    logActivity(req, 'approve_rapport', 'rapport', req.params.id, `Approuvé par ${approverLabel}`)
+    res.json({ success: true, approverLabel })
   } catch (err) {
     console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
