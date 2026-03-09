@@ -368,19 +368,23 @@ router.put('/:id/validate', auth, async (req, res) => {
 
     const validatorRang = req.user.grade_rang || 0
     const auteurRang = rapport.auteur_rang || 0
+    const isAdministratif = req.user.isRecenseur
 
-    // HDR (rang < 35) → SO (35+) ou OFF (60+) peut valider
-    // SO (35-59) → OFF (60+) peut valider
+    // Administratifs (recenseurs) can validate any rapport
+    // HDR (rang < 35) → SO (35+) ou OFF (60+) ou Administratif peut valider
+    // SO (35-59) → OFF (60+) ou Administratif peut valider
     // OFF (60+) → auto-validé (shouldn't reach here)
-    if (auteurRang < 35 && validatorRang < 35) {
-      return res.status(403).json({ success: false, message: 'Seul un sous-officier ou officier peut valider ce rapport' })
-    }
-    if (auteurRang >= 35 && auteurRang < 60 && validatorRang < 60) {
-      return res.status(403).json({ success: false, message: 'Seul un officier peut valider le rapport d\'un sous-officier' })
+    if (!isAdministratif && !req.user.isAdmin) {
+      if (auteurRang < 35 && validatorRang < 35) {
+        return res.status(403).json({ success: false, message: 'Seul un sous-officier, officier ou administratif peut valider ce rapport' })
+      }
+      if (auteurRang >= 35 && auteurRang < 60 && validatorRang < 60) {
+        return res.status(403).json({ success: false, message: 'Seul un officier ou administratif peut valider le rapport d\'un sous-officier' })
+      }
     }
 
     // Get validator's saved signature or use the provided one
-    const { signature_data } = req.body
+    const { signature_data, forward_to_officier } = req.body
     let sigData = signature_data
     if (!sigData && req.user.effectif_id) {
       const saved = await queryOne('SELECT signature_data FROM signatures_effectifs WHERE effectif_id = ?', [req.user.effectif_id])
@@ -388,6 +392,11 @@ router.put('/:id/validate', auth, async (req, res) => {
     }
 
     const validatorName = `${req.user.prenom || ''} ${req.user.nom || req.user.username}`.trim()
+    // Determine validator label: "Bataillon Administratif" for recenseurs, grade for others
+    const validatorLabel = isAdministratif && !req.user.isOfficier
+      ? `Bataillon Administratif ${validatorName}`
+      : validatorName
+
     // Validate AND auto-publish — signature goes on document
     await pool.execute(
       `UPDATE rapports SET valide = 1, published = 1, valide_par = ?, valide_par_nom = ?, valide_signature = ?, valide_at = NOW(),
@@ -395,7 +404,7 @@ router.put('/:id/validate', auth, async (req, res) => {
        signature_nom = COALESCE(signature_nom, ?),
        signature_grade = COALESCE(signature_grade, ?)
        WHERE id = ?`,
-      [req.user.id, validatorName, sigData || null, sigData, validatorName, req.user.grade || '', req.params.id]
+      [req.user.id, validatorLabel, sigData || null, sigData, validatorName, req.user.grade || '', req.params.id]
     )
 
     // Save signature if new
@@ -407,8 +416,27 @@ router.put('/:id/validate', auth, async (req, res) => {
       ).catch(() => {})
     }
 
-    logActivity(req, 'validate_rapport', 'rapport', req.params.id, `Validé par ${validatorName}`)
-    res.json({ success: true })
+    // If administratif wants to forward to an officier for confirmation
+    if (forward_to_officier && isAdministratif) {
+      // Send a telegramme to notify an officier
+      try {
+        const nextNum = await queryOne('SELECT COALESCE(MAX(numero),0)+1 AS n FROM telegrammes')
+        await pool.execute(
+          `INSERT INTO telegrammes (numero, expediteur_id, expediteur_nom, objet, contenu, priorite)
+           VALUES (?, ?, ?, ?, ?, 'Normal')`,
+          [
+            nextNum.n,
+            req.user.effectif_id || null,
+            validatorName,
+            `📋 Rapport validé — confirmation demandée`,
+            `Le rapport "${rapport.titre}" (ID: ${req.params.id}) a été validé par le Bataillon Administratif (${validatorName}).\n\nUne confirmation officier est demandée.\n\nLien : ${req.headers.origin || ''}/rapports/${req.params.id}`
+          ]
+        )
+      } catch (e) { console.warn('Forward telegramme failed:', e.message) }
+    }
+
+    logActivity(req, 'validate_rapport', 'rapport', req.params.id, `Validé par ${validatorLabel}`)
+    res.json({ success: true, validatorLabel })
   } catch (err) {
     console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
@@ -421,11 +449,11 @@ router.put('/:id/sign', auth, async (req, res) => {
     const { signature_data } = req.body
     if (!signature_data) return res.status(400).json({ success: false, message: 'Signature requise' })
 
-    const rapport = await queryOne('SELECT id, created_by FROM rapports WHERE id = ?', [req.params.id])
+    const rapport = await queryOne('SELECT id, auteur_id FROM rapports WHERE id = ?', [req.params.id])
     if (!rapport) return res.status(404).json({ success: false, message: 'Rapport introuvable' })
 
-    // Only author or admin can sign the author slot
-    if (rapport.created_by !== req.user.id && !req.user.isAdmin) {
+    // Only author, admin, or recenseur (administratif) can sign the author slot
+    if (rapport.auteur_id !== req.user.id && !req.user.isAdmin && !req.user.isRecenseur) {
       return res.status(403).json({ success: false, message: 'Seul l\'auteur peut signer ce rapport' })
     }
 

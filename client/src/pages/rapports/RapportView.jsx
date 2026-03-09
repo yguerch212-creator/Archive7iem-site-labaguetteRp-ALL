@@ -54,30 +54,54 @@ export default function RapportView() {
   }
 
   const canValidate = rapport && !rapport.valide && rapport.published && (
-    (rapport.auteur_rang < 35 && (user?.grade_rang >= 35 || user?.isAdmin)) ||
-    (rapport.auteur_rang >= 35 && rapport.auteur_rang < 60 && (user?.grade_rang >= 60 || user?.isOfficier || user?.isAdmin))
+    user?.isRecenseur || user?.isAdmin ||
+    (rapport.auteur_rang < 35 && (user?.grade_rang >= 35)) ||
+    (rapport.auteur_rang >= 35 && rapport.auteur_rang < 60 && (user?.grade_rang >= 60 || user?.isOfficier))
   )
 
-  const validateRapport = async (signatureData) => {
+  const validateRapport = async (signatureData, forwardToOfficier = false) => {
     try {
-      await apiClient.put(`/rapports/${id}/validate`, { signature_data: signatureData || mySignature || null })
+      const res = await apiClient.put(`/rapports/${id}/validate`, {
+        signature_data: signatureData || mySignature || null,
+        forward_to_officier: forwardToOfficier
+      })
       // Save signature if new
       if (signatureData && user?.effectif_id) {
         await apiClient.put(`/effectifs/${user.effectif_id}/signature`, { signature_data: signatureData }).catch(() => {})
         setMySignature(signatureData)
       }
       setShowValidateSign(false)
-      setMessage({ type: 'success', text: '✅ Rapport validé' })
+      const label = res.data?.validatorLabel || ''
+      const successMsg = forwardToOfficier
+        ? '✅ Rapport validé — télégramme envoyé à un officier pour confirmation'
+        : `✅ Rapport validé par ${label}`
+      setMessage({ type: 'success', text: successMsg })
       load()
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur' })
     }
   }
 
+  const [showForwardChoice, setShowForwardChoice] = useState(false)
+
   const handleValidateClick = () => {
-    if (mySignature) {
+    // If administratif (not officier), show choice to forward to officier
+    if (user?.isRecenseur && !user?.isOfficier) {
+      setShowForwardChoice(true)
+    } else if (mySignature) {
       validateRapport(mySignature)
     } else {
+      setShowValidateSign(true)
+    }
+  }
+
+  const handleAdminValidate = (forward) => {
+    setShowForwardChoice(false)
+    if (mySignature) {
+      validateRapport(mySignature, forward)
+    } else {
+      // Store forward choice for when signature is done
+      window._forwardToOfficier = forward
       setShowValidateSign(true)
     }
   }
@@ -264,11 +288,32 @@ export default function RapportView() {
 
       {/* Validate button (outside document) */}
       {canValidate && (
-        <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', display: 'flex', gap: 8, justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button className="btn btn-primary" onClick={handleValidateClick}>
             {mySignature ? '✅ Valider & Signer' : '✍️ Dessiner signature & Valider'}
           </button>
           {mySignature && <button className="btn btn-secondary" onClick={() => setShowValidateSign(true)}>🔄 Redessiner</button>}
+        </div>
+      )}
+
+      {/* Administratif forward choice popup */}
+      {showForwardChoice && (
+        <div className="popup-overlay" onClick={() => setShowForwardChoice(false)}>
+          <div className="popup-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 480 }}>
+            <button className="popup-close" onClick={() => setShowForwardChoice(false)}>✕</button>
+            <h3 style={{ margin: '0 0 12px' }}>📋 Validation administrative</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 16 }}>
+              En tant qu'administratif, vous pouvez valider ce rapport. Souhaitez-vous également le transmettre à un officier pour confirmation ?
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button className="btn btn-primary" onClick={() => handleAdminValidate(false)} style={{ padding: '12px 20px' }}>
+                ✅ Valider uniquement
+              </button>
+              <button className="btn btn-secondary" onClick={() => handleAdminValidate(true)} style={{ padding: '12px 20px' }}>
+                ✅📨 Valider + Transmettre à un officier
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -278,7 +323,7 @@ export default function RapportView() {
           <div className="popup-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 550 }}>
             <button className="popup-close" onClick={() => setShowValidateSign(false)}>✕</button>
             <h3 style={{ margin: '0 0 16px' }}>✍️ Signer pour valider</h3>
-            <SignatureCanvas onSave={(dataUrl) => validateRapport(dataUrl)} width={480} height={200} />
+            <SignatureCanvas onSave={(dataUrl) => validateRapport(dataUrl, window._forwardToOfficier || false)} width={480} height={200} />
           </div>
         </div>
       )}
