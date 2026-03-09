@@ -133,12 +133,12 @@ router.put('/:effectifId/sign', auth, async (req, res) => {
     const effectifId = parseInt(req.params.effectifId)
     const isOwner = req.user.effectif_id === effectifId
 
-    // soldat slot: ONLY the effectif themselves (not admin, not administratif)
-    // referent slot: ONLY officiers (not admin, not administratif)
-    if (slot === 'soldat' && !isOwner) {
+    // soldat slot: the effectif themselves OR admin/recenseur/officier
+    // referent slot: officiers, recenseurs, or admins
+    if (slot === 'soldat' && !isOwner && !req.user.isAdmin && !req.user.isRecenseur && !req.user.isOfficier) {
       return res.status(403).json({ success: false, message: 'Seul le soldat concerné peut signer son propre Soldbuch' })
     }
-    if (slot === 'referent' && !req.user.isOfficier && !req.user.isRecenseur) {
+    if (slot === 'referent' && !req.user.isOfficier && !req.user.isRecenseur && !req.user.isAdmin) {
       return res.status(403).json({ success: false, message: 'Seul un officier peut signer en tant que référent' })
     }
 
