@@ -459,7 +459,7 @@ router.put('/:id/validate', auth, async (req, res) => {
 // PUT /api/rapports/:id/approve — Officer approves a validated rapport (fond)
 router.put('/:id/approve', auth, async (req, res) => {
   try {
-    if (!req.user.isOfficier && !req.user.isAdmin && !req.user.isEtatMajor) {
+    if (!req.user.isOfficier && !req.user.isEtatMajor) {
       return res.status(403).json({ success: false, message: 'Seul un officier peut approuver un rapport' })
     }
     const rapport = await queryOne('SELECT * FROM rapports WHERE id = ?', [req.params.id])

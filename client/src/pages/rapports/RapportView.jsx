@@ -75,7 +75,7 @@ export default function RapportView() {
   }, [])
 
   const canApprove = rapport && rapport.valide && !rapport.approuve_par && (
-    user?.isOfficier || user?.isAdmin || user?.isEtatMajor
+    user?.isOfficier || user?.isEtatMajor
   )
 
   const validateRapport = async (signatureData, forwardToOfficier = false, stampData = null) => {
