@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FS2024 — Calculateur VS/I</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0a1a; color: #e0e0e0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+.container { max-width: 480px; width: 90%; }
+a.back { color: #00d4aa; text-decoration: none; font-size: 0.85rem; display: inline-block; margin-bottom: 1.5rem; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.6rem; margin-bottom: 0.3rem; color: #fff; }
+h1 span { color: #4da6ff; }
+.subtitle { color: #888; margin-bottom: 2rem; font-size: 0.85rem; }
+.form-group { margin-bottom: 1rem; }
+label { display: block; font-size: 0.8rem; color: #aaa; margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+input { width: 100%; background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 8px; padding: 12px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.2s; }
+input:focus { border-color: #4da6ff; }
+input::placeholder { color: #555; }
+.row { display: flex; gap: 0.75rem; }
+.row .form-group { flex: 1; }
+.optional { color: #666; font-size: 0.7rem; font-weight: 400; text-transform: none; }
+button { width: 100%; background: #4da6ff; color: #000; border: none; border-radius: 8px; padding: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 0.5rem; }
+button:hover { background: #6bb8ff; transform: translateY(-1px); }
+.result { margin-top: 1.5rem; background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 12px; padding: 1.5rem; display: none; }
+.result.show { display: block; }
+.result-value { font-size: 2.2rem; font-weight: 700; text-align: center; margin: 0.5rem 0; }
+.result-value.climb { color: #00d4aa; }
+.result-value.descend { color: #ff6b6b; }
+.result-label { text-align: center; font-size: 0.85rem; color: #888; }
+.result-details { margin-top: 1rem; font-size: 0.8rem; color: #666; border-top: 1px solid #2a2a4a; padding-top: 1rem; }
+.result-details div { display: flex; justify-content: space-between; padding: 3px 0; }
+.result-details span:last-child { color: #aaa; }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="/" class="back">← Retour a l'index</a>
+  <h1>✈️ FS2024 — <span>VS/I Calculator</span></h1>
+  <p class="subtitle">Calcul de vitesse verticale pour atteindre une altitude cible</p>
+
+  <div class="form-group">
+    <label>Altitude de depart (ft)</label>
+    <input type="number" id="altStart" placeholder="Ex: 35000" autofocus>
+  </div>
+  <div class="form-group">
+    <label>Altitude cible (ft)</label>
+    <input type="number" id="altTarget" placeholder="Ex: 3000">
+  </div>
+  <div class="form-group">
+    <label>Vitesse (kts) <span class="optional">— facultatif</span></label>
+    <input type="number" id="speed" placeholder="Ex: 250">
+  </div>
+  <div class="row">
+    <div class="form-group">
+      <label>Minutes</label>
+      <input type="number" id="minutes" placeholder="15" min="0">
+    </div>
+    <div class="form-group">
+      <label>Secondes</label>
+      <input type="number" id="seconds" placeholder="0" min="0" max="59">
+    </div>
+  </div>
+
+  <button onclick="calculate()">Calculer</button>
+
+  <div class="result" id="result">
+    <div class="result-label" id="resultLabel"></div>
+    <div class="result-value" id="resultValue"></div>
+    <div class="result-label" id="resultUnit"></div>
+    <div class="result-details" id="resultDetails"></div>
+  </div>
+</div>
+
+<script>
+function calculate() {
+  const altStart = parseFloat(document.getElementById('altStart').value)
+  const altTarget = parseFloat(document.getElementById('altTarget').value)
+  const speed = parseFloat(document.getElementById('speed').value) || null
+  const minutes = parseFloat(document.getElementById('minutes').value) || 0
+  const seconds = parseFloat(document.getElementById('seconds').value) || 0
+
+  if (isNaN(altStart) || isNaN(altTarget)) return alert('Entrez les altitudes')
+  const totalMin = minutes + seconds / 60
+  if (totalMin <= 0) return alert('Entrez un temps valide')
+
+  const diffFt = altTarget - altStart
+  const diffM = diffFt * 0.3048
+  const vsMetersPerMin = diffM / totalMin
+  const vsFtPerMin = diffFt / totalMin
+  const isClimb = diffFt > 0
+
+  const el = document.getElementById('result')
+  const label = document.getElementById('resultLabel')
+  const value = document.getElementById('resultValue')
+  const unit = document.getElementById('resultUnit')
+  const details = document.getElementById('resultDetails')
+
+  label.textContent = isClimb ? '⬆️ MONTEE' : '⬇️ DESCENTE'
+  value.textContent = (vsMetersPerMin >= 0 ? '+' : '') + Math.round(vsMetersPerMin) + ' m/min'
+  value.className = 'result-value ' + (isClimb ? 'climb' : 'descend')
+  unit.textContent = (vsFtPerMin >= 0 ? '+' : '') + Math.round(vsFtPerMin) + ' ft/min'
+
+  let detailsHtml = `
+    <div><span>Altitude depart</span><span>${altStart.toLocaleString()} ft (${Math.round(altStart * 0.3048).toLocaleString()} m)</span></div>
+    <div><span>Altitude cible</span><span>${altTarget.toLocaleString()} ft (${Math.round(altTarget * 0.3048).toLocaleString()} m)</span></div>
+    <div><span>Difference</span><span>${diffFt >= 0 ? '+' : ''}${diffFt.toLocaleString()} ft (${diffM >= 0 ? '+' : ''}${Math.round(diffM).toLocaleString()} m)</span></div>
+    <div><span>Temps</span><span>${minutes > 0 ? minutes + ' min ' : ''}${seconds > 0 ? seconds + ' sec' : minutes > 0 ? '' : '0'}</span></div>`
+  
+  if (speed) {
+    const distNm = speed * (totalMin / 60)
+    const distKm = distNm * 1.852
+    detailsHtml += `<div><span>Distance parcourue</span><span>${distNm.toFixed(1)} NM (${distKm.toFixed(1)} km)</span></div>`
+    
+    // Angle de descente/montée
+    const altDiffNm = Math.abs(diffFt) / 6076.12 // ft to NM
+    const angle = Math.atan2(Math.abs(diffFt), distNm * 6076.12) * (180 / Math.PI)
+    detailsHtml += `<div><span>Angle</span><span>${angle.toFixed(1)}°</span></div>`
+  }
+
+  details.innerHTML = detailsHtml
+  el.classList.add('show')
+}
+
+// Enter key triggers calculation
+document.addEventListener('keydown', e => { if (e.key === 'Enter') calculate() })
+</script>
+</body>
+</html>
