@@ -2,6 +2,7 @@ const router = require('express').Router()
 const { query } = require('../config/db')
 const auth = require('../middleware/auth')
 const { optionalAuth } = require('../middleware/auth')
+const { escapeLike } = require('../utils/sanitize')
 
 // GET /api/search?q=X&filter=all|effectif|rapport
 router.get('/', optionalAuth, async (req, res) => {
@@ -9,7 +10,7 @@ router.get('/', optionalAuth, async (req, res) => {
     const { q, filter = 'all' } = req.query
     if (!q) return res.json({ success: true, data: { effectifs: [], rapports: [], telegrammes: [], pieces: [], documentation: [] } })
 
-    const like = `%${q}%`
+    const like = `%${escapeLike(q)}%`
     const result = { effectifs: [], rapports: [], telegrammes: [], pieces: [], documentation: [] }
 
     if (filter === 'all' || filter === 'effectif') {

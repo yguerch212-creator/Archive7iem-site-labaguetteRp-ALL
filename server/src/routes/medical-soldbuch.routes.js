@@ -212,6 +212,7 @@ router.put('/reconcile/:effectifId', auth, async (req, res) => {
   try {
     const { prenom, nom } = req.body
     if (!prenom || !nom) return res.status(400).json({ success: false, message: 'prenom et nom requis' })
+    const { escapeLike } = require('../utils/sanitize')
     const fullName = `${prenom} ${nom}`
     const patterns = [fullName, `${nom} ${prenom}`, nom]
 
@@ -219,14 +220,14 @@ router.put('/reconcile/:effectifId', auth, async (req, res) => {
     for (const pat of patterns) {
       await pool.execute(
         `UPDATE soins_front SET patient_id = ?, patient_nom_libre = NULL WHERE patient_id IS NULL AND patient_nom_libre LIKE ?`,
-        [req.params.effectifId, `%${pat}%`]
+        [req.params.effectifId, `%${escapeLike(pat)}%`]
       )
     }
     for (const table of ['hospitalisations', 'vaccinations', 'blessures']) {
       for (const pat of patterns) {
         await pool.execute(
           `UPDATE ${table} SET effectif_id = ?, effectif_nom_libre = NULL WHERE effectif_id IS NULL AND effectif_nom_libre LIKE ?`,
-          [req.params.effectifId, `%${pat}%`]
+          [req.params.effectifId, `%${escapeLike(pat)}%`]
         )
       }
     }

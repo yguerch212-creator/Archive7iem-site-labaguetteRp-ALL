@@ -1,5 +1,6 @@
 const { logActivity } = require('../utils/logger')
 const { logHistorique } = require('../utils/historique')
+const { escapeLike } = require('../utils/sanitize')
 const router = require('express').Router()
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
@@ -102,7 +103,7 @@ router.post('/', auth, recenseur, async (req, res) => {
       const patterns = [fullName, `${f.nom} ${f.prenom}`, f.nom]
       for (const table of ['hospitalisations', 'vaccinations', 'blessures']) {
         for (const pat of patterns) {
-          pool.execute(`UPDATE ${table} SET effectif_id = ?, effectif_nom_libre = NULL WHERE effectif_id IS NULL AND effectif_nom_libre LIKE ?`, [effectifId, `%${pat}%`]).catch(() => {})
+          pool.execute(`UPDATE ${table} SET effectif_id = ?, effectif_nom_libre = NULL WHERE effectif_id IS NULL AND effectif_nom_libre LIKE ?`, [effectifId, `%${escapeLike(pat)}%`]).catch(() => {})
         }
       }
     }
