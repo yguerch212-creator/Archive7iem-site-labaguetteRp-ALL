@@ -17,7 +17,12 @@ router.get('/', optionalAuth, async (req, res) => {
   try {
     const { unite_id } = req.query
     let sql = `
-      SELECT e.*, g.nom_complet AS grade_nom, g.categorie AS grade_categorie, g.rang AS grade_rang, u.nom AS unite_nom, u.code AS unite_code
+      SELECT e.*, g.nom_complet AS grade_nom, g.rang AS grade_rang, u.nom AS unite_nom, u.code AS unite_code,
+        CASE
+          WHEN g.rang >= 60 THEN 'Officier'
+          WHEN g.rang >= 35 THEN 'Sous-officier'
+          ELSE 'Homme du rang'
+        END AS categorie_computed
       FROM effectifs e
       LEFT JOIN grades g ON g.id = e.grade_id
       LEFT JOIN unites u ON u.id = e.unite_id

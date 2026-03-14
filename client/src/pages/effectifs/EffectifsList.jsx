@@ -116,7 +116,7 @@ export default function EffectifsList() {
               <tr key={e.id} onClick={() => setSelected(e)} style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={ev => ev.currentTarget.style.background = 'var(--military-light)'} onMouseLeave={ev => ev.currentTarget.style.background = ''}>
                 <td style={tdStyle}><strong>{e.prenom} {e.nom}</strong>{e.en_reserve ? <span style={{ marginLeft: 6, fontSize: '0.65rem', background: '#8a7d6b', color: '#fff', padding: '1px 6px', borderRadius: 8, fontWeight: 700 }}>RÉSERVE</span> : null}</td>
                 <td style={tdStyle}>{e.grade_nom || '—'}</td>
-                <td style={tdStyle}><span className={`badge ${e.categorie === 'Officier' ? 'badge-warning' : e.categorie === 'Sous-officier' ? 'badge-success' : 'badge-muted'}`}>{e.categorie || e.grade_categorie || '—'}</span></td>
+                <td style={tdStyle}><span className={`badge ${(e.categorie_computed || e.categorie) === 'Officier' ? 'badge-warning' : (e.categorie_computed || e.categorie) === 'Sous-officier' ? 'badge-success' : 'badge-muted'}`}>{e.categorie_computed || e.categorie || '—'}</span></td>
                 <td style={tdStyle}>{e.fonction || '—'}</td>
                 <td style={tdStyle}>{e.specialite || '—'}</td>
                 <td style={tdStyle}>{formatDate(e.date_entree_irl)}</td>
