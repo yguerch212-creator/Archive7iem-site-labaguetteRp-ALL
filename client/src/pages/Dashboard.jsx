@@ -100,7 +100,6 @@ export default function Dashboard() {
     { icon: '📜', title: 'Ordres', desc: 'Ordres & directives', to: '/ordres' },
     { icon: '📸', title: 'Galerie', desc: 'Photos RP', to: '/galerie' },
     { icon: '🗺️', title: 'Organigramme', desc: 'Organisation du Korps', to: '/organigramme' },
-    { icon: '⚔️', title: 'Bataillons', desc: '851e & 852e — Combat', to: '/bataillons' },
     { icon: '📰', title: 'Journal', desc: 'Wacht am Korps', to: '/journal' },
     { icon: '📖', title: 'Guide', desc: 'Guide d\'utilisation', href: '/docs/guide-utilisateur.html' },
   ]
@@ -271,6 +270,32 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Bataillons — bannière horizontale */}
+      <Link to="/bataillons" style={{ display: 'block', textDecoration: 'none', marginBottom: 'var(--space-xl)' }}>
+        <div className="paper-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-md) var(--space-lg)', cursor: 'pointer', transition: 'all 0.2s', border: '2px solid var(--border-color)' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--military-green)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.transform = '' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+            <span style={{ fontSize: '2rem' }}>⚔️</span>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Bataillons de Combat</h3>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>851e & 852e — Ordres de mission, effectifs, propagande</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 'var(--space-lg)', alignItems: 'center' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#4a6741', display: 'inline-block', marginRight: 6 }}></div>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>851e</span>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#6b4a4a', display: 'inline-block', marginRight: 6 }}></div>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>852e</span>
+            </div>
+            <span style={{ fontSize: '1.2rem', color: 'var(--text-muted)' }}>→</span>
+          </div>
+        </div>
+      </Link>
 
       {/* Navigation */}
       <div className="grid grid-cols-3" style={{ gap: 'var(--space-lg)', marginBottom: 'var(--space-xl)' }}>

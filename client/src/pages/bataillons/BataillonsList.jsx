@@ -39,7 +39,7 @@ export default function BataillonsList() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--space-md)' }}>
         {bataillons.map(b => (
           <div key={b.id} onClick={() => setSelected(b.id)} style={{
-            background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 8,
+            background: 'var(--paper-bg)', border: '1px solid var(--border-color)', borderRadius: 8,
             padding: 'var(--space-lg)', cursor: 'pointer', transition: 'all 0.2s', borderLeft: `4px solid ${b.couleur}`,
             position: 'relative'
           }}
@@ -131,7 +131,7 @@ function BataillonDetail({ id, onBack, user, reload }) {
         {tabs.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)} style={{
             padding: '8px 14px', border: 'none', borderRadius: '6px 6px 0 0', cursor: 'pointer', fontSize: '0.82rem', fontWeight: tab === t.key ? 700 : 400,
-            background: tab === t.key ? 'var(--card-bg)' : 'transparent', color: tab === t.key ? 'var(--text-color)' : 'var(--text-muted)',
+            background: tab === t.key ? 'var(--paper-bg)' : 'transparent', color: tab === t.key ? 'var(--text-color)' : 'var(--text-muted)',
             borderBottom: tab === t.key ? '2px solid var(--primary-color)' : '2px solid transparent'
           }}>{t.icon} {t.label}</button>
         ))}
@@ -142,7 +142,7 @@ function BataillonDetail({ id, onBack, user, reload }) {
         <div>
           {isOfficier && <OrdreForm bataillonId={id} onCreated={loadAll} />}
           {ordres.length === 0 ? <p style={{ color: 'var(--text-muted)' }}>Aucun ordre de mission.</p> : ordres.map(o => (
-            <div key={o.id} style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 8, padding: 'var(--space-md)', marginBottom: 'var(--space-sm)',
+            <div key={o.id} style={{ background: 'var(--paper-bg)', border: '1px solid var(--border-color)', borderRadius: 8, padding: 'var(--space-md)', marginBottom: 'var(--space-sm)',
               borderLeft: `3px solid ${o.priorite === 'critique' ? 'var(--error)' : o.priorite === 'urgente' ? 'var(--warning)' : 'var(--success)'}`,
               opacity: o.statut === 'annule' ? 0.5 : 1 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -205,7 +205,7 @@ function BataillonDetail({ id, onBack, user, reload }) {
       {/* DISCUSSION */}
       {tab === 'discussion' && (
         <div>
-          <div style={{ maxHeight: 400, overflowY: 'auto', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 8, padding: 'var(--space-md)', marginBottom: 'var(--space-sm)' }}>
+          <div style={{ maxHeight: 400, overflowY: 'auto', background: 'var(--paper-bg)', border: '1px solid var(--border-color)', borderRadius: 8, padding: 'var(--space-md)', marginBottom: 'var(--space-sm)' }}>
             {messages.length === 0 ? <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>Aucun message.</p> : messages.map(m => (
               <div key={m.id} style={{ marginBottom: 10, padding: '6px 0', borderBottom: '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -247,7 +247,7 @@ function BataillonDetail({ id, onBack, user, reload }) {
           {media.length === 0 ? <p style={{ color: 'var(--text-muted)' }}>Aucun media.</p> :
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
               {media.map(m => (
-                <div key={m.id} style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 8, overflow: 'hidden' }}>
+                <div key={m.id} style={{ background: 'var(--paper-bg)', border: '1px solid var(--border-color)', borderRadius: 8, overflow: 'hidden' }}>
                   {m.type === 'photo' ? <img src={m.url} alt={m.titre || ''} style={{ width: '100%', height: 160, objectFit: 'cover' }} /> :
                     <video src={m.url} controls style={{ width: '100%', height: 160, objectFit: 'cover' }} />}
                   <div style={{ padding: 8, fontSize: '0.8rem' }}>
@@ -305,7 +305,7 @@ function OrdreForm({ bataillonId, onCreated }) {
   if (!open) return <button onClick={() => setOpen(true)} className="btn btn-primary" style={{ marginBottom: 'var(--space-md)' }}>+ Nouvel ordre de mission</button>
 
   return (
-    <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 8, padding: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
+    <div style={{ background: 'var(--paper-bg)', border: '1px solid var(--border-color)', borderRadius: 8, padding: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
       <input value={form.titre} onChange={e => setForm(f => ({ ...f, titre: e.target.value }))} placeholder="Titre de l'ordre" className="input" style={{ width: '100%', marginBottom: 8 }} />
       <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Description (optionnel)" className="input" rows={2} style={{ width: '100%', marginBottom: 8 }} />
       <select value={form.priorite} onChange={e => setForm(f => ({ ...f, priorite: e.target.value }))} className="input" style={{ marginBottom: 8 }}>
@@ -357,7 +357,7 @@ function MembreForm({ bataillonId, onAdded }) {
   if (!open) return <button onClick={() => setOpen(true)} className="btn btn-sm" style={{ marginBottom: 'var(--space-md)' }}>+ Ajouter un membre</button>
 
   return (
-    <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 8, padding: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
+    <div style={{ background: 'var(--paper-bg)', border: '1px solid var(--border-color)', borderRadius: 8, padding: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
       <input value={search} onChange={e => doSearch(e.target.value)} placeholder="Rechercher un effectif..." className="input" style={{ width: '100%', marginBottom: 8 }} />
       {results.map(e => (
         <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid var(--border-color)' }}>
@@ -389,7 +389,7 @@ function MediaForm({ bataillonId, onAdded }) {
   if (!open) return <button onClick={() => setOpen(true)} className="btn btn-sm" style={{ marginBottom: 'var(--space-md)' }}>+ Ajouter un media</button>
 
   return (
-    <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 8, padding: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
+    <div style={{ background: 'var(--paper-bg)', border: '1px solid var(--border-color)', borderRadius: 8, padding: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
       <input value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))} placeholder="URL de l'image ou video" className="input" style={{ width: '100%', marginBottom: 8 }} />
       <input value={form.titre} onChange={e => setForm(f => ({ ...f, titre: e.target.value }))} placeholder="Titre (optionnel)" className="input" style={{ width: '100%', marginBottom: 8 }} />
       <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} className="input" style={{ marginBottom: 8 }}>
@@ -416,7 +416,7 @@ function BdmForm({ bataillons, onSet }) {
   if (!open) return <button onClick={() => setOpen(true)} className="btn btn-sm" style={{ marginBottom: 'var(--space-md)', background: 'var(--warning)', color: '#fff' }}>Decerner Bataillon du Mois</button>
 
   return (
-    <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 8, padding: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
+    <div style={{ background: 'var(--paper-bg)', border: '1px solid var(--border-color)', borderRadius: 8, padding: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
       <input type="month" value={form.mois} onChange={e => setForm(f => ({ ...f, mois: e.target.value }))} className="input" style={{ marginBottom: 8 }} />
       <select value={form.bataillon_id} onChange={e => setForm(f => ({ ...f, bataillon_id: e.target.value }))} className="input" style={{ marginBottom: 8 }}>
         <option value="">Choisir un bataillon</option>
