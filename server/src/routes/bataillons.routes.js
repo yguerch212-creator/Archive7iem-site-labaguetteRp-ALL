@@ -3,10 +3,23 @@ const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
 const { optionalAuth } = require('../middleware/auth')
 
+// ==================== HELPERS ====================
+
+// Check if user is member of bataillon (or has bypass privileges)
+async function isMemberOrPrivileged(userId, bataillonId, user) {
+  if (user?.isAdmin || user?.isOfficier || user?.isEtatMajor) return true
+  if (!userId) return false
+  const membership = await queryOne(
+    'SELECT id FROM bataillon_membres bm JOIN effectifs e ON e.id = bm.effectif_id JOIN users u ON u.effectif_id = e.id WHERE u.id = ? AND bm.bataillon_id = ?',
+    [userId, bataillonId]
+  )
+  return !!membership
+}
+
 // ==================== BATAILLONS ====================
 
-// GET /api/bataillons — list all
-router.get('/', optionalAuth, async (req, res) => {
+// GET /api/bataillons — list all (public: cards visible, but membership info included)
+router.get('/', auth, async (req, res) => {
   try {
     const rows = await query(`
       SELECT b.*,
@@ -19,6 +32,12 @@ router.get('/', optionalAuth, async (req, res) => {
       LEFT JOIN grades cg ON cg.id = ce.grade_id
       ORDER BY b.numero
     `)
+
+    // Check user membership for each bataillon
+    for (const b of rows) {
+      b.isMember = await isMemberOrPrivileged(req.user.id, b.id, req.user)
+    }
+
     // Bataillon du mois courant
     const now = new Date()
     const mois = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`
@@ -27,9 +46,12 @@ router.get('/', optionalAuth, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
-// GET /api/bataillons/:id — detail with members
-router.get('/:id', optionalAuth, async (req, res) => {
+// GET /api/bataillons/:id — detail with members (restricted to members)
+router.get('/:id', auth, async (req, res) => {
   try {
+    const allowed = await isMemberOrPrivileged(req.user.id, req.params.id, req.user)
+    if (!allowed) return res.status(403).json({ success: false, message: 'Acces reserve aux membres du bataillon' })
+
     const bat = await queryOne(`
       SELECT b.*,
         ce.nom AS chef_nom, ce.prenom AS chef_prenom, cg.nom_complet AS chef_grade
@@ -96,9 +118,12 @@ router.delete('/:id/membres/:effectifId', auth, async (req, res) => {
 
 // ==================== ORDRES DE MISSION ====================
 
-// GET /api/bataillons/:id/ordres
+// GET /api/bataillons/:id/ordres (restricted)
 router.get('/:id/ordres', auth, async (req, res) => {
   try {
+    const allowed = await isMemberOrPrivileged(req.user.id, req.params.id, req.user)
+    if (!allowed) return res.status(403).json({ success: false, message: 'Acces reserve aux membres' })
+
     const ordres = await query(`
       SELECT o.*, u.username AS created_by_nom,
         (SELECT COUNT(*) FROM bataillon_ordre_taches WHERE ordre_id = o.id) AS total_taches,
@@ -144,11 +169,15 @@ router.post('/:id/ordres', auth, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
-// PUT /api/bataillons/ordres/taches/:tacheId/toggle — toggle task completion
+// PUT /api/bataillons/ordres/taches/:tacheId/toggle — toggle task completion (member only)
 router.put('/ordres/taches/:tacheId/toggle', auth, async (req, res) => {
   try {
-    const tache = await queryOne('SELECT * FROM bataillon_ordre_taches WHERE id = ?', [req.params.tacheId])
+    const tache = await queryOne('SELECT t.*, o.bataillon_id FROM bataillon_ordre_taches t JOIN bataillon_ordres o ON o.id = t.ordre_id WHERE t.id = ?', [req.params.tacheId])
     if (!tache) return res.status(404).json({ success: false, message: 'Tache introuvable' })
+
+    const allowed = await isMemberOrPrivileged(req.user.id, tache.bataillon_id, req.user)
+    if (!allowed) return res.status(403).json({ success: false, message: 'Acces reserve aux membres' })
+
     if (tache.completed) {
       await pool.execute('UPDATE bataillon_ordre_taches SET completed = 0, completed_by = NULL, completed_at = NULL WHERE id = ?', [req.params.tacheId])
     } else {
@@ -182,11 +211,14 @@ router.put('/ordres/:ordreId/statut', auth, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
-// ==================== DISCUSSION ====================
+// ==================== DISCUSSION (restricted) ====================
 
 // GET /api/bataillons/:id/messages
 router.get('/:id/messages', auth, async (req, res) => {
   try {
+    const allowed = await isMemberOrPrivileged(req.user.id, req.params.id, req.user)
+    if (!allowed) return res.status(403).json({ success: false, message: 'Acces reserve aux membres' })
+
     const limit = Math.min(parseInt(req.query.limit) || 50, 200)
     const messages = await query(`
       SELECT m.*, u.username, u.nom AS user_nom, u.prenom AS user_prenom,
@@ -202,9 +234,12 @@ router.get('/:id/messages', auth, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
-// POST /api/bataillons/:id/messages
+// POST /api/bataillons/:id/messages (member only)
 router.post('/:id/messages', auth, async (req, res) => {
   try {
+    const allowed = await isMemberOrPrivileged(req.user.id, req.params.id, req.user)
+    if (!allowed) return res.status(403).json({ success: false, message: 'Acces reserve aux membres' })
+
     const { contenu } = req.body
     if (!contenu?.trim()) return res.status(400).json({ success: false, message: 'Message vide' })
     await pool.execute('INSERT INTO bataillon_messages (bataillon_id, auteur_id, contenu) VALUES (?, ?, ?)',
@@ -213,11 +248,14 @@ router.post('/:id/messages', auth, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
-// ==================== MEDIA ====================
+// ==================== MEDIA (restricted) ====================
 
 // GET /api/bataillons/:id/media
-router.get('/:id/media', optionalAuth, async (req, res) => {
+router.get('/:id/media', auth, async (req, res) => {
   try {
+    const allowed = await isMemberOrPrivileged(req.user.id, req.params.id, req.user)
+    if (!allowed) return res.status(403).json({ success: false, message: 'Acces reserve aux membres' })
+
     const media = await query(`
       SELECT m.*, u.username AS uploaded_by_nom
       FROM bataillon_media m
@@ -229,9 +267,12 @@ router.get('/:id/media', optionalAuth, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
-// POST /api/bataillons/:id/media — upload media (URL-based for now)
+// POST /api/bataillons/:id/media
 router.post('/:id/media', auth, async (req, res) => {
   try {
+    const allowed = await isMemberOrPrivileged(req.user.id, req.params.id, req.user)
+    if (!allowed) return res.status(403).json({ success: false, message: 'Acces reserve aux membres' })
+
     const { url, titre, type } = req.body
     if (!url) return res.status(400).json({ success: false, message: 'URL requise' })
     await pool.execute('INSERT INTO bataillon_media (bataillon_id, type, url, titre, uploaded_by) VALUES (?, ?, ?, ?, ?)',

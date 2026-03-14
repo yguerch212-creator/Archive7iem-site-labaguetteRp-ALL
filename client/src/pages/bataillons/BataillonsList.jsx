@@ -38,14 +38,15 @@ export default function BataillonsList() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--space-md)' }}>
         {bataillons.map(b => (
-          <div key={b.id} onClick={() => setSelected(b.id)} style={{
+          <div key={b.id} onClick={() => b.isMember ? setSelected(b.id) : null} style={{
             background: '#f5f2e8', border: '1px solid var(--border-color)', borderRadius: 8,
-            padding: 'var(--space-lg)', cursor: 'pointer', transition: 'all 0.2s', borderLeft: `4px solid ${b.couleur}`,
-            position: 'relative'
+            padding: 'var(--space-lg)', cursor: b.isMember ? 'pointer' : 'not-allowed', transition: 'all 0.2s', borderLeft: `4px solid ${b.couleur}`,
+            position: 'relative', opacity: b.isMember ? 1 : 0.7
           }}
-          onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseEnter={e => b.isMember && (e.currentTarget.style.transform = 'translateY(-2px)')}
           onMouseLeave={e => e.currentTarget.style.transform = ''}>
             {bdm?.bataillon_id === b.id && <div style={{ position: 'absolute', top: 8, right: 12, fontSize: '0.65rem', fontWeight: 700, background: 'var(--warning)', color: '#fff', padding: '2px 8px', borderRadius: 10 }}>DU MOIS</div>}
+            {!b.isMember && <div style={{ position: 'absolute', top: 8, right: 12, fontSize: '0.65rem', fontWeight: 600, background: 'var(--border-color)', color: 'var(--text-muted)', padding: '2px 8px', borderRadius: 10 }}>ACCES RESTREINT</div>}
             <div style={{ fontSize: '1.3rem', fontWeight: 800, fontFamily: 'var(--font-display)' }}>{b.nom}</div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: 4 }}>{b.description}</div>
             {b.chef_nom && <div style={{ marginTop: 8, fontSize: '0.85rem' }}>Chef : <strong>{b.chef_grade} {b.chef_prenom} {b.chef_nom}</strong></div>}
