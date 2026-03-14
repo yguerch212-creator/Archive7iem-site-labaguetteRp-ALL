@@ -33,14 +33,14 @@ export default function SoinsFront() {
   const [saving, setSaving] = useState(false)
   const [todayCount, setTodayCount] = useState(0)
 
-  const canLog = user?.unite_code === 'FSA' || user?.isAdmin || user?.isRecenseur
+  const canLog = user?.unite_code === '003' || user?.isAdmin || user?.isRecenseur
 
   useEffect(() => { load() }, [])
 
   const load = async () => {
     try {
       const params = {}
-      if (user?.effectif_id && user?.unite_code === 'FSA') params.medecin_id = user.effectif_id
+      if (user?.effectif_id && user?.unite_code === '003') params.medecin_id = user.effectif_id
       const res = await api.get('/medical-soldbuch/soins', { params })
       const data = res.data.data || []
       setItems(data)

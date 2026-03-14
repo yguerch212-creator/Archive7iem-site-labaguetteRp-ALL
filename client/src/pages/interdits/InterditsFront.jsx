@@ -14,7 +14,7 @@ export default function InterditsFront() {
 
   // Officiers, Feldgendarmerie (254), Sanitäts sous-off+ can create
   const canCreate = user?.isAdmin || user?.isOfficier || user?.unite_code === '254' ||
-    (user?.unite_code === 'FSA' && (user?.isRecenseur || (user?.grade_rang && user?.grade_rang >= 35)))
+    (user?.unite_code === '003' && (user?.isRecenseur || (user?.grade_rang && user?.grade_rang >= 35)))
 
   useEffect(() => { load() }, [showAll])
 

@@ -12,7 +12,7 @@ export default function DescriptionPersonnelle() {
   const [message, setMessage] = useState(null)
   const [saving, setSaving] = useState(false)
 
-  const canEdit = user?.isAdmin || user?.isRecenseur || user?.unite_code === 'FSA'
+  const canEdit = user?.isAdmin || user?.isRecenseur || user?.unite_code === '003'
 
   const loadEffectif = async (id) => {
     try {

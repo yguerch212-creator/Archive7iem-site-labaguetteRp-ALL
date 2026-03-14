@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import apiClient from '../../api/client'
 
 const UNIT_COLORS = {
-  '916': '#dcdcdc', '254': '#ff9500', 'FSA': '#3da9fc',
+  '916': '#dcdcdc', '254': '#ff9500', '003': '#3da9fc',
   '001': '#222', '919': '#8B4513', '130': '#8a2be2', '009': '#e4c21c'
 }
 

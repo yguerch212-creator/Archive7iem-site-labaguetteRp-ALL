@@ -12,7 +12,7 @@ export default function Hospitalisations() {
   const [search, setSearch] = useState('')
   const [form, setForm] = useState({ effectif_id: '', effectif_nom: '', effectif_nom_libre: '', date_entree: '', date_sortie: '', etablissement: '', motif: '', diagnostic: '', traitement: '', medecin_nom: user?.username || '', notes: '' })
 
-  const canCreate = user?.isAdmin || user?.isRecenseur || user?.unite_code === 'FSA'
+  const canCreate = user?.isAdmin || user?.isRecenseur || user?.unite_code === '003'
 
   useEffect(() => { load() }, [])
 

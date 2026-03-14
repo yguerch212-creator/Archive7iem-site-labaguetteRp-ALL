@@ -28,7 +28,7 @@ export default function VisitesMedicales() {
   const [search, setSearch] = useState('')
   const [form, setForm] = useState({ ...defaultForm, medecin: user?.username || '' })
 
-  const canCreate = user?.isAdmin || user?.isRecenseur || user?.unite_code === 'FSA'
+  const canCreate = user?.isAdmin || user?.isRecenseur || user?.unite_code === '003'
   const [effectifInfo, setEffectifInfo] = useState(null)
 
   useEffect(() => { load() }, [])

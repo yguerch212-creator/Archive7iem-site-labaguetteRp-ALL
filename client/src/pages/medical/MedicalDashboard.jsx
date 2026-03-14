@@ -5,7 +5,7 @@ import BackButton from '../../components/BackButton'
 export default function MedicalDashboard() {
   const { user } = useAuth()
 
-  const isSanit = user?.unite_code === 'FSA'
+  const isSanit = user?.unite_code === '003'
   const isPrivileged = user?.isAdmin || user?.isOfficier || user?.isRecenseur
 
   const cards = [

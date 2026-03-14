@@ -177,7 +177,7 @@ export default function MedicalStats() {
       api.get('/medical-soldbuch/blessures').then(r => setBlessures(r.data.data || [])).catch(() => {}),
       api.get('/effectifs').then(r => {
         const all = r.data.data || r.data || []
-        setSanitatEffectifs(all.filter(e => e.unite_code === 'FSA'))
+        setSanitatEffectifs(all.filter(e => e.unite_code === '003'))
       }).catch(() => {}),
     ])
   }, [])
