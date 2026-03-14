@@ -45,6 +45,7 @@ const avisRechercheRoutes = require('./routes/avis-recherche.routes')
 const frontRoutes = require('./routes/front.routes')
 const rolesRoutes = require('./routes/roles.routes')
 const regimentRoutes = require('./routes/regiment.routes')
+const bataillonsRoutes = require('./routes/bataillons.routes')
 
 const app = express()
 app.set('trust proxy', 1) // Behind Nginx
@@ -123,6 +124,7 @@ app.use('/api/avis-recherche', avisRechercheRoutes)
 app.use('/api/front', frontRoutes)
 app.use('/api/roles', rolesRoutes)
 app.use('/api/regiment', regimentRoutes)
+app.use('/api/bataillons', bataillonsRoutes)
 
 // Stats endpoint (auth required)
 app.get('/api/stats', auth, async (req, res) => {

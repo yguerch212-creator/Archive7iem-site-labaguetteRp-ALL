@@ -100,6 +100,7 @@ export default function Dashboard() {
     { icon: '📜', title: 'Ordres', desc: 'Ordres & directives', to: '/ordres' },
     { icon: '📸', title: 'Galerie', desc: 'Photos RP', to: '/galerie' },
     { icon: '🗺️', title: 'Organigramme', desc: 'Organisation du Korps', to: '/organigramme' },
+    { icon: '⚔️', title: 'Bataillons', desc: '851e & 852e — Combat', to: '/bataillons' },
     { icon: '📰', title: 'Journal', desc: 'Wacht am Korps', to: '/journal' },
     { icon: '📖', title: 'Guide', desc: 'Guide d\'utilisation', href: '/docs/guide-utilisateur.html' },
   ]

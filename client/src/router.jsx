@@ -59,6 +59,7 @@ import Statistiques from './pages/stats/Statistiques'
 import JournalList from './pages/journal/JournalList'
 import JournalView from './pages/journal/JournalView'
 import JournalEdit from './pages/journal/JournalEdit'
+import BataillonsList from './pages/bataillons/BataillonsList'
 
 function AppRouter() {
   const { user } = useAuth()
@@ -124,6 +125,7 @@ function AppRouter() {
       <Route path="/calendrier" element={<ProtectedRoute><Calendrier /></ProtectedRoute>} />
       <Route path="/ordres" element={<ProtectedRoute><OrdresList /></ProtectedRoute>} />
       <Route path="/ordres/:id" element={<ProtectedRoute><OrdreView /></ProtectedRoute>} />
+      <Route path="/bataillons" element={<ProtectedRoute><BataillonsList /></ProtectedRoute>} />
       <Route path="/galerie" element={<ProtectedRoute><Galerie /></ProtectedRoute>} />
       <Route path="/commandement" element={<ProtectedRoute><Commandement /></ProtectedRoute>} />
       <Route path="/gazette" element={<ProtectedRoute><Gazette /></ProtectedRoute>} />
