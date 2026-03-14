@@ -77,6 +77,7 @@ function BataillonDetail({ id, onBack, user, reload }) {
   const [ordres, setOrdres] = useState([])
   const [messages, setMessages] = useState([])
   const [media, setMedia] = useState([])
+  const [batDecos, setBatDecos] = useState([])
   const [msg, setMsg] = useState('')
   const [newMsg, setNewMsg] = useState('')
 
@@ -89,6 +90,7 @@ function BataillonDetail({ id, onBack, user, reload }) {
     api.get(`/bataillons/${id}/ordres`).then(r => setOrdres(r.data.data || [])).catch(() => {})
     api.get(`/bataillons/${id}/messages`).then(r => setMessages(r.data.data || [])).catch(() => {})
     api.get(`/bataillons/${id}/media`).then(r => setMedia(r.data.data || [])).catch(() => {})
+    api.get(`/bataillons/${id}/decorations`).then(r => setBatDecos(r.data.data || [])).catch(() => {})
   }
 
   const toggleTache = (tacheId) => {
@@ -224,17 +226,22 @@ function BataillonDetail({ id, onBack, user, reload }) {
         </div>
       )}
 
-      {/* DECORATIONS */}
+      {/* DECORATIONS DU BATAILLON */}
       {tab === 'decorations' && (
         <div>
-          {(bat.decorations || []).length === 0 ? <p style={{ color: '#8a7d6b' }}>Aucune decoration pour ce bataillon.</p> :
-            (bat.decorations || []).map(d => (
-              <div key={d.id} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #d4cbb8' }}>
-                {d.image_url && <img src={d.image_url} alt="" style={{ width: 32, height: 32, objectFit: 'contain' }} />}
-                <div>
-                  <strong>{d.decoration_nom || d.nom_custom}</strong>
-                  <div style={{ fontSize: '0.8rem', color: '#8a7d6b' }}>{d.effectif_prenom} {d.effectif_nom} — {d.date_attribution || '?'}</div>
+          {isOfficier && <DecoForm bataillonId={id} onAdded={loadAll} />}
+          {batDecos.length === 0 ? <p style={{ color: '#8a7d6b' }}>Aucune decoration attribuee au bataillon.</p> :
+            batDecos.map(d => (
+              <div key={d.id} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #d4cbb8' }}>
+                <span style={{ fontSize: '1.5rem' }}>🎖️</span>
+                <div style={{ flex: 1 }}>
+                  <strong style={{ color: '#2c2416' }}>{d.nom}</strong>
+                  {d.description && <div style={{ fontSize: '0.85rem', color: '#5a5040' }}>{d.description}</div>}
+                  <div style={{ fontSize: '0.75rem', color: '#8a7d6b', marginTop: 2 }}>
+                    {d.attribue_par && <>Attribuee par {d.attribue_par} — </>}{d.date_attribution || new Date(d.created_at).toLocaleDateString('fr')}
+                  </div>
                 </div>
+                {(user?.isAdmin || user?.isEtatMajor) && <button onClick={() => api.delete(`/bataillons/decorations/${d.id}`).then(loadAll)} style={{ background: 'none', border: 'none', color: '#8b4a47', cursor: 'pointer', fontSize: '0.75rem' }}>Supprimer</button>}
               </div>
             ))
           }
@@ -399,6 +406,35 @@ function MediaForm({ bataillonId, onAdded }) {
       </select>
       <div style={{ display: 'flex', gap: 8 }}>
         <button onClick={submit} className="btn btn-primary">Ajouter</button>
+        <button onClick={() => setOpen(false)} className="btn btn-outline">Annuler</button>
+      </div>
+    </div>
+  )
+}
+
+function DecoForm({ bataillonId, onAdded }) {
+  const [open, setOpen] = useState(false)
+  const [form, setForm] = useState({ nom: '', description: '', date_attribution: '', attribue_par: '' })
+
+  const submit = () => {
+    if (!form.nom.trim()) return
+    api.post(`/bataillons/${bataillonId}/decorations`, form).then(() => {
+      setForm({ nom: '', description: '', date_attribution: '', attribue_par: '' })
+      setOpen(false)
+      onAdded()
+    }).catch(() => {})
+  }
+
+  if (!open) return <button onClick={() => setOpen(true)} className="btn btn-sm" style={{ marginBottom: 'var(--space-md)' }}>+ Attribuer une decoration</button>
+
+  return (
+    <div style={{ background: '#f5f2e8', border: '1px solid #d4cbb8', borderRadius: 8, padding: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
+      <input value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))} placeholder="Nom de la decoration *" className="input" style={{ width: '100%', marginBottom: 8 }} />
+      <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Description / motif (optionnel)" className="input" rows={2} style={{ width: '100%', marginBottom: 8 }} />
+      <input value={form.attribue_par} onChange={e => setForm(f => ({ ...f, attribue_par: e.target.value }))} placeholder="Attribuee par (ex: General Chevalier)" className="input" style={{ width: '100%', marginBottom: 8 }} />
+      <input value={form.date_attribution} onChange={e => setForm(f => ({ ...f, date_attribution: e.target.value }))} placeholder="Date (ex: 14/03/2026)" className="input" style={{ width: '100%', marginBottom: 8 }} />
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={submit} className="btn btn-primary">Attribuer</button>
         <button onClick={() => setOpen(false)} className="btn btn-outline">Annuler</button>
       </div>
     </div>

@@ -290,6 +290,41 @@ router.delete('/media/:mediaId', auth, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
+// ==================== DECORATIONS DU BATAILLON ====================
+
+// GET /api/bataillons/:id/decorations
+router.get('/:id/decorations', auth, async (req, res) => {
+  try {
+    const allowed = await isMemberOrPrivileged(req.user.id, req.params.id, req.user)
+    if (!allowed) return res.status(403).json({ success: false, message: 'Acces reserve aux membres' })
+    const rows = await query('SELECT * FROM bataillon_decorations WHERE bataillon_id = ? ORDER BY created_at DESC', [req.params.id])
+    res.json({ success: true, data: rows })
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
+})
+
+// POST /api/bataillons/:id/decorations (officier+)
+router.post('/:id/decorations', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isEtatMajor) return res.status(403).json({ success: false, message: 'Reserve aux officiers' })
+    const { nom, description, date_attribution, attribue_par } = req.body
+    if (!nom?.trim()) return res.status(400).json({ success: false, message: 'Nom requis' })
+    await pool.execute(
+      'INSERT INTO bataillon_decorations (bataillon_id, nom, description, date_attribution, attribue_par, created_by) VALUES (?, ?, ?, ?, ?, ?)',
+      [req.params.id, nom.trim(), description || null, date_attribution || null, attribue_par || null, req.user.id]
+    )
+    res.json({ success: true })
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
+})
+
+// DELETE /api/bataillons/decorations/:decoId
+router.delete('/decorations/:decoId', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin && !req.user.isEtatMajor) return res.status(403).json({ success: false, message: 'Non autorise' })
+    await pool.execute('DELETE FROM bataillon_decorations WHERE id = ?', [req.params.decoId])
+    res.json({ success: true })
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
+})
+
 // ==================== BATAILLON DU MOIS ====================
 
 // POST /api/bataillons/du-mois — set bataillon du mois
