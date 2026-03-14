@@ -15,7 +15,7 @@ export default function Vaccinations() {
   const autoLot = () => `VAC-${new Date().getFullYear()}-${String(Math.floor(Math.random()*9000)+1000)}`
   const [form, setForm] = useState({ effectif_id: '', effectif_nom: '', effectif_nom_libre: '', type_vaccin: 'Typhus', date_vaccination: '', medecin_nom: user?.username || '', lot: autoLot(), notes: '' })
 
-  const canCreate = user?.isAdmin || user?.isRecenseur || user?.unite_code === '916S'
+  const canCreate = user?.isAdmin || user?.isRecenseur || user?.unite_code === 'FSA'
 
   useEffect(() => { load() }, [])
 

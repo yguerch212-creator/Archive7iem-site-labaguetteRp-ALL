@@ -19,7 +19,7 @@ export default function Blessures() {
   const [search, setSearch] = useState('')
   const [form, setForm] = useState({ effectif_id: '', effectif_nom: '', effectif_nom_libre: '', date_blessure: '', type_blessure: '', localisation: '', circonstances: '', gravite: 'legere', sequelles: '', medecin_nom: user?.username || '', notes: '' })
 
-  const canCreate = user?.isAdmin || user?.isRecenseur || user?.unite_code === '916S'
+  const canCreate = user?.isAdmin || user?.isRecenseur || user?.unite_code === 'FSA'
 
   useEffect(() => { load() }, [])
 

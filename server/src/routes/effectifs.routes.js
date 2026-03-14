@@ -158,7 +158,7 @@ router.post('/', auth, recenseur, async (req, res) => {
         if (uniteInfo.code === '254' || uniteInfo.nom.toLowerCase().includes('feldgendarmerie')) {
           autoGroups.push(5) // Feldgendarmerie
         }
-        if (uniteInfo.code === '916S' || uniteInfo.nom.toLowerCase().includes('sanit')) {
+        if (uniteInfo.code === 'FSA' || uniteInfo.nom.toLowerCase().includes('sanit')) {
           autoGroups.push(6) // Sanitaets
         }
         if (uniteInfo.code === '084' || uniteInfo.nom.toLowerCase().includes('etat-major') || uniteInfo.nom.toLowerCase().includes('armeekorps')) {

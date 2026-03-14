@@ -93,7 +93,7 @@ router.post('/users', auth, privileged, async (req, res) => {
     const autoGroups = []
 
     // Sanitats group for 916S members who are sous-officier+ (rang >= 30)
-    if (unite?.code === '916S' && grade?.rang >= 30) {
+    if (unite?.code === 'FSA' && grade?.rang >= 30) {
       autoGroups.push('Sanitat')
     }
     // Sous-officier group for rang >= 30 and < 60

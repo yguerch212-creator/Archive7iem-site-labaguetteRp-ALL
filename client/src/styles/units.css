@@ -1,7 +1,7 @@
 /* Couleurs par unité du 84e Armeekorps */
 .unit-916  { color: #dcdcdc; text-shadow: 0 0 3px #000, 0 0 6px rgba(0,0,0,0.5); }
 .unit-254  { color: #ff9500; }
-.unit-916S { color: #3da9fc; }
+.unit-FSA { color: #3da9fc; }
 .unit-001  { color: #222; }
 .unit-919  { color: #8B4513; }
 .unit-130  { color: #8a2be2; }
@@ -10,7 +10,7 @@
 /* Backgrounds pour cards */
 .unit-bg-916  { border-left: 4px solid #dcdcdc; }
 .unit-bg-254  { border-left: 4px solid #ff9500; }
-.unit-bg-916S { border-left: 4px solid #3da9fc; }
+.unit-bg-FSA { border-left: 4px solid #3da9fc; }
 .unit-bg-001  { border-left: 4px solid #222; }
 .unit-bg-919  { border-left: 4px solid #8B4513; }
 .unit-bg-130  { border-left: 4px solid #8a2be2; }

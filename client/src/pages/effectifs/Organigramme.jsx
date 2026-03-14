@@ -7,7 +7,7 @@ import BackButton from '../../components/BackButton'
 const UNIT_COLORS = {
   '916': { bg: '#4b5320', dot: '⚪', label: '916. Grenadier-Regiment' },
   '254': { bg: '#c97000', dot: '🟠', label: '254. Feldgendarmerie' },
-  '916S': { bg: '#2c5ea0', dot: '🔵', label: '916S. Sanitats-Abteilung' },
+  'FSA': { bg: '#2c5ea0', dot: '🔵', label: '3. Fallschirm-Sanitäts-Abteilung' },
   '001': { bg: '#1a1a2e', dot: '⚫', label: '001. Marine Pionier Bataillon' },
   '919': { bg: '#6b4c2a', dot: '🟤', label: '919. Logistik-Abteilung' },
   '130': { bg: '#6b2d8b', dot: '🟣', label: '130. Panzer Lehr' },
@@ -57,7 +57,7 @@ const GRADES = {
     { nom: 'Oberstleutnant', abbr: 'OTL.', cat: 'OFF', role: 'Commandant adjoint' },
     { nom: 'Oberst', abbr: 'Obst.', cat: 'OFF', role: 'Commandant' },
   ],
-  '916S': [
+  'FSA': [
     { nom: 'Sanitatssoldat', abbr: 'SanSdt.', cat: 'HDR', role: 'Infirmier de base' },
     { nom: 'Sanitats Obersoldat', abbr: 'SanOSdt.', cat: 'HDR', role: 'Infirmier confirmé' },
     { nom: 'Gefreiter', abbr: 'Gefr.', cat: 'HDR', role: 'Caporal médical' },
@@ -209,7 +209,7 @@ const DEFAULT_COMMANDERS = {
   '84ak': { kommandeur: 'Maréchal Jean Devin (intérim)', generalstab: 'Maréchal Jean Devin' },
   '916': { kommandeur: 'OLtn. Manfred Wurst', adjoint: 'Ltn. Miller Hermantraut' },
   '254': { kommandeur: 'Hptm. Jean Muller', adjoint: 'OLtn. Kreger Hoenstadt' },
-  '916S': { kommandeur: 'OStArzt Ernest Der Erlkönig', adjoint: 'OArzt Bert Elséeune' },
+  'FSA': { kommandeur: 'OStArzt Ernest Der Erlkönig', adjoint: 'OArzt Bert Elséeune' },
   '001': { kommandeur: 'KptLt. Alarak Vander', adjoint: 'OLtzS. Karl Witteman' },
   '919': { kommandeur: 'OLtn. Krauss Von Strauss', adjoint: '' },
   '130': { kommandeur: 'Maj. Ernest Honigsberg', adjoint: 'Ltn. Ernest Von Richtofen' },
@@ -394,7 +394,7 @@ export default function Organigramme() {
 
           {/* Régiments — tous horizontal */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
-            {['916', '254', '916S', '001', '919', '130', '009'].map(code => {
+            {['916', '254', 'FSA', '001', '919', '130', '009'].map(code => {
               const uc = UNIT_COLORS[code]
               const is916 = code === '916'
               const textColor = code === '009' ? '#222' : '#f5f0e1'
