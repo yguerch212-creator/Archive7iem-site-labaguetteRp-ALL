@@ -82,6 +82,11 @@ export default function PDS() {
 
   const [pdsConfig, setPdsConfig] = useState({})
 
+  // Admin edit state (for Administratifs editing other's PDS)
+  const [adminEditTarget, setAdminEditTarget] = useState(null) // { effectif_id, prenom, nom, unite_id, grade_rang }
+  const [adminEditPds, setAdminEditPds] = useState({})
+  const [adminSaving, setAdminSaving] = useState(false)
+
   const isPrivileged = user?.isAdmin || user?.isRecenseur
   const hasEffectif = !!user?.effectif_id
 
@@ -154,6 +159,23 @@ export default function PDS() {
     } catch (err) { setMessage('Erreur') }
   }
 
+  const startAdminEdit = (eff) => {
+    setAdminEditTarget({ effectif_id: eff.effectif_id, prenom: eff.prenom, nom: eff.nom, unite_id: eff.unite_id, grade_rang: eff.grade_rang, grade_nom: eff.grade_nom, unite_code: eff.unite_code, unite_nom: eff.unite_nom })
+    setAdminEditPds({ lundi: eff.lundi||'', mardi: eff.mardi||'', mercredi: eff.mercredi||'', jeudi: eff.jeudi||'', vendredi: eff.vendredi||'', vendredi_fin: eff.vendredi_fin||'', samedi: eff.samedi||'', dimanche: eff.dimanche||'' })
+    setSelectedEffectif(null)
+    setView('adminEdit')
+  }
+
+  const saveAdminEdit = async () => {
+    setAdminSaving(true)
+    try {
+      await api.put('/pds/saisie', { effectif_id: adminEditTarget.effectif_id, semaine, ...adminEditPds })
+      setMessage('PDS modifié ✓'); setTimeout(() => setMessage(''), 2000)
+      loadAll(); setView('list'); setAdminEditTarget(null)
+    } catch (err) { setMessage('Erreur: ' + (err.response?.data?.message || err.message)) }
+    setAdminSaving(false)
+  }
+
   const traiterPermission = async (id, statut) => {
     const notes = statut === 'Refusee' ? prompt('Motif du refus :') : null
     try { await api.put(`/pds/permissions/${id}/traiter`, { statut, notes }); loadPermissions() } catch(err) { alert(err.response?.data?.message || 'Erreur traitement') }
@@ -161,6 +183,40 @@ export default function PDS() {
 
   const unites = [...new Set(allData.map(d => d.unite_code))].sort()
   const filteredAll = filterUnite ? allData.filter(d => d.unite_code === filterUnite) : allData
+
+  // ===== ADMIN EDIT VIEW (Administratifs editing another's PDS) =====
+  if (view === 'adminEdit' && adminEditTarget) {
+    const adminTotal = JOURS.reduce((sum, j) => sum + parseCreneaux(adminEditPds[j]), 0)
+    const adminRequired = getRequiredHours(adminEditTarget.unite_id, adminEditTarget.grade_rang || 0)
+    const adminValide = adminTotal >= adminRequired
+    return (
+      <div className="pds-page">
+        <button className="btn btn-secondary btn-small" onClick={() => { setView('list'); setAdminEditTarget(null) }} style={{ marginBottom: 'var(--space-md)' }}>← Retour</button>
+        <h2 style={{ marginBottom: 'var(--space-sm)' }}>🏢 Modifier PDS — {adminEditTarget.prenom} {adminEditTarget.nom}</h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 'var(--space-lg)' }}>
+          {adminEditTarget.grade_nom || '—'} — {adminEditTarget.unite_code} {adminEditTarget.unite_nom} · Semaine {semaine}
+        </p>
+        <div style={{ background: 'rgba(255,152,0,0.08)', border: '1px solid rgba(255,152,0,0.3)', borderRadius: 8, padding: '0.7rem 1rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
+          ⚠️ <strong>Modification administrative</strong> — Cette action sera enregistrée dans les logs d'activité.
+        </div>
+        <div className="paper-card" style={{ padding: 'var(--space-lg)' }}>
+          {JOURS.map(j => (
+            <div className="form-group" key={j} style={{ marginBottom: 'var(--space-sm)' }}>
+              <label className="form-label">{JOURS_LABELS[j]}</label>
+              <input type="text" className="form-input" placeholder="Ex: 20h-22h30" value={adminEditPds[j] || ''} onChange={e => setAdminEditPds(p => ({...p, [j]: e.target.value}))} />
+            </div>
+          ))}
+          <div style={{ marginTop: 'var(--space-md)', padding: '0.5rem', background: adminValide ? 'rgba(76,175,80,0.08)' : 'rgba(244,67,54,0.08)', borderRadius: 6 }}>
+            Total : <strong style={{ color: adminValide ? 'var(--success)' : 'var(--danger)' }}>{formatHeures(adminTotal)}</strong> / {adminRequired}h requis {adminValide ? '✅' : '❌'}
+          </div>
+          <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center', marginTop: 'var(--space-lg)' }}>
+            <button className="btn btn-primary" onClick={saveAdminEdit} disabled={adminSaving}>{adminSaving ? 'Sauvegarde...' : '💾 Sauvegarder'}</button>
+            <button className="btn btn-secondary" onClick={() => { setView('list'); setAdminEditTarget(null) }}>Annuler</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // ===== EDIT VIEW =====
   if (view === 'edit') {
@@ -239,6 +295,9 @@ export default function PDS() {
           <div style={{ textAlign: 'center', marginTop: '1rem', display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
             {user?.effectif_id === eff.effectif_id && (
               <button className="btn btn-primary" onClick={() => { setSelectedEffectif(null); setView('edit') }}>✏️ Éditer mon PDS</button>
+            )}
+            {(user?.isRecenseur || user?.isAdmin) && user?.effectif_id !== eff.effectif_id && (
+              <button className="btn btn-primary" onClick={() => startAdminEdit(eff)}>🏢 Modifier ce PDS</button>
             )}
             {user?.isAdmin && eff.pds_id && (
               <button className="btn btn-danger btn-small" onClick={async () => {
