@@ -135,10 +135,18 @@ router.put('/saisie', auth, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Vous ne pouvez modifier que votre propre PDS' })
     }
 
-    // Lock: only current RP week is editable (unless admin)
+    // Lock: only current RP week is editable (unless admin/administratif)
     const currentWeek = getCurrentWeek()
-    if (!req.user.isAdmin && semaine !== currentWeek) {
+    const canEditPast = req.user.isAdmin || req.user.isRecenseur
+    if (!canEditPast && semaine !== currentWeek) {
       return res.status(403).json({ success: false, message: 'Vous ne pouvez remplir que la semaine en cours' })
+    }
+
+    // Log retroactive edits by administratifs
+    if (canEditPast && semaine !== currentWeek && req.user.effectif_id !== effectif_id) {
+      const target = await queryOne('SELECT prenom, nom FROM effectifs WHERE id = ?', [effectif_id])
+      const targetName = target ? `${target.prenom} ${target.nom}` : `#${effectif_id}`
+      logActivity(req, 'admin_retro_pds', 'pds', effectif_id, `PDS modifie retroactivement pour ${targetName} (semaine ${semaine})`)
     }
 
     // Compute total hours from creneaux
@@ -314,6 +322,12 @@ router.put('/permissions/:id/traiter', auth, async (req, res) => {
       'UPDATE permissions_absence SET statut = ?, traite_par = ?, notes_traitement = ? WHERE id = ?',
       [statut, req.user.id, notes || null, req.params.id]
     )
+    // Log administratif permission actions
+    if (req.user.isRecenseur) {
+      const perm = await queryOne('SELECT e.prenom, e.nom FROM permissions_absence pa JOIN effectifs e ON e.id = pa.effectif_id WHERE pa.id = ?', [req.params.id])
+      const targetName = perm ? `${perm.prenom} ${perm.nom}` : `#${req.params.id}`
+      logActivity(req, 'admin_retro_permission', 'permission', req.params.id, `Permission ${statut} pour ${targetName}`)
+    }
     res.json({ success: true })
   } catch (err) {
     console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })

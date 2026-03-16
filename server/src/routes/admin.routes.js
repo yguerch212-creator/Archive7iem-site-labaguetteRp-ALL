@@ -194,6 +194,28 @@ router.get('/logs', auth, privileged, async (req, res) => {
   }
 })
 
+// GET /api/admin/logs/administratif — Activity log filtered to administratif (recenseur) actions only
+router.get('/logs/administratif', auth, privileged, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 100, 500)
+    const rows = await query(`
+      SELECT al.*, u.username,
+             CONCAT(COALESCE(e.prenom,''), ' ', COALESCE(e.nom,'')) AS user_fullname
+      FROM activity_logs al
+      LEFT JOIN users u ON u.id = al.user_id
+      LEFT JOIN effectifs e ON e.id = u.effectif_id
+      WHERE al.action LIKE 'admin_retro_%'
+         OR (al.user_id IN (
+           SELECT ug.user_id FROM user_groups ug JOIN \`groups\` g ON g.id = ug.group_id WHERE g.name = 'Administratif'
+         ) AND al.action NOT IN ('login', 'view'))
+      ORDER BY al.created_at DESC LIMIT ${limit}
+    `)
+    res.json({ success: true, data: rows })
+  } catch (err) {
+    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
+  }
+})
+
 // PUT /api/admin/users/:id/reset-password
 router.put('/users/:id/reset-password', auth, privileged, async (req, res) => {
   try {

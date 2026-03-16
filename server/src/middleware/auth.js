@@ -29,7 +29,9 @@ async function auth(req, res, next) {
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
               WHERE ug.user_id = u.id AND gp.name = 'Etat-Major') > 0 AS isEtatMajor,
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
-              WHERE ug.user_id = u.id AND gp.name = 'Sous-officier') > 0 AS isSousOfficier
+              WHERE ug.user_id = u.id AND gp.name = 'Sous-officier') > 0 AS isSousOfficier,
+             (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
+              WHERE ug.user_id = u.id AND gp.name = 'Ordre-de-Mission') > 0 AS isOrdreDeMission
       FROM users u
       LEFT JOIN unites un ON u.unite_id = un.id
       LEFT JOIN grades g ON g.id = u.grade_id
@@ -47,6 +49,7 @@ async function auth(req, res, next) {
     user.isSanitaets = !!user.isSanitaets
     user.isEtatMajor = !!user.isEtatMajor
     user.isSousOfficier = !!user.isSousOfficier
+    user.isOrdreDeMission = !!user.isOrdreDeMission
     user.isGuest = false
     user.mustChangePassword = !!user.must_change_password
     req.user = user
@@ -60,7 +63,7 @@ async function auth(req, res, next) {
 async function optionalAuth(req, res, next) {
   const header = req.headers.authorization
   if (!header || !header.startsWith('Bearer ')) {
-    req.user = { id: 0, isGuest: true, isAdmin: false, isRecenseur: false, isOfficier: false, isFeldgendarmerie: false, isSanitaets: false, isEtatMajor: false, isSousOfficier: false }
+    req.user = { id: 0, isGuest: true, isAdmin: false, isRecenseur: false, isOfficier: false, isFeldgendarmerie: false, isSanitaets: false, isEtatMajor: false, isSousOfficier: false, isOrdreDeMission: false }
     return next()
   }
   return auth(req, res, next)

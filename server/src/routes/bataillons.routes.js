@@ -108,7 +108,7 @@ router.get('/:id', auth, async (req, res) => {
     // Permission flags for frontend
     const canManage = await canManageMembers(req.user.id, req.params.id, req.user)
     const membership = await getUserMembership(req.user.id, req.params.id)
-    const isMemberOfficier = !!(membership && (req.user.isOfficier || req.user.isEtatMajor || req.user.isAdmin || membership.role === 'officier'))
+    const isMemberOfficier = !!(membership && (req.user.isOfficier || req.user.isEtatMajor || req.user.isAdmin || req.user.isOrdreDeMission || membership.role === 'officier'))
 
     res.json({ success: true, data: { ...bat, membres, decorations, palmares, canManage, isMemberOfficier } })
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }

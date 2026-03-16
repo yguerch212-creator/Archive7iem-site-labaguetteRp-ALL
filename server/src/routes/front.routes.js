@@ -49,7 +49,7 @@ router.get('/cartes/:id/events', optionalAuth, async (req, res) => {
 // POST /api/front/cartes/:id/events — Add event
 router.post('/cartes/:id/events', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isSousOfficier && !req.user.isEtatMajor)
+    if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isSousOfficier && !req.user.isEtatMajor && !req.user.isRecenseur)
       return res.status(403).json({ success: false, message: 'Non autorisé' })
     const { type_event, resultat, camp_vainqueur, vp_id, heure, note } = req.body
     if (!type_event) return res.status(400).json({ success: false, message: 'Type requis' })
@@ -57,6 +57,11 @@ router.post('/cartes/:id/events', auth, async (req, res) => {
       'INSERT INTO situation_front_events (carte_id, type_event, resultat, camp_vainqueur, vp_id, heure, note, rapporte_par) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [req.params.id, type_event, resultat || 'vp', camp_vainqueur || '', vp_id || null, heure || null, note || null, req.user.effectif_id || null]
     )
+    // Log retroactive edits by administratifs
+    if (req.user.isRecenseur && !req.user.isAdmin) {
+      const { logActivity } = require('../utils/logger')
+      logActivity(req, 'admin_retro_front', 'front_event', result.insertId, `Evenement front ajoute sur carte #${req.params.id}: ${type_event}`)
+    }
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
