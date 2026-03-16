@@ -65,11 +65,17 @@ router.get('/', optionalAuth, async (req, res) => {
              g.nom_complet AS grade_nom, g.rang AS grade_rang,
              u.nom AS unite_nom, u.code AS unite_code, u.id AS unite_id,
              p.id AS pds_id, p.lundi, p.mardi, p.mercredi, p.jeudi, p.vendredi, p.vendredi_fin, p.samedi, p.dimanche,
-             p.total_heures, p.valide
+             p.total_heures, p.valide,
+             pc.duree_heures AS required_hours
       FROM effectifs e
       INNER JOIN pds_semaines p ON p.effectif_id = e.id AND p.semaine = ?
       LEFT JOIN grades g ON g.id = e.grade_id
       LEFT JOIN unites u ON u.id = e.unite_id
+      LEFT JOIN pds_config pc ON pc.unite_id = u.id AND pc.rang_type = CASE
+        WHEN COALESCE(g.rang, 0) >= 60 THEN 'off'
+        WHEN COALESCE(g.rang, 0) >= 35 THEN 'so'
+        ELSE 'hdr'
+      END
       WHERE e.actif = 'Actif'
       ORDER BY u.code, COALESCE(g.rang, 0) DESC, e.nom
     `, [semaine])

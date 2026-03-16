@@ -80,8 +80,18 @@ export default function PDS() {
   const [showPermForm, setShowPermForm] = useState(false)
   const [permForm, setPermForm] = useState({ date_debut: '', date_fin: '', raison: '' })
 
+  const [pdsConfig, setPdsConfig] = useState({})
+
   const isPrivileged = user?.isAdmin || user?.isRecenseur
   const hasEffectif = !!user?.effectif_id
+
+  // Get required hours for a given unite and grade rang
+  const getRequiredHours = useCallback((uniteId, gradeRang) => {
+    const rangType = gradeRang >= 60 ? 'off' : gradeRang >= 35 ? 'so' : 'hdr'
+    const key = `${uniteId}-${rangType}`
+    if (pdsConfig[key]) return pdsConfig[key].duree_heures
+    return 6 // default
+  }, [pdsConfig])
 
   const loadAll = useCallback(async () => {
     try {
@@ -107,13 +117,23 @@ export default function PDS() {
     } catch {}
   }, [semaine, hasEffectif])
 
+  useEffect(() => {
+    api.get('/pds/config').then(r => {
+      const cfg = {}
+      for (const row of (r.data.data || [])) {
+        cfg[`${row.unite_id}-${row.rang_type}`] = row
+      }
+      setPdsConfig(cfg)
+    }).catch(() => {})
+  }, [])
   useEffect(() => { loadAll(); loadMine() }, [loadAll, loadMine])
   useEffect(() => { if (view === 'permissions') loadPermissions() }, [view])
 
   const loadPermissions = async () => { try { const r = await api.get('/pds/permissions'); setPermissions(r.data.data) } catch {} }
 
   const myTotal = JOURS.reduce((sum, j) => sum + parseCreneaux(myPds[j]), 0)
-  const myValide = myTotal >= 6
+  const myRequiredHours = getRequiredHours(user?.unite_id, user?.grade_rang || 0)
+  const myValide = myTotal >= myRequiredHours
 
   const saveMine = async () => {
     setSaving(true)
@@ -158,7 +178,7 @@ export default function PDS() {
             </div>
             <div className={`mon-pds-total ${myValide ? 'total-valid' : 'total-invalid'}`}>
               <span className="total-value">{formatHeures(myTotal)}</span>
-              <span className="total-label">{myValide ? '✅ Validé (≥6h)' : '❌ < 6h minimum'}</span>
+              <span className="total-label">{myValide ? `✅ Validé (≥${myRequiredHours}h)` : `❌ < ${myRequiredHours}h minimum`}</span>
             </div>
           </div>
 
@@ -376,9 +396,12 @@ export default function PDS() {
                   <td style={tdS}>{eff.unite_code}</td>
                   <td style={tdS}><strong style={{ color: eff.valide ? 'var(--success)' : 'var(--danger)' }}>{formatHeures(eff.total_heures)}</strong></td>
                   <td style={tdS}>
-                    {eff.valide
-                      ? <span className="badge badge-green">✅ Validé</span>
-                      : <span className="badge badge-red">❌ &lt; 6h</span>}
+                    {(() => {
+                      const reqH = getRequiredHours(eff.unite_id, eff.grade_rang || 0)
+                      return eff.valide || (eff.total_heures >= reqH)
+                        ? <span className="badge badge-green">✅ Valide</span>
+                        : <span className="badge badge-red">❌ &lt; {reqH}h</span>
+                    })()}
                   </td>
                 </tr>
               ))}
@@ -522,8 +545,8 @@ function RapportSemaine({ semaine, setSemaine, semaineActuelle, setView, user, f
                   <td style={{ ...tdS, textAlign: 'center' }}>
                     {eff.en_permission ? <span className="badge" style={{ background: '#2c5f7c', color: '#fff', fontSize: '0.7rem' }}>🏖️ Permission</span>
                       : !hasPds ? <span className="badge" style={{ background: '#888', color: '#fff', fontSize: '0.7rem' }}>Non rempli</span>
-                      : eff.valide ? <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>✅ Validé</span>
-                      : <span className="badge badge-red" style={{ fontSize: '0.7rem' }}>❌ &lt; 6h</span>}
+                      : eff.valide ? <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>✅ Valide</span>
+                      : <span className="badge badge-red" style={{ fontSize: '0.7rem' }}>❌ &lt; {eff.required_hours || 6}h</span>}
                   </td>
                 </tr>
               )
