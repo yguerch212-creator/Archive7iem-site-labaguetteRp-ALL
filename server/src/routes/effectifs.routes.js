@@ -231,12 +231,36 @@ router.put('/:id', auth, recenseur, async (req, res) => {
        f.historique || null, f.date_entree_ig || null, f.date_entree_irl || null,
        f.discord_id || null, req.params.id]
     )
-    // Auto-attestation on promotion
+    // Auto-attestation on promotion + sync users.grade_id + auto-assign role
     if (gradeChanged) {
       try {
         const { createAutoAttestation } = require('./attestations.routes')
-        const newGrade = await queryOne('SELECT nom_complet FROM grades WHERE id = ?', [f.grade_id])
+        const newGrade = await queryOne('SELECT nom_complet, rang, categorie FROM grades WHERE id = ?', [f.grade_id])
         await createAutoAttestation(parseInt(req.params.id), `Promotion : ${newGrade?.nom_complet || 'nouveau grade'}`, 'promotion', null, req.user.id, '1')
+        
+        // Sync users.grade_id and unite_id
+        await pool.execute('UPDATE users SET grade_id = ?, unite_id = ? WHERE effectif_id = ?', [f.grade_id, f.unite_id || null, req.params.id])
+        
+        // Auto-assign Officier/Sous-officier roles based on new grade rang
+        if (newGrade) {
+          const userRow = await queryOne('SELECT id FROM users WHERE effectif_id = ?', [req.params.id])
+          if (userRow) {
+            const officierRole = await queryOne("SELECT id FROM roles WHERE name = 'Officier'", [])
+            const soRole = await queryOne("SELECT id FROM roles WHERE name = 'Sous-officier'", [])
+            if (newGrade.rang >= 60 && officierRole) {
+              await pool.execute('INSERT IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)', [userRow.id, officierRole.id])
+            }
+            if (newGrade.rang >= 35 && newGrade.rang < 60 && soRole) {
+              // Add SO, remove Officier if they had it
+              await pool.execute('INSERT IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)', [userRow.id, soRole.id])
+              if (officierRole) await pool.execute('DELETE FROM user_roles WHERE user_id = ? AND role_id = ?', [userRow.id, officierRole.id])
+            }
+            if (newGrade.rang >= 60 && soRole) {
+              // Officier gets SO too
+              await pool.execute('INSERT IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)', [userRow.id, soRole.id])
+            }
+          }
+        }
       } catch(e) { console.error("Auto-op error:", e.message) }
     }
     res.json({ success: true })

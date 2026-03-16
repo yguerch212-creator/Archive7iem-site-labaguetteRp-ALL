@@ -15,7 +15,8 @@ async function auth(req, res, next) {
 
     const user = await queryOne(`
       SELECT u.id, u.nom, u.prenom, u.username, u.role_level, u.unite_id, u.effectif_id, u.must_change_password,
-             un.nom AS unite_nom, un.code AS unite_code, g.nom_complet AS grade_nom, g.rang AS grade_rang,
+             COALESCE(eun.nom, un.nom) AS unite_nom, COALESCE(eun.code, un.code) AS unite_code,
+             COALESCE(eg.nom_complet, g.nom_complet) AS grade_nom, COALESCE(eg.rang, g.rang) AS grade_rang,
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
               WHERE ug.user_id = u.id AND gp.name = 'Administration') > 0 AS isAdmin,
              (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` gp ON gp.id = ug.group_id 
@@ -35,6 +36,9 @@ async function auth(req, res, next) {
       FROM users u
       LEFT JOIN unites un ON u.unite_id = un.id
       LEFT JOIN grades g ON g.id = u.grade_id
+      LEFT JOIN effectifs ef ON ef.id = u.effectif_id
+      LEFT JOIN grades eg ON eg.id = ef.grade_id
+      LEFT JOIN unites eun ON eun.id = ef.unite_id
       WHERE u.id = ? AND u.active = 1
     `, [decoded.userId])
 

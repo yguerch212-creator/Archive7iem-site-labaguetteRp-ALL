@@ -19,7 +19,9 @@ router.get('/users', auth, privileged, async (req, res) => {
   try {
     const users = await query(`
       SELECT u.id, u.nom, u.prenom, u.username, u.role_level, u.must_change_password, u.active,
-             g.nom_complet AS grade_nom, un.nom AS unite_nom,
+             COALESCE(eg.nom_complet, g.nom_complet) AS grade_nom, 
+             COALESCE(eun.nom, un.nom) AS unite_nom,
+             eg.rang AS grade_rang, eg.categorie AS grade_categorie,
              (SELECT GROUP_CONCAT(r.name SEPARATOR ', ') FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = u.id) AS role_names,
              (SELECT COUNT(*) FROM user_roles ur JOIN roles r ON r.id = ur.role_id 
               WHERE ur.user_id = u.id AND r.name = 'Administration') > 0 AS is_admin,
@@ -38,6 +40,9 @@ router.get('/users', auth, privileged, async (req, res) => {
       FROM users u
       LEFT JOIN grades g ON g.id = u.grade_id
       LEFT JOIN unites un ON un.id = u.unite_id
+      LEFT JOIN effectifs e ON e.id = u.effectif_id
+      LEFT JOIN grades eg ON eg.id = e.grade_id
+      LEFT JOIN unites eun ON eun.id = e.unite_id
       ORDER BY u.role_level DESC, u.nom
     `)
     res.json({ success: true, data: users })
