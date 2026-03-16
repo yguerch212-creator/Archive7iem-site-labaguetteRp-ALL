@@ -22,12 +22,13 @@ export default function EffectifNew() {
   const [decoForm, setDecoForm] = useState({ decoration_id: '', nom_custom: '', date_attribution: '', attribue_par: '', motif: '' })
   const [showDecoForm, setShowDecoForm] = useState(false)
   const [decoMsg, setDecoMsg] = useState(null)
+  const [bataillons, setBataillons] = useState([])
   const [form, setForm] = useState({
     nom: '', prenom: '', surnom: '', unite_id: params.get('unite_id') || '',
     grade_id: '', fonction: '', categorie: '', specialite: '', date_naissance: '', lieu_naissance: '',
     nationalite: 'Allemande', taille_cm: '', arme_principale: '', arme_secondaire: '',
     equipement_special: '', tenue: '', historique: '', date_entree_ig: '', date_entree_irl: '',
-    discord_id: ''
+    discord_id: '', bataillon_id: ''
   })
 
   const loadDecos = () => {
@@ -37,6 +38,7 @@ export default function EffectifNew() {
   useEffect(() => {
     apiClient.get('/unites').then(r => setUnites(r.data.data || []))
     apiClient.get('/decorations').then(r => setAllDecorations(r.data.data || [])).catch(() => {})
+    apiClient.get('/bataillons').then(r => setBataillons(r.data.data || [])).catch(() => {})
     if (isEdit) {
       loadDecos()
       apiClient.get(`/effectifs/${id}`).then(r => {
@@ -52,7 +54,7 @@ export default function EffectifNew() {
           arme_secondaire: e.arme_secondaire || '', equipement_special: e.equipement_special || '',
           tenue: e.tenue || '', historique: e.historique || '',
           date_entree_ig: e.date_entree_ig || '', date_entree_irl: e.date_entree_irl || '',
-          discord_id: e.discord_id || ''
+          discord_id: e.discord_id || '', bataillon_id: e.bataillon_id || ''
         })
         setLoading(false)
       }).catch(() => setLoading(false))
@@ -214,6 +216,17 @@ export default function EffectifNew() {
           <div className="grid grid-cols-2" style={{ gap: 'var(--space-md)' }}>
             <div className="form-group"><label className="form-label">Spécialité</label><input className="form-input" value={form.specialite} onChange={e => set('specialite', e.target.value)} placeholder="Scharf, Funker, Pionnier..." /></div>
             <div className="form-group"><label className="form-label">Discord ID</label><input className="form-input" value={form.discord_id} onChange={e => set('discord_id', e.target.value)} placeholder="Ex: 123456789012345678" /><span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Optionnel — pour envoi auto du soldbuch par MP</span></div>
+          </div>
+
+          <div className="grid grid-cols-2" style={{ gap: 'var(--space-md)' }}>
+            <div className="form-group">
+              <label className="form-label">Bataillon</label>
+              <select className="form-select" value={form.bataillon_id} onChange={e => set('bataillon_id', e.target.value)}>
+                <option value="">— Aucun bataillon —</option>
+                {bataillons.map(b => <option key={b.id} value={b.id}>{b.nom || `${b.numero}e Bataillon`}</option>)}
+              </select>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Optionnel — affectation à un bataillon de combat</span>
+            </div>
           </div>
 
           <div className="grid grid-cols-3" style={{ gap: 'var(--space-md)' }}>

@@ -81,12 +81,18 @@ function BataillonDetail({ id, onBack, user, reload }) {
   const [msg, setMsg] = useState('')
   const [newMsg, setNewMsg] = useState('')
 
-  const isOfficier = user?.isAdmin || user?.isOfficier || user?.isEtatMajor
+  const isEM = user?.isAdmin || user?.isEtatMajor
+  const [canManage, setCanManage] = useState(false)
+  const [isMemberOfficier, setIsMemberOfficier] = useState(false)
 
   useEffect(() => { loadAll() }, [id])
 
   const loadAll = () => {
-    api.get(`/bataillons/${id}`).then(r => setBat(r.data.data)).catch(() => {})
+    api.get(`/bataillons/${id}`).then(r => {
+      setBat(r.data.data)
+      setCanManage(r.data.data?.canManage || false)
+      setIsMemberOfficier(r.data.data?.isMemberOfficier || false)
+    }).catch(() => {})
     api.get(`/bataillons/${id}/ordres`).then(r => setOrdres(r.data.data || [])).catch(() => {})
     api.get(`/bataillons/${id}/messages`).then(r => setMessages(r.data.data || [])).catch(() => {})
     api.get(`/bataillons/${id}/media`).then(r => setMedia(r.data.data || [])).catch(() => {})
@@ -143,7 +149,7 @@ function BataillonDetail({ id, onBack, user, reload }) {
       {/* ORDRES DE MISSION */}
       {tab === 'ordres' && (
         <div>
-          {isOfficier && <OrdreForm bataillonId={id} onCreated={loadAll} />}
+          {isMemberOfficier && <OrdreForm bataillonId={id} onCreated={loadAll} />}
           {ordres.length === 0 ? <p style={{ color: '#8a7d6b' }}>Aucun ordre de mission.</p> : ordres.map(o => (
             <div key={o.id} style={{ background: '#f5f2e8', border: '1px solid #d4cbb8', borderRadius: 8, padding: 'var(--space-md)', marginBottom: 'var(--space-sm)',
               borderLeft: `3px solid ${o.priorite === 'critique' ? '#8b4a47' : o.priorite === 'urgente' ? '#a17c47' : '#4a6741'}`,
@@ -173,7 +179,7 @@ function BataillonDetail({ id, onBack, user, reload }) {
                   </div>
                 </div>
               )}
-              {isOfficier && o.statut === 'en_cours' && (
+              {isMemberOfficier && o.statut === 'en_cours' && (
                 <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
                   <button onClick={() => api.put(`/bataillons/ordres/${o.id}/statut`, { statut: 'termine' }).then(loadAll)} className="btn btn-sm" style={{ fontSize: '0.75rem' }}>Terminer</button>
                   <button onClick={() => api.put(`/bataillons/ordres/${o.id}/statut`, { statut: 'annule' }).then(loadAll)} className="btn btn-sm btn-outline" style={{ fontSize: '0.75rem' }}>Annuler</button>
@@ -187,17 +193,17 @@ function BataillonDetail({ id, onBack, user, reload }) {
       {/* MEMBRES */}
       {tab === 'membres' && (
         <div>
-          {isOfficier && <MembreForm bataillonId={id} onAdded={loadAll} />}
+          {canManage && <MembreForm bataillonId={id} onAdded={loadAll} />}
           <div style={{ fontSize: '0.85rem', color: '#8a7d6b', marginBottom: 8 }}>{bat.membres?.length || 0} membres</div>
           <table className="table" style={{ width: '100%' }}>
-            <thead><tr><th>Nom</th><th>Grade</th><th>Role</th>{isOfficier && <th></th>}</tr></thead>
+            <thead><tr><th>Nom</th><th>Grade</th><th>Role</th>{canManage && <th></th>}</tr></thead>
             <tbody>
               {(bat.membres || []).map(m => (
                 <tr key={m.id}>
                   <td><strong>{m.prenom} {m.nom}</strong>{m.surnom ? ` "${m.surnom}"` : ''}</td>
                   <td>{m.grade_nom || '—'}</td>
                   <td><span className={`badge ${m.role === 'officier' ? 'badge-warning' : 'badge-muted'}`}>{m.role}</span></td>
-                  {isOfficier && <td><button onClick={() => api.delete(`/bataillons/${id}/membres/${m.effectif_id}`).then(loadAll)} style={{ background: 'none', border: 'none', color: '#8b4a47', cursor: 'pointer', fontSize: '0.8rem' }}>Retirer</button></td>}
+                  {canManage && <td><button onClick={() => api.delete(`/bataillons/${id}/membres/${m.effectif_id}`).then(loadAll)} style={{ background: 'none', border: 'none', color: '#8b4a47', cursor: 'pointer', fontSize: '0.8rem' }}>Retirer</button></td>}
                 </tr>
               ))}
             </tbody>
@@ -229,7 +235,7 @@ function BataillonDetail({ id, onBack, user, reload }) {
       {/* DECORATIONS DU BATAILLON */}
       {tab === 'decorations' && (
         <div>
-          {isOfficier && <DecoForm bataillonId={id} onAdded={loadAll} />}
+          {isEM && <DecoForm bataillonId={id} onAdded={loadAll} />}
           {batDecos.length === 0 ? <p style={{ color: '#8a7d6b' }}>Aucune decoration attribuee au bataillon.</p> :
             batDecos.map(d => (
               <div key={d.id} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #d4cbb8' }}>
@@ -251,7 +257,7 @@ function BataillonDetail({ id, onBack, user, reload }) {
       {/* MEDIA / PROPAGANDE */}
       {tab === 'media' && (
         <div>
-          {isOfficier && <MediaForm bataillonId={id} onAdded={loadAll} />}
+          {isMemberOfficier && <MediaForm bataillonId={id} onAdded={loadAll} />}
           {media.length === 0 ? <p style={{ color: '#8a7d6b' }}>Aucun media.</p> :
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
               {media.map(m => (
@@ -261,7 +267,7 @@ function BataillonDetail({ id, onBack, user, reload }) {
                   <div style={{ padding: 8, fontSize: '0.8rem' }}>
                     {m.titre && <div style={{ fontWeight: 600 }}>{m.titre}</div>}
                     <div style={{ color: '#8a7d6b', fontSize: '0.7rem' }}>{m.uploaded_by_nom} — {new Date(m.created_at).toLocaleDateString('fr')}</div>
-                    {isOfficier && <button onClick={() => api.delete(`/bataillons/media/${m.id}`).then(loadAll)} style={{ background: 'none', border: 'none', color: '#8b4a47', cursor: 'pointer', fontSize: '0.7rem', marginTop: 4 }}>Supprimer</button>}
+                    {isMemberOfficier && <button onClick={() => api.delete(`/bataillons/media/${m.id}`).then(loadAll)} style={{ background: 'none', border: 'none', color: '#8b4a47', cursor: 'pointer', fontSize: '0.7rem', marginTop: 4 }}>Supprimer</button>}
                   </div>
                 </div>
               ))}
@@ -273,7 +279,7 @@ function BataillonDetail({ id, onBack, user, reload }) {
       {/* PALMARES */}
       {tab === 'palmares' && (
         <div>
-          {isOfficier && <BdmForm bataillons={[bat]} onSet={loadAll} />}
+          {isEM && <BdmForm bataillons={[bat]} onSet={loadAll} />}
           {(bat.palmares || []).length === 0 ? <p style={{ color: '#8a7d6b' }}>Pas encore de titre.</p> :
             (bat.palmares || []).map(p => (
               <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid #d4cbb8' }}>

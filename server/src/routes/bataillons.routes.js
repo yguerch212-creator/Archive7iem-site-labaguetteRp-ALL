@@ -5,14 +5,28 @@ const { optionalAuth } = require('../middleware/auth')
 
 // ==================== HELPERS ====================
 
-// Check if user is member of bataillon (or has bypass privileges)
-async function isMemberOrPrivileged(userId, bataillonId, user) {
-  if (user?.isAdmin || user?.isOfficier || user?.isEtatMajor) return true
-  if (!userId) return false
-  const membership = await queryOne(
-    'SELECT id FROM bataillon_membres bm JOIN effectifs e ON e.id = bm.effectif_id JOIN users u ON u.effectif_id = e.id WHERE u.id = ? AND bm.bataillon_id = ?',
+// Get user's membership in a bataillon (null if not member)
+async function getUserMembership(userId, bataillonId) {
+  if (!userId) return null
+  return queryOne(
+    'SELECT bm.id, bm.role FROM bataillon_membres bm JOIN effectifs e ON e.id = bm.effectif_id JOIN users u ON u.effectif_id = e.id WHERE u.id = ? AND bm.bataillon_id = ?',
     [userId, bataillonId]
   )
+}
+
+// Check if user can VIEW bataillon (member, administratif, or EM+)
+async function canViewBataillon(userId, bataillonId, user) {
+  if (user?.isAdmin || user?.isEtatMajor || user?.isRecenseur) return true
+  const membership = await getUserMembership(userId, bataillonId)
+  return !!membership
+}
+
+// Check if user can MANAGE members of a bataillon (officier of SAME bataillon, administratif, or EM+)
+async function canManageMembers(userId, bataillonId, user) {
+  if (user?.isAdmin || user?.isEtatMajor || user?.isRecenseur) return true
+  if (!user?.isOfficier) return false
+  // Officier must be member of THIS bataillon
+  const membership = await getUserMembership(userId, bataillonId)
   return !!membership
 }
 
@@ -35,7 +49,9 @@ router.get('/', auth, async (req, res) => {
 
     // Check user membership for each bataillon
     for (const b of rows) {
-      b.isMember = await isMemberOrPrivileged(req.user.id, b.id, req.user)
+      b.isMember = await canViewBataillon(req.user.id, b.id, req.user)
+      // Also flag if user can manage members (for frontend)
+      b.canManage = await canManageMembers(req.user.id, b.id, req.user)
     }
 
     // Bataillon du mois courant
@@ -49,7 +65,7 @@ router.get('/', auth, async (req, res) => {
 // GET /api/bataillons/:id — detail with members (restricted to members)
 router.get('/:id', auth, async (req, res) => {
   try {
-    const allowed = await isMemberOrPrivileged(req.user.id, req.params.id, req.user)
+    const allowed = await canViewBataillon(req.user.id, req.params.id, req.user)
     if (!allowed) return res.status(403).json({ success: false, message: 'Acces reserve aux membres du bataillon' })
 
     const bat = await queryOne(`
@@ -89,7 +105,12 @@ router.get('/:id', auth, async (req, res) => {
     // Palmares bataillon du mois
     const palmares = await query('SELECT * FROM bataillon_du_mois WHERE bataillon_id = ? ORDER BY mois DESC', [req.params.id])
 
-    res.json({ success: true, data: { ...bat, membres, decorations, palmares } })
+    // Permission flags for frontend
+    const canManage = await canManageMembers(req.user.id, req.params.id, req.user)
+    const membership = await getUserMembership(req.user.id, req.params.id)
+    const isMemberOfficier = !!(membership && (req.user.isOfficier || req.user.isEtatMajor || req.user.isAdmin))
+
+    res.json({ success: true, data: { ...bat, membres, decorations, palmares, canManage, isMemberOfficier } })
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
@@ -98,8 +119,20 @@ router.get('/:id', auth, async (req, res) => {
 // POST /api/bataillons/:id/membres — add member
 router.post('/:id/membres', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isEtatMajor) return res.status(403).json({ success: false, message: 'Non autorise' })
+    const allowed = await canManageMembers(req.user.id, req.params.id, req.user)
+    if (!allowed) return res.status(403).json({ success: false, message: 'Reserve aux officiers du bataillon, administratifs ou Etat-Major' })
+
     const { effectif_id, role } = req.body
+
+    // Prevent adding someone who is already in ANOTHER bataillon
+    const existingMembership = await queryOne(
+      'SELECT bm.bataillon_id, b.nom FROM bataillon_membres bm JOIN bataillons b ON b.id = bm.bataillon_id WHERE bm.effectif_id = ?',
+      [effectif_id]
+    )
+    if (existingMembership && existingMembership.bataillon_id !== parseInt(req.params.id)) {
+      return res.status(400).json({ success: false, message: `Cet effectif est deja membre du ${existingMembership.nom}` })
+    }
+
     await pool.execute('INSERT IGNORE INTO bataillon_membres (bataillon_id, effectif_id, role) VALUES (?, ?, ?)',
       [req.params.id, effectif_id, role || 'membre'])
     res.json({ success: true })
@@ -109,7 +142,8 @@ router.post('/:id/membres', auth, async (req, res) => {
 // DELETE /api/bataillons/:id/membres/:effectifId — remove member
 router.delete('/:id/membres/:effectifId', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isEtatMajor) return res.status(403).json({ success: false, message: 'Non autorise' })
+    const allowed = await canManageMembers(req.user.id, req.params.id, req.user)
+    if (!allowed) return res.status(403).json({ success: false, message: 'Reserve aux officiers du bataillon, administratifs ou Etat-Major' })
     await pool.execute('DELETE FROM bataillon_membres WHERE bataillon_id = ? AND effectif_id = ?',
       [req.params.id, req.params.effectifId])
     res.json({ success: true })
@@ -121,7 +155,7 @@ router.delete('/:id/membres/:effectifId', auth, async (req, res) => {
 // GET /api/bataillons/:id/ordres (restricted)
 router.get('/:id/ordres', auth, async (req, res) => {
   try {
-    const allowed = await isMemberOrPrivileged(req.user.id, req.params.id, req.user)
+    const allowed = await canViewBataillon(req.user.id, req.params.id, req.user)
     if (!allowed) return res.status(403).json({ success: false, message: 'Acces reserve aux membres' })
 
     const ordres = await query(`
@@ -149,10 +183,11 @@ router.get('/:id/ordres', auth, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
-// POST /api/bataillons/:id/ordres — create ordre with tasks
+// POST /api/bataillons/:id/ordres — create ordre with tasks (officier of same bat, administratif, EM+)
 router.post('/:id/ordres', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isEtatMajor) return res.status(403).json({ success: false, message: 'Reserve aux officiers' })
+    const canManage = await canManageMembers(req.user.id, req.params.id, req.user)
+    if (!canManage || (!req.user.isOfficier && !req.user.isAdmin && !req.user.isEtatMajor && !req.user.isRecenseur)) return res.status(403).json({ success: false, message: 'Reserve aux officiers du bataillon' })
     const { titre, description, priorite, taches } = req.body
     const [result] = await pool.execute(
       'INSERT INTO bataillon_ordres (bataillon_id, titre, description, priorite, created_by) VALUES (?, ?, ?, ?, ?)',
@@ -175,7 +210,7 @@ router.put('/ordres/taches/:tacheId/toggle', auth, async (req, res) => {
     const tache = await queryOne('SELECT t.*, o.bataillon_id FROM bataillon_ordre_taches t JOIN bataillon_ordres o ON o.id = t.ordre_id WHERE t.id = ?', [req.params.tacheId])
     if (!tache) return res.status(404).json({ success: false, message: 'Tache introuvable' })
 
-    const allowed = await isMemberOrPrivileged(req.user.id, tache.bataillon_id, req.user)
+    const allowed = await canViewBataillon(req.user.id, tache.bataillon_id, req.user)
     if (!allowed) return res.status(403).json({ success: false, message: 'Acces reserve aux membres' })
 
     if (tache.completed) {
@@ -204,7 +239,11 @@ router.put('/ordres/taches/:tacheId/toggle', auth, async (req, res) => {
 // PUT /api/bataillons/ordres/:ordreId/statut — update ordre status
 router.put('/ordres/:ordreId/statut', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isEtatMajor) return res.status(403).json({ success: false, message: 'Non autorise' })
+    // Get bataillon from ordre to check permissions
+    const ordre = await queryOne('SELECT bataillon_id FROM bataillon_ordres WHERE id = ?', [req.params.ordreId])
+    if (!ordre) return res.status(404).json({ success: false, message: 'Ordre introuvable' })
+    const canManage = await canManageMembers(req.user.id, ordre.bataillon_id, req.user)
+    if (!canManage || (!req.user.isOfficier && !req.user.isAdmin && !req.user.isEtatMajor)) return res.status(403).json({ success: false, message: 'Non autorise' })
     const { statut } = req.body
     await pool.execute('UPDATE bataillon_ordres SET statut = ? WHERE id = ?', [statut, req.params.ordreId])
     res.json({ success: true })
@@ -216,7 +255,7 @@ router.put('/ordres/:ordreId/statut', auth, async (req, res) => {
 // GET /api/bataillons/:id/messages
 router.get('/:id/messages', auth, async (req, res) => {
   try {
-    const allowed = await isMemberOrPrivileged(req.user.id, req.params.id, req.user)
+    const allowed = await canViewBataillon(req.user.id, req.params.id, req.user)
     if (!allowed) return res.status(403).json({ success: false, message: 'Acces reserve aux membres' })
 
     const limit = Math.min(parseInt(req.query.limit) || 50, 200)
@@ -237,7 +276,7 @@ router.get('/:id/messages', auth, async (req, res) => {
 // POST /api/bataillons/:id/messages (member only)
 router.post('/:id/messages', auth, async (req, res) => {
   try {
-    const allowed = await isMemberOrPrivileged(req.user.id, req.params.id, req.user)
+    const allowed = await canViewBataillon(req.user.id, req.params.id, req.user)
     if (!allowed) return res.status(403).json({ success: false, message: 'Acces reserve aux membres' })
 
     const { contenu } = req.body
@@ -253,7 +292,7 @@ router.post('/:id/messages', auth, async (req, res) => {
 // GET /api/bataillons/:id/media
 router.get('/:id/media', auth, async (req, res) => {
   try {
-    const allowed = await isMemberOrPrivileged(req.user.id, req.params.id, req.user)
+    const allowed = await canViewBataillon(req.user.id, req.params.id, req.user)
     if (!allowed) return res.status(403).json({ success: false, message: 'Acces reserve aux membres' })
 
     const media = await query(`
@@ -270,7 +309,7 @@ router.get('/:id/media', auth, async (req, res) => {
 // POST /api/bataillons/:id/media
 router.post('/:id/media', auth, async (req, res) => {
   try {
-    const allowed = await isMemberOrPrivileged(req.user.id, req.params.id, req.user)
+    const allowed = await canViewBataillon(req.user.id, req.params.id, req.user)
     if (!allowed) return res.status(403).json({ success: false, message: 'Acces reserve aux membres' })
 
     const { url, titre, type } = req.body
@@ -295,17 +334,17 @@ router.delete('/media/:mediaId', auth, async (req, res) => {
 // GET /api/bataillons/:id/decorations
 router.get('/:id/decorations', auth, async (req, res) => {
   try {
-    const allowed = await isMemberOrPrivileged(req.user.id, req.params.id, req.user)
+    const allowed = await canViewBataillon(req.user.id, req.params.id, req.user)
     if (!allowed) return res.status(403).json({ success: false, message: 'Acces reserve aux membres' })
     const rows = await query('SELECT * FROM bataillon_decorations WHERE bataillon_id = ? ORDER BY created_at DESC', [req.params.id])
     res.json({ success: true, data: rows })
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
-// POST /api/bataillons/:id/decorations (officier+)
+// POST /api/bataillons/:id/decorations (EM+ only)
 router.post('/:id/decorations', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isEtatMajor) return res.status(403).json({ success: false, message: 'Reserve aux officiers' })
+    if (!req.user.isAdmin && !req.user.isEtatMajor) return res.status(403).json({ success: false, message: 'Reserve a l\'Etat-Major' })
     const { nom, description, date_attribution, attribue_par } = req.body
     if (!nom?.trim()) return res.status(400).json({ success: false, message: 'Nom requis' })
     await pool.execute(

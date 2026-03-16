@@ -58,10 +58,13 @@ router.get('/all', auth, async (req, res) => {
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const row = await queryOne(`
-      SELECT e.*, g.nom_complet AS grade_nom, u.nom AS unite_nom, u.code AS unite_code
+      SELECT e.*, g.nom_complet AS grade_nom, u.nom AS unite_nom, u.code AS unite_code,
+        bm.bataillon_id, b.nom AS bataillon_nom
       FROM effectifs e
       LEFT JOIN grades g ON g.id = e.grade_id
       LEFT JOIN unites u ON u.id = e.unite_id
+      LEFT JOIN bataillon_membres bm ON bm.effectif_id = e.id
+      LEFT JOIN bataillons b ON b.id = bm.bataillon_id
       WHERE e.id = ?
     `, [req.params.id])
     if (!row) return res.status(404).json({ success: false, message: 'Effectif non trouvé' })
@@ -95,6 +98,12 @@ router.post('/', auth, recenseur, async (req, res) => {
 
     logActivity(req, 'create_effectif', 'effectif', effectifId, `${f.prenom} ${f.nom}`)
     logHistorique(effectifId, 'creation', `Création de la fiche — ${f.prenom} ${f.nom}`)
+
+    // Optional bataillon assignment
+    if (f.bataillon_id) {
+      await pool.execute('INSERT IGNORE INTO bataillon_membres (bataillon_id, effectif_id, role) VALUES (?, ?, ?)',
+        [f.bataillon_id, effectifId, 'membre'])
+    }
 
     // Discord notification
     const { notifyEffectif } = require('../utils/discordNotify')
