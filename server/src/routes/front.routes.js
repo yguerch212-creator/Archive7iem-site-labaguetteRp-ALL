@@ -40,7 +40,7 @@ router.get('/cartes/:id/events', optionalAuth, async (req, res) => {
       FROM situation_front_events e 
       LEFT JOIN situation_front_vp v ON v.id = e.vp_id
       LEFT JOIN effectifs ef ON ef.id = e.rapporte_par
-      WHERE e.carte_id = ? ORDER BY e.date_irl DESC
+      WHERE e.carte_id = ? ORDER BY e.date_irl DESC, e.heure DESC, e.id DESC
     `, [req.params.id])
     res.json({ success: true, data: events })
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
@@ -108,7 +108,7 @@ router.get('/rapport', optionalAuth, async (req, res) => {
         FROM situation_front_events e 
         LEFT JOIN situation_front_vp v ON v.id = e.vp_id
         WHERE e.carte_id = ? ${where}
-        ORDER BY e.date_irl DESC
+        ORDER BY e.date_irl DESC, e.heure DESC, e.id DESC
       `, [c.id, ...params])
 
       const att_all = events.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'allemand').length
@@ -135,7 +135,7 @@ router.get('/events', optionalAuth, async (req, res) => {
       SELECT e.*, c.nom AS carte_nom
       FROM situation_front_events e
       LEFT JOIN situation_front_cartes c ON c.id = e.carte_id
-      ORDER BY e.date_irl DESC, e.heure DESC
+      ORDER BY e.date_irl DESC, e.heure DESC, e.id DESC
       LIMIT 500
     `)
     res.json({ success: true, data: rows })
