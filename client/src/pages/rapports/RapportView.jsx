@@ -66,11 +66,14 @@ export default function RapportView() {
   const [forwardTarget, setForwardTarget] = useState(null)
   const [forwardText, setForwardText] = useState('')
 
-  const canApprove = rapport && rapport.valide && !rapport.approuve_par && (
+  // If an officier validated → it's already validated+approved, no need for separate approval
+  const officierAutoValidated = rapport && rapport.valide && rapport.valide_signature === 'Auto-validé (Officier)'
+  
+  const canApprove = rapport && rapport.valide && !rapport.approuve_par && !officierAutoValidated && (
     user?.isOfficier || user?.isEtatMajor
   )
 
-  const canForward = rapport && rapport.valide && !rapport.approuve_par && !canApprove
+  const canForward = rapport && rapport.valide && !rapport.approuve_par && !canApprove && !officierAutoValidated
 
   const validateRapport = async (signatureData) => {
     try {
@@ -191,7 +194,7 @@ export default function RapportView() {
       {R.published && !R.valide && (
         <div className="paper-card" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-md)', background: '#fdf8e8', borderLeft: '3px solid var(--warning)' }}>
           <strong>⏳ En attente de validation</strong> — 
-          {' Un administratif doit valider ce rapport. Un officier pourra ensuite l\'approuver.'}
+          {' Un administratif ou officier doit valider ce rapport.'}
         </div>
       )}
 
@@ -282,7 +285,7 @@ export default function RapportView() {
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <div style={{ textAlign: 'center', minWidth: 250, position: 'relative' }}>
                 <div style={{ fontSize: '0.75rem', color: '#666', fontStyle: 'italic', marginBottom: 4 }}>
-                  Lu et approuvé le {R.valide_at ? new Date(R.valide_at).toLocaleString('fr-FR') : ''}
+                  {R.valide_par_nom?.includes('Bataillon Administratif') ? 'Validé par Bataillon Administratif' : 'Lu et approuvé'} le {R.valide_at ? new Date(R.valide_at).toLocaleString('fr-FR') : ''}
                 </div>
                 <div style={{ position: 'relative', borderBottom: '1px solid #333', height: 60, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 4 }}>
                   {R.valide_stamp && (

@@ -22,7 +22,7 @@ export default function BataillonsList() {
     <div style={{ padding: 'var(--space-lg)' }}>
       <BackButton />
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', marginBottom: 'var(--space-md)' }}>Bataillons de Combat</h1>
-      <p style={{ color: '#8a7d6b', marginBottom: 'var(--space-lg)', fontSize: '0.9rem' }}>
+      <p style={{ color: '#5a5040', marginBottom: 'var(--space-lg)', fontSize: '0.9rem' }}>
         851e et 852e bataillons du 916e Grenadier Regiment — Rivalite sans haine.
       </p>
 
@@ -32,7 +32,7 @@ export default function BataillonsList() {
           <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#a17c47', margin: '4px 0' }}>
             {bataillons.find(b => b.id === bdm.bataillon_id)?.nom || '?'}
           </div>
-          {bdm.motif && <div style={{ fontSize: '0.85rem', color: '#8a7d6b', fontStyle: 'italic' }}>{bdm.motif}</div>}
+          {bdm.motif && <div style={{ fontSize: '0.85rem', color: '#5a5040', fontStyle: 'italic' }}>{bdm.motif}</div>}
         </div>
       )}
 
@@ -46,9 +46,9 @@ export default function BataillonsList() {
           onMouseEnter={e => b.isMember && (e.currentTarget.style.transform = 'translateY(-2px)')}
           onMouseLeave={e => e.currentTarget.style.transform = ''}>
             {bdm?.bataillon_id === b.id && <div style={{ position: 'absolute', top: 8, right: 12, fontSize: '0.65rem', fontWeight: 700, background: '#a17c47', color: '#fff', padding: '2px 8px', borderRadius: 10 }}>DU MOIS</div>}
-            {!b.isMember && <div style={{ position: 'absolute', top: 8, right: 12, fontSize: '0.65rem', fontWeight: 600, background: '#d4cbb8', color: '#8a7d6b', padding: '2px 8px', borderRadius: 10 }}>ACCES RESTREINT</div>}
+            {!b.isMember && <div style={{ position: 'absolute', top: 8, right: 12, fontSize: '0.65rem', fontWeight: 600, background: '#d4cbb8', color: '#5a5040', padding: '2px 8px', borderRadius: 10 }}>ACCES RESTREINT</div>}
             <div style={{ fontSize: '1.3rem', fontWeight: 800, fontFamily: 'var(--font-display)' }}>{b.nom}</div>
-            <div style={{ fontSize: '0.85rem', color: '#8a7d6b', marginTop: 4 }}>{b.description}</div>
+            <div style={{ fontSize: '0.85rem', color: '#5a5040', marginTop: 4 }}>{b.description}</div>
             {b.chef_nom && <div style={{ marginTop: 8, fontSize: '0.85rem' }}>Chef : <strong>{b.chef_grade} {b.chef_prenom} {b.chef_nom}</strong></div>}
             <div style={{ display: 'flex', gap: 'var(--space-md)', marginTop: 12 }}>
               <Stat label="Membres" value={b.nb_membres} />
@@ -65,7 +65,7 @@ function Stat({ label, value }) {
   return (
     <div style={{ textAlign: 'center' }}>
       <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#4a6741' }}>{value}</div>
-      <div style={{ fontSize: '0.7rem', color: '#8a7d6b', textTransform: 'uppercase', letterSpacing: 1 }}>{label}</div>
+      <div style={{ fontSize: '0.7rem', color: '#5a5040', textTransform: 'uppercase', letterSpacing: 1 }}>{label}</div>
     </div>
   )
 }
@@ -130,18 +130,19 @@ function BataillonDetail({ id, onBack, user, reload }) {
       
       <div style={{ borderLeft: `4px solid ${bat.couleur}`, paddingLeft: 'var(--space-md)', marginBottom: 'var(--space-lg)' }}>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', margin: 0 }}>{bat.nom}</h1>
-        <div style={{ color: '#8a7d6b', fontSize: '0.9rem' }}>{bat.description}</div>
+        <div style={{ color: '#5a5040', fontSize: '0.9rem' }}>{bat.description}</div>
         {bat.chef_nom && <div style={{ marginTop: 4, fontSize: '0.9rem' }}>Commandant : <strong>{bat.chef_grade} {bat.chef_prenom} {bat.chef_nom}</strong></div>}
       </div>
 
       {msg && <div className="alert alert-info" style={{ marginBottom: 'var(--space-md)' }}>{msg}</div>}
 
-      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 'var(--space-lg)', borderBottom: '1px solid #d4cbb8', paddingBottom: 8 }}>
+      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 'var(--space-lg)', borderBottom: '2px solid #c4b89a', paddingBottom: 8 }}>
         {tabs.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)} style={{
-            padding: '8px 14px', border: 'none', borderRadius: '6px 6px 0 0', cursor: 'pointer', fontSize: '0.82rem', fontWeight: tab === t.key ? 700 : 400,
-            background: tab === t.key ? '#e8e2d5' : '#f5f2e8', color: tab === t.key ? '#2c2416' : '#5a5040',
-            borderBottom: tab === t.key ? '2px solid #4a6741' : '2px solid transparent'
+            padding: '10px 16px', border: 'none', borderRadius: '6px 6px 0 0', cursor: 'pointer', fontSize: '0.85rem', fontWeight: tab === t.key ? 700 : 500,
+            background: tab === t.key ? '#e8dfc8' : 'transparent', color: tab === t.key ? '#2c2416' : '#5a5040',
+            borderBottom: tab === t.key ? '3px solid #4a6741' : '3px solid transparent',
+            transition: 'all 0.15s'
           }}>{t.icon} {t.label}</button>
         ))}
       </div>
@@ -150,7 +151,7 @@ function BataillonDetail({ id, onBack, user, reload }) {
       {tab === 'ordres' && (
         <div>
           {isMemberOfficier && <OrdreForm bataillonId={id} onCreated={loadAll} />}
-          {ordres.length === 0 ? <p style={{ color: '#8a7d6b' }}>Aucun ordre de mission.</p> : ordres.map(o => (
+          {ordres.length === 0 ? <p style={{ color: '#5a5040' }}>Aucun ordre de mission.</p> : ordres.map(o => (
             <div key={o.id} style={{ background: '#f5f2e8', border: '1px solid #d4cbb8', borderRadius: 8, padding: 'var(--space-md)', marginBottom: 'var(--space-sm)',
               borderLeft: `3px solid ${o.priorite === 'critique' ? '#8b4a47' : o.priorite === 'urgente' ? '#a17c47' : '#4a6741'}`,
               opacity: o.statut === 'annule' ? 0.5 : 1 }}>
@@ -160,9 +161,9 @@ function BataillonDetail({ id, onBack, user, reload }) {
                   <span className={`badge ${o.statut === 'termine' ? 'badge-success' : o.statut === 'annule' ? 'badge-muted' : 'badge-warning'}`} style={{ marginLeft: 8, fontSize: '0.7rem' }}>{o.statut.replace('_', ' ')}</span>
                   {o.priorite !== 'normale' && <span className={`badge ${o.priorite === 'critique' ? 'badge-danger' : 'badge-warning'}`} style={{ marginLeft: 4, fontSize: '0.65rem' }}>{o.priorite}</span>}
                 </div>
-                <span style={{ fontSize: '0.75rem', color: '#8a7d6b' }}>par {o.created_by_nom} — {new Date(o.created_at).toLocaleDateString('fr')}</span>
+                <span style={{ fontSize: '0.75rem', color: '#5a5040' }}>par {o.created_by_nom} — {new Date(o.created_at).toLocaleDateString('fr')}</span>
               </div>
-              {o.description && <p style={{ fontSize: '0.85rem', color: '#8a7d6b', margin: '6px 0' }}>{o.description}</p>}
+              {o.description && <p style={{ fontSize: '0.85rem', color: '#5a5040', margin: '6px 0' }}>{o.description}</p>}
               {o.taches?.length > 0 && (
                 <div style={{ marginTop: 8 }}>
                   {o.taches.map(t => (
@@ -171,10 +172,10 @@ function BataillonDetail({ id, onBack, user, reload }) {
                         {t.completed ? '✓' : ''}
                       </span>
                       <span style={{ textDecoration: t.completed ? 'line-through' : 'none', color: t.completed ? '#8a7d6b' : '#2c2416' }}>{t.description}</span>
-                      {t.completed_by_nom && <span style={{ fontSize: '0.7rem', color: '#8a7d6b' }}>({t.completed_by_nom})</span>}
+                      {t.completed_by_nom && <span style={{ fontSize: '0.7rem', color: '#5a5040' }}>({t.completed_by_nom})</span>}
                     </div>
                   ))}
-                  <div style={{ marginTop: 6, fontSize: '0.75rem', color: '#8a7d6b' }}>
+                  <div style={{ marginTop: 6, fontSize: '0.75rem', color: '#5a5040' }}>
                     {o.taches_completees}/{o.total_taches} taches completees
                   </div>
                 </div>
@@ -194,9 +195,9 @@ function BataillonDetail({ id, onBack, user, reload }) {
       {tab === 'membres' && (
         <div>
           {canManage && <MembreForm bataillonId={id} onAdded={loadAll} />}
-          <div style={{ fontSize: '0.85rem', color: '#8a7d6b', marginBottom: 8 }}>{bat.membres?.length || 0} membres</div>
-          <table className="table" style={{ width: '100%' }}>
-            <thead><tr><th>Nom</th><th>Grade</th><th>Role</th>{canManage && <th></th>}</tr></thead>
+          <div style={{ fontSize: '0.85rem', color: '#5a5040', marginBottom: 8, fontWeight: 600 }}>{bat.membres?.length || 0} membres</div>
+          <table className="table" style={{ width: '100%', background: '#f5f0e0', borderRadius: 8, overflow: 'hidden' }}>
+            <thead><tr style={{ background: '#e8dfc8', color: '#2c2416' }}><th>Nom</th><th>Grade</th><th>Role</th>{canManage && <th></th>}</tr></thead>
             <tbody>
               {(bat.membres || []).map(m => (
                 <tr key={m.id}>
@@ -215,11 +216,11 @@ function BataillonDetail({ id, onBack, user, reload }) {
       {tab === 'discussion' && (
         <div>
           <div style={{ maxHeight: 400, overflowY: 'auto', background: '#f5f2e8', border: '1px solid #d4cbb8', borderRadius: 8, padding: 'var(--space-md)', marginBottom: 'var(--space-sm)' }}>
-            {messages.length === 0 ? <p style={{ color: '#8a7d6b', textAlign: 'center' }}>Aucun message.</p> : messages.map(m => (
+            {messages.length === 0 ? <p style={{ color: '#5a5040', textAlign: 'center' }}>Aucun message.</p> : messages.map(m => (
               <div key={m.id} style={{ marginBottom: 10, padding: '6px 0', borderBottom: '1px solid #d4cbb8' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <strong style={{ fontSize: '0.85rem' }}>{m.grade_nom ? `${m.grade_nom} ` : ''}{m.eff_prenom || m.user_prenom} {m.eff_nom || m.user_nom}</strong>
-                  <span style={{ fontSize: '0.7rem', color: '#8a7d6b' }}>{new Date(m.created_at).toLocaleString('fr')}</span>
+                  <span style={{ fontSize: '0.7rem', color: '#5a5040' }}>{new Date(m.created_at).toLocaleString('fr')}</span>
                 </div>
                 <div style={{ fontSize: '0.9rem', marginTop: 2 }}>{m.contenu}</div>
               </div>
@@ -236,14 +237,14 @@ function BataillonDetail({ id, onBack, user, reload }) {
       {tab === 'decorations' && (
         <div>
           {isEM && <DecoForm bataillonId={id} onAdded={loadAll} />}
-          {batDecos.length === 0 ? <p style={{ color: '#8a7d6b' }}>Aucune decoration attribuee au bataillon.</p> :
+          {batDecos.length === 0 ? <p style={{ color: '#5a5040' }}>Aucune decoration attribuee au bataillon.</p> :
             batDecos.map(d => (
               <div key={d.id} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #d4cbb8' }}>
                 <span style={{ fontSize: '1.5rem' }}>🎖️</span>
                 <div style={{ flex: 1 }}>
                   <strong style={{ color: '#2c2416' }}>{d.nom}</strong>
                   {d.description && <div style={{ fontSize: '0.85rem', color: '#5a5040' }}>{d.description}</div>}
-                  <div style={{ fontSize: '0.75rem', color: '#8a7d6b', marginTop: 2 }}>
+                  <div style={{ fontSize: '0.75rem', color: '#5a5040', marginTop: 2 }}>
                     {d.attribue_par && <>Attribuee par {d.attribue_par} — </>}{d.date_attribution || new Date(d.created_at).toLocaleDateString('fr')}
                   </div>
                 </div>
@@ -257,8 +258,8 @@ function BataillonDetail({ id, onBack, user, reload }) {
       {/* MEDIA / PROPAGANDE */}
       {tab === 'media' && (
         <div>
-          {isMemberOfficier && <MediaForm bataillonId={id} onAdded={loadAll} />}
-          {media.length === 0 ? <p style={{ color: '#8a7d6b' }}>Aucun media.</p> :
+          {(isMemberOfficier || isEM) && <MediaForm bataillonId={id} onAdded={loadAll} />}
+          {media.length === 0 ? <p style={{ color: '#5a5040' }}>Aucun media.</p> :
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
               {media.map(m => (
                 <div key={m.id} style={{ background: '#f5f2e8', border: '1px solid #d4cbb8', borderRadius: 8, overflow: 'hidden' }}>
@@ -266,8 +267,8 @@ function BataillonDetail({ id, onBack, user, reload }) {
                     <video src={m.url} controls style={{ width: '100%', height: 160, objectFit: 'cover' }} />}
                   <div style={{ padding: 8, fontSize: '0.8rem' }}>
                     {m.titre && <div style={{ fontWeight: 600 }}>{m.titre}</div>}
-                    <div style={{ color: '#8a7d6b', fontSize: '0.7rem' }}>{m.uploaded_by_nom} — {new Date(m.created_at).toLocaleDateString('fr')}</div>
-                    {isMemberOfficier && <button onClick={() => api.delete(`/bataillons/media/${m.id}`).then(loadAll)} style={{ background: 'none', border: 'none', color: '#8b4a47', cursor: 'pointer', fontSize: '0.7rem', marginTop: 4 }}>Supprimer</button>}
+                    <div style={{ color: '#5a5040', fontSize: '0.7rem' }}>{m.uploaded_by_nom} — {new Date(m.created_at).toLocaleDateString('fr')}</div>
+                    {(isMemberOfficier || isEM) && <button onClick={() => api.delete(`/bataillons/media/${m.id}`).then(loadAll)} style={{ background: 'none', border: 'none', color: '#8b4a47', cursor: 'pointer', fontSize: '0.7rem', marginTop: 4 }}>Supprimer</button>}
                   </div>
                 </div>
               ))}
@@ -280,13 +281,13 @@ function BataillonDetail({ id, onBack, user, reload }) {
       {tab === 'palmares' && (
         <div>
           {isEM && <BdmForm bataillons={[bat]} onSet={loadAll} />}
-          {(bat.palmares || []).length === 0 ? <p style={{ color: '#8a7d6b' }}>Pas encore de titre.</p> :
+          {(bat.palmares || []).length === 0 ? <p style={{ color: '#5a5040' }}>Pas encore de titre.</p> :
             (bat.palmares || []).map(p => (
               <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid #d4cbb8' }}>
                 <span style={{ fontSize: '1.5rem' }}>🏆</span>
                 <div>
                   <strong>Bataillon du Mois — {p.mois}</strong>
-                  {p.motif && <div style={{ fontSize: '0.85rem', color: '#8a7d6b' }}>{p.motif}</div>}
+                  {p.motif && <div style={{ fontSize: '0.85rem', color: '#5a5040' }}>{p.motif}</div>}
                 </div>
               </div>
             ))

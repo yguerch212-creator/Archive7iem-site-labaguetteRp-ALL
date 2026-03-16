@@ -323,4 +323,39 @@ router.delete('/:id', auth, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
+// GET /api/pds/config — PDS duration config per unite
+router.get('/config', optionalAuth, async (req, res) => {
+  try {
+    const rows = await query(`
+      SELECT pc.unite_id, u.nom AS unite_nom, u.code AS unite_code,
+             pc.rang_type, pc.duree_heures, pc.rapports_requis
+      FROM pds_config pc
+      JOIN unites u ON u.id = pc.unite_id
+      ORDER BY u.code, pc.rang_type
+    `)
+    // Also return default config (for units without custom config)
+    res.json({
+      success: true,
+      data: rows,
+      defaults: { hdr: { duree_heures: 2, rapports_requis: 0 }, so: { duree_heures: 3, rapports_requis: 0 }, off: { duree_heures: 3, rapports_requis: 0 } }
+    })
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
+})
+
+// PUT /api/pds/config (admin only) — Update PDS config for a unite
+router.put('/config', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) return res.status(403).json({ success: false, message: 'Admin requis' })
+    const { unite_id, rang_type, duree_heures, rapports_requis } = req.body
+    if (!unite_id || !rang_type) return res.status(400).json({ success: false, message: 'unite_id et rang_type requis' })
+    await pool.execute(
+      `INSERT INTO pds_config (unite_id, rang_type, duree_heures, rapports_requis)
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE duree_heures = VALUES(duree_heures), rapports_requis = VALUES(rapports_requis)`,
+      [unite_id, rang_type, duree_heures || 3, rapports_requis || 0]
+    )
+    res.json({ success: true })
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
+})
+
 module.exports = router

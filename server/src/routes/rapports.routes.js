@@ -58,7 +58,7 @@ router.get('/', optionalAuth, async (req, res) => {
       LEFT JOIN effectifs e ON e.id = r.auteur_id
       LEFT JOIN unites u ON u.id = COALESCE(e.unite_id, r.unite_id)
       ${where}
-      ORDER BY r.created_at DESC
+      ORDER BY r.date_irl DESC, r.created_at DESC
     `)
     res.json({ success: true, data: rows })
   } catch (err) {
@@ -99,13 +99,17 @@ router.post('/', auth, async (req, res) => {
     )
     const rapportId = result.insertId
 
-    // Set auteur_rang + auto-validate for officiers
+    // Set auteur_rang + auto-validate+approve for officiers
     const auteurRang = req.user.grade_rang || 0
     const isOfficier = req.user.isOfficier || req.user.isAdmin
+    const officierName = `${req.user.prenom || ''} ${req.user.nom || req.user.username}`.trim()
     if (isOfficier) {
       await pool.execute(
-        'UPDATE rapports SET auteur_rang = ?, valide = 1, valide_par = ?, valide_par_nom = ?, valide_at = NOW(), valide_signature = ? WHERE id = ?',
-        [auteurRang, req.user.id, `${req.user.prenom || ''} ${req.user.nom || req.user.username}`.trim(), 'Auto-validé (Officier)', rapportId]
+        `UPDATE rapports SET auteur_rang = ?, valide = 1, valide_par = ?, valide_par_nom = ?, valide_at = NOW(), valide_signature = ?,
+         approuve_par = ?, approuve_par_nom = ?, approuve_at = NOW(), approuve_signature = ?
+         WHERE id = ?`,
+        [auteurRang, req.user.id, officierName, 'Auto-validé (Officier)',
+         req.user.id, officierName, 'Auto-validé (Officier)', rapportId]
       )
     } else {
       await pool.execute('UPDATE rapports SET auteur_rang = ? WHERE id = ?', [auteurRang, rapportId])
@@ -165,7 +169,7 @@ router.put('/:id/publish', auth, async (req, res) => {
     const rapport = await queryOne('SELECT * FROM rapports WHERE id = ?', [req.params.id])
     if (!rapport) return res.status(404).json({ success: false, message: 'Rapport introuvable' })
 
-    // If officier/admin → auto-validate + publish
+    // If officier/admin → auto-validate + auto-approve + publish
     const isOfficier = req.user.isOfficier || req.user.isAdmin
     if (isOfficier) {
       const validatorName = `${req.user.prenom || ''} ${req.user.nom || req.user.username}`.trim()
@@ -176,9 +180,11 @@ router.put('/:id/publish', auth, async (req, res) => {
         if (saved) sigData = saved.signature_data
       }
       await pool.execute(
-        `UPDATE rapports SET published = 1, valide = 1, valide_par = ?, valide_par_nom = ?, valide_signature = ?, valide_at = NOW()
+        `UPDATE rapports SET published = 1, valide = 1, valide_par = ?, valide_par_nom = ?, valide_signature = ?, valide_at = NOW(),
+         approuve_par = ?, approuve_par_nom = ?, approuve_signature = ?, approuve_at = NOW()
          WHERE id = ?`,
-        [req.user.id, validatorName, sigData || 'Auto-validé (Officier)', req.params.id]
+        [req.user.id, validatorName, sigData || 'Auto-validé (Officier)',
+         req.user.id, validatorName, sigData || 'Auto-validé (Officier)', req.params.id]
       )
     } else {
       // Just mark as submitted (published=1, awaiting validation)
