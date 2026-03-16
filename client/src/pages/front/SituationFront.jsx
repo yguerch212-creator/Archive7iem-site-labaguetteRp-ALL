@@ -3,6 +3,7 @@ import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import BackButton from '../../components/BackButton'
 import html2canvas from 'html2canvas'
+import { exportToPdf, exportToImage } from '../../utils/exportPdf'
 import './situation-front.css'
 
 const ICON = (ev) => {
@@ -307,9 +308,15 @@ export default function SituationFront() {
   if (loading) return <div className="container"><p>Chargement...</p></div>
 
   return (
-    <div className="container">
+    <div className="container" id="situation-front-content">
       <BackButton />
-      <h2>⚔️ Situation du Front</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+        <h2>⚔️ Situation du Front</h2>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-secondary btn-small" onClick={() => exportToPdf('situation-front-content', 'Situation_Front')}>📄 PDF</button>
+          <button className="btn btn-secondary btn-small" onClick={() => exportToImage('situation-front-content', 'Situation_Front')}>🖼️ Image</button>
+        </div>
+      </div>
 
       <div className="front-grid">
         {cartes.map(c => {

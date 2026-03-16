@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import BackButton from '../../components/BackButton'
+import { exportToPdf, exportToImage } from '../../utils/exportPdf'
 
 // ── Helpers ──
 function parseCreneaux(text) {
@@ -248,14 +249,16 @@ export default function Commandement() {
   const removeNote = async (id) => { try { await api.delete(`/commandement/notes/${id}`); loadNotes() } catch {} }
 
   // Unit filter for charts: user's unit unless admin/EM
-  const chartUnite = (user?.isAdmin || user?.isEtatMajor) ? '916' : (user?.unite_code || '916')
+  const [chartUniteFilter, setChartUniteFilter] = useState('')
+  const allUniteCodes = useMemo(() => [...new Set(effectifs.map(e => e.unite_code).filter(Boolean))].sort(), [effectifs])
+  const chartUnite = chartUniteFilter || ((user?.isAdmin || user?.isEtatMajor) ? '' : (user?.unite_code || '916'))
 
   // Effectifs for the unit (SO+ = grade_rang >= 35, exclude generals >= 90)
   const unitEffectifs = useMemo(() =>
     effectifs.filter(e => {
       if (e.en_reserve) return false
       // Match unit
-      const matchUnit = (user?.isAdmin || user?.isEtatMajor) ? true : (e.unite_code === chartUnite)
+      const matchUnit = !chartUnite || e.unite_code === chartUnite
       if (!matchUnit) return false
       return true
     }), [effectifs, chartUnite, user])
@@ -346,8 +349,19 @@ export default function Commandement() {
       </div>
 
       {/* 3 Pie Charts */}
-      <div className="paper-card" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-lg)' }}>
-        <PeriodNav periode={periode} setPeriode={setPeriode} currentDate={currentDate} setCurrentDate={setCurrentDate} />
+      <div className="paper-card" id="commandement-charts" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-lg)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 'var(--space-sm)' }}>
+          <PeriodNav periode={periode} setPeriode={setPeriode} currentDate={currentDate} setCurrentDate={setCurrentDate} />
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {(user?.isAdmin || user?.isEtatMajor) && (
+              <select value={chartUniteFilter} onChange={e => setChartUniteFilter(e.target.value)} className="input" style={{ fontSize: '0.8rem', padding: '4px 8px', minWidth: 100 }}>
+                <option value="">Toutes les unites</option>
+                {allUniteCodes.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            )}
+            <button className="btn btn-secondary btn-small" onClick={() => exportToImage('commandement-charts', 'Camemberts')}>🖼️ Image</button>
+          </div>
+        </div>
         <div style={{ display: 'flex', gap: 'var(--space-lg)', marginTop: 'var(--space-lg)', flexWrap: 'wrap', justifyContent: 'center' }}>
           <div style={{ flex: 1, minWidth: 240 }}>
             <PieChart data={pdsPie} size={220} title={`📋 PDS (SO+)`} showHours />

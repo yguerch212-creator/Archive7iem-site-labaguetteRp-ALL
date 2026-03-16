@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
-import { exportToPdf } from '../../utils/exportPdf'
+import { exportToPdf, exportToImage } from '../../utils/exportPdf'
 import { exportCsv } from '../../utils/exportCsv'
 import './pds.css'
 
@@ -255,9 +255,12 @@ export default function PDS() {
   // ===== PERMISSIONS VIEW =====
   if (view === 'permissions') {
     return (
-      <div className="pds-page">
+      <div className="pds-page" id="permissions-content">
         <button className="btn btn-secondary btn-small" onClick={() => setView('list')} style={{ marginBottom: 'var(--space-md)' }}>← Retour</button>
-        <h2>🏖️ Permissions d'absence</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <h2>🏖️ Permissions d'absence</h2>
+          <button className="btn btn-secondary btn-small" onClick={() => exportToImage('permissions-content', 'Permissions')}>🖼️ Image</button>
+        </div>
         {hasEffectif && (
           <div style={{ marginBottom: '1rem' }}>
             <button className="btn btn-primary" onClick={() => setShowPermForm(!showPermForm)}>{showPermForm ? '✕ Annuler' : '+ Demander une permission'}</button>
@@ -324,7 +327,10 @@ export default function PDS() {
           {hasEffectif && <button className="btn btn-primary btn-small" onClick={() => { setSemaine(semaineActuelle); setView('edit') }}>✏️ Mon PDS</button>}
           {isPrivileged && <button className="btn btn-secondary btn-small" onClick={() => setView('rapport')}>📊 Rapport</button>}
           <button className="btn btn-secondary btn-small" onClick={() => setView('permissions')}>🏖️ Permissions</button>
-          {isPrivileged && <button className="btn btn-secondary btn-small" onClick={() => exportToPdf('pds-table', `PDS_${semaine}`)}>📄 PDF</button>}
+          {isPrivileged && <>
+            <button className="btn btn-secondary btn-small" onClick={() => exportToPdf('pds-table', `PDS_${semaine}`)}>📄 PDF</button>
+            <button className="btn btn-secondary btn-small" onClick={() => exportToImage('pds-table', `PDS_${semaine}`)}>🖼️ Image</button>
+          </>}
           {isPrivileged && <button className="btn btn-secondary btn-small" onClick={() => exportCsv(filteredAll, [
             { key: r => `${r.grade_nom || ''} ${r.prenom} ${r.nom}`, label: 'Effectif' },
             { key: 'unite_code', label: 'Unité' },
@@ -454,6 +460,7 @@ function RapportSemaine({ semaine, setSemaine, semaineActuelle, setView, user, f
         <button className="btn btn-secondary btn-small" onClick={() => setView('list')}>← Retour</button>
         <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
           <button className="btn btn-secondary btn-small" onClick={() => exportToPdf('rapport-pds', `Rapport_PDS_${semaine}`)}>📄 PDF</button>
+          <button className="btn btn-secondary btn-small" onClick={() => exportToImage('rapport-pds', `Rapport_PDS_${semaine}`)}>🖼️ Image</button>
           <button className="btn btn-secondary btn-small" onClick={() => exportCsv(filtered, [
             { key: r => `${r.grade_nom || ''} ${r.prenom} ${r.nom}`, label: 'Effectif' },
             { key: 'unite_code', label: 'Unité' },

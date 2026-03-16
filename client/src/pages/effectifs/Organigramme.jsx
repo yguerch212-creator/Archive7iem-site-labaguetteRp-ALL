@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import BackButton from '../../components/BackButton'
+import { exportToPdf, exportToImage } from '../../utils/exportPdf'
 
 /* ─── Couleurs par unité ─── */
 const UNIT_COLORS = {
@@ -284,9 +285,15 @@ export default function Organigramme() {
   if (!data) return <div className="container"><p>Chargement...</p></div>
 
   return (
-    <div className="container">
+    <div className="container" id="organigramme-content">
       <BackButton label="← Tableau de bord" />
-      <h1 style={{ textAlign: 'center', margin: 'var(--space-lg) 0 var(--space-sm)' }}>🏛️ Organigramme du 7. Armeekorps</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+        <h1 style={{ margin: 'var(--space-lg) 0 var(--space-sm)' }}>🏛️ Organigramme du 7. Armeekorps</h1>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-secondary btn-small" onClick={() => exportToPdf('organigramme-content', 'Organigramme_7AK')}>📄 PDF</button>
+          <button className="btn btn-secondary btn-small" onClick={() => exportToImage('organigramme-content', 'Organigramme_7AK')}>🖼️ Image</button>
+        </div>
+      </div>
       <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 var(--space-lg)' }}>Cliquer sur un régiment pour voir ses grades • Cliquer sur une spécialité pour voir les règles</p>
       {msg && <div className="alert alert-success" style={{ marginBottom: 'var(--space-md)' }}>{msg}</div>}
 

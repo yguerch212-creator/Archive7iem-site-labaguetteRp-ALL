@@ -8,7 +8,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import apiClient from '../../api/client'
-import { exportToPdf } from '../../utils/exportPdf'
+import { exportToPdf, exportToImage } from '../../utils/exportPdf'
 import { formatDateSoft } from '../../utils/dates'
 
 export default function Soldbuch() {
@@ -388,7 +388,8 @@ export default function Soldbuch() {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-xl)', display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
-        <button className="btn btn-primary" onClick={() => exportToPdf('soldbuch-paper', `Soldbuch_${e.prenom}_${e.nom}`)}>📄 Exporter en PDF</button>
+        <button className="btn btn-primary" onClick={() => exportToPdf('soldbuch-paper', `Soldbuch_${e.prenom}_${e.nom}`)}>📄 PDF</button>
+        <button className="btn btn-secondary" onClick={() => exportToImage('soldbuch-paper', `Soldbuch_${e.prenom}_${e.nom}`)}>🖼️ Image</button>
         <button className="btn btn-secondary" onClick={() => window.print()}>🖨️ Imprimer</button>
         <ShareButton />
       </div>

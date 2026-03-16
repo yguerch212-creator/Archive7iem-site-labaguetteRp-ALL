@@ -4,7 +4,7 @@ import { useAuth } from '../../auth/useAuth'
 import api from '../../api/client'
 import BackButton from '../../components/BackButton'
 import LayoutRenderer from '../../components/LayoutRenderer'
-import { exportToPdf } from '../../utils/exportPdf'
+import { exportToPdf, exportToImage } from '../../utils/exportPdf'
 
 export default function JournalView() {
   const { id } = useParams()
@@ -51,6 +51,7 @@ export default function JournalView() {
             {canEdit && <button className="btn btn-secondary btn-small layout-desktop-only" onClick={() => navigate(`/journal/${id}/edit`)}>✏️ Modifier</button>}
             {canDelete && <button className="btn btn-danger btn-small" onClick={deleteArticle}>🗑️</button>}
             <button className="btn btn-secondary btn-small" onClick={() => exportToPdf('journal-article', `Journal_${article.titre}`)}>📥 PDF</button>
+            <button className="btn btn-secondary btn-small" onClick={() => exportToImage('journal-article', `Journal_${article.titre}`)}>🖼️ Image</button>
           </div>
         </div>
         <div id="journal-article" style={{ background: '#f5f2e8', border: '1px solid #c4b99a', padding: 0, maxWidth: 850, margin: '0 auto', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
