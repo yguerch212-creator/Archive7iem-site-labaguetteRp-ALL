@@ -63,17 +63,19 @@ export default function AdminLogs() {
                 <th style={{ padding: '0.5rem', textAlign: 'left' }}>Action</th>
                 <th style={{ padding: '0.5rem', textAlign: 'left' }}>Membre</th>
                 <th style={{ padding: '0.5rem', textAlign: 'left' }}>Details</th>
+                <th style={{ padding: '0.5rem', textAlign: 'left' }}>IP</th>
               </tr>
             </thead>
             <tbody>
               {adminLogs.map(log => (
-                <tr key={log.id} style={{ borderBottom: '1px solid var(--border)', background: log.action.includes('retro') ? 'rgba(255,152,0,0.06)' : 'transparent' }}>
+                <tr key={log.id} style={{ borderBottom: '1px solid var(--border)', background: 'rgba(255,152,0,0.06)' }}>
                   <td style={{ padding: '0.4rem 0.5rem', whiteSpace: 'nowrap' }}>{formatDate(log.created_at)}</td>
                   <td style={{ padding: '0.4rem 0.5rem' }}>
                     {log.action.includes('retro_pds') ? '📋' : log.action.includes('retro_front') ? '⚔️' : log.action.includes('retro_permission') ? '🏖️' : '📌'} {log.action.replace('admin_retro_', '')}
                   </td>
                   <td style={{ padding: '0.4rem 0.5rem' }}>{log.user_fullname?.trim() || log.username || '—'}</td>
                   <td style={{ padding: '0.4rem 0.5rem', maxWidth: 400 }}>{log.details || '—'}</td>
+                  <td style={{ padding: '0.4rem 0.5rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{log.ip || '—'}</td>
                 </tr>
               ))}
             </tbody>
