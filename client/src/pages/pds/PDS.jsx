@@ -83,9 +83,11 @@ export default function PDS() {
   const [pdsConfig, setPdsConfig] = useState({})
 
   // Admin edit state (for Administratifs editing other's PDS)
-  const [adminEditTarget, setAdminEditTarget] = useState(null) // { effectif_id, prenom, nom, unite_id, grade_rang }
+  const [adminEditTarget, setAdminEditTarget] = useState(null)
   const [adminEditPds, setAdminEditPds] = useState({})
   const [adminSaving, setAdminSaving] = useState(false)
+  const [allEffectifs, setAllEffectifs] = useState([])
+  const [adminCreateId, setAdminCreateId] = useState('')
 
   const isPrivileged = user?.isAdmin || user?.isRecenseur
   const hasEffectif = !!user?.effectif_id
@@ -132,6 +134,11 @@ export default function PDS() {
     }).catch(() => {})
   }, [])
   useEffect(() => { loadAll(); loadMine() }, [loadAll, loadMine])
+  useEffect(() => {
+    if (isPrivileged) {
+      api.get('/effectifs').then(r => setAllEffectifs(r.data.data || [])).catch(() => {})
+    }
+  }, [isPrivileged])
   useEffect(() => { if (view === 'permissions') loadPermissions() }, [view])
 
   const loadPermissions = async () => { try { const r = await api.get('/pds/permissions'); setPermissions(r.data.data) } catch {} }
@@ -157,6 +164,16 @@ export default function PDS() {
       setShowPermForm(false); setPermForm({ date_debut:'', date_fin:'', raison:'' })
       setMessage('Demande envoyée'); setTimeout(() => setMessage(''), 2000); loadPermissions()
     } catch (err) { setMessage('Erreur') }
+  }
+
+  const startAdminCreate = () => {
+    if (!adminCreateId) return
+    const eff = allEffectifs.find(e => e.id === parseInt(adminCreateId))
+    if (!eff) return
+    setAdminEditTarget({ effectif_id: eff.id, prenom: eff.prenom, nom: eff.nom, unite_id: eff.unite_id, grade_rang: eff.grade_rang || 0, grade_nom: eff.grade_nom || '—', unite_code: eff.unite_code || '', unite_nom: eff.unite_nom || '' })
+    setAdminEditPds({ lundi:'', mardi:'', mercredi:'', jeudi:'', vendredi:'', vendredi_fin:'', samedi:'', dimanche:'' })
+    setView('adminEdit')
+    setAdminCreateId('')
   }
 
   const startAdminEdit = (eff) => {
@@ -384,6 +401,17 @@ export default function PDS() {
         <BackButton label="← Tableau de bord" />
         <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
           {hasEffectif && <button className="btn btn-primary btn-small" onClick={() => { setSemaine(semaineActuelle); setView('edit') }}>✏️ Mon PDS</button>}
+          {isPrivileged && (
+            <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
+              <select className="form-input" style={{ width: 'auto', fontSize: '0.8rem', padding: '4px 6px' }} value={adminCreateId} onChange={e => setAdminCreateId(e.target.value)}>
+                <option value="">— Effectif —</option>
+                {allEffectifs.filter(e => !allData.find(d => d.effectif_id === e.id)).map(e => (
+                  <option key={e.id} value={e.id}>{e.grade_nom ? e.grade_nom + ' ' : ''}{e.prenom} {e.nom}</option>
+                ))}
+              </select>
+              <button className="btn btn-primary btn-small" onClick={startAdminCreate} disabled={!adminCreateId}>🏢 Créer PDS</button>
+            </span>
+          )}
           {isPrivileged && <button className="btn btn-secondary btn-small" onClick={() => setView('rapport')}>📊 Rapport</button>}
           <button className="btn btn-secondary btn-small" onClick={() => setView('permissions')}>🏖️ Permissions</button>
           {isPrivileged && <>

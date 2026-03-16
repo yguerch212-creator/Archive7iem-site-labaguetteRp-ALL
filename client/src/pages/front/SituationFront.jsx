@@ -177,6 +177,7 @@ export default function SituationFront() {
   const [flash, setFlash] = useState(null)
   const [heureMode, setHeureMode] = useState('auto')
   const [heureManuel, setHeureManuel] = useState('')
+  const [retroDate, setRetroDate] = useState('')
   const [histFilter, setHistFilter] = useState('jour') // jour | semaine | all
   const [histDate, setHistDate] = useState(() => {
     const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
@@ -242,7 +243,9 @@ export default function SituationFront() {
     setTab('history')
 
     try {
-      const r = await api.post(`/front/cartes/${selected}/events`, { ...data, heure })
+      const payload = { ...data, heure }
+      if (retroDate && (user?.isRecenseur || user?.isAdmin)) payload.date_irl = retroDate
+      const r = await api.post(`/front/cartes/${selected}/events`, payload)
       // Replace temp event with real one (with server ID)
       setEvents(prev => prev.map(e => e.id === tempId ? { ...e, id: r.data.data.id } : e))
       load() // refresh cartes stats in background
@@ -391,6 +394,17 @@ export default function SituationFront() {
                     <input type="time" className="form-input" value={heureManuel} onChange={e => setHeureManuel(e.target.value)} style={{ marginTop: '0.3rem', maxWidth: 140 }} />
                   )}
                 </div>
+
+                {(user?.isRecenseur || user?.isAdmin) && (
+                  <div className="front-section">
+                    <p className="front-section-label">🏢 Date rétroactive (admin)</p>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input type="datetime-local" className="form-input" value={retroDate} onChange={e => setRetroDate(e.target.value)} style={{ maxWidth: 220, fontSize: '0.85rem' }} />
+                      {retroDate && <button className="btn btn-secondary btn-small" onClick={() => setRetroDate('')}>✕ Maintenant</button>}
+                    </div>
+                    {retroDate && <p style={{ fontSize: '0.75rem', color: '#e65100', marginTop: 4 }}>⚠️ Les événements seront datés au {new Date(retroDate).toLocaleString('fr-FR')}</p>}
+                  </div>
+                )}
 
                 {/* Début / Fin combats */}
                 <div className="front-section">

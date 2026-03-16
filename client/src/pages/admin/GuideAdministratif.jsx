@@ -24,7 +24,7 @@ const Step = ({ n, children }) => (
 
 export default function GuideAdministratif() {
   return (
-    <div className="container" style={{ maxWidth: 900, paddingBottom: 'var(--space-xxl)' }} id="guide-administratif">
+    <div className="container" style={{ maxWidth: 900, paddingBottom: 'var(--space-xxl)', background: 'var(--paper-bg, #f5f2e8)', borderRadius: 12, padding: '2rem', marginTop: '1rem', minHeight: '80vh', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }} id="guide-administratif">
       <BackButton label="← Retour" />
 
       <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)', paddingTop: 'var(--space-md)' }}>
@@ -168,7 +168,45 @@ export default function GuideAdministratif() {
         </Task>
       </Section>
 
-      <Section title="IV. LE BUREAU DE RECENSEMENT (EN JEU)">
+      <Section title="IV. MISE À JOUR RÉTROACTIVE">
+        <p style={{ lineHeight: 1.7, marginBottom: 12 }}>
+          Le rôle principal des administratifs est de <strong>maintenir le site à jour</strong> en se basant sur ce qui se passe sur Discord et en jeu.
+          Vous pouvez modifier des informations passées quand elles n'ont pas été saisies à temps.
+        </p>
+
+        <Task icon="📋" title="1. PDS (Plans de Service) rétroactifs">
+          <Step n={1}>Aller dans <strong>📋 PDS</strong></Step>
+          <Step n={2}>Naviguer vers la semaine concernée avec les flèches ◀ ▶</Step>
+          <Step n={3}>Cliquer sur un effectif pour ouvrir sa fiche</Step>
+          <Step n={4}>Cliquer <strong>🏢 Modifier ce PDS</strong></Step>
+          <Step n={5}>Remplir les créneaux (ex: 20h-22h30) et sauvegarder</Step>
+          <p style={{ marginTop: 8, fontSize: '0.82rem', color: '#795548' }}>
+            💡 Pour créer un PDS qui n'existe pas encore : utilisez le sélecteur d'effectif en haut de la page PDS, puis <strong>🏢 Créer PDS</strong>.
+          </p>
+          <p style={{ fontSize: '0.82rem', color: '#e65100' }}>
+            ⚠️ Toutes les modifications rétroactives sont enregistrées dans les logs d'activité.
+          </p>
+        </Task>
+
+        <Task icon="⚔️" title="2. Situation du Front rétroactive">
+          <Step n={1}>Aller dans <strong>⚔️ Situation du Front</strong></Step>
+          <Step n={2}>Sélectionner la carte concernée</Step>
+          <Step n={3}>Dans le panneau de rapport, utiliser le champ <strong>🏢 Date rétroactive</strong> pour choisir la date/heure passée</Step>
+          <Step n={4}>Enregistrer les événements (début, fin, attaques, défenses, prises/pertes de VP)</Step>
+          <p style={{ marginTop: 8, fontSize: '0.82rem', color: '#795548' }}>
+            💡 Si aucune date rétroactive n'est sélectionnée, l'événement est enregistré à la date actuelle.
+          </p>
+        </Task>
+
+        <Task icon="📊" title="3. Suivi de votre activité">
+          <p>Toutes vos modifications sont visibles dans <strong>Admin → Journal d'activité → 🏢 Activité Administratifs</strong>.</p>
+          <p style={{ fontSize: '0.82rem', color: '#795548', marginTop: 6 }}>
+            Le commandement peut suivre en temps réel qui modifie quoi et quand. Soyez rigoureux et précis.
+          </p>
+        </Task>
+      </Section>
+
+      <Section title="VI. LE BUREAU DE RECENSEMENT (EN JEU)">
         <p style={{ lineHeight: 1.7, marginBottom: 12 }}>
           En jeu (Garry's Mod), le Bataillon Administratif tient un <strong>bureau de recensement</strong>.
           C'est une tente ou un bâtiment où les nouveaux arrivants viennent se faire enregistrer.
@@ -213,7 +251,7 @@ export default function GuideAdministratif() {
         </div>
       </Section>
 
-      <Section title="V. SIGNATURES ET TAMPONS">
+      <Section title="VII. SIGNATURES ET TAMPONS">
         <Task icon="✍️" title="Votre signature personnelle">
           <Step n={1}>Allez dans n'importe quel document à signer</Step>
           <Step n={2}>Dessinez votre signature une fois — elle sera sauvegardée</Step>
@@ -231,7 +269,7 @@ export default function GuideAdministratif() {
         </Task>
       </Section>
 
-      <Section title="VI. RÈGLES ET BONNES PRATIQUES">
+      <Section title="VIII. RÈGLES ET BONNES PRATIQUES">
         <div style={{ display: 'grid', gap: 10 }}>
           {[
             ['✅', 'Toujours vérifier avant de valider', 'Lisez le rapport en entier, vérifiez les noms et dates.'],
@@ -252,7 +290,7 @@ export default function GuideAdministratif() {
         </div>
       </Section>
 
-      <Section title="VII. EN CAS DE PROBLÈME">
+      <Section title="IX. EN CAS DE PROBLÈME">
         <p style={{ lineHeight: 1.7 }}>
           Si vous rencontrez un bug, un problème de permissions, ou une situation que vous ne savez pas gérer :
         </p>

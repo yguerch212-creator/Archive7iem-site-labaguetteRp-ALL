@@ -51,11 +51,13 @@ router.post('/cartes/:id/events', auth, async (req, res) => {
   try {
     if (!req.user.isAdmin && !req.user.isOfficier && !req.user.isSousOfficier && !req.user.isEtatMajor && !req.user.isRecenseur)
       return res.status(403).json({ success: false, message: 'Non autorisé' })
-    const { type_event, resultat, camp_vainqueur, vp_id, heure, note } = req.body
+    const { type_event, resultat, camp_vainqueur, vp_id, heure, note, date_irl: customDate, date_rp } = req.body
     if (!type_event) return res.status(400).json({ success: false, message: 'Type requis' })
+    // Administratifs can set a custom date_irl for retroactive entries
+    const dateIrl = (req.user.isRecenseur || req.user.isAdmin) && customDate ? customDate : new Date()
     const [result] = await pool.execute(
-      'INSERT INTO situation_front_events (carte_id, type_event, resultat, camp_vainqueur, vp_id, heure, note, rapporte_par) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [req.params.id, type_event, resultat || 'vp', camp_vainqueur || '', vp_id || null, heure || null, note || null, req.user.effectif_id || null]
+      'INSERT INTO situation_front_events (carte_id, type_event, resultat, camp_vainqueur, vp_id, heure, note, rapporte_par, date_irl, date_rp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [req.params.id, type_event, resultat || 'vp', camp_vainqueur || '', vp_id || null, heure || null, note || null, req.user.effectif_id || null, dateIrl, date_rp || null]
     )
     // Log retroactive edits by administratifs
     if (req.user.isRecenseur && !req.user.isAdmin) {
