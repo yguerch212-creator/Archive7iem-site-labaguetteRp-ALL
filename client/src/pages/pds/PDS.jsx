@@ -7,9 +7,18 @@ import { exportToPdf, exportToImage } from '../../utils/exportPdf'
 import { exportCsv } from '../../utils/exportCsv'
 import './pds.css'
 
-const JOURS = ['vendredi', 'samedi', 'dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi_fin']
-const JOURS_LABELS = { vendredi: 'Vendredi (20h →)', samedi: 'Samedi', dimanche: 'Dimanche', lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi_fin: 'Vendredi (→ 20h)' }
-const JOURS_SHORT = { vendredi: 'Ven.→', samedi: 'Sam.', dimanche: 'Dim.', lundi: 'Lun.', mardi: 'Mar.', mercredi: 'Mer.', jeudi: 'Jeu.', vendredi_fin: '→Ven.' }
+// Safe date formatter — handles both Date objects and "YYYY-MM-DD" strings
+function fmtDate(d) {
+  if (!d) return '?'
+  try {
+    const str = typeof d === 'string' ? d.slice(0, 10) : d instanceof Date ? d.toISOString().slice(0, 10) : String(d).slice(0, 10)
+    return new Date(str + 'T00:00:00').toLocaleDateString('fr-FR')
+  } catch { return '?' }
+}
+
+const JOURS = ['samedi', 'dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi_fin']
+const JOURS_LABELS = { samedi: 'Samedi', dimanche: 'Dimanche', lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi_fin: 'Vendredi (→ 23h59)' }
+const JOURS_SHORT = { samedi: 'Sam.', dimanche: 'Dim.', lundi: 'Lun.', mardi: 'Mar.', mercredi: 'Mer.', jeudi: 'Jeu.', vendredi_fin: 'Ven.' }
 
 function getWeekString(date = new Date()) {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
@@ -33,7 +42,7 @@ function weekLabel(w) {
     const friday = new Date(monday); friday.setUTCDate(monday.getUTCDate() + 4)
     const nextFriday = new Date(friday); nextFriday.setUTCDate(friday.getUTCDate() + 7)
     const fmt = d => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
-    return `Semaine du ven. ${fmt(friday)} au ven. ${fmt(nextFriday)}`
+    return `Semaine du sam. ${fmt(friday)} au ven. ${fmt(nextFriday)}`
   } catch { return w }
 }
 
@@ -79,6 +88,7 @@ export default function PDS() {
   const [permissions, setPermissions] = useState([])
   const [showPermForm, setShowPermForm] = useState(false)
   const [permForm, setPermForm] = useState({ date_debut: '', date_fin: '', raison: '' })
+  const [permSubmitting, setPermSubmitting] = useState(false)
 
   const [pdsConfig, setPdsConfig] = useState({})
 
@@ -88,6 +98,7 @@ export default function PDS() {
   const [adminSaving, setAdminSaving] = useState(false)
   const [allEffectifs, setAllEffectifs] = useState([])
   const [adminCreateId, setAdminCreateId] = useState('')
+  const [selectedPerm, setSelectedPerm] = useState(null)
 
   const isPrivileged = user?.isAdmin || user?.isRecenseur
   const hasEffectif = !!user?.effectif_id
@@ -117,9 +128,9 @@ export default function PDS() {
       const res = await api.get('/pds/mine', { params: { semaine } })
       if (res.data.data) {
         const d = res.data.data
-        setMyPds({ lundi: d.lundi||'', mardi: d.mardi||'', mercredi: d.mercredi||'', jeudi: d.jeudi||'', vendredi: d.vendredi||'', vendredi_fin: d.vendredi_fin||'', samedi: d.samedi||'', dimanche: d.dimanche||'' })
+        setMyPds({ lundi: d.lundi||'', mardi: d.mardi||'', mercredi: d.mercredi||'', jeudi: d.jeudi||'', vendredi_fin: d.vendredi_fin||'', samedi: d.samedi||'', dimanche: d.dimanche||'' })
       } else {
-        setMyPds({ lundi:'', mardi:'', mercredi:'', jeudi:'', vendredi:'', vendredi_fin:'', samedi:'', dimanche:'' })
+        setMyPds({ lundi:'', mardi:'', mercredi:'', jeudi:'', vendredi_fin:'', samedi:'', dimanche:'' })
       }
     } catch {}
   }, [semaine, hasEffectif])
@@ -159,11 +170,17 @@ export default function PDS() {
 
   const submitPermission = async (e) => {
     e.preventDefault()
+    if (permSubmitting) return
+    setPermSubmitting(true)
     try {
       await api.post('/pds/permissions', permForm)
       setShowPermForm(false); setPermForm({ date_debut:'', date_fin:'', raison:'' })
-      setMessage('Demande envoyée'); setTimeout(() => setMessage(''), 2000); loadPermissions()
-    } catch (err) { setMessage('Erreur') }
+      setMessage('✅ Demande de permission envoyée'); setTimeout(() => setMessage(''), 3000); loadPermissions()
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Erreur lors de l\'envoi')
+      setTimeout(() => setMessage(''), 3000)
+    }
+    setPermSubmitting(false)
   }
 
   const startAdminCreate = () => {
@@ -171,14 +188,14 @@ export default function PDS() {
     const eff = allEffectifs.find(e => e.id === parseInt(adminCreateId))
     if (!eff) return
     setAdminEditTarget({ effectif_id: eff.id, prenom: eff.prenom, nom: eff.nom, unite_id: eff.unite_id, grade_rang: eff.grade_rang || 0, grade_nom: eff.grade_nom || '—', unite_code: eff.unite_code || '', unite_nom: eff.unite_nom || '' })
-    setAdminEditPds({ lundi:'', mardi:'', mercredi:'', jeudi:'', vendredi:'', vendredi_fin:'', samedi:'', dimanche:'' })
+    setAdminEditPds({ lundi:'', mardi:'', mercredi:'', jeudi:'', vendredi_fin:'', samedi:'', dimanche:'' })
     setView('adminEdit')
     setAdminCreateId('')
   }
 
   const startAdminEdit = (eff) => {
     setAdminEditTarget({ effectif_id: eff.effectif_id, prenom: eff.prenom, nom: eff.nom, unite_id: eff.unite_id, grade_rang: eff.grade_rang, grade_nom: eff.grade_nom, unite_code: eff.unite_code, unite_nom: eff.unite_nom })
-    setAdminEditPds({ lundi: eff.lundi||'', mardi: eff.mardi||'', mercredi: eff.mercredi||'', jeudi: eff.jeudi||'', vendredi: eff.vendredi||'', vendredi_fin: eff.vendredi_fin||'', samedi: eff.samedi||'', dimanche: eff.dimanche||'' })
+    setAdminEditPds({ lundi: eff.lundi||'', mardi: eff.mardi||'', mercredi: eff.mercredi||'', jeudi: eff.jeudi||'', vendredi_fin: eff.vendredi_fin||'', samedi: eff.samedi||'', dimanche: eff.dimanche||'' })
     setSelectedEffectif(null)
     setView('adminEdit')
   }
@@ -196,6 +213,15 @@ export default function PDS() {
   const traiterPermission = async (id, statut) => {
     const notes = statut === 'Refusee' ? prompt('Motif du refus :') : null
     try { await api.put(`/pds/permissions/${id}/traiter`, { statut, notes }); loadPermissions() } catch(err) { alert(err.response?.data?.message || 'Erreur traitement') }
+  }
+
+  const deletePermission = async (id) => {
+    if (!confirm('Supprimer cette permission ? Cette action est irréversible.')) return
+    try {
+      await api.delete(`/pds/permissions/${id}`)
+      setMessage('🗑️ Permission supprimée'); setTimeout(() => setMessage(''), 2000)
+      loadPermissions()
+    } catch(err) { alert(err.response?.data?.message || 'Erreur suppression') }
   }
 
   const unites = [...new Set(allData.map(d => d.unite_code))].sort()
@@ -319,7 +345,7 @@ export default function PDS() {
             {user?.isAdmin && eff.pds_id && (
               <button className="btn btn-danger btn-small" onClick={async () => {
                 if (!confirm('Supprimer ce PDS ?')) return
-                try { await api.delete(`/pds/${eff.pds_id}`); setSelectedEffectif(null); load() } catch (err) { alert('Erreur') }
+                try { await api.delete(`/pds/${eff.pds_id}`); setSelectedEffectif(null); loadAll() } catch (err) { alert('Erreur') }
               }}>🗑️ Supprimer</button>
             )}
           </div>
@@ -330,6 +356,10 @@ export default function PDS() {
 
   // ===== PERMISSIONS VIEW =====
   if (view === 'permissions') {
+    const statutColor = (s) => s === 'Approuvee' ? '#2d4a34' : s === 'Refusee' ? '#8b4a47' : '#8b7355'
+    const statutLabel = (s) => s === 'Approuvee' ? '✅ APPROUVÉE' : s === 'Refusee' ? '❌ REFUSÉE' : '⏳ EN ATTENTE'
+    const statutBg = (s) => s === 'Approuvee' ? 'rgba(45,74,52,0.08)' : s === 'Refusee' ? 'rgba(139,74,71,0.08)' : 'rgba(139,115,85,0.08)'
+
     return (
       <div className="pds-page" id="permissions-content">
         <button className="btn btn-secondary btn-small" onClick={() => setView('list')} style={{ marginBottom: 'var(--space-md)' }}>← Retour</button>
@@ -350,39 +380,149 @@ export default function PDS() {
                 <div className="form-group"><label className="form-label">Au *</label><input type="date" className="form-input" value={permForm.date_fin} onChange={e => setPermForm(p => ({...p, date_fin: e.target.value}))} required /></div>
               </div>
               <div className="form-group"><label className="form-label">Raison *</label><textarea className="form-input" value={permForm.raison} onChange={e => setPermForm(p => ({...p, raison: e.target.value}))} required rows={2} /></div>
-              <button type="submit" className="btn btn-primary">📨 Envoyer</button>
+              <button type="submit" className="btn btn-primary" disabled={permSubmitting}>{permSubmitting ? '⏳ Envoi...' : '📨 Envoyer'}</button>
             </form>
           </div>
         )}
+        {message && <div className="pds-message-bar">{message}</div>}
         {permissions.length === 0 ? (
           <div className="paper-card" style={{ textAlign: 'center', padding: '2rem' }}>Aucune demande</div>
         ) : (
-          <div className="paper-card" style={{ overflow: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-              <thead><tr style={{ borderBottom: '2px solid var(--border-color)' }}>
-                <th style={thS}>Effectif</th><th style={thS}>Du</th><th style={thS}>Au</th><th style={thS}>Raison</th><th style={thS}>Statut</th>
-                {(isPrivileged || user?.isOfficier) && <th style={thS}>Actions</th>}
-              </tr></thead>
-              <tbody>
-                {permissions.map(p => (
-                  <tr key={p.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={tdS}><strong>{p.grade_nom ? `${p.grade_nom} ` : ''}{p.prenom} {p.nom}</strong><br/><span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.unite_code}</span></td>
-                    <td style={tdS}>{p.date_debut ? new Date(p.date_debut+'T00:00').toLocaleDateString('fr-FR') : '?'}</td>
-                    <td style={tdS}>{p.date_fin ? new Date(p.date_fin+'T00:00').toLocaleDateString('fr-FR') : '?'}</td>
-                    <td style={tdS}>{p.raison}</td>
-                    <td style={tdS}><span className={`badge ${p.statut === 'Approuvee' ? 'badge-green' : p.statut === 'Refusee' ? 'badge-red' : 'badge-warning'}`}>{p.statut === 'Approuvee' ? '✅ Approuvée' : p.statut === 'Refusee' ? '❌ Refusée' : '⏳ En attente'}</span></td>
-                    {(isPrivileged || user?.isOfficier) && (
-                      <td style={tdS}>{p.statut === 'En attente' && (
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          <button className="btn btn-sm btn-primary" style={{ padding: '2px 8px', fontSize: '0.75rem' }} onClick={() => traiterPermission(p.id, 'Approuvee')}>✅</button>
-                          <button className="btn btn-sm" style={{ padding: '2px 8px', fontSize: '0.75rem', color: 'var(--danger)' }} onClick={() => traiterPermission(p.id, 'Refusee')}>❌</button>
-                        </div>
-                      )}</td>
+          <div className="perm-tickets-grid">
+            {permissions.map(p => (
+              <div key={p.id} className="perm-ticket" onClick={() => setSelectedPerm(p)} style={{ borderLeftColor: statutColor(p.statut) }}>
+                <div className="perm-ticket-header">
+                  <div className="perm-ticket-eagle">⚔️</div>
+                  <div className="perm-ticket-title">URLAUBSSCHEIN<br/><span style={{ fontSize: '0.65rem', letterSpacing: 1 }}>Permission d'absence</span></div>
+                  <div className="perm-ticket-nr">N° {String(p.id).padStart(4, '0')}</div>
+                </div>
+                <div className="perm-ticket-body">
+                  <div className="perm-ticket-field">
+                    <span className="perm-ticket-label">Effectif</span>
+                    <span className="perm-ticket-value">{p.grade_nom ? `${p.grade_nom} ` : ''}{p.prenom} {p.nom}</span>
+                  </div>
+                  <div className="perm-ticket-field">
+                    <span className="perm-ticket-label">Unité</span>
+                    <span className="perm-ticket-value">{p.unite_code} {p.unite_nom || ''}</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    <div className="perm-ticket-field" style={{ flex: 1 }}>
+                      <span className="perm-ticket-label">Du</span>
+                      <span className="perm-ticket-value">{fmtDate(p.date_debut)}</span>
+                    </div>
+                    <div className="perm-ticket-field" style={{ flex: 1 }}>
+                      <span className="perm-ticket-label">Au</span>
+                      <span className="perm-ticket-value">{fmtDate(p.date_fin)}</span>
+                    </div>
+                  </div>
+                  <div className="perm-ticket-field">
+                    <span className="perm-ticket-label">Motif</span>
+                    <span className="perm-ticket-value">{p.raison}</span>
+                  </div>
+                </div>
+                <div className="perm-ticket-footer">
+                  <div className="perm-ticket-statut" style={{ background: statutBg(p.statut), color: statutColor(p.statut) }}>
+                    {statutLabel(p.statut)}
+                  </div>
+                  {(isPrivileged || user?.isOfficier) && p.statut === 'En attente' && (
+                    <div className="perm-ticket-actions" onClick={e => e.stopPropagation()}>
+                      <button className="btn btn-sm btn-primary" style={{ padding: '2px 10px', fontSize: '0.75rem' }} onClick={() => traiterPermission(p.id, 'Approuvee')}>✅ Approuver</button>
+                      <button className="btn btn-sm" style={{ padding: '2px 10px', fontSize: '0.75rem', color: 'var(--error)' }} onClick={() => traiterPermission(p.id, 'Refusee')}>❌ Refuser</button>
+                    </div>
+                  )}
+                  {user?.isAdmin && (
+                    <div className="perm-ticket-actions" onClick={e => e.stopPropagation()} style={{ marginLeft: 'auto' }}>
+                      <button className="btn btn-sm" style={{ padding: '2px 8px', fontSize: '0.7rem', color: 'var(--error)' }} onClick={() => { deletePermission(p.id) }} title="Supprimer">🗑️</button>
+                    </div>
+                  )}
+                  {p.statut !== 'En attente' && p.traite_grade && (
+                    <div className="perm-ticket-signature">
+                      <span className="perm-ticket-label">Signé par</span>
+                      <span className="perm-ticket-value" style={{ fontStyle: 'italic' }}>{p.traite_grade} {p.traite_prenom} {p.traite_nom_eff}</span>
+                    </div>
+                  )}
+                  {p.statut !== 'En attente' && !p.traite_grade && p.traite_par_nom && (
+                    <div className="perm-ticket-signature">
+                      <span className="perm-ticket-label">Traité par</span>
+                      <span className="perm-ticket-value" style={{ fontStyle: 'italic' }}>{p.traite_par_nom}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Popup ticket détaillé */}
+        {selectedPerm && (
+          <div className="popup-overlay" onClick={() => setSelectedPerm(null)}>
+            <div className="perm-ticket-detail" onClick={e => e.stopPropagation()}>
+              <button className="popup-close" onClick={() => setSelectedPerm(null)}>✕</button>
+              <div id="perm-detail-content" className="perm-detail-export">
+              <div className="perm-detail-header">
+                <div style={{ fontSize: '1.5rem' }}>⚔️</div>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: '1.1rem', letterSpacing: 2, textTransform: 'uppercase' }}>Urlaubsschein</h2>
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--military-accent)', letterSpacing: 1 }}>Permission d'absence — N° {String(selectedPerm.id).padStart(4, '0')}</p>
+                </div>
+              </div>
+              <div style={{ borderTop: '2px double var(--border-color)', borderBottom: '2px double var(--border-color)', padding: '1rem 0', margin: '1rem 0' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.85rem' }}>
+                  <tbody>
+                    <tr><td style={{ padding: '0.3rem 0', color: 'var(--military-accent)', width: '35%', fontWeight: 600 }}>Grade</td><td style={{ padding: '0.3rem 0' }}>{selectedPerm.grade_nom || '—'}</td></tr>
+                    <tr><td style={{ padding: '0.3rem 0', color: 'var(--military-accent)', fontWeight: 600 }}>Nom</td><td style={{ padding: '0.3rem 0' }}>{selectedPerm.nom}</td></tr>
+                    <tr><td style={{ padding: '0.3rem 0', color: 'var(--military-accent)', fontWeight: 600 }}>Prénom</td><td style={{ padding: '0.3rem 0' }}>{selectedPerm.prenom}</td></tr>
+                    <tr><td style={{ padding: '0.3rem 0', color: 'var(--military-accent)', fontWeight: 600 }}>Unité</td><td style={{ padding: '0.3rem 0' }}>{selectedPerm.unite_code} {selectedPerm.unite_nom || ''}</td></tr>
+                    <tr style={{ borderTop: '1px solid var(--border-color)' }}><td style={{ padding: '0.5rem 0 0.3rem', color: 'var(--military-accent)', fontWeight: 600 }}>Du</td><td style={{ padding: '0.5rem 0 0.3rem' }}>{fmtDate(selectedPerm.date_debut)}</td></tr>
+                    <tr><td style={{ padding: '0.3rem 0', color: 'var(--military-accent)', fontWeight: 600 }}>Au</td><td style={{ padding: '0.3rem 0' }}>{fmtDate(selectedPerm.date_fin)}</td></tr>
+                    <tr style={{ borderTop: '1px solid var(--border-color)' }}><td style={{ padding: '0.5rem 0 0.3rem', color: 'var(--military-accent)', fontWeight: 600 }}>Motif</td><td style={{ padding: '0.5rem 0 0.3rem' }}>{selectedPerm.raison}</td></tr>
+                    {selectedPerm.notes_traitement && (
+                      <tr><td style={{ padding: '0.3rem 0', color: 'var(--military-accent)', fontWeight: 600 }}>Motif {selectedPerm.statut === 'Refusee' ? 'du refus' : 'de décision'}</td><td style={{ padding: '0.3rem 0', fontStyle: 'italic' }}>{selectedPerm.notes_traitement}</td></tr>
                     )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  </tbody>
+                </table>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '1rem' }}>
+                <div>
+                  <div className="perm-ticket-statut" style={{
+                    background: statutBg(selectedPerm.statut),
+                    color: statutColor(selectedPerm.statut),
+                    fontSize: '0.85rem',
+                    padding: '0.4rem 1rem'
+                  }}>
+                    {statutLabel(selectedPerm.statut)}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  {selectedPerm.statut !== 'En attente' && (selectedPerm.traite_grade || selectedPerm.traite_par_nom) && (
+                    <div className="perm-detail-stamp">
+                      <div style={{ fontSize: '0.7rem', color: 'var(--military-accent)', marginBottom: 2 }}>Signature de l'autorité</div>
+                      <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontStyle: 'italic', fontSize: '0.9rem', borderBottom: '1px solid var(--border-color)', paddingBottom: 4, minWidth: 150 }}>
+                        {selectedPerm.traite_grade ? `${selectedPerm.traite_grade} ${selectedPerm.traite_prenom || ''} ${selectedPerm.traite_nom_eff || ''}` : selectedPerm.traite_par_nom}
+                      </div>
+                    </div>
+                  )}
+                  {selectedPerm.statut === 'En attente' && (
+                    <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.75rem', color: 'var(--military-accent)', fontStyle: 'italic' }}>
+                      En attente de signature...
+                    </div>
+                  )}
+                </div>
+              </div>
+              </div>{/* end perm-detail-content */}
+              {(isPrivileged || user?.isOfficier) && selectedPerm.statut === 'En attente' && (
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                  <button className="btn btn-primary" onClick={() => { traiterPermission(selectedPerm.id, 'Approuvee'); setSelectedPerm(null) }}>✅ Approuver</button>
+                  <button className="btn btn-danger" onClick={() => { traiterPermission(selectedPerm.id, 'Refusee'); setSelectedPerm(null) }}>❌ Refuser</button>
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+                <button className="btn btn-secondary btn-small" onClick={() => exportToImage('perm-detail-content', `Permission_${String(selectedPerm.id).padStart(4,'0')}`)}>🖼️ Télécharger image</button>
+                {user?.isAdmin && (
+                  <button className="btn btn-danger btn-small" onClick={() => { deletePermission(selectedPerm.id); setSelectedPerm(null) }}>🗑️ Supprimer</button>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>

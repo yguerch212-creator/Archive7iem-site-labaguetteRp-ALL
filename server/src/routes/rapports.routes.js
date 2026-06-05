@@ -67,6 +67,207 @@ router.get('/', optionalAuth, async (req, res) => {
 })
 
 // GET /api/rapports/:id
+// POST /api/rapports/analyse-ia — Analyse IA du contenu des rapports via Groq
+router.post('/analyse-ia', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin && !req.user.isOfficier) {
+      return res.status(403).json({ success: false, message: 'Accès réservé' })
+    }
+    
+    const GROQ_API_KEY = process.env.GROQ_API_KEY
+    if (!GROQ_API_KEY) {
+      return res.status(500).json({ success: false, message: 'GROQ_API_KEY non configurée' })
+    }
+
+    const { periode, date_debut, date_fin, include_front } = req.body
+    
+    let startDate, endDate
+    const now = new Date()
+    if (periode === 'mois') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10)
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0,10)
+    } else if (periode === 'custom' && date_debut && date_fin) {
+      startDate = date_debut; endDate = date_fin
+    } else {
+      const d = new Date(now); const day = d.getDay()
+      const diff = day >= 5 ? day - 5 : day + 2
+      const fri = new Date(d); fri.setDate(d.getDate() - diff)
+      const friEnd = new Date(fri); friEnd.setDate(fri.getDate() + 7)
+      startDate = fri.toISOString().slice(0,10); endDate = friEnd.toISOString().slice(0,10)
+    }
+
+    const rapports = await query(`
+      SELECT r.id, r.type, r.titre, r.auteur_nom, r.auteur_grade, r.date_rp, r.date_irl,
+        r.contexte, r.resume, r.bilan, r.remarques, r.compte_rendu, r.lieu_incident,
+        r.personne_renseignee_nom, r.recommande_nom, r.mise_en_cause_nom,
+        r.raison_1, r.recompense, r.valide, r.published,
+        u.code AS unite_code, u.nom AS unite_nom
+      FROM rapports r
+      LEFT JOIN effectifs e ON e.id = r.auteur_id
+      LEFT JOIN unites u ON u.id = e.unite_id
+      WHERE DATE(r.created_at) >= ? AND DATE(r.created_at) <= ?
+      ORDER BY r.date_rp ASC, r.created_at ASC
+    `, [startDate, endDate])
+
+    if (rapports.length === 0) {
+      return res.json({ success: true, data: { analyse: 'Aucun rapport trouvé pour cette période.', rapports_count: 0 } })
+    }
+
+    let rapportsText = rapports.map((r, i) => {
+      let text = `--- RAPPORT #${i+1} ---\nType: ${r.type}\nTitre: ${r.titre}\nAuteur: ${r.auteur_grade || ''} ${r.auteur_nom || 'Inconnu'}\nUnité: ${r.unite_code || '?'} ${r.unite_nom || ''}\nDate RP: ${r.date_rp || '?'}\nDate IRL: ${r.date_irl || '?'}\n`
+      if (r.contexte) text += `Contexte: ${r.contexte}\n`
+      if (r.resume) text += `Résumé: ${r.resume}\n`
+      if (r.bilan) text += `Bilan: ${r.bilan}\n`
+      if (r.remarques) text += `Remarques: ${r.remarques}\n`
+      if (r.compte_rendu) text += `Compte-rendu: ${r.compte_rendu}\n`
+      if (r.lieu_incident) text += `Lieu: ${r.lieu_incident}\n`
+      if (r.personne_renseignee_nom) text += `Personne renseignée: ${r.personne_renseignee_nom}\n`
+      if (r.recommande_nom) text += `Recommandé: ${r.recommande_nom} — Raison: ${r.raison_1 || '?'} — Récompense: ${r.recompense || '?'}\n`
+      if (r.mise_en_cause_nom) text += `Mis en cause: ${r.mise_en_cause_nom}\n`
+      return text
+    }).join('\n')
+
+    let frontText = ''
+    if (include_front) {
+      const frontEvents = await query(`
+        SELECT e.type_event, e.camp_vainqueur, e.heure, e.date_irl, c.nom AS carte_nom, v.nom AS vp_nom, v.numero AS vp_numero
+        FROM situation_front_events e
+        LEFT JOIN situation_front_cartes c ON c.id = e.carte_id
+        LEFT JOIN situation_front_vp v ON v.id = e.vp_id
+        WHERE DATE(e.date_irl) >= ? AND DATE(e.date_irl) <= ?
+        ORDER BY e.date_irl ASC
+      `, [startDate, endDate])
+      
+      if (frontEvents.length > 0) {
+        frontText = '\n\n--- DONNÉES DU FRONT (même période) ---\n'
+        frontText += frontEvents.map(e => {
+          let line = `[${e.date_irl ? new Date(e.date_irl).toLocaleDateString('fr-FR') : '?'}] ${e.carte_nom}: `
+          if (e.type_event === 'attaque') line += `Attaque base US → Win ${e.camp_vainqueur === 'allemand' ? 'ALL' : 'US'}`
+          else if (e.type_event === 'defense') line += `Défense base ALL → Win ${e.camp_vainqueur === 'allemand' ? 'ALL' : 'US'}`
+          else if (e.type_event === 'prise') line += `Prise VP${e.vp_numero} ${e.vp_nom || ''}`
+          else if (e.type_event === 'perte') line += `Perte VP${e.vp_numero} ${e.vp_nom || ''}`
+          else if (e.type_event === 'debut') line += 'Début des combats'
+          else if (e.type_event === 'fin') line += 'Fin des combats'
+          if (e.heure) line += ` à ${e.heure}`
+          return line
+        }).join('\n')
+      }
+
+      const pdsStats = await query(`
+        SELECT COUNT(*) as total, SUM(CASE WHEN valide = 1 THEN 1 ELSE 0 END) as valides,
+          ROUND(AVG(total_heures), 1) as moy_heures
+        FROM pds_semaines WHERE semaine = (SELECT MAX(semaine) FROM pds_semaines)
+      `)
+      if (pdsStats[0]?.total > 0) {
+        frontText += `\n\n--- PDS (dernière semaine) ---\n`
+        frontText += `Effectifs ayant rempli: ${pdsStats[0].total}\nValidés (>=6h): ${pdsStats[0].valides}\nMoyenne heures: ${pdsStats[0].moy_heures}h\n`
+      }
+    }
+
+    const prompt = `Tu es l'analyste en chef du 7e Armeekorps (camp allemand, WW2 RP sur Garry's Mod). Tu analyses les rapports soumis par les officiers et sous-officiers.
+
+PÉRIODE ANALYSÉE : ${startDate} → ${endDate}
+NOMBRE DE RAPPORTS : ${rapports.length}
+
+${rapportsText}${frontText}
+
+Produis une analyse COMPLÈTE et STRUCTURÉE :
+
+## SYNTHÈSE DE LA PÉRIODE
+Résumé global en 3-5 phrases des événements marquants.
+
+## CHRONOLOGIE DES FAITS
+Reconstitue la chronologie des événements jour par jour à partir des rapports. Indique dates, lieux, personnes impliquées.
+
+## PERSONNES CLÉS
+Liste les personnes mentionnées dans les rapports avec leur rôle (auteur, recommandé, mis en cause, renseigné). Note les récurrences.
+
+## INCIDENTS & RÉSOLUTIONS
+Détaille chaque incident reporté, son statut (traité/non traité), et les suites données.
+
+## RECOMMANDATIONS & MÉRITES
+Liste les recommandations faites, les raisons et récompenses proposées.
+
+## TENDANCES & OBSERVATIONS
+- Quelles unités sont les plus actives dans les rapports ?
+- Y a-t-il des patterns (mêmes personnes, mêmes types d'incidents) ?
+- Qualité et exhaustivité des rapports soumis
+
+${include_front ? `## CORRÉLATION RAPPORTS × FRONT
+Croise les informations des rapports avec les données de combat :
+- Les rapports correspondent-ils à ce qui s'est passé sur le terrain ?
+- Y a-t-il des événements de front non couverts par des rapports ?
+- Impact des incidents sur la performance au combat
+
+## CORRÉLATION RAPPORTS × PDS
+- Les unités actives au front remplissent-elles bien leurs PDS ?
+- Y a-t-il un lien entre heures de service et performance ?` : ''}
+
+## RECOMMANDATIONS DU COMMANDEMENT
+Suggestions concrètes basées sur l'analyse.
+
+RÈGLES :
+- Ne JAMAIS inventer de données. Base ton analyse UNIQUEMENT sur les rapports fournis.
+- Cite les noms, dates et faits tels qu'ils apparaissent.
+- Sois direct et factuel, style rapport d'état-major.
+- Si un rapport est vide ou incomplet, signale-le.`
+
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 30000)
+
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${GROQ_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.3,
+          max_tokens: 4000
+        }),
+        signal: controller.signal
+      })
+      clearTimeout(timeout)
+
+      if (!response.ok) {
+        const errText = await response.text().catch(() => '')
+        console.error(`[Groq Rapports] API error ${response.status}: ${errText}`)
+        return res.json({ success: false, message: `Groq API error: ${response.status}` })
+      }
+
+      const data = await response.json()
+      const analyse = data.choices?.[0]?.message?.content
+      if (!analyse) {
+        return res.json({ success: false, message: 'Réponse vide de Groq' })
+      }
+
+      res.json({
+        success: true,
+        data: {
+          analyse,
+          rapports_count: rapports.length,
+          periode: { debut: startDate, fin: endDate },
+          include_front: !!include_front
+        }
+      })
+    } catch (fetchErr) {
+      clearTimeout(timeout)
+      if (fetchErr.name === 'AbortError') {
+        return res.json({ success: false, message: 'Timeout Groq API (30s)' })
+      }
+      throw fetchErr
+    }
+  } catch (err) {
+    console.error('[Groq Rapports] Error:', err.message)
+    res.status(500).json({ success: false, message: 'Erreur serveur' })
+  }
+})
+
+
+// GET /api/rapports/:id
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const row = await queryOne('SELECT * FROM rapports WHERE id = ?', [req.params.id])

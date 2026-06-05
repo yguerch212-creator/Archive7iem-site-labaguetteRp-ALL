@@ -152,7 +152,7 @@ router.put('/saisie', auth, async (req, res) => {
     // Compute total hours from creneaux
     const totalHeures = 
       parseCreneaux(lundi) + parseCreneaux(mardi) + parseCreneaux(mercredi) +
-      parseCreneaux(jeudi) + parseCreneaux(vendredi) + parseCreneaux(vendredi_fin) + parseCreneaux(samedi) + parseCreneaux(dimanche)
+      parseCreneaux(jeudi) + parseCreneaux(vendredi_fin) + parseCreneaux(samedi) + parseCreneaux(dimanche)
 
     await pool.execute(`
       INSERT INTO pds_semaines (effectif_id, semaine, lundi, mardi, mercredi, jeudi, vendredi, vendredi_fin, samedi, dimanche, total_heures)
@@ -164,7 +164,7 @@ router.put('/saisie', auth, async (req, res) => {
     `, [
       effectif_id, semaine,
       lundi || null, mardi || null, mercredi || null,
-      jeudi || null, vendredi || null, vendredi_fin || null, samedi || null, dimanche || null,
+      jeudi || null, null, vendredi_fin || null, samedi || null, dimanche || null,
       Math.round(totalHeures * 10) / 10
     ])
 
@@ -265,12 +265,15 @@ router.get('/permissions', auth, async (req, res) => {
     const isPrivileged = req.user.isAdmin || req.user.isRecenseur || req.user.isOfficier
     let sql = `
       SELECT pa.*, e.nom, e.prenom, g.nom_complet AS grade_nom, u.code AS unite_code, u.nom AS unite_nom,
-             t.username AS traite_par_nom
+             t.username AS traite_par_nom,
+             te.prenom AS traite_prenom, te.nom AS traite_nom_eff, tg.nom_complet AS traite_grade
       FROM permissions_absence pa
       JOIN effectifs e ON e.id = pa.effectif_id
       LEFT JOIN grades g ON g.id = e.grade_id
       LEFT JOIN unites u ON u.id = e.unite_id
       LEFT JOIN users t ON t.id = pa.traite_par
+      LEFT JOIN effectifs te ON te.id = t.effectif_id
+      LEFT JOIN grades tg ON tg.id = te.grade_id
     `
     const params = []
     if (!isPrivileged) {
@@ -298,10 +301,62 @@ router.post('/permissions', auth, async (req, res) => {
       return res.status(400).json({ success: false, message: 'date_debut, date_fin et raison requis' })
     }
 
+    // Anti-doublon : vérifier qu'il n'existe pas déjà une demande identique (mêmes dates, en attente)
+    const existing = await queryOne(
+      `SELECT id FROM permissions_absence WHERE effectif_id = ? AND date_debut = ? AND date_fin = ? AND statut = 'En attente'`,
+      [effectif_id, date_debut, date_fin]
+    )
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'Une demande identique est déjà en attente pour ces dates' })
+    }
+
     const [result] = await pool.execute(
       'INSERT INTO permissions_absence (effectif_id, date_debut, date_fin, raison) VALUES (?, ?, ?, ?)',
       [effectif_id, date_debut, date_fin, raison]
     )
+
+    // Notify Charge-Permission users via telegramme
+    try {
+      const chargeUsers = await query(`
+        SELECT u.id AS user_id, u.effectif_id, CONCAT(COALESCE(e.prenom,''), ' ', COALESCE(e.nom,'')) AS full_name
+        FROM users u
+        JOIN user_groups ug ON ug.user_id = u.id
+        JOIN \`groups\` g ON g.id = ug.group_id
+        LEFT JOIN effectifs e ON e.id = u.effectif_id
+        WHERE g.name = 'Charge-Permission' AND u.active = 1
+      `)
+
+      const demandeur = await queryOne('SELECT prenom, nom FROM effectifs WHERE id = ?', [effectif_id])
+      const demandeurNom = demandeur ? `${demandeur.prenom} ${demandeur.nom}` : 'Inconnu'
+
+      for (const cu of chargeUsers) {
+        if (cu.effectif_id) {
+          const [telResult] = await pool.execute(
+            `INSERT INTO telegrammes (numero, expediteur_id, expediteur_nom, destinataire_id, destinataire_nom, objet, contenu, priorite, created_by)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'Normal', ?)`,
+            [
+              `TEL-PERM-${Date.now()}`,
+              effectif_id,
+              demandeurNom,
+              cu.effectif_id,
+              cu.full_name.trim(),
+              `Demande de permission — ${demandeurNom}`,
+              `Une nouvelle demande de permission a été soumise.\n\nDemandeur: ${demandeurNom}\nDu: ${date_debut}\nAu: ${date_fin}\nMotif: ${raison}\n\n→ Accédez à la page des permissions pour traiter cette demande.`,
+              req.user.id
+            ]
+          )
+          if (telResult.insertId) {
+            await pool.execute(
+              'INSERT INTO telegramme_destinataires (telegramme_id, effectif_id) VALUES (?, ?)',
+              [telResult.insertId, cu.effectif_id]
+            ).catch(() => {})
+          }
+        }
+      }
+    } catch (notifErr) {
+      console.error('Erreur notification permission:', notifErr.message)
+    }
+
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) {
     console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
@@ -332,6 +387,18 @@ router.put('/permissions/:id/traiter', auth, async (req, res) => {
   } catch (err) {
     console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
   }
+})
+
+// DELETE /api/pds/permissions/:id (admin only)
+router.delete('/permissions/:id', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) return res.status(403).json({ success: false, message: 'Admin requis' })
+    const perm = await queryOne('SELECT pa.id, e.prenom, e.nom FROM permissions_absence pa JOIN effectifs e ON e.id = pa.effectif_id WHERE pa.id = ?', [req.params.id])
+    if (!perm) return res.status(404).json({ success: false, message: 'Permission introuvable' })
+    await pool.execute('DELETE FROM permissions_absence WHERE id = ?', [req.params.id])
+    logActivity(req, 'admin_delete_permission', 'permission', req.params.id, `Permission supprimée pour ${perm.prenom} ${perm.nom}`)
+    res.json({ success: true })
+  } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })
 
 // DELETE /api/pds/:id (admin only)

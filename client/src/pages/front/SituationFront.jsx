@@ -61,12 +61,31 @@ function getCarteStatus(events, vps, carteId) {
 
 function computeHeldVPs(vpEvents, vps, carteId) {
   if (carteId === NON_LINEAR_CARTE) {
+    // Berlin Mur Est dependency tree:
+    // VP1 & VP2 independent → both needed for VP3 → VP3 needed for VP4 & VP5 (independent)
+    // Losing VP1 or VP2 → VP3 drops → VP4 & VP5 drop
+    // Losing VP3 → VP4 & VP5 drop
     const held = new Set()
     for (const ev of vpEvents) {
       const vpNum = ev.vp_numero || vps.find(v => v.id === ev.vp_id)?.numero || 0
       if (!vpNum) continue
       if (ev.type_event === 'prise') held.add(vpNum)
-      if (ev.type_event === 'perte') held.delete(vpNum)
+      if (ev.type_event === 'perte') {
+        held.delete(vpNum)
+        // Cascade dependencies
+        if (vpNum === 1 || vpNum === 2) {
+          // VP3 requires both VP1 AND VP2
+          if (!held.has(1) || !held.has(2)) {
+            held.delete(3)
+            held.delete(4)
+            held.delete(5)
+          }
+        }
+        if (vpNum === 3) {
+          held.delete(4)
+          held.delete(5)
+        }
+      }
     }
     return [...held].sort((a, b) => a - b)
   }
@@ -183,9 +202,18 @@ export default function SituationFront() {
     const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
   })
 
+  const [statsData, setStatsData] = useState(null)
+  const [statsLoading, setStatsLoading] = useState(false)
+  const [statsFilter, setStatsFilter] = useState('all') // jour | semaine | mois | all
+  const [statsDate, setStatsDate] = useState(() => {
+    const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  })
+  const [showStatsCal, setShowStatsCal] = useState(false)
+
   const canReport = user?.isAdmin || user?.isOfficier || user?.isSousOfficier || user?.isEtatMajor || user?.isRecenseur
   const canDelete = user?.isAdmin || user?.isOfficier || user?.isEtatMajor || user?.isRecenseur
   const weekRef = useRef(null)
+  const statsRef = useRef(null)
   const [showCal, setShowCal] = useState(false)
 
   // Compute dates that have events (for calendar dots)
@@ -206,8 +234,18 @@ export default function SituationFront() {
   }
   useEffect(() => { load() }, [])
 
+  const loadStats = async () => {
+    if (!selected || statsData?._carteId === selected) return
+    setStatsLoading(true)
+    try {
+      const r = await api.get(`/front/cartes/${selected}/stats`)
+      setStatsData({ ...r.data.data, _carteId: selected })
+    } catch { setStatsData(null) }
+    finally { setStatsLoading(false) }
+  }
+
   const openCarte = async (id) => {
-    setSelected(id); setTab('report')
+    setSelected(id); setTab('report'); setStatsData(null)
     try { const r = await api.get(`/front/cartes/${id}/events`); setEvents(r.data.data) }
     catch { setEvents([]) }
   }
@@ -380,6 +418,7 @@ export default function SituationFront() {
             <div className="front-tabs">
               <button className={`front-tab ${tab==='report'?'active':''}`} onClick={() => setTab('report')}>📝 Rapporter</button>
               <button className={`front-tab ${tab==='history'?'active':''}`} onClick={() => setTab('history')}>📋 Historique ({events.length})</button>
+              <button className={`front-tab ${tab==='stats'?'active':''}`} onClick={() => { setTab('stats'); loadStats() }}>📊 Statistiques</button>
             </div>
 
             {flash && <div className="front-flash">{flash}</div>}
@@ -484,7 +523,7 @@ export default function SituationFront() {
                 </div>
 
                 {sortedFiltered.length === 0 ? (
-                  <p className="muted" style={{textAlign:'center'}}>Aucun événement pour cette période.</p>
+                  <p className="muted" style={{textAlign:'center'}}>Aucun evenement pour cette periode.</p>
                 ) : histFilter === 'semaine' ? (
                   /* Semaine RP: summary only */
                   (() => {
@@ -507,14 +546,14 @@ export default function SituationFront() {
                       <div className="front-week-summary" ref={weekRef}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <p className="front-section-label">📊 Rapport — {sel?.nom}</p>
-                          <button className="front-nav-btn" onClick={exportWeekPng} title="Télécharger en PNG">📥</button>
+                          <button className="front-nav-btn" onClick={exportWeekPng} title="Telecharger en PNG">📥</button>
                         </div>
                         <p style={{ fontSize: '0.8rem', color: '#8b8060', margin: '0 0 0.5rem' }}>Semaine RP : {rpWeek.label}</p>
                         <div className="front-week-grid">
                           <div className="front-week-stat"><span className="front-week-num">{s.debuts}</span><span className="front-week-label">🔔 Sessions</span></div>
                           <div className="front-week-stat"><span className="front-week-num">{bat}</span><span className="front-week-label">⚔️ Batailles</span></div>
                           <div className="front-week-stat"><span className="front-week-num">{nbAtt}</span><span className="front-week-label">🗡️ Attaques</span></div>
-                          <div className="front-week-stat"><span className="front-week-num">{nbDef}</span><span className="front-week-label">🛡️ Défenses</span></div>
+                          <div className="front-week-stat"><span className="front-week-num">{nbDef}</span><span className="front-week-label">🛡️ Defenses</span></div>
                           <div className="front-week-stat"><span className="front-week-num" style={{color:'#8bc34a'}}>{vicAll}</span><span className="front-week-label">🏆 Win ALL</span></div>
                           <div className="front-week-stat"><span className="front-week-num" style={{color:'#e57373'}}>{vicUs}</span><span className="front-week-label">🏆 Win US</span></div>
                           <div className="front-week-stat"><span className="front-week-num">{s.prises}</span><span className="front-week-label">🚩 Prises VP</span></div>
@@ -524,7 +563,7 @@ export default function SituationFront() {
                         {bat > 0 && (
                           <div className="front-week-details">
                             <p>✅ Win ALL att: {s.att_all} · ⚠️✅ Win US att: {s.att_us}</p>
-                            <p>⚠️ Win ALL déf: {s.def_all} · ❌ Win US déf: {s.def_us}</p>
+                            <p>⚠️ Win ALL def: {s.def_all} · ❌ Win US def: {s.def_us}</p>
                             <p>Bilan VP: +{s.prises} / -{s.pertes} ({s.prises - s.pertes >= 0 ? '+' : ''}{s.prises - s.pertes} net)</p>
                           </div>
                         )}
@@ -568,15 +607,15 @@ export default function SituationFront() {
                       if (bat === 0 && s.prises === 0 && s.pertes === 0) return null
                       return (
                         <div className="front-rapport-summary">
-                          <p className="front-section-label">📊 Résumé</p>
+                          <p className="front-section-label">📊 Resume</p>
                           <div className="front-rapport-grid">
                             <span>⚔️ Batailles: {bat}</span>
                             <span>🗡️ Attaques: {nbAtt}</span>
-                            <span>🛡️ Défenses: {nbDef}</span>
+                            <span>🛡️ Defenses: {nbDef}</span>
                             <span>✅ Win ALL att: {s.att_all}</span>
                             <span>⚠️✅ Win US att: {s.att_us}</span>
-                            <span>⚠️ Win ALL déf: {s.def_all}</span>
-                            <span>❌ Win US déf: {s.def_us}</span>
+                            <span>⚠️ Win ALL def: {s.def_all}</span>
+                            <span>❌ Win US def: {s.def_us}</span>
                             <span>🚩 Prises: {s.prises}</span>
                             <span>🏳️ Pertes: {s.pertes}</span>
                           </div>
@@ -585,6 +624,281 @@ export default function SituationFront() {
                     })()}
                   </>
                 )}
+              </div>
+            )}
+
+            {/* ===== STATS TAB ===== */}
+            {tab === 'stats' && (
+              <div className="front-stats-dashboard" ref={statsRef}>
+                {statsLoading && <p className="muted" style={{textAlign:'center',padding:'1rem'}}>Chargement des statistiques...</p>}
+                {!statsLoading && !statsData && <p className="muted" style={{textAlign:'center',padding:'1rem'}}>Aucune donnee disponible.</p>}
+                {!statsLoading && statsData && (() => {
+                  const d = statsData
+                  const bat = d.batailles
+                  const winRateAll = bat.total > 0 ? Math.round(bat.win_all / bat.total * 100) : 0
+
+                  // Filter timeline by statsFilter
+                  const statsRpWeek = getRPWeekRange(statsDate)
+                  const filterDay = (dayStr) => {
+                    if (statsFilter === 'all') return true
+                    if (statsFilter === 'jour') return dayStr === statsDate
+                    if (statsFilter === 'semaine') return dayStr >= toDateStr(statsRpWeek.start) && dayStr < toDateStr(statsRpWeek.end)
+                    if (statsFilter === 'mois') return dayStr.slice(0, 7) === statsDate.slice(0, 7)
+                    return true
+                  }
+
+                  // Filtered timeline
+                  const filteredTimeline = Object.entries(d.timeline || {}).filter(([day]) => filterDay(day)).sort(([a], [b]) => a.localeCompare(b))
+                  
+                  // Recompute stats from filtered timeline
+                  const fBat = { att_all: 0, att_us: 0, def_all: 0, def_us: 0, total: 0, win_all: 0, win_us: 0 }
+                  const fVp = { prises: 0, pertes: 0 }
+                  let fSessions = 0
+                  
+                  // We need to recompute from events if filtering
+                  if (statsFilter !== 'all') {
+                    // Use the client-side events filtered by date
+                    const evts = events.filter(e => {
+                      const evDay = toDateStr(e.date_irl)
+                      return filterDay(evDay)
+                    })
+                    fSessions = evts.filter(e => e.type_event === 'debut').length
+                    fBat.att_all = evts.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'allemand').length
+                    fBat.att_us = evts.filter(e => e.type_event === 'attaque' && e.camp_vainqueur === 'us').length
+                    fBat.def_all = evts.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'allemand').length
+                    fBat.def_us = evts.filter(e => e.type_event === 'defense' && e.camp_vainqueur === 'us').length
+                    fBat.total = fBat.att_all + fBat.att_us + fBat.def_all + fBat.def_us
+                    fBat.win_all = fBat.att_all + fBat.def_all
+                    fBat.win_us = fBat.att_us + fBat.def_us
+                    // Exclude synchro prises (VP1/VP2 at start of actif or after bataille)
+                    const sortedEvts = [...evts].sort((a, b) => {
+                      if (a.heure && b.heure) return a.heure.localeCompare(b.heure)
+                      return (a.id || 0) - (b.id || 0)
+                    })
+                    const synchroIds = new Set()
+                    // Group by day for synchro detection
+                    const evtsByDay = {}
+                    sortedEvts.forEach(e => {
+                      const day = toDateStr(e.date_irl)
+                      if (!evtsByDay[day]) evtsByDay[day] = []
+                      evtsByDay[day].push(e)
+                    })
+                    Object.values(evtsByDay).forEach(dayEvts => {
+                      let afterBataille = true, syncCount = 0
+                      for (const e of dayEvts) {
+                        if (e.type_event === 'debut' || e.type_event === 'attaque' || e.type_event === 'defense') { afterBataille = true; syncCount = 0; continue }
+                        if (e.type_event === 'prise' && afterBataille && syncCount < 2 && (parseInt(e.vp_numero) || 0) <= 2) { synchroIds.add(e.id); syncCount++; continue }
+                        if (e.type_event === 'prise' || e.type_event === 'perte') afterBataille = false
+                      }
+                    })
+                    fVp.prises = evts.filter(e => e.type_event === 'prise' && !synchroIds.has(e.id)).length
+                    fVp.pertes = evts.filter(e => e.type_event === 'perte').length
+                  }
+
+                  // For 'all' mode, also apply synchro filter on VP from all events
+                  if (statsFilter === 'all' && events.length > 0) {
+                    const allSorted = [...events].sort((a, b) => {
+                      if (a.heure && b.heure) return a.heure.localeCompare(b.heure)
+                      return (a.id || 0) - (b.id || 0)
+                    })
+                    const allSynchroIds = new Set()
+                    const allByDay = {}
+                    allSorted.forEach(e => { const day = toDateStr(e.date_irl); if (!allByDay[day]) allByDay[day] = []; allByDay[day].push(e) })
+                    Object.values(allByDay).forEach(dayEvts => {
+                      let afterBat = true, sc = 0
+                      for (const e of dayEvts) {
+                        if (e.type_event === 'debut' || e.type_event === 'attaque' || e.type_event === 'defense') { afterBat = true; sc = 0; continue }
+                        if (e.type_event === 'prise' && afterBat && sc < 2 && (parseInt(e.vp_numero) || 0) <= 2) { allSynchroIds.add(e.id); sc++; continue }
+                        if (e.type_event === 'prise' || e.type_event === 'perte') afterBat = false
+                      }
+                    })
+                    fVp.prises = events.filter(e => e.type_event === 'prise' && !allSynchroIds.has(e.id)).length
+                    fVp.pertes = events.filter(e => e.type_event === 'perte').length
+                  }
+                  const sBat = statsFilter === 'all' ? bat : fBat
+                  const sVp = statsFilter === 'all' ? fVp : fVp
+                  const sSessions = statsFilter === 'all' ? d.sessions : fSessions
+                  const sWinRate = sBat.total > 0 ? Math.round(sBat.win_all / sBat.total * 100) : 0
+                  const sVpNet = sVp.prises - sVp.pertes
+
+                  // VP stats (always from full data for avg hold time)
+                  const vpStatsList = Object.values(d.vpStats || {}).sort((a, b) => a.numero - b.numero)
+                  const mostDisputed = vpStatsList.length > 0 ? [...vpStatsList].sort((a, b) => b.disputee - a.disputee)[0] : null
+
+                  // Stats date navigation
+                  const shiftStatsDate = (days) => {
+                    const dt = new Date(statsDate + 'T12:00:00')
+                    dt.setDate(dt.getDate() + days)
+                    setStatsDate(toDateStr(dt))
+                  }
+                  const isStatsToday = statsDate === toDateStr(new Date())
+
+                  return (
+                    <>
+                      {/* Filter bar */}
+                      <div className="front-hist-filter">
+                        <div className="front-filter-tabs">
+                          <button className={`front-ftab ${statsFilter==='jour'?'active':''}`} onClick={() => setStatsFilter('jour')}>📅 Jour</button>
+                          <button className={`front-ftab ${statsFilter==='semaine'?'active':''}`} onClick={() => setStatsFilter('semaine')}>📆 Semaine RP</button>
+                          <button className={`front-ftab ${statsFilter==='mois'?'active':''}`} onClick={() => setStatsFilter('mois')}>📅 Mois</button>
+                          <button className={`front-ftab ${statsFilter==='all'?'active':''}`} onClick={() => setStatsFilter('all')}>📋 Tout</button>
+                        </div>
+                        {statsFilter !== 'all' && (
+                          <div className="front-date-nav">
+                            <button className="front-nav-btn" onClick={() => shiftStatsDate(statsFilter === 'jour' ? -1 : statsFilter === 'semaine' ? -7 : -30)}>◀</button>
+                            <button className={`front-nav-today ${isStatsToday ? 'active' : ''}`} onClick={() => setStatsDate(toDateStr(new Date()))}>Aujourd'hui</button>
+                            <button className="front-nav-btn" onClick={() => shiftStatsDate(statsFilter === 'jour' ? 1 : statsFilter === 'semaine' ? 7 : 30)}>▶</button>
+                            <button className="front-nav-btn" onClick={() => setShowStatsCal(!showStatsCal)}>📅</button>
+                          </div>
+                        )}
+                        {showStatsCal && statsFilter !== 'all' && (
+                          <MiniCalendar value={statsDate} onChange={setStatsDate} eventDates={eventDates} onClose={() => setShowStatsCal(false)} />
+                        )}
+                        {statsFilter === 'jour' && (
+                          <div className="front-date-label">{new Date(statsDate + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>
+                        )}
+                        {statsFilter === 'semaine' && (
+                          <div className="front-date-label">Semaine RP : {statsRpWeek.label}</div>
+                        )}
+                        {statsFilter === 'mois' && (
+                          <div className="front-date-label">{new Date(statsDate + 'T12:00:00').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</div>
+                        )}
+                      </div>
+
+                      {/* KPIs */}
+                      <div className="stats-kpi-row">
+                        <div className="stats-kpi">
+                          <span className="stats-kpi-num">{sSessions}</span>
+                          <span className="stats-kpi-label">🔔 Sessions</span>
+                        </div>
+                        <div className="stats-kpi">
+                          <span className="stats-kpi-num">{sBat.total}</span>
+                          <span className="stats-kpi-label">⚔️ Batailles</span>
+                        </div>
+                        <div className="stats-kpi">
+                          <span className="stats-kpi-num" style={{color: sWinRate >= 50 ? '#8bc34a' : '#e57373'}}>{sWinRate}%</span>
+                          <span className="stats-kpi-label">🏆 Win ALL</span>
+                        </div>
+                        <div className="stats-kpi">
+                          <span className="stats-kpi-num" style={{color: sVpNet >= 0 ? '#8bc34a' : '#e57373'}}>{sVpNet >= 0 ? '+' : ''}{sVpNet}</span>
+                          <span className="stats-kpi-label">🚩 VP Net</span>
+                        </div>
+                      </div>
+
+                      {/* Batailles breakdown */}
+                      {sBat.total > 0 && (
+                        <div className="stats-section">
+                          <p className="front-section-label">⚔️ Batailles ({sBat.total})</p>
+                          <div className="stats-bar-group">
+                            <div className="stats-bar-row">
+                              <span className="stats-bar-label">🗡️ Attaques ({sBat.att_all + sBat.att_us})</span>
+                              <div className="stats-bar-track">
+                                {sBat.att_all > 0 && <div className="stats-bar-fill stats-bar-all" style={{width: `${(sBat.att_all / Math.max(sBat.att_all + sBat.att_us, 1)) * 100}%`}}>{sBat.att_all} ALL</div>}
+                                {sBat.att_us > 0 && <div className="stats-bar-fill stats-bar-us" style={{width: `${(sBat.att_us / Math.max(sBat.att_all + sBat.att_us, 1)) * 100}%`}}>{sBat.att_us} US</div>}
+                              </div>
+                            </div>
+                            <div className="stats-bar-row">
+                              <span className="stats-bar-label">🛡️ Defenses ({sBat.def_all + sBat.def_us})</span>
+                              <div className="stats-bar-track">
+                                {sBat.def_all > 0 && <div className="stats-bar-fill stats-bar-all" style={{width: `${(sBat.def_all / Math.max(sBat.def_all + sBat.def_us, 1)) * 100}%`}}>{sBat.def_all} ALL</div>}
+                                {sBat.def_us > 0 && <div className="stats-bar-fill stats-bar-us" style={{width: `${(sBat.def_us / Math.max(sBat.def_all + sBat.def_us, 1)) * 100}%`}}>{sBat.def_us} US</div>}
+                              </div>
+                            </div>
+                            <div className="stats-bar-row">
+                              <span className="stats-bar-label">🏆 Total</span>
+                              <div className="stats-bar-track">
+                                {sBat.win_all > 0 && <div className="stats-bar-fill stats-bar-all" style={{width: `${(sBat.win_all / Math.max(sBat.total, 1)) * 100}%`}}>{sBat.win_all} ALL</div>}
+                                {sBat.win_us > 0 && <div className="stats-bar-fill stats-bar-us" style={{width: `${(sBat.win_us / Math.max(sBat.total, 1)) * 100}%`}}>{sBat.win_us} US</div>}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* VP par position */}
+                      {vpStatsList.length > 0 && (
+                        <div className="stats-section">
+                          <p className="front-section-label">🚩 Avant-postes (VP)</p>
+                          <div className="stats-vp-table">
+                            <div className="stats-vp-header">
+                              <span>Position</span>
+                              <span>Prises</span>
+                              <span>Pertes</span>
+                              <span>Tenue moy.</span>
+                            </div>
+                            {vpStatsList.map(vp => (
+                              <div key={vp.numero} className={`stats-vp-row ${mostDisputed && mostDisputed.numero === vp.numero ? 'stats-vp-hot' : ''}`}>
+                                <span className="stats-vp-name">VP{vp.numero}{vp.nom ? ` ${vp.nom}` : ''}</span>
+                                <span className="stats-vp-val stats-color-all">+{vp.prises}</span>
+                                <span className="stats-vp-val stats-color-us">-{vp.pertes}</span>
+                                <span className="stats-vp-val">{vp.avg_hold_hours != null ? `${vp.avg_hold_hours}h` : '—'}</span>
+                              </div>
+                            ))}
+                          </div>
+                          {mostDisputed && (
+                            <p className="stats-vp-note">🔥 Plus disputee : VP{mostDisputed.numero}{mostDisputed.nom ? ` ${mostDisputed.nom}` : ''} ({mostDisputed.disputee} mouvements)</p>
+                          )}
+                          <div className="stats-vp-summary">
+                            <span>Total: 🚩 {sVp.prises} prises · 🏳️ {sVp.pertes} pertes · Bilan: {sVpNet >= 0 ? '+' : ''}{sVpNet}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Timeline */}
+                      {filteredTimeline.length > 0 && (
+                        <div className="stats-section">
+                          <p className="front-section-label">📈 Timeline</p>
+                          <div className="stats-timeline">
+                            {filteredTimeline.map(([day, data]) => {
+                              const dayBat = (data.batailles_all || 0) + (data.batailles_us || 0)
+                              const maxBar = Math.max(...filteredTimeline.map(([, d]) => Math.max((d.batailles_all||0) + (d.batailles_us||0), (d.prises||0) + (d.pertes||0), 1)))
+                              return (
+                                <div key={day} className="stats-tl-row">
+                                  <span className="stats-tl-date">{new Date(day + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</span>
+                                  <div className="stats-tl-bars">
+                                    <div className="stats-tl-bar-group">
+                                      {data.batailles_all > 0 && <div className="stats-tl-bar stats-bar-all" style={{width: `${(data.batailles_all / maxBar) * 100}%`}} title={`${data.batailles_all} win ALL`}></div>}
+                                      {data.batailles_us > 0 && <div className="stats-tl-bar stats-bar-us" style={{width: `${(data.batailles_us / maxBar) * 100}%`}} title={`${data.batailles_us} win US`}></div>}
+                                    </div>
+                                    <div className="stats-tl-bar-group">
+                                      {data.prises > 0 && <div className="stats-tl-bar stats-bar-prise" style={{width: `${(data.prises / maxBar) * 100}%`}} title={`${data.prises} prises`}></div>}
+                                      {data.pertes > 0 && <div className="stats-tl-bar stats-bar-perte" style={{width: `${(data.pertes / maxBar) * 100}%`}} title={`${data.pertes} pertes`}></div>}
+                                    </div>
+                                  </div>
+                                  <div className="stats-tl-nums">
+                                    {dayBat > 0 && <span>⚔️{dayBat}</span>}
+                                    {(data.prises||0) > 0 && <span className="stats-color-all">+{data.prises}</span>}
+                                    {(data.pertes||0) > 0 && <span className="stats-color-us">-{data.pertes}</span>}
+                                    {data.vp_held?.length > 0 && <span className="stats-tl-vp">VP:{data.vp_held.join(',')}</span>}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                          {/* Legend */}
+                          <div className="stats-legend">
+                            <span><span className="stats-legend-dot stats-bar-all"></span> Win ALL</span>
+                            <span><span className="stats-legend-dot stats-bar-us"></span> Win US</span>
+                            <span><span className="stats-legend-dot stats-bar-prise"></span> Prises</span>
+                            <span><span className="stats-legend-dot stats-bar-perte"></span> Pertes</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Export */}
+                      <div className="stats-export">
+                        <button className="front-btn front-btn-combat" onClick={async () => {
+                          if (!statsRef.current) return
+                          const canvas = await html2canvas(statsRef.current, { scale: 2, backgroundColor: '#1e1c18', logging: false })
+                          const link = document.createElement('a')
+                          link.download = `stats-${sel?.nom?.replace(/\s/g,'-') || 'front'}.png`
+                          link.href = canvas.toDataURL('image/png')
+                          link.click()
+                        }}>📥 Exporter en image</button>
+                      </div>
+                    </>
+                  )
+                })()}
               </div>
             )}
           </div>

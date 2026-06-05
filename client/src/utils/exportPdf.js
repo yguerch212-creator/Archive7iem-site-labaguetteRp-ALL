@@ -62,8 +62,26 @@ export async function exportToImage(elementId, filename = 'document') {
   const element = document.getElementById(elementId)
   if (!element) return alert('Élément introuvable')
 
-  const origMaxWidth = element.style.maxWidth
-  element.style.maxWidth = 'none'
+  // Save and remove ALL size/overflow constraints on element + ancestors up to popup
+  const saved = []
+  let el = element
+  while (el && !el.classList?.contains('popup-overlay')) {
+    const s = el.style
+    saved.push({
+      el,
+      maxWidth: s.maxWidth,
+      maxHeight: s.maxHeight,
+      overflow: s.overflow,
+      overflowY: s.overflowY,
+      height: s.height,
+    })
+    s.maxWidth = 'none'
+    s.maxHeight = 'none'
+    s.overflow = 'visible'
+    s.overflowY = 'visible'
+    s.height = 'auto'
+    el = el.parentElement
+  }
 
   const canvas = await html2canvas(element, {
     scale: 2,
@@ -71,9 +89,17 @@ export async function exportToImage(elementId, filename = 'document') {
     backgroundColor: '#f5f0e1',
     logging: false,
     windowWidth: 900,
+    scrollY: -window.scrollY,
   })
 
-  element.style.maxWidth = origMaxWidth
+  // Restore all saved styles
+  for (const s of saved) {
+    s.el.style.maxWidth = s.maxWidth
+    s.el.style.maxHeight = s.maxHeight
+    s.el.style.overflow = s.overflow
+    s.el.style.overflowY = s.overflowY
+    s.el.style.height = s.height
+  }
 
   const link = document.createElement('a')
   link.download = `${filename}.png`

@@ -49,6 +49,7 @@ export default function RapportsList() {
             { key: 'auteur_nom', label: 'Auteur' }, { key: 'date_rp', label: 'Date RP' },
             { key: r => r.date_irl ? new Date(r.date_irl+'T00:00').toLocaleDateString('fr-FR') : '', label: 'Date IRL' }
           ], 'Rapports')}>📥 CSV</button>}
+          {(user?.isAdmin || user?.isOfficier) && <Link to="/rapports/analyse" className="btn btn-secondary btn-small">🧠 Analyse IA</Link>}
           <Link to="/rapports/new" className="btn btn-primary btn-small">+ Nouveau rapport</Link>
         </div>
 
@@ -69,7 +70,7 @@ export default function RapportsList() {
           </select>
         </div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 20px', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 8, padding: '0 4px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 20px', fontSize: '0.75rem', color: 'var(--ink, #1b1b1b)', marginBottom: 8, padding: '0 4px' }}>
           <span>📝 Brouillon</span>
           <span>📜⏳ Publié, en attente</span>
           <span>📜✅ Validé (administratif)</span>

@@ -1,8 +1,8 @@
 // Service Worker — Archives 7e Armeekorps PWA
-const CACHE_NAME = 'archives7e-v1';
+const CACHE_NAME = 'archives7e-v18';
 const STATIC_ASSETS = ['/'];
 
-// Install: cache shell
+// Install: cache shell, skip waiting immediately
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME)
@@ -11,7 +11,7 @@ self.addEventListener('install', e => {
   );
 });
 
-// Activate: clean old caches
+// Activate: clean ALL old caches, claim clients
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
@@ -20,16 +20,20 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Fetch: network-first for API, cache-first for static
+// Fetch strategy:
+// - API/uploads: passthrough (no cache)
+// - Navigation (HTML): network-first, cache fallback
+// - Hashed assets (.js/.css with hash in filename): network-first, cache for offline
+// - Other static: network-first
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // Never cache API calls or auth requests
+  // Never cache API calls or uploads
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/uploads/')) {
-    return; // Let browser handle normally (network only)
+    return;
   }
 
-  // For navigation (HTML pages): network first, fallback to cache
+  // Navigation: network first
   if (e.request.mode === 'navigate') {
     e.respondWith(
       fetch(e.request)
@@ -43,17 +47,17 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Static assets: cache first, fallback network
+  // All other assets: network-first (so deploys are always picked up)
   if (url.pathname.match(/\.(js|css|woff2?|svg|png|jpg|jpeg)$/)) {
     e.respondWith(
-      caches.match(e.request).then(cached => {
-        if (cached) return cached;
-        return fetch(e.request).then(res => {
+      fetch(e.request)
+        .then(res => {
           const clone = res.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
           return res;
-        });
-      })
+        })
+        .catch(() => caches.match(e.request))
     );
+    return;
   }
 });

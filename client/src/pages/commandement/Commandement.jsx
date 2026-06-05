@@ -305,16 +305,14 @@ export default function Commandement() {
     return Object.entries(map).sort((a, b) => b[1] - a[1]).map(([label, value]) => ({ label, value }))
   }, [rapports, unitEffectifs, periode, currentDate])
 
-  // Front events pie by type (filtered period) — only combat events
+  // Front events pie — BATAILLES ONLY (attaque/defense), not VP movements
   const frontPie = useMemo(() => {
-    const COMBAT_TYPES = ['prise', 'perte', 'attaque', 'defense']
-    const filtered = frontEvents.filter(e => isInPeriod(e.date_irl || e.created_at, periode, currentDate) && COMBAT_TYPES.includes(e.type_event))
+    const filtered = frontEvents.filter(e => isInPeriod(e.date_irl || e.created_at, periode, currentDate) && (e.type_event === 'attaque' || e.type_event === 'defense'))
     const map = {}
     filtered.forEach(e => {
-      let label = e.type_event === 'prise' ? '🚩 Prise VP' : e.type_event === 'perte' ? '🏳️ Perte VP'
-        : e.type_event === 'attaque' ? (e.camp_vainqueur === 'allemand' ? '✅ Win ALL' : '⚠️ Win US')
-        : e.type_event === 'defense' ? (e.camp_vainqueur === 'allemand' ? '⚠️ Déf. Win ALL' : '❌ Déf. Win US')
-        : e.type_event
+      let label = e.type_event === 'attaque'
+        ? (e.camp_vainqueur === 'allemand' ? '✅ Att. Win ALL' : '⚠️ Att. Win US')
+        : (e.camp_vainqueur === 'allemand' ? '⚠️ Def. Win ALL' : '❌ Def. Win US')
       map[label] = (map[label] || 0) + 1
     })
     return Object.entries(map).sort((a, b) => b[1] - a[1]).map(([label, value]) => ({ label, value }))

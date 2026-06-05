@@ -11,6 +11,7 @@ import EffectifNew from './pages/effectifs/EffectifNew'
 import Soldbuch from './pages/effectifs/Soldbuch'
 import SoldbuchLayout from './pages/effectifs/SoldbuchLayout'
 import RapportsList from './pages/rapports/RapportsList'
+import RapportsAnalyse from './pages/rapports/RapportsAnalyse'
 import RapportNew from './pages/rapports/RapportNew'
 import RapportView from './pages/rapports/RapportView'
 import RapportLayout from './pages/rapports/RapportLayout'
@@ -82,6 +83,7 @@ function AppRouter() {
       {/* Rapports */}
       <Route path="/rapports" element={<ProtectedRoute><RapportsList /></ProtectedRoute>} />
       <Route path="/rapports/new" element={<ProtectedRoute><RapportNew /></ProtectedRoute>} />
+      <Route path="/rapports/analyse" element={<ProtectedRoute><RapportsAnalyse /></ProtectedRoute>} />
       <Route path="/rapports/:id" element={<ProtectedRoute><RapportView /></ProtectedRoute>} />
       <Route path="/rapports/:id/layout" element={<ProtectedRoute><RapportLayout /></ProtectedRoute>} />
       

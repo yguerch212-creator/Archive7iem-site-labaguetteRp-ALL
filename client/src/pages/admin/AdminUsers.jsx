@@ -10,6 +10,7 @@ const ROLE_ICONS = {
   'Administratif': '📋', 'Feldgendarmerie': '🛡️', 'Sous-officier': '🪖',
   'Sanitat': '🏥', 'Militaire du rang': '👤', 'Invite': '👁️',
   'Officier Referent': '🔗',
+  'Charge-Permission': '📝',
   'Kommandeur der 7e Armee': '🦅',
 }
 // Kommandeur icons auto-generated
