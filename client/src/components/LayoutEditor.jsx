@@ -212,7 +212,8 @@ export default function LayoutEditor({ blocks: initialBlocks = [], onSave, onPub
   const handleSave = () => { if (onSave) onSave(blocks) }
 
   const handlePublish = () => {
-    if (!onPublish || !canvasRef.current) return
+    if (!onPublish) return
+    if (!canvasRef.current) { alert("Editeur non pret (zone de mise en page introuvable). Utilisez un ordinateur pour publier."); return }
     const clone = canvasRef.current.cloneNode(true)
     clone.querySelectorAll('.block-tools, .block-resize-handle').forEach(el => el.remove())
     clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'))

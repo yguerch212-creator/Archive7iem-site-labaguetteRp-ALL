@@ -8,6 +8,7 @@ const devLog = require('./utils/devLogger')
 
 const { queryOne, query } = require('./config/db')
 const auth = require('./middleware/auth')
+const { loadPdsConfig, requiredHours } = require('./utils/pds')
 
 // Routes
 const authRoutes = require('./routes/auth.routes')
@@ -67,8 +68,8 @@ app.use(cors({
   credentials: true
 }))
 app.use(generalLimiter)
-app.use(express.json({ limit: '10mb' }))
-app.use(express.urlencoded({ extended: true }))
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 
 // Static uploads — no directory listing, files accessible by direct URL only
 // Multer saves to server/uploads/ (relative to middleware), so we serve from there
@@ -203,13 +204,19 @@ app.get('/api/stats', auth, async (req, res) => {
       FROM rapports ORDER BY created_at DESC LIMIT 10
     `)
 
-    // PDS stats current week
-    const pdsStats = await queryOne(`
-      SELECT COUNT(*) as saisis, SUM(CASE WHEN total_heures >= 6 THEN 1 ELSE 0 END) as valides
-      FROM pds_semaines WHERE semaine = (
-        SELECT MAX(semaine) FROM pds_semaines
-      )
+    // PDS stats current week — seuil reel par regiment/categorie (pas un 6h fige)
+    const pdsRows = await query(`
+      SELECT p.total_heures, e.categorie, e.unite_id, g.rang AS grade_rang
+      FROM pds_semaines p
+      JOIN effectifs e ON e.id = p.effectif_id
+      LEFT JOIN grades g ON g.id = e.grade_id
+      WHERE p.semaine = (SELECT MAX(semaine) FROM pds_semaines)
     `)
+    const pdsCfg = await loadPdsConfig(query)
+    const pdsStats = {
+      saisis: pdsRows.length,
+      valides: pdsRows.filter(r => (Number(r.total_heures) || 0) >= requiredHours(r, pdsCfg)).length
+    }
     
     res.json({
       effectifs: effectifs.c, rapports: rapports.c, unites: unites.c,

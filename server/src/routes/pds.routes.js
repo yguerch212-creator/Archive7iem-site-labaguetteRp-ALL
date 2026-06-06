@@ -3,6 +3,7 @@ const router = require('express').Router()
 const { query, queryOne, pool } = require('../config/db')
 const auth = require('../middleware/auth')
 const { optionalAuth } = require('../middleware/auth')
+const { loadPdsConfig, annotate } = require('../utils/pds')
 
 // Semaine RP: vendredi → jeudi (deadline vendredi 20h, samedi = cérémonie)
 // On utilise les numéros de semaine ISO mais la semaine RP commence le vendredi.
@@ -65,21 +66,17 @@ router.get('/', optionalAuth, async (req, res) => {
              g.nom_complet AS grade_nom, g.rang AS grade_rang,
              u.nom AS unite_nom, u.code AS unite_code, u.id AS unite_id,
              p.id AS pds_id, p.lundi, p.mardi, p.mercredi, p.jeudi, p.vendredi, p.vendredi_fin, p.samedi, p.dimanche,
-             p.total_heures, p.valide,
-             pc.duree_heures AS required_hours
+             p.total_heures
       FROM effectifs e
       INNER JOIN pds_semaines p ON p.effectif_id = e.id AND p.semaine = ?
       LEFT JOIN grades g ON g.id = e.grade_id
       LEFT JOIN unites u ON u.id = e.unite_id
-      LEFT JOIN pds_config pc ON pc.unite_id = u.id AND pc.rang_type = CASE
-        WHEN COALESCE(g.rang, 0) >= 60 THEN 'off'
-        WHEN COALESCE(g.rang, 0) >= 35 THEN 'so'
-        ELSE 'hdr'
-      END
       WHERE e.actif = 'Actif'
       ORDER BY u.code, COALESCE(g.rang, 0) DESC, e.nom
     `, [semaine])
 
+    // Seuil de validation reel par regiment/categorie (pds_config + defauts), pas un 6h fige.
+    annotate(rows, await loadPdsConfig(query))
     const saisis = rows.length
     const valides = rows.filter(r => r.valide).length
 
@@ -195,11 +192,11 @@ router.get('/recap', auth, async (req, res) => {
     const semaine = req.query.semaine || getCurrentWeek()
 
     const allRows = await query(`
-      SELECT e.id AS effectif_id, e.nom, e.prenom, e.fonction,
+      SELECT e.id AS effectif_id, e.nom, e.prenom, e.fonction, e.categorie, e.unite_id,
              g.nom_complet AS grade_nom, g.rang AS grade_rang,
              u.nom AS unite_nom, u.code AS unite_code,
              p.id AS pds_id, p.lundi, p.mardi, p.mercredi, p.jeudi, p.vendredi, p.vendredi_fin, p.samedi, p.dimanche,
-             p.total_heures, p.valide
+             p.total_heures
       FROM effectifs e
       LEFT JOIN grades g ON g.id = e.grade_id
       LEFT JOIN unites u ON u.id = e.unite_id
@@ -214,7 +211,7 @@ router.get('/recap', auth, async (req, res) => {
     const rows = allRows.filter(r => {
       const rang = r.grade_rang || 0
       if (rang > 100 && !r.pds_id) return false // generals without PDS excluded
-      if (!includeHDR && rang < 35 && !r.pds_id) return false // HDR without PDS excluded by default
+      if (!includeHDR && rang < 30 && !r.pds_id) return false // HDR without PDS excluded by default (SO a partir du rang 30)
       return true
     })
 
@@ -244,6 +241,8 @@ router.get('/recap', auth, async (req, res) => {
     // Attach permission info to rows
     rows.forEach(r => { if (permMap[r.effectif_id]) r.en_permission = permMap[r.effectif_id] })
 
+    // Validation reelle par regiment/categorie (pds_config + defauts), pas un 6h fige.
+    annotate(rows, await loadPdsConfig(query))
     const total = rows.length
     const remplis = rows.filter(r => r.pds_id).length
     const valides = rows.filter(r => r.valide).length
@@ -424,7 +423,7 @@ router.get('/config', optionalAuth, async (req, res) => {
     res.json({
       success: true,
       data: rows,
-      defaults: { hdr: { duree_heures: 2, rapports_requis: 0 }, so: { duree_heures: 3, rapports_requis: 0 }, off: { duree_heures: 3, rapports_requis: 0 } }
+      defaults: { hdr: { duree_heures: 4, rapports_requis: 0 }, so: { duree_heures: 6, rapports_requis: 0 }, off: { duree_heures: 0, rapports_requis: 0 } }
     })
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
 })

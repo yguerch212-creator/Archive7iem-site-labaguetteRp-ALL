@@ -283,11 +283,29 @@ router.post('/:id/photo', auth, recenseur, upload.single('photo'), handleUploadE
 
 // DELETE /api/effectifs/:id (admin only)
 router.delete('/:id', auth, admin, async (req, res) => {
+  // Suppression DURE (purge). Pour un depart normal, utiliser le renvoi (POST /api/regiment/dismiss)
+  // qui conserve tout l'historique. Ici on gere les 3 FK en NO ACTION qui bloquaient le DELETE :
+  // - affaires_signatures.effectif_id (nullable) -> detache (preserve la piece d'affaire)
+  // - signatures_effectifs / sanctions (NOT NULL) -> supprimees (lignes propres a l'effectif)
+  // Les autres FK sont en CASCADE / SET NULL (gerees automatiquement par la base).
+  const id = req.params.id
+  const conn = await pool.getConnection()
   try {
-    await pool.execute('DELETE FROM effectifs WHERE id = ?', [req.params.id])
+    await conn.beginTransaction()
+    await conn.execute('UPDATE affaires_signatures SET effectif_id = NULL WHERE effectif_id = ?', [id])
+    await conn.execute('DELETE FROM signatures_effectifs WHERE effectif_id = ?', [id])
+    await conn.execute('DELETE FROM sanctions WHERE effectif_id = ?', [id])
+    const [r] = await conn.execute('DELETE FROM effectifs WHERE id = ?', [id])
+    await conn.commit()
+    if (r.affectedRows === 0) return res.status(404).json({ success: false, message: 'Effectif introuvable' })
+    logActivity(req, 'effectif_delete', 'effectif', id, `Effectif #${id} supprime (purge)`)
     res.json({ success: true })
   } catch (err) {
-    console.error(err); res.status(500).json({ success: false, message: "Erreur serveur" })
+    await conn.rollback()
+    console.error('Delete effectif error:', err.code, err.sqlMessage || err.message)
+    res.status(500).json({ success: false, message: err.sqlMessage || 'Erreur serveur' })
+  } finally {
+    conn.release()
   }
 })
 
@@ -362,9 +380,12 @@ router.put('/:id/reserve', auth, async (req, res) => {
       if (gradeOrigine) {
         grade716 = await queryOne('SELECT id FROM grades WHERE nom_complet = ? AND unite_id = ? LIMIT 1', [gradeOrigine.nom_complet, unite716.id])
       }
+      // 716 Reserve n'a pas de grades propres : si aucun equivalent, on met grade_id = NULL
+      // (le grade reel est conserve dans grade_origine_id et restaure a la reintegration)
+      // -> evite de laisser un grade d'une autre unite tout en etant affecte au 716 (incoherence FK).
       await pool.execute(
         'UPDATE effectifs SET en_reserve = 1, unite_origine_id = ?, grade_origine_id = ?, unite_id = ?, grade_id = ? WHERE id = ?',
-        [eff.unite_id, eff.grade_id, unite716.id, grade716 ? grade716.id : eff.grade_id, req.params.id]
+        [eff.unite_id, eff.grade_id, unite716.id, grade716 ? grade716.id : null, req.params.id]
       )
       logHistorique(eff.id, 'reserve', `Passage en réserve (716. Reserve)`, { unite_origine: eff.unite_id, grade_origine: eff.grade_id })
       res.json({ success: true, message: 'Effectif mis en réserve' })

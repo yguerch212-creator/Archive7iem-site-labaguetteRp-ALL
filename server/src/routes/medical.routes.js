@@ -7,7 +7,7 @@ const recenseur = require('../middleware/recenseur')
 const { checkPermission } = require('../utils/permissions')
 
 // GET /api/medical — Toutes les visites
-router.get('/', optionalAuth, async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
     const rows = await query(`
       SELECT v.*,
@@ -44,7 +44,7 @@ router.get('/effectif/:effectif_id', auth, async (req, res) => {
 })
 
 // GET /api/medical/:id — Single visite
-router.get('/:id', optionalAuth, async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
   try {
     const row = await queryOne(`
       SELECT v.*,

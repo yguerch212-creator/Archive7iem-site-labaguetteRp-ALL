@@ -14,7 +14,7 @@ const ROLE_ICONS = {
   'Kommandeur der 7e Armee': '🦅',
 }
 // Kommandeur icons auto-generated
-for (const code of ['916','130','001','254','919','009']) {
+for (const code of ['916','130','352','254','009']) {
   ROLE_ICONS[`Kommandeur ${code}`] = '⚔️'
   ROLE_ICONS[`Kommandeur Adjoint ${code}`] = '🗡️'
 }

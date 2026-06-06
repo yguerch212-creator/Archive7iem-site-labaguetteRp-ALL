@@ -12,7 +12,7 @@ const R = ({l,v,ph}) => <tr><td className="sb-lbl-cell">{l||NB}</td><td classNam
 const R4 = ({a,b,c,d,phB,phD}) => <tr><td className="sb-lbl-cell">{a||NB}</td><td className="sb-val-cell">{b?<Ink>{b}</Ink>:(phB?<Ph>{phB}</Ph>:NB)}</td><td className="sb-lbl-cell">{c||NB}</td><td className="sb-val-cell">{d?<Ink>{d}</Ink>:(phD?<Ph>{phD}</Ph>:NB)}</td></tr>
 const ER = ({cols,n}) => <>{Array.from({length:n},(_,i)=><tr key={i}>{Array.from({length:cols},(_,j)=><td key={j}>{NB}</td>)}</tr>)}</>
 
-function getTheme(c){if(!c)return'heer';c=String(c).toLowerCase();return{['009']:'luftwaffe',['254']:'feld',['130']:'panzer',['003']:'sanit',['001']:'marine'}[c]||'heer'}
+function getTheme(c){if(!c)return'heer';c=String(c).toLowerCase();return{['009']:'luftwaffe',['254']:'feld',['130']:'panzer',['003']:'sanit'}[c]||'heer'}
 function genWehr(e){return e.wehrnummer||`${e.unite_code||'000'}/${String(e.grade_rang||0).padStart(2,'0')}/${String(e.id).padStart(3,'0')}`}
 
 const EAGLE_H='/assets/eagles/heer-eagle.svg', EAGLE_L='/assets/eagles/luftwaffe-eagle.svg'

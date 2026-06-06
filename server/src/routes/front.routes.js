@@ -89,7 +89,7 @@ router.delete('/events/:id', auth, async (req, res) => {
 })
 
 // GET /api/front/rapport — Weekly/daily front report
-router.get('/rapport', optionalAuth, async (req, res) => {
+router.get('/rapport', auth, async (req, res) => {
   try {
     const { periode, date_debut } = req.query
     let where = ''
@@ -139,7 +139,7 @@ router.get('/rapport', optionalAuth, async (req, res) => {
 })
 
 // GET /api/front/cartes/:id/stats — Detailed stats for dashboard
-router.get('/cartes/:id/stats', optionalAuth, async (req, res) => {
+router.get('/cartes/:id/stats', auth, async (req, res) => {
   try {
     const carteId = req.params.id
     // All events for this carte
@@ -241,7 +241,7 @@ router.get('/cartes/:id/stats', optionalAuth, async (req, res) => {
 })
 
 // GET /api/front/correlation — PDS / Front correlation for a period
-router.get('/correlation', optionalAuth, async (req, res) => {
+router.get('/correlation', auth, async (req, res) => {
   try {
     const { date_debut, date_fin } = req.query
     if (!date_debut || !date_fin) {
@@ -272,17 +272,21 @@ router.get('/correlation', optionalAuth, async (req, res) => {
     const weekList = [...weeks]
     const placeholders = weekList.map(() => '?').join(',')
 
-    // Get PDS data for those weeks (only validated)
-    const pdsRows = await query(`
-      SELECT p.effectif_id, p.semaine, p.total_heures, p.valide,
-             e.nom, e.prenom, g.nom_complet AS grade_nom, u.code AS unite_code
+    // Get PDS data for those weeks — validation par seuil regiment (utils/pds.js), pas la colonne 6h figee
+    const { loadPdsConfig, annotate } = require('../utils/pds')
+    const pdsConfigMap = await loadPdsConfig(query)
+    let pdsRows = await query(`
+      SELECT p.effectif_id, p.semaine, p.total_heures,
+             e.nom, e.prenom, e.categorie, e.unite_id, g.nom_complet AS grade_nom, g.rang AS grade_rang, u.code AS unite_code
       FROM pds_semaines p
       JOIN effectifs e ON e.id = p.effectif_id
       LEFT JOIN grades g ON g.id = e.grade_id
       LEFT JOIN unites u ON u.id = e.unite_id
-      WHERE p.semaine IN (${placeholders}) AND p.valide = 1 AND e.actif = 'Actif'
+      WHERE p.semaine IN (${placeholders}) AND e.actif = 'Actif'
       ORDER BY u.code, COALESCE(g.rang, 0) DESC
     `, weekList)
+    annotate(pdsRows, pdsConfigMap)
+    pdsRows = pdsRows.filter(r => r.valide === 1)
 
     // Get front events count for the period
     const eventsCount = await queryOne(`
@@ -325,7 +329,7 @@ router.get('/correlation', optionalAuth, async (req, res) => {
 })
 
 // GET /api/front/events — All events (for commandement charts)
-router.get('/events', optionalAuth, async (req, res) => {
+router.get('/events', auth, async (req, res) => {
   try {
     const rows = await query(`
       SELECT e.*, c.nom AS carte_nom
@@ -339,7 +343,7 @@ router.get('/events', optionalAuth, async (req, res) => {
 })
 
 // POST /api/front/analyse — AI analysis via Groq
-router.post('/analyse', optionalAuth, async (req, res) => {
+router.post('/analyse', auth, async (req, res) => {
   try {
     const { events, periode, pdsData, combatHours, rapports } = req.body
     if (!events || !Array.isArray(events)) {
@@ -423,8 +427,7 @@ REGIMENTS DU 7E ARMEEKORPS:
 - 916 : Grenadier Regiment (infanterie principale)
 - 254 : Feldgendarmerie (police militaire)
 - 003 : Fallschirm-Sanitats-Abteilung (medical parachutiste)
-- 001 : Marine Pionier Bataillon (marine/genie)
-- 919 : Logistik-Abteilung (logistique)
+- 352 : Pionier-Bataillon (genie/pionniers)
 - 130 : Panzer Lehr (blindes)
 - 009 : Fallschirmjaeger Regiment (parachutistes)
 - 716 : Reserve
@@ -557,7 +560,7 @@ RESUME: [2-3 phrases de synthese]`
 })
 
 // GET /api/front/rapports — Rapports valides pour une periode
-router.get('/rapports', optionalAuth, async (req, res) => {
+router.get('/rapports', auth, async (req, res) => {
   try {
     const { date_debut, date_fin } = req.query
     if (!date_debut || !date_fin) {

@@ -16,9 +16,19 @@ router.get('/dashboard', auth, officier, async (req, res) => {
     const rapportsNonValides = await queryOne('SELECT COUNT(*) as c FROM rapports WHERE valide = 0 AND published = 1')
     const rapportsSemaine = await queryOne("SELECT COUNT(*) as c FROM rapports WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")
     
-    // PDS compliance current week
+    // PDS compliance current week — seuils PAR regiment (utils/pds.js), pas 6h fige
     const pdsTotal = await queryOne("SELECT COUNT(DISTINCT effectif_id) as c FROM pds_semaines WHERE semaine = (SELECT MAX(semaine) FROM pds_semaines)")
-    const pdsValides = await queryOne("SELECT COUNT(DISTINCT effectif_id) as c FROM pds_semaines WHERE semaine = (SELECT MAX(semaine) FROM pds_semaines) AND total_heures >= 6")
+    const { loadPdsConfig, annotate } = require('../utils/pds')
+    const pdsConfigMap = await loadPdsConfig(query)
+    const pdsRows = await query(`
+      SELECT p.total_heures, e.categorie, e.unite_id, g.rang AS grade_rang
+      FROM pds_semaines p
+      JOIN effectifs e ON e.id = p.effectif_id
+      LEFT JOIN grades g ON g.id = e.grade_id
+      WHERE p.semaine = (SELECT MAX(semaine) FROM pds_semaines)
+    `)
+    annotate(pdsRows, pdsConfigMap)
+    const pdsValides = { c: pdsRows.filter(r => r.valide === 1).length }
     
     // Effectifs par statut
     const parStatut = {

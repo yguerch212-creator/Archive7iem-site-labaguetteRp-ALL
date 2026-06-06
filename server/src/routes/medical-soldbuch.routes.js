@@ -10,7 +10,7 @@ const fmtDate = (d) => {
 
 // ==================== HOSPITALISATIONS ====================
 
-router.get('/hospitalisations', optionalAuth, async (req, res) => {
+router.get('/hospitalisations', auth, async (req, res) => {
   try {
     const { effectif_id } = req.query
     let sql = `SELECT h.*, COALESCE(CONCAT(e.prenom,' ',e.nom), h.effectif_nom_libre) AS effectif_nom, CONCAT(m.prenom,' ',m.nom) AS medecin_effectif_nom
@@ -49,7 +49,7 @@ router.delete('/hospitalisations/:id', auth, async (req, res) => {
 
 // ==================== VACCINATIONS ====================
 
-router.get('/vaccinations', optionalAuth, async (req, res) => {
+router.get('/vaccinations', auth, async (req, res) => {
   try {
     const { effectif_id } = req.query
     let sql = `SELECT v.*, COALESCE(CONCAT(e.prenom,' ',e.nom), v.effectif_nom_libre) AS effectif_nom
@@ -85,7 +85,7 @@ router.delete('/vaccinations/:id', auth, async (req, res) => {
 
 // ==================== BLESSURES ====================
 
-router.get('/blessures', optionalAuth, async (req, res) => {
+router.get('/blessures', auth, async (req, res) => {
   try {
     const { effectif_id } = req.query
     let sql = `SELECT b.*, COALESCE(CONCAT(e.prenom,' ',e.nom), b.effectif_nom_libre) AS effectif_nom
@@ -140,7 +140,7 @@ router.put('/sync-physique/:effectifId', auth, async (req, res) => {
 // ==================== SOINS AU FRONT ====================
 
 // GET /api/medical-soldbuch/soins — List soins (filterable by medecin_id, date range)
-router.get('/soins', optionalAuth, async (req, res) => {
+router.get('/soins', auth, async (req, res) => {
   try {
     const { medecin_id, date_from, date_to } = req.query
     let sql = `SELECT s.*, CONCAT(m.prenom,' ',m.nom) AS medecin_nom,

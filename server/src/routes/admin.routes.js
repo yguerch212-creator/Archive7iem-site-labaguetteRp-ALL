@@ -130,8 +130,8 @@ router.put('/users/:id/group', auth, privileged, async (req, res) => {
     console.log('GROUP TOGGLE:', req.params.id, action, group)
     const groupName = group || 'Administration'
     // Non-admins cannot modify admin-level groups
-    const restrictedGroups = ['Administration', 'Etat-Major']
-    if (restrictedGroups.includes(groupName) && !req.user.isAdmin) {
+    const safeGroups = ['851i', '852i'] // seuls groupes assignables par un non-admin (tags d unite, sans privilege)
+    if (!safeGroups.includes(groupName) && !req.user.isAdmin) {
       return res.status(403).json({ success: false, message: 'Seul un administrateur peut modifier ce groupe' })
     }
     const grp = await queryOne("SELECT id FROM `groups` WHERE name = ?", [groupName])
@@ -219,18 +219,28 @@ router.get('/logs/administratif', auth, privileged, async (req, res) => {
 })
 
 // PUT /api/admin/users/:id/reset-password
-router.put('/users/:id/reset-password', auth, privileged, async (req, res) => {
+router.put('/users/:id/reset-password', auth, admin, async (req, res) => {
   try {
     const { new_password } = req.body
     if (!new_password || new_password.length < 6) {
       return res.status(400).json({ success: false, message: 'Mot de passe requis (min 6 caractères)' })
     }
 
+    // R1: empecher un admin de reinitialiser le MDP d'un AUTRE admin (prise de controle).
+    // Seul le super-admin (role_level >= 5) le peut ; chacun peut reinitialiser le sien.
+    const target = await queryOne(`SELECT u.id, u.username,
+        (SELECT COUNT(*) FROM user_groups ug JOIN \`groups\` g ON g.id = ug.group_id
+         WHERE ug.user_id = u.id AND g.name = 'Administration') > 0 AS isAdmin
+      FROM users u WHERE u.id = ?`, [req.params.id])
+    if (!target) return res.status(404).json({ success: false, message: 'Utilisateur introuvable' })
+    if (target.isAdmin && String(target.id) !== String(req.user.id) && (req.user.role_level || 0) < 5) {
+      return res.status(403).json({ success: false, message: "Reinitialisation du mot de passe d'un autre administrateur interdite" })
+    }
+
     const bcrypt = require('bcryptjs')
     const hash = await bcrypt.hash(new_password, 10)
     await pool.execute('UPDATE users SET password_hash = ?, must_change_password = 1 WHERE id = ?', [hash, req.params.id])
 
-    const target = await queryOne('SELECT username FROM users WHERE id = ?', [req.params.id])
     const { logActivity } = require('../utils/logger')
     logActivity(req, 'password_reset', 'user', req.params.id, `MDP réinitialisé pour ${target?.username}`)
 

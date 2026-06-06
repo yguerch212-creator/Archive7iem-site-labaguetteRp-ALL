@@ -9,8 +9,7 @@ const UNIT_COLORS = {
   '916': { bg: '#4b5320', dot: '⚪', label: '916. Grenadier-Regiment' },
   '254': { bg: '#c97000', dot: '🟠', label: '254. Feldgendarmerie' },
   '003': { bg: '#2c5ea0', dot: '🔵', label: '3. Fallschirm-Sanitäts-Abteilung' },
-  '001': { bg: '#1a1a2e', dot: '⚫', label: '001. Marine Pionier Bataillon' },
-  '919': { bg: '#6b4c2a', dot: '🟤', label: '919. Logistik-Abteilung' },
+  '352': { bg: '#3b4022', dot: '🟤', label: '352. Pionier-Bataillon' },
   '130': { bg: '#6b2d8b', dot: '🟣', label: '130. Panzer Lehr' },
   '009': { bg: '#b8a000', dot: '🟡', label: '009. Fallschirmjager-Regiment' },
 }
@@ -75,42 +74,23 @@ const GRADES = {
     { nom: 'Oberfeldarzt', abbr: 'OFArzt', cat: 'OFF', role: 'Médecin-chef divisionnaire' },
     { nom: 'Oberstarzt', abbr: 'OStArzt', cat: 'OFF', role: 'Médecin-chef supérieur' },
   ],
-  '001': [
-    { nom: 'Matrose', abbr: 'Mtr.', cat: 'HDR', role: 'Matelot de base' },
-    { nom: 'Oberschütze', abbr: 'OSchtz.', cat: 'HDR', role: 'Matelot confirmé' },
-    { nom: 'Gefreiter', abbr: 'Gefr.', cat: 'HDR', role: 'Matelot caporal' },
-    { nom: 'Obergefreiter', abbr: 'OGefr.', cat: 'HDR', role: 'Caporal-chef' },
-    { nom: 'Stabsgefreiter', abbr: 'StGefr.', cat: 'HDR', role: 'Caporal-chef supérieur' },
-    { nom: 'Oberstabsgefreiter', abbr: 'OStGefr.', cat: 'HDR', role: 'Premier caporal-chef' },
-    { nom: 'Maat', abbr: 'Mt.', cat: 'SO', role: 'Quartier-maître' },
-    { nom: 'Obermaat', abbr: 'OMt.', cat: 'SO', role: 'Second maître' },
-    { nom: 'Bootsmann', abbr: 'Btsm.', cat: 'SO', role: 'Maître d\'équipage' },
-    { nom: 'Stabsbootsmann', abbr: 'StBtsm.', cat: 'SO', role: 'Maître principal' },
-    { nom: 'Oberbootsmann', abbr: 'OBtsm.', cat: 'SO', role: 'Premier maître' },
-    { nom: 'Stabsoberbootsmann', abbr: 'StOBtsm.', cat: 'SO', role: 'Major de la flotte' },
-    { nom: 'Leutnant zur See', abbr: 'LtzS.', cat: 'OFF', role: 'Enseigne de vaisseau' },
-    { nom: 'Oberleutnant zur See', abbr: 'OLtzS.', cat: 'OFF', role: 'Lieutenant de vaisseau' },
-    { nom: 'Kapitanleutnant', abbr: 'KptLt.', cat: 'OFF', role: 'Capitaine de corvette' },
-    { nom: 'Korvettenkapitan', abbr: 'KKpt.', cat: 'OFF', role: 'Commandant adjoint' },
-    { nom: 'Fregattenkapitan', abbr: 'FKpt.', cat: 'OFF', role: 'Capitaine de frégate' },
-    { nom: 'Kapitan zur See', abbr: 'KzS.', cat: 'OFF', role: 'Capitaine de vaisseau' },
-  ],
-  '919': [
-    { nom: 'Kraftfahrer', abbr: 'Kf.', cat: 'HDR', role: 'Conducteur de base' },
-    { nom: 'OberKraftfahrer', abbr: 'OKf.', cat: 'HDR', role: 'Conducteur confirmé' },
+  '352': [
+    { nom: 'Schutze', abbr: 'Sch.', cat: 'HDR', role: 'Pionnier de base' },
+    { nom: 'Oberschutze', abbr: 'OSch.', cat: 'HDR', role: 'Pionnier confirme' },
     { nom: 'Gefreiter', abbr: 'Gefr.', cat: 'HDR', role: 'Caporal' },
     { nom: 'Obergefreiter', abbr: 'OGefr.', cat: 'HDR', role: 'Caporal-chef' },
-    { nom: 'Stabsgefreiter', abbr: 'StGefr.', cat: 'HDR', role: 'Caporal-chef supérieur' },
-    { nom: 'Unterwachtmeister', abbr: 'UWm.', cat: 'SO', role: 'Sous-officier subalterne' },
-    { nom: 'Wachtmeister', abbr: 'Wm.', cat: 'SO', role: 'Sous-officier' },
-    { nom: 'Oberwachtmeister', abbr: 'OWm.', cat: 'SO', role: 'Adjudant logistique' },
-    { nom: 'Stabsfeldwebel', abbr: 'StFw.', cat: 'SO', role: 'Adjudant de compagnie' },
-    { nom: 'Leutnant', abbr: 'Lt.', cat: 'OFF', role: 'Officier logistique' },
-    { nom: 'Oberleutnant', abbr: 'OLt.', cat: 'OFF', role: 'Chef adjoint' },
-    { nom: 'Rittmeister', abbr: 'Rittm.', cat: 'OFF', role: 'Capitaine (cavalerie/logistique)' },
-    { nom: 'Major', abbr: 'Maj.', cat: 'OFF', role: 'Chef de bataillon' },
+    { nom: 'Stabsgefreiter', abbr: 'StGefr.', cat: 'SO', role: 'Caporal-chef superieur' },
+    { nom: 'Unteroffizier', abbr: 'Uffz.', cat: 'SO', role: 'Sous-officier' },
+    { nom: 'Unterfeldwebel', abbr: 'UFw.', cat: 'SO', role: 'Sous-officier subalterne' },
+    { nom: 'Feldwebel', abbr: 'Fw.', cat: 'SO', role: 'Chef de section du genie' },
+    { nom: 'Oberfeldwebel', abbr: 'OFw.', cat: 'SO', role: 'Adjudant de compagnie' },
+    { nom: 'Stabsfeldwebel', abbr: 'StFw.', cat: 'SO', role: 'Adjudant-chef' },
+    { nom: 'Leutnant', abbr: 'Lt.', cat: 'OFF', role: 'Officier du genie' },
+    { nom: 'Oberleutnant', abbr: 'OLt.', cat: 'OFF', role: 'Chef de bataillon' },
+    { nom: 'Hauptmann', abbr: 'Hptm.', cat: 'OFF', role: 'Capitaine' },
+    { nom: 'Major', abbr: 'Maj.', cat: 'OFF', role: 'Commandant' },
     { nom: 'Oberstleutnant', abbr: 'OTL.', cat: 'OFF', role: 'Commandant adjoint' },
-    { nom: 'Oberst', abbr: 'Obst.', cat: 'OFF', role: 'Commandant' },
+    { nom: 'Oberst', abbr: 'Obst.', cat: 'OFF', role: 'Commandant superieur' },
   ],
   '130': [
     { nom: 'Schutze', abbr: 'Schtz.', cat: 'HDR', role: 'Recrue blindée' },
@@ -211,9 +191,8 @@ const DEFAULT_COMMANDERS = {
   '916': { kommandeur: 'OLtn. Manfred Wurst', adjoint: 'Ltn. Miller Hermantraut' },
   '254': { kommandeur: 'Hptm. Jean Muller', adjoint: 'OLtn. Kreger Hoenstadt' },
   '003': { kommandeur: 'OStArzt Ernest Der Erlkönig', adjoint: 'OArzt Bert Elséeune' },
-  '001': { kommandeur: 'KptLt. Alarak Vander', adjoint: 'OLtzS. Karl Witteman' },
-  '919': { kommandeur: 'OLtn. Krauss Von Strauss', adjoint: '' },
-  '130': { kommandeur: 'Maj. Ernest Honigsberg', adjoint: 'Ltn. Ernest Von Richtofen' },
+  '352': { kommandeur: 'OLtn. Krauss Von Strauss', adjoint: 'StFw. Ludwig Weber' },
+  '130': { kommandeur: 'Maj. Ernst Honigsberg', adjoint: 'Ltn. Ernst von Richtofen' },
   '009': { kommandeur: 'Hptm. Markus Urkane', adjoint: '' },
 }
 
@@ -401,7 +380,7 @@ export default function Organigramme() {
 
           {/* Régiments — tous horizontal */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
-            {['916', '254', '003', '001', '919', '130', '009'].map(code => {
+            {['916', '254', '003', '352', '130', '009'].map(code => {
               const uc = UNIT_COLORS[code]
               const is916 = code === '916'
               const textColor = code === '009' ? '#222' : '#f5f0e1'

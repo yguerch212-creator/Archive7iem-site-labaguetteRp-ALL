@@ -20,7 +20,7 @@ export default function JournalList() {
   const [msg, setMsg] = useState('')
 
   const canValidate = user?.isAdmin || user?.isEtatMajor || user?.isOfficier || (user?.grade_rang >= 35)
-  const canCreate = !!user?.effectif_id && !user?.isGuest
+  const canCreate = !user?.isGuest && (!!user?.effectif_id || user?.isAdmin || user?.isEtatMajor || user?.isOfficier)
 
   useEffect(() => { load() }, [])
 

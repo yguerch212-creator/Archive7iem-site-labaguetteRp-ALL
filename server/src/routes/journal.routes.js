@@ -86,13 +86,17 @@ router.get('/:id', optionalAuth, async (req, res) => {
 // POST /api/journal — create article
 router.post('/', auth, async (req, res) => {
   try {
-    if (!req.user.effectif_id) return res.status(403).json({ error: 'Effectif requis' })
+    // Effectif requis SAUF pour admin / Etat-Major / officier (compte de commandement sans fiche effectif)
+    if (!req.user.effectif_id && !req.user.isAdmin && !req.user.isEtatMajor && !req.user.isOfficier) {
+      return res.status(403).json({ error: 'Effectif requis' })
+    }
     const { titre, sous_titre, contenu } = req.body
     if (!titre) return res.status(400).json({ error: 'Titre requis' })
 
+    const auteurNom = `${req.user.prenom || ''} ${req.user.nom || ''}`.trim() || req.user.username || 'Etat-Major'
     const [result] = await pool.execute(
       'INSERT INTO journal_articles (titre, sous_titre, auteur_id, auteur_nom, contenu, statut) VALUES (?,?,?,?,?,?)',
-      [titre, sous_titre || null, req.user.effectif_id, `${req.user.prenom || ''} ${req.user.nom || ''}`.trim(), contenu || '', 'brouillon']
+      [titre, sous_titre || null, req.user.effectif_id || null, auteurNom, contenu || '', 'brouillon']
     )
     res.json({ success: true, data: { id: result.insertId } })
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Erreur serveur' }) }
@@ -135,10 +139,10 @@ router.put('/:id/submit', auth, async (req, res) => {
   try {
     const article = await queryOne('SELECT * FROM journal_articles WHERE id = ?', [req.params.id])
     if (!article) return res.status(404).json({ error: 'Article introuvable' })
-    if (article.auteur_id !== req.user.effectif_id && !req.user.isAdmin) {
+    if (article.auteur_id !== req.user.effectif_id && !req.user.isAdmin && !req.user.isEtatMajor) {
       return res.status(403).json({ error: 'Non autorisé' })
     }
-    
+
     // Officiers auto-publish
     if (req.user.isOfficier || req.user.isAdmin || req.user.isEtatMajor) {
       await pool.execute('UPDATE journal_articles SET statut=?, valide_par=?, valide_at=NOW(), date_publication=NOW() WHERE id=?',

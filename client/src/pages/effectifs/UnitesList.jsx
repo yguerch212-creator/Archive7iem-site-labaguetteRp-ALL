@@ -5,7 +5,7 @@ import apiClient from '../../api/client'
 
 const UNIT_COLORS = {
   '916': '#dcdcdc', '254': '#ff9500', '003': '#3da9fc',
-  '001': '#222', '919': '#8B4513', '130': '#8a2be2', '009': '#e4c21c'
+  '352': '#3b4022', '130': '#8a2be2', '009': '#e4c21c'
 }
 
 export default function UnitesList() {
