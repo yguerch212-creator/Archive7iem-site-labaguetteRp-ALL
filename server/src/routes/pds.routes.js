@@ -5,31 +5,19 @@ const auth = require('../middleware/auth')
 const { optionalAuth } = require('../middleware/auth')
 const { loadPdsConfig, annotate } = require('../utils/pds')
 
-// Semaine RP: vendredi → jeudi (deadline vendredi 20h, samedi = cérémonie)
-// On utilise les numéros de semaine ISO mais la semaine RP commence le vendredi.
-// Si on est vendredi après 20h ou samedi-jeudi, on est dans la semaine ISO suivante côté RP.
+// Semaine PDS : samedi 00h00 -> vendredi 23h59 (PAS de bascule a 20h).
+// Le vendredi reste dans la semaine en cours jusqu'a 23h59 ; le samedi ouvre la nouvelle.
+// Label = numero de semaine ISO du vendredi qui precede le samedi de debut (coherent avec les donnees stockees).
 function getCurrentWeek() {
   const now = new Date()
-  const utcDay = now.getUTCDay() // 0=dim, 1=lun, ..., 5=ven, 6=sam
-  const utcHour = now.getUTCHours()
-  
-  // Find the Friday that started the current RP week (Fri 20h → Fri 20h)
   const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
-  
-  if (utcDay === 5) {
-    // Friday: if before 20h UTC, still previous RP week
-    if (utcHour < 20) d.setUTCDate(d.getUTCDate() - 7)
-    // else: this Friday is the start
-  } else if (utcDay === 6) {
-    // Saturday: Friday was yesterday
-    d.setUTCDate(d.getUTCDate() - 1)
-  } else {
-    // Sun(0), Mon(1), Tue(2), Wed(3), Thu(4): go back to last Friday
-    const daysBack = (utcDay + 2) % 7 // Sun→2, Mon→3, Tue→4, Wed→5, Thu→6
-    d.setUTCDate(d.getUTCDate() - daysBack)
-  }
-  
-  // d is now the Friday that started this RP week. Compute its ISO week.
+  const utcDay = d.getUTCDay() // 0=dim, ..., 5=ven, 6=sam
+  // Reculer jusqu'au samedi qui debute la semaine PDS courante
+  const daysSinceSat = (utcDay + 1) % 7 // sam->0, dim->1, lun->2, ..., ven->6
+  d.setUTCDate(d.getUTCDate() - daysSinceSat) // samedi de debut
+  d.setUTCDate(d.getUTCDate() - 1)            // vendredi precedent = ancrage du label (inchange vs avant)
+
+  // Compute its ISO week.
   const ref = new Date(d)
   const dayNum = ref.getUTCDay() || 7
   ref.setUTCDate(ref.getUTCDate() + 4 - dayNum)

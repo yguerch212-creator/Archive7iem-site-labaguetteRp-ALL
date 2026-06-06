@@ -21,7 +21,10 @@ const JOURS_LABELS = { samedi: 'Samedi', dimanche: 'Dimanche', lundi: 'Lundi', m
 const JOURS_SHORT = { samedi: 'Sam.', dimanche: 'Dim.', lundi: 'Lun.', mardi: 'Mar.', mercredi: 'Mer.', jeudi: 'Jeu.', vendredi_fin: 'Ven.' }
 
 function getWeekString(date = new Date()) {
+  // Semaine PDS samedi -> vendredi 23h59 : on ancre sur le vendredi precedent le samedi de debut
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  const daysSinceSat = (d.getUTCDay() + 1) % 7 // sam->0 ... ven->6
+  d.setUTCDate(d.getUTCDate() - daysSinceSat - 1) // vendredi d'ancrage
   const dayNum = d.getUTCDay() || 7
   d.setUTCDate(d.getUTCDate() + 4 - dayNum)
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
@@ -39,10 +42,10 @@ function weekLabel(w) {
     const dayOfWeek = jan4.getUTCDay() || 7
     const monday = new Date(jan4)
     monday.setUTCDate(jan4.getUTCDate() - dayOfWeek + 1 + (wn - 1) * 7)
-    const friday = new Date(monday); friday.setUTCDate(monday.getUTCDate() + 4)
-    const nextFriday = new Date(friday); nextFriday.setUTCDate(friday.getUTCDate() + 7)
+    const saturday = new Date(monday); saturday.setUTCDate(monday.getUTCDate() + 5) // samedi de debut
+    const fridayEnd = new Date(saturday); fridayEnd.setUTCDate(saturday.getUTCDate() + 6) // vendredi de fin
     const fmt = d => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
-    return `Semaine du sam. ${fmt(friday)} au ven. ${fmt(nextFriday)}`
+    return `Semaine du sam. ${fmt(saturday)} au ven. ${fmt(fridayEnd)}`
   } catch { return w }
 }
 

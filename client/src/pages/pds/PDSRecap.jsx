@@ -22,12 +22,12 @@ function weekLabel(w) {
     const dayOfWeek = jan4.getUTCDay() || 7
     const monday = new Date(jan4)
     monday.setUTCDate(jan4.getUTCDate() - dayOfWeek + 1 + (wn - 1) * 7)
-    const friday = new Date(monday)
-    friday.setUTCDate(monday.getUTCDate() + 4)
-    const nextFriday = new Date(friday)
-    nextFriday.setUTCDate(friday.getUTCDate() + 7)
+    const saturday = new Date(monday)
+    saturday.setUTCDate(monday.getUTCDate() + 5) // samedi de debut
+    const fridayEnd = new Date(saturday)
+    fridayEnd.setUTCDate(saturday.getUTCDate() + 6) // vendredi de fin (23h59)
     const fmt = d => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-    return `${fmt(friday)} — ${fmt(nextFriday)}`
+    return `${fmt(saturday)} — ${fmt(fridayEnd)}`
   } catch { return w }
 }
 
